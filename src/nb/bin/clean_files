@@ -13,9 +13,9 @@ use strict;
 $| = 1;
 
 use Getopt::Std;
-our ($opt_e, $opt_h) =
-    (     0,      0);
-getopts('eh') || die("Option error. Use -h for help.\n");
+our ($opt_E, $opt_e, $opt_h) =
+    (     0,      0,      0);
+getopts('Eeh') || die("Option error. Use -h for help.\n");
 
 my $SEP = "&#64738;";
 
@@ -43,17 +43,19 @@ if ($opt_e) {
     $Data =~ s/(<!-- \@ENGLISH {{{)(.*?)(\@ENGLISH }}} -->)/
                sprintf("%s%s%s", $1, cleanup_english($2), $3)/ges;
 
-    # Convert all UTF-8 sequences into numerical entities. To make 
-    # RFC 3629 happy, only use four bytes.
-    $Data =~ s/([\xF0-\xF7][\x80-\xBF][\x80-\xBF][\x80-\xBF])/
-               decode_char($1)/ge;
-    $Data =~ s/([\xE0-\xEF][\x80-\xBF][\x80-\xBF])/
-               decode_char($1)/ge;
-    $Data =~ s/([\xC0-\xDF][\x80-\xBF])/
-               decode_char($1)/ge;
+    if ($opt_E) {
+        # Convert all UTF-8 sequences into numerical entities. To make 
+        # RFC 3629 happy, only use four bytes.
+        $Data =~ s/([\xF0-\xF7][\x80-\xBF][\x80-\xBF][\x80-\xBF])/
+                   decode_char($1)/ge;
+        $Data =~ s/([\xE0-\xEF][\x80-\xBF][\x80-\xBF])/
+                   decode_char($1)/ge;
+        $Data =~ s/([\xC0-\xDF][\x80-\xBF])/
+                   decode_char($1)/ge;
 
-    if ($Data =~ /[\x80-\xFF]/) {
-        die("Invalid UTF-8 in stream, aborting.\n");
+        if ($Data =~ /[\x80-\xFF]/) {
+            die("Invalid UTF-8 in stream, aborting.\n");
+        }
     }
 }
 
@@ -227,14 +229,15 @@ sub usage {
 Usage: $0 [options] [file [...]]
 
 Convert the xml files of the svnbook for commit or editing. Default 
-action is to prepare the file for commit: Characters above U+007F are 
-converted to numerical 7-bit entities and $SEP is inserted between 
-double dashes in the English text.
+action is to prepare the file for commit: Insert $SEP between double 
+dashes in the English text.
 
 Everything is written to stdout.
 
 Options:
 
+  -E  Convert characters above U+007F to numerical SGML entities when 
+      converting to the commit format.
   -e  Prepare file for editing or merging. The file or stdin is 
       converted to UTF-8 and all occurences of $SEP are removed.
   -h  Print this help.
