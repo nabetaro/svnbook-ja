@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- originated from English revision 10817 -->
   <appendix id="svn-ap-b">
     <title>Solución de problemas</title>
@@ -33,77 +32,85 @@
       <footnote><para>Recuerde que la cantidad de detalle que provea sobre
       su configuración<!--TODO:setup--> y su problema es directamente
       proporcional a la probabilidad de conseguir una respuesta de la
-      lista de correo<!--TODO:mailing list-->.
-
-      You're encouraged to include everything short of what you had
-      for breakfast and your mother's maiden name.  </para>
+      lista de correo<!--TODO:mailing list-->. Está animado a incluir
+      brevemente lo que ha tomado para desayunar o el nombre de soltera
+      de su madre.<!--TODO:You're encouraged to include everything short of
+      what you had for breakfast and your mother's maiden name.-->  </para>
       </footnote> </para>
       
   
     <sect2 id="svn-ap-b-sect-1.2">
-      <title>Problems Using Subversion</title>
+      <title>Problemas usando Subversion</title>
       
-      <para>Here are some of the most popular questions from
-        Subversion's FAQ.</para>
+      <para>Aqui hay algunas de las preguntas más populares del FAQ de
+        Subversion.</para>
 
       <sect3 id="svn-ap-b-sect-1.2.1">
-        <title>Every time I try to access my repository, my Subversion
-          client just hangs.</title>
+        <title>Cada vez que intento acceder a mi repositorio, mi cliente
+          de Subversion se cuelga<!--TODO:just hangs--></title>
         
-        <para>Your repository is not corrupt, nor is your data
-          lost. If your process accesses the repository directly
-          (mod_dav_svn, svnlook, svnadmin, or if you access a
-          <literal>file://</literal> URL), then it's using Berkeley DB to
-          access your data.  Berkeley DB is a journaling system, meaning
-          that it logs everything it is about to do before it does so.  If
-          your process is interrupted (e.g. by a kill signal or segfault),
-          then a lockfile is left behind, along with a logfile describing
-          unfinished business.  Any other process that attempts to
-          access the database will just hang, waiting for the lockfile
-          to disappear.  To awaken your repository, you need to ask
-          Berkeley DB to either finish the work, or rewind the
-          database to a previous state that is known to be
-          consistent.</para>
+        <para>Su repositorio no está corrupto, ni sus datos perdidos. Si su
+          proceso accede directamente al repositorio (mod_dav_svn, svnlook,
+          svnadmin, o si accede a una URL <literal>file://</literal>),
+          entonces está usando Berkeley DB para acceder a sus datos.
+          Berkeley DB es un sistema transaccional, lo que significa que
+          registra todo sobre lo que va a hacer antes de hacerlo. Si su
+          proceso es interrumpido (por ejemplo por una señal kill o
+          segfault<!--TODO:a kill signal or segfault-->), entonces un
+          fichero de bloqueo se deja atrás, junto con un fichero de
+          registro que describe el trabajo<!--TODO:unfinished business-->
+          inacabado. Cualquier otro proceso que procure tener acceso a
+          la base de datos se colgará, esperando a que desaparezca el
+          fichero de bloqueo. Para despertar su repositorio, necesita
+          pedirle a Berkeley DB que finalice el trabajo, o rebobinar la
+          base de datos a un estado anterior que se sepa que es
+          consistente.</para>
 
-        <para>Make sure you run this command as the user that owns and
-          manages the database, not as root, or else it will leave
-          root-owned files in the db directory.  These files cannot be opened
-          by the non-root user that manages the database, which is
-          typically either you or your Apache process.  Also be sure
-          to have the correct umask set when you run recover, since
-          failing to do so will lock out users that are in the group
-          allowed to access the repository.</para>
+        <para>Asegurese que ejecuta este comando como el usuario que
+          posee<!--TODO:owns--> y administra la base de datos, no como
+          superusuario<!--TODO:root-->, o sino<!--TODO:or else--> dejará
+          ficheros pertenecientes al superusuario<!--TODO:root-ownned files
+          -->en el directorio db. Estos ficheros no pueden ser abiertos
+          por el usuario no root que administra la base de datos, que
+          tipicamente es usted o su proceso Apache. También asegurese
+          de tener fijada correctamente la umask cuando ejecute la
+          recuperación<!--TODO:recover-->, si falla<!--TODO:since failing
+          to do so will lock out users--> esta bloqueará a usuarios que
+          están en el grupo permitido para acceder al repositorio.</para>
 
-        <para>Simply run:</para>
+        <para>Simplemente ejecute:</para>
 
 <screen>
 $ svnadmin recover /path/to/repos
 </screen>
 
-        <para>Once the command has completed, check the permissions in the
-          <filename>db/</filename> directory of the repository.</para>
+        <para>Una vez el comando se haya completado, compruebe los
+          permisos en el directorio <filename>db/</filename> del
+          repositorio.</para>
         
       </sect3>
       
       
       <sect3 id="svn-ap-b-sect-1.2.2">
-        <title>Every time I try to run <command>svn</command>, it
-          says my working copy is locked.</title>
+        <title>Cada vez que intento ejecutar <command>svn</command>, dice
+          que mi copia de trabajo está bloqueada.</title>
+
+        <para>La copia de trabajo de Subversion, como el Berkeley DB, usa
+          un mecanismo transaccional para realizar todas las acciones.
+          Esto es, registra todo acerca de lo que va a hacer antes de
+          hacerlo. Si <command>svn</command> es interrumpido mientras
+          realiza una acción, entonces uno o más ficheros de bloqueo son
+          dejados atras, junto con ficheros de registro describiendo
+          las acciones inacabadas. (<command>svn status</command>mostrará
+          una <literal>L</literal> al lado de los directorios bloqueados.)
+        </para>
         
-        <para>Subversion's working copy, just like Berkeley DB, uses a
-          journaling mechanism to perform all actions. That is, it
-          logs everything it is about to do before it does so. If
-          <command>svn</command> is interrupted while performing an
-          action, then one or more lockfiles are left behind, along
-          with log files describing the unfinished
-          actions. (<command>svn status</command> will show an
-          <literal>L</literal> next to locked directories.)</para>
-        
-        <para>Any other process that attempts to access the working
-          copy will fail when it sees the locks. To awaken your
-          working copy, you need to tell the client to finish the
-          work.  To fix this, run this command from the top of your
-          working copy:</para>
+        <para>Cualquier otro proceso que intente<!--TODO:attempts--> tener
+          acceso a la copia de trabajo fallará cuando vea los bloqueos.
+          Para despertar su copia de trabajo, usted necesita pedirle al
+          cliente que finalice el trabajo. Para corregir esto, ejecute
+          este comando desde<!--TODO:from the top of your working copy-->
+          lo alto de su copia de trabajo:</para>
         
         <screen>
 $ svn cleanup
@@ -113,28 +120,28 @@ $ svn cleanup
 
       
       <sect3 id="svn-ap-b-sect-1.2.3">
-        <title>I'm getting errors finding or opening a repository,
-          but I know my repository URL is correct.</title>
+        <title>Estoy teniendo errores encontrando o abriendo un repositorio,
+          pero sé que mi URL del repositorio es correcta.</title>
 
-        <para>See <xref linkend="svn-ap-b-sect-1.2.1"/>.</para>
+        <para>Vea <xref linkend="svn-ap-b-sect-1.2.1"/>.</para>
 
-        <para>You might also have a permissions problem opening the
-          repository.  See <xref linkend="svn-ch-6-sect-5"/>.</para>
+        <para>También puede tener un problema de permisos al abrir el
+          repositorio. Vea <xref linkend="svn-ch-6-sect-5"/>.</para>
       </sect3>
 
       
       <sect3 id="svn-ap-b-sect-1.2.4">
-        <title>How can I specify a Windows drive letter in a
-          <literal>file://</literal> URL?</title>
+        <title>Cómo puedo especificar una letra de un dispositivo Windows
+          en una URL <literal>file://</literal>?</title>
         
-        <para>See <xref linkend="svn-ch-2-sidebar-1"/>.</para>
+        <para>Vea <xref linkend="svn-ch-2-sidebar-1"/>.</para>
       </sect3>
       
       <sect3 id="svn-ap-b-sect-1.2.5">
-        <title>I'm having trouble doing write operations to a
-          Subversion repository over a network.</title>
+        <title>Estoy teniendo problemas haciendo operaciones de escritura
+          en un repositorio de Subversion sobre una red.</title>
         
-        <para>If import works fine over local access:</para>
+        <para>Si la importación funciona bien sobre acceso local:</para>
         
         <screen>
 $ mkdir test
@@ -145,7 +152,7 @@ Transmitting file data .
 Committed revision 1.
 </screen>
 
-        <para>But not from a remote host:</para>
+        <para>Pero no desde un puesto remoto:</para>
         
         <screen>
 $ svn import test http://svn.red-bean.com/test -m "Initial import"
@@ -154,72 +161,82 @@ harry's password: xxxxxxx
 svn_error: &hellip; The specified activity does not exist.
 </screen>
         
-        <para>We've seen this when the <filename>REPOS/dav/</filename>
-          directory is not writable by the httpd process. Check the
-          permissions to ensure that Apache httpd can write to the
-          <filename>dav/</filename> directory (and to the
-          corresponding <filename>db/</filename> directory, of
-          course).</para>
+        <para>Hemos visto esto cuando el directorio
+          <filename>REPOS/dav/</filename> no es escribible por el proceso
+          httpd. Compruebe los permisos para asegurarse que el httpd de
+          Apache puede escribir en el directorio <filename>dav/</filename>
+          (y al directorio correspondiente <filename>db/</filename>, por
+          supuesto).<!--TODO:(and to the corresponding db/ directory, of
+          course)--></para>
         
       </sect3>
 
 
       <sect3 id="svn-ap-b-sect-1.2.6">
-        <title>Under Windows XP, the Subversion server sometimes
-          seems to send out corrupted data.</title>
+        <title>Bajo Windows XP, a veces el servidor de Subversion parece
+          enviar datos corruptos.</title>
         
-        <para>You need to install Windows XP Service Pack 1 to fix a
-          TCP/IP stack bug in the operating system.  You can get all
-          sorts of information about that Service Pack at <systemitem
+        <para>Necesita instalar Windows XP Service Pack 1 para corregir
+          un fallo en la pila TCP/IP en el sistema operativo. Puede
+          conseguir toda clase de información sobre este Service Pack en
+          <systemitem
           class="url">http://support.microsoft.com/default.aspx?scid=kb;EN-US;q317949</systemitem>.</para>
       </sect3>
       
       
       <sect3 id="svn-ap-b-sect-1.2.7">
-        <title>What is the best method of doing a network trace of
-          the conversation between a Subversion client and
-          Apache server?</title>
+        <title>¿Cual es el mejor metodo de hacer un trazo de red<!--TODO:
+          a network trace--> de la conversación entre un cliente de
+          Subversion y un servidor Apache?</title>
         
-        <para>Use Ethereal to eavesdrop on the conversation:</para>
+        <para>Utilice Ethereal para cuchichear<!--TODO:eavesdrop on the
+        conversation... cuchichear o escuchar?-->la conversación:</para>
 
         <note>
-          <para>The following instructions are specific to the
-            graphical version of Ethereal, and may not apply to the
-            command line version (whose binary is usually named
-            <command>tethereal</command>).</para>
+          <para>Las siguientes instrucciones son especificas para la
+            versión grafica de Ethereal, y puede no ser aplicable a la
+            versión de linea de comandos (cuyo binario se nombra
+            generalmente <command>tethereal</command>).</para>
         </note>
         
         <itemizedlist>
           <listitem>
-            <para>Pull down the Capture menu, and choose
-              Start.</para>
+            <para>Desplegar el menu Capture<!--TODO:Pull down the Capture
+              menu-->, y elija Start.</para>
           </listitem>
           
           <listitem>
-            <para>Type port 80 for Filter, and turn off promiscuous
-              mode.</para>
+            <para>Escriba puerto 80 para Filter, y desactive el modo
+              promiscuo<!--TODO:Type port 80 for Filter, and turn off
+              promiscuous mode-->.</para>
           </listitem>
           
           <listitem>
-            <para>Run your Subversion client.</para>
+            <para>Ejecute su cliente Subversion.</para>
           </listitem>
           
           <listitem>
-            <para>Hit Stop. Now you have a capture. It looks like a
-              huge list of lines.</para>
+            <para>Pulse Stop<!--TODO:hit Stop-->. Ahora usted tiene una
+              captura. Parece una lista enorme de lineas<!--TODO:It looks
+              like a huge list of lines-->.</para>
           </listitem>
           
           <listitem>
-            <para>Click on the Protocol column to sort.</para>
+            <para>Haga click en la columna Protocol para abreviar.<!--TODO:
+              to sort-->
+            </para>
           </listitem>
           
           <listitem>
-            <para>Then, click on the first relevant TCP line to
-              select it.</para>
+            <para>Despues, haga clic en la primera linea relevante TCP para
+              seleccionarla.</para>
           </listitem>
           
           <listitem>
-            <para>Right click, and choose Follow TCP Stream. You'll
+            <para>Click derecho, y elija "Follow TCP Stream"<!--TODO:Follow
+              TCP Stream-->.
+
+              You'll
               be presented with the request/response pairs of the
               Subversion client's HTTP conversion.</para>
           </listitem>
