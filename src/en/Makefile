@@ -1,4 +1,4 @@
-ENSURE_XSL = if ! test -e "$(TOOLS_DIR)/xml"; then $(TOOLS_DIR)/find-xsl.py; fi
+ENSURE_XSL = if ! test -e "$(TOOLS_DIR)/xsl"; then $(TOOLS_DIR)/find-xsl.py; fi
 XSLTPROC = xsltproc
 INSTALL_DIR = $(DESTDIR)/usr/share/doc/subversion
 INSTALL = install
