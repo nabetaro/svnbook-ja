@@ -20,15 +20,6 @@ BOOK_ALL_SOURCE = $(BOOK_DIR)/*.xml
 BOOK_IMAGES = $(BOOK_DIR)/images/*.png
 BOOK_INSTALL_DIR = $(INSTALL_DIR)/book
 
-MDOCS_DIR = ${BOOK_TOP}/misc-docs
-MDOCS_HTML_TARGET = $(MDOCS_DIR)/misc-docs.html
-MDOCS_PDF_TARGET = $(MDOCS_DIR)/misc-docs.pdf
-MDOCS_PS_TARGET = $(MDOCS_DIR)/misc-docs.ps
-MDOCS_FO_TARGET = $(MDOCS_DIR)/misc-docs.fo
-MDOCS_XML_SOURCE = $(MDOCS_DIR)/misc-docs.xml
-MDOCS_ALL_SOURCE = $(MDOCS_DIR)/*.xml
-MDOCS_INSTALL_DIR = $(INSTALL_DIR)/misc-docs
-
 XSL_FO = ${BOOK_TOP}/tools/fo-stylesheet.xsl
 XSL_HTML = $(BOOK_TOP)/tools/html-stylesheet.xsl
 XSL_HTML_CHUNK = $(BOOK_TOP)/tools/chunk-stylesheet.xsl
@@ -49,24 +40,19 @@ BOOK_HTML_XSLTPROC_OPTS =
 
 all: all-html all-pdf all-ps
 
-install: install-book install-misc-docs
+install: install-book
 
-all-html: book-html book-html-chunk misc-docs-html
+all-html: book-html book-html-chunk
 
-all-pdf: book-pdf misc-docs-pdf
+all-pdf: book-pdf
 
-all-ps: book-ps misc-docs-ps
+all-ps: book-ps
 
 all-book: book-html book-html-chunk book-pdf book-ps
 
 install-book: install-book-html install-book-html-chunk install-book-pdf install-book-ps
 
-all-misc-docs: misc-docs-html misc-docs-pdf book-ps
-
-install-misc-docs: install-misc-html install-misc-pdf \
-                   install-misc-ps
-
-clean: book-clean misc-docs-clean
+clean: book-clean
 
 $(BOOK_VERSION_SOURCE): book-version
 
@@ -141,38 +127,3 @@ book-clean:
 	rm -f $(BOOK_HTML_TARGET) $(BOOK_FO_TARGET)
 	rm -rf $(BOOK_HTML_CHUNK_DIR)
 	rm -f $(BOOK_PDF_TARGET) $(BOOK_PS_TARGET) 
-
-misc-docs-html: $(MDOCS_HTML_TARGET)
-
-$(MDOCS_HTML_TARGET): $(MDOCS_ALL_SOURCE)
-	$(XSLTPROC) $(XSL_HTML) $(MDOCS_XML_SOURCE) > $(MDOCS_HTML_TARGET)
-
-misc-docs-pdf: $(MDOCS_PDF_TARGET)
-
-misc-docs-ps: $(MDOCS_PS_TARGET)
-
-$(MDOCS_PDF_TARGET): $(MDOCS_ALL_SOURCE)
-	$(XSLTPROC) $(XSL_FO) $(MDOCS_XML_SOURCE) > $(MDOCS_FO_TARGET)
-	$(RUN_FOP) $(BOOK_TOP) -fo $(MDOCS_FO_TARGET) -pdf $(MDOCS_PDF_TARGET)
-
-$(MDOCS_PS_TARGET): $(MDOCS_ALL_SOURCE)
-	$(XSLTPROC) $(XSL_FO) $(MDOCS_XML_SOURCE) > $(MDOCS_FO_TARGET)
-	$(RUN_FOP) $(BOOK_TOP) -fo $(MDOCS_FO_TARGET) -ps $(MDOCS_PS_TARGET)
-
-misc-docs-clean:
-	rm -f $(MDOCS_HTML_TARGET) $(MDOCS_FO_TARGET)
-	rm -f $(MDOCS_PDF_TARGET) $(MDOCS_PS_TARGET)
-
-$(MDOCS_INSTALL_DIR):
-	$(INSTALL) -d $(MDOCS_INSTALL_DIR)
-
-install-misc-html: $(MDOCS_HTML_TARGET) $(MDOCS_INSTALL_DIR)
-	$(INSTALL) $(MDOCS_HTML_TARGET) $(MDOCS_INSTALL_DIR)
-
-install-misc-pdf: $(MDOCS_PDF_TARGET) $(MDOCS_INSTALL_DIR)
-	$(INSTALL) $(MDOCS_PDF_TARGET) $(MDOCS_INSTALL_DIR)
-
-install-misc-ps: $(MDOCS_PS_TARGET) $(MDOCS_INSTALL_DIR)
-	$(INSTALL) $(MDOCS_PS_TARGET) $(MDOCS_INSTALL_DIR)
-
-
