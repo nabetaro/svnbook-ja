@@ -7,6 +7,7 @@ SHELL = /bin/sh
 SVNVERSION = svnversion
 
 BOOK_TOP = .
+TOOLS_DIR = ../tools
 BOOK_HTML_CHUNK_DIR = $(BOOK_DIR)/html-chunk
 BOOK_DIR = ${BOOK_TOP}/book
 BOOK_HTML_TARGET = $(BOOK_DIR)/svn-book.html
@@ -20,15 +21,15 @@ BOOK_ALL_SOURCE = $(BOOK_DIR)/*.xml
 BOOK_IMAGES = $(BOOK_DIR)/images/*.png
 BOOK_INSTALL_DIR = $(INSTALL_DIR)/book
 
-XSL_FO = ${BOOK_TOP}/tools/fo-stylesheet.xsl
-XSL_HTML = $(BOOK_TOP)/tools/html-stylesheet.xsl
-XSL_HTML_CHUNK = $(BOOK_TOP)/tools/chunk-stylesheet.xsl
+XSL_FO = $(TOOLS_DIR)/fo-stylesheet.xsl
+XSL_HTML = $(TOOLS_DIR)/html-stylesheet.xsl
+XSL_HTML_CHUNK = $(TOOLS_DIR)/chunk-stylesheet.xsl
 
-RUN_FOP = ${BOOK_TOP}/tools/bin/run-fop.sh
+RUN_FOP = $(TOOLS_DIR)/bin/run-fop.sh
 
 # Book xsltproc options for HTML output
 # Note: --stringparam arguments no longer go here; 
-# see tools/html-stylesheet.xsl and tools/chunk-stylesheet.xsl
+# see ../tools/html-stylesheet.xsl and ../tools/chunk-stylesheet.xsl
 BOOK_HTML_XSLTPROC_OPTS = 
 
 # Book xsltproc options for PDF and PostScript output
