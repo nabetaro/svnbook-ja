@@ -29,11 +29,11 @@ MDOCS_XML_SOURCE = $(MDOCS_DIR)/misc-docs.xml
 MDOCS_ALL_SOURCE = $(MDOCS_DIR)/*.xml
 MDOCS_INSTALL_DIR = $(INSTALL_DIR)/misc-docs
 
-XSL_FO = ${BOOK_TOP}/../../book/tools/fo-stylesheet.xsl
-XSL_HTML = $(BOOK_TOP)/../../book/tools/html-stylesheet.xsl
-XSL_HTML_CHUNK = $(BOOK_TOP)/../../book/tools/chunk-stylesheet.xsl
+XSL_FO = ${BOOK_TOP}/../en/tools/fo-stylesheet.xsl
+XSL_HTML = $(BOOK_TOP)/../en/tools/html-stylesheet.xsl
+XSL_HTML_CHUNK = $(BOOK_TOP)/../en/tools/chunk-stylesheet.xsl
 
-RUN_FOP = ${BOOK_TOP}/../../book/tools/bin/run-fop.sh
+RUN_FOP = ${BOOK_TOP}/../en/tools/bin/run-fop.sh
 
 # Book xsltproc options for HTML output
 # Note: --stringparam arguments no longer go here; 
@@ -177,7 +177,7 @@ install-misc-ps: $(MDOCS_PS_TARGET) $(MDOCS_INSTALL_DIR)
 
 # Stuff below here is added for building the Norwegian version.
 
-COLLAB=http://svn.collab.net/repos/svn
+COLLAB=http://svn.red-bean.com/svnbook
 
 BUILDTMP_DIR = build.tmp
 BOOKFILES = appa.xml appb.xml appc.xml appd.xml book.xml ch00.xml \
@@ -233,7 +233,7 @@ convfiles:
 
 bookdiff:
 	mkdir $(BDTMP)
-	svn co -N -r`cat LAST_UPDATED` $(COLLAB)/trunk/doc/book/book $(BDTMP)/eng
+	svn co -N -r`cat LAST_UPDATED` $(COLLAB)/trunk/src/en/book $(BDTMP)/eng
 	for _ptd in $(BDFILES); do \
 		cat $(BDTMP)/eng/$$_ptd | bin/clean_files -e >>$(BDTMP)/eng.txt; \
 		cat book/$$_ptd | bin/clean_files -e >>$(BDTMP)/norw.txt; \
@@ -251,7 +251,7 @@ sync:
 	@read
 	svnversion . >HEADREV
 	$(MAKE) editmode
-	svn merge -r$$(cat LAST_UPDATED):$$(cat HEADREV) $(COLLAB)/trunk/doc/book .
+	svn merge -r$$(cat LAST_UPDATED):$$(cat HEADREV) $(COLLAB)/trunk/src/en .
 	mv HEADREV LAST_UPDATED
 	rmdir sync.LOCK
 
