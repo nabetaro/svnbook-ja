@@ -23,7 +23,7 @@ if [ -f ${HOME}/.foprc ]; then
 fi
 
 # The fop of last resort.
-DESPERATION_FOP_DIR=${BOOK_TOP}/tools/fop
+DESPERATION_FOP_DIR=${BOOK_TOP}/../tools/fop
 DESPERATION_FOP_PGM=${DESPERATION_FOP_DIR}/fop.sh
 
 if [ "${FOP_HOME}X" = X ]; then
