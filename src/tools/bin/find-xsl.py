@@ -5,8 +5,12 @@ import os
 
 #######################################################
 candidate_xsldirs = (
+    # Fedora
     '/usr/share/sgml/docbook/xsl-stylesheets',
+    # Cygwin
     '/usr/share/docbook-xsl',
+    # Debian
+    '/usr/share/xml/docbook/stylesheet/nwalsh',
     # Please add your OS's location here if not listed!
     )
 #######################################################
