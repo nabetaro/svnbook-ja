@@ -11,8 +11,8 @@ candidate_xsldirs = (
     )
 #######################################################
 
-tools_dir = os.path.dirname(sys.argv[0])
-xsl_dir = os.path.join(tools_dir, 'xsl')
+tools_bin_dir = os.path.dirname(sys.argv[0])
+xsl_dir = os.path.join(tools_bin_dir, '..', 'xsl')
 
 if os.path.exists(xsl_dir):
   print "XSL directory %s already exists" % (xsl_dir,)
