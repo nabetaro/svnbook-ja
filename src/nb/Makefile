@@ -204,7 +204,6 @@ sync:
 	svnversion . >HEADREV
 	$(MAKE) editmode
 	svn merge -r$$(cat LAST_UPDATED):$$(cat HEADREV) $(COLLAB)/trunk/src/en .
-	svn merge -r$$(cat LAST_UPDATED):$$(cat HEADREV) $(COLLAB)/trunk/src/tools tools
 	mv HEADREV LAST_UPDATED
 	rmdir sync.LOCK
 
