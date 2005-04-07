@@ -135,3 +135,11 @@ book-clean:
 	rm -f $(BOOK_HTML_TARGET) $(BOOK_FO_TARGET)
 	rm -rf $(BOOK_HTML_CHUNK_DIR)
 	rm -f $(BOOK_PDF_TARGET) $(BOOK_PS_TARGET) 
+
+# The path to xml.soc is going to vary wildly from system to system.
+# I suppose we need another find-foo script - unless anyone has a better idea?
+valid:
+	SP_CHARSET_FIXED=YES SP_ENCODING=XML \
+	SGML_CATALOG_FILES="/usr/share/OpenSP/xml.soc" \
+	onsgmls -wxml -ges book/book.xml
+
