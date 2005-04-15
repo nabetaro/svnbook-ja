@@ -1,4 +1,3 @@
-ENSURE_XSL = if ! test -e "$(TOOLS_DIR)/xsl"; then $(TOOLS_DIR)/find-xsl.py; fi
 XSLTPROC = xsltproc
 INSTALL_DIR = $(DESTDIR)/usr/share/doc/subversion
 INSTALL = install
@@ -26,6 +25,8 @@ XSL_FO = $(TOOLS_DIR)/fo-stylesheet.xsl
 XSL_HTML = $(TOOLS_DIR)/html-stylesheet.xsl
 XSL_HTML_CHUNK = $(TOOLS_DIR)/chunk-stylesheet.xsl
 
+ENSURE_XSL = if ! test -e "$(TOOLS_DIR)/xsl"; \
+	     then $(TOOLS_DIR)/bin/find-xsl.py; fi
 RUN_FOP = $(TOOLS_DIR)/bin/run-fop.sh
 
 # Book xsltproc options for HTML output
@@ -134,6 +135,13 @@ book-clean:
 	rm -f $(BOOK_HTML_TARGET) $(BOOK_FO_TARGET)
 	rm -rf $(BOOK_HTML_CHUNK_DIR)
 	rm -f $(BOOK_PDF_TARGET) $(BOOK_PS_TARGET) 
+
+# The path to xml.soc is going to vary wildly from system to system.
+# I suppose we need another find-foo script - unless anyone has a better idea?
+valid:
+	SP_CHARSET_FIXED=YES SP_ENCODING=XML \
+	SGML_CATALOG_FILES="/usr/share/OpenSP/xml.soc" \
+	onsgmls -wxml -ges book/book.xml
 
 # Stuff below here is added for building the Norwegian version.
 
