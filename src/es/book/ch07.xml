@@ -692,7 +692,7 @@ collabnet = svn.collab.net
             </listitem>
           </varlistentry>
           
-	  <!-- ###TODO add description of other options shown in example
+      <!-- ###TODO add description of other options shown in example
           registry file, e.g., log-encoding, etc. -->
         </variablelist>
 
@@ -1617,126 +1617,139 @@ Cumulus clouds are appearing more frequently as summer approaches.
       <sect3 id="svn-ch-7-sect-2.3.5">
         <title><literal>svn:eol-style</literal></title>
 
-        <para>Unless otherwise noted using a versioned file's
-          <literal>svn:mime-type</literal> property, Subversion
-          assumes the file contains human-readable data.  Generally
-          speaking, Subversion only uses this knowledge to determine
-          if contextual difference reports for that file are
-          possible.  Otherwise, to Subversion, bytes are bytes.</para>
+        <para>Mientras la propiedad <literal>svn:mime-type</literal>
+          de un fichero versionado no indique lo contrario,
+          Subversion asume que el fichero contiene datos legibles
+          por seres humanos. En general, Subversion slo usa
+          este conocimiento para determinar si se pueden realizar
+          ficheros diferenciales contextuales sobre el fichero.
+          En caso contrario, para Subversion, los bytes son
+          bytes.</para>
         
-        <para>This means that by default, Subversion doesn't pay any
-          attention to the type of <firstterm>end-of-line (EOL)
-          markers</firstterm> used in your files.  Unfortunately,
-          different operating system use different tokens to represent
-          the end of a line of text in a file.  For example, the usual
-          line ending token used by software on the Windows platform
-          is a pair of ASCII control characters&mdash;carriage return
-          (<literal>CR</literal>) and line feed
-          (<literal>LF</literal>).  Unix software, however, just uses
-          the <literal>LF</literal> character to denote the end of a
-          line.</para>
+        <para>Esto significa que por defecto, Subversion no
+          presta atencin al tipo de <firstterm>marcas de fn de
+          lnea (EOL)</firstterm> que use en sus ficheros.
+          Desafortunadamente, diferentes sistemas operativos
+          usan carcteres diferentes para representar los fines
+          de lnea en un fichero de texto. Por ejemplo, el carcter
+          de fín de línea habitual usado por software en la
+          plataforma Windows es una pareja de caracteres de
+          control ASCII &mdash;retorno de carro (<literal>CR</literal>)
+          y nueva línea<!-- TODO line feed mal traducido-->
+          (<literal>LF</literal>).  En su lugar, el software
+          Unix usa simplemente el carácter <literal>LF</literal>
+          para indicar nueva línea.</para>
 
-        <para>Not all of the various tools on these operating systems
-          are prepared to understand files that contain line endings
-          in a format that differs from the <firstterm>native line
-          ending style</firstterm> of the operating system on which
-          they are running.  Common results are that Unix programs
-          treat the <literal>CR</literal> character present in Windows
-          files as a regular character (usually rendered as
-          <literal>^M</literal>), and that Windows programs combine
-          all of the lines of a Unix file into one giant line because
-          no carriage return-linefeed (or <literal>CRLF</literal>)
-          character combination was found to denote the end of
-          line.</para>
+        <para>No todas las herramientas en estos sistemas
+          operativos están preparadas para entender ficheros
+          en formatos que difieran del <firstterm>estilo de fín
+          de línea nativo</firstterm> del sistema operativo
+          sobre el cual están corriendo. Los resultados habituales
+          son que los programas Unix tratan el carácter
+          <literal>CR</literal> presente en ficheros Windows
+          como carácteres regulares (normalmente mostrados como
+          <literal>^M</literal>), y los programas Windows
+          combinan todas las líneas de un fichero Unix en una
+          línea gigante porque no encuentranla combinación de
+          retorno de carro y nueva línea (o <literal>CRLF</literal>)
+          que marca el fin de línea.</para>
 
-        <para>This sensitivity to foreign EOL markers can become
-          frustrating for folks who share a file across different
-          operating systems.  For example, consider a source code
-          file, and developers that edit this file on both Windows and
-          Unix systems.  If all the developers always use tools which
-          preserve the line ending style of the file, no problems
-          occur.</para>
+        <para>Esta sensitividad <!--TODO bonito palabro --> a marcas
+          EOL extrañas puede resultar frustrante para quienes
+          comparten un fichero en múltiples sistemas operativos
+          diferentes.  Por ejemplo, considere un fichero de
+          código fuente y desarrolladores que modifiquen este
+          fichero tanto en Windows como en Unix. Si todos los
+          desarrolladores usan herramientas que preservan el
+          estilo de fin de línea del fichero, no ocurrirán
+          problemas.</para>
 
-        <para>But in practice, many common tools either fail to
-          properly read a file with foreign EOL markers, or they
-          convert the file's line endings to the native style when the
-          file is saved.  If the former is true for a developer, he
-          has to use an external conversion utility (such as
-          <command>dos2unix</command> or its companion,
-          <command>unix2dos</command>) to prepare the file for
-          editing.  The latter case requires no extra preparation.
-          But both cases result in a file that differs from the
-          original quite literally on every line!  Prior to committing
-          his changes, the user has two choices.  Either he can use a
-          conversion utility to restore the modified file to the same
-          line ending style that it was in before his edits were made.
-          Or, he can simply commit the file&mdash;new EOL markers and
-          all.</para>
+        <para>Pero en la práctica, muchas herramientas comunes o
+          bien fallan al leer un fichero con marcas EOL extrañas,
+          o bien convierten los finales de línea al estilo
+          nativo cuando el fichero es guardado. Si lo primero
+          es cierto para un desarrollador, tendrá que usar una
+          utilidad de conversión externa (como por ejemplo
+          <command>dos2unix</command> o su compañera,
+          <command>unix2dos</command>) para preparar el fichero
+          antes de modificarlo. En el segundo caso no hace falta
+          preparación adicional. ¡Pero en ambos casos el resultado
+          es un fichero que difiere del origenal en todas y
+          cada una de las líneas! Antes de enviar sus cambios
+          al repositorio, el usuario tiene dos opciones. O bien
+          usa una utilidad de conversión para recuperar el
+          estilo de línea que tenía el fichero antes de ser
+          modificadi.  O, simplemente puede enviar sus
+          cambios&mdash;con nuevas marcas EOL y todo.</para>
 
-        <para>The result of scenarios like these include wasted time
-          and unnecessary modifications to committed files.  Wasted
-          time is painful enough.  But when commits change every line
-          in a file, this complicates the job of determining which of
-          those lines were changed in a non-trivial way.  Where was
-          that bug really fixed?  On what line was a syntax error
-          introduced?</para>
+        <para>El resultado de este tipo de escenarios incluyen
+          tiempo perdido en modificaciones innecesarias sobre
+          ficheros enviados al repositorio. Perder tiempo ya
+          es doloroso. Pero cuando un cambio modifica toda línea
+          del fichero, esto complica el trabajo de determinar
+          qué lineas realmente cambiaron de un modo poco trivial
+          <!-- TODO estilo, "no trivial"-->. ¿Fue el fallo
+          realmente corregido?  ¿En qué línea se introdujo un
+          error de sintaxis?</para>
 
-        <para>The solution to this problem is the
-          <literal>svn:eol-style</literal> property.  When this
-          property is set to a valid value, Subversion uses it to
-          determine what special processing to perform on the file so
-          that the file's line ending style isn't flip-flopping with
-          every commit that comes from a different operating
-          system.  The valid values are:</para>
+        <para>La solución a este problema es la propiedad
+          <literal>svn:eol-style</literal>.  Cuando se ajusta
+          esta propiedad a un valor válido, Subversion la usa
+          para determinar si tiene que realizar un proceso
+          especial sobre el fichero para que los finales de
+          línea del fichero no bailen como un flip-flop con
+          cada cambio enviado al repositorio proveniente de un
+          sistema operativo diferente. Los valores válidos
+          son:</para>
 
         <variablelist>
           <varlistentry>
             <term><literal>native</literal></term>
             <listitem>
-              <para>This causes the file to contain the EOL markers
-                that are native to the operating system on which
-                Subversion was run.  In other words, if a user on a
-                Windows machine checks out a working copy that
-                contains a file with an
-                <literal>svn:eol-style</literal> property set to
-                <literal>native</literal>, that file will contain
-                <literal>CRLF</literal> EOL markers.  A Unix user
-                checking out a working copy which contains the same
-                file will see <literal>LF</literal> EOL markers in his
-                copy of the file.</para>
+              <para>Esto provoca que el fichero contenta marcas EOL
+                nativas del sistema operativo en que fue
+                ejecutado Subversion. En otras palabras.
+                si un usuario de Windows obtiene una copia local
+                de un fichero cuya propiedad
+                <literal>svn:eol-style</literal> contenga el valor
+                <literal>native</literal>, ese fichero contendrá
+                marcas EOL <literal>CRLF</literal>. Un usuario de
+                Unix que obtenga una copia local del mismo fichero
+                verá marcas EOL <literal>LF</literal>.</para>
 
-              <para>Note that Subversion will actually store the file
-                in the repository using normalized
-                <literal>LF</literal> EOL markers regardless of the
-                operating system.  This is basically transparent to
-                the user, though.</para>
+              <para>Tenga en cuenta que Subversion en realidad
+                almacenará el fichero en el repositorio usando
+                marcas EOL <literal>LF</literal> normalizadas
+                sin importar el sistema operativo. No obstante,
+                esto es básicamente transparente para el
+                usuario.</para>
             </listitem>
           </varlistentry>
           <varlistentry>
             <term><literal>CRLF</literal></term>
             <listitem>
-              <para>This causes the file to contain
-                <literal>CRLF</literal> sequences for EOL markers,
-                regardless of the operating system in use.</para>
+              <para>Esto provoca que el fichero contenga la secuencia
+                <literal>CRLF</literal> como marcas EOL, sin importar
+                el sistema operativo usado.</para>
             </listitem>
           </varlistentry>
           <varlistentry>
             <term><literal>LF</literal></term>
             <listitem>
-              <para>This causes the file to contain
-                <literal>LF</literal> characters for EOL markers,
-                regardless of the operating system in use.</para>
+              <para>Esto provoca que el fichero contenga el carácter
+                <literal>LF</literal> como marca EOL, sin importar
+                el sistema operativo usado.</para>
             </listitem>
           </varlistentry>
           <varlistentry>
             <term><literal>CR</literal></term>
             <listitem>
-              <para>This causes the file to contain
-                <literal>CR</literal> characters for EOL markers,
-                regardless of the operating system in use.  This line
-                ending style is not very common.  It was used on older
-                Macintosh platforms (on which Subversion doesn't even
-                run).</para>
+              <para>Esto provoca que el fichero contenga el carácter
+                <literal>CR</literal> como marca EOL, sin importar
+                el sistema operativo usado.  Este estilo de fín de
+                línea no es muy habitual. Fue usado en plataformas
+                Macintosh antiguas (en las cuales Subversion ni si
+                quiera funciona).</para>
             </listitem>
           </varlistentry>
         </variablelist>
@@ -1746,66 +1759,75 @@ Cumulus clouds are appearing more frequently as summer approaches.
       <sect3 id="svn-ch-7-sect-2.3.6">
         <title><literal>svn:externals</literal></title>
 
-        <para>The <literal>svn:externals</literal> property contains
-          instructions for Subversion to populate a versioned
-          directory with one or more other checked-out Subversion
-          working copies.  For more information on this keyword and
-          its use, see <xref linkend="svn-ch-7-sect-3"/>.</para>
+        <para>La propiedad <literal>svn:externals</literal> contiene
+          instrucciones para Subversion de poblar el directorio
+          con una o más copias locales de trabajo de Subversion.
+          Para más información sobre esta propiedad y sus usos,
+          vea <xref linkend="svn-ch-7-sect-3"/>.</para>
 
       </sect3>
     </sect2>
 
     <!-- ***************************************************************** -->
     <sect2 id="svn-ch-7-sect-2.4">
-      <title>Automatic Property Setting</title>
+      <title>Ajuste automático de propiedades</title>
 
-      <para>Properties are a powerful feature of Subversion, acting as
-        key components of many Subversion features discussed elsewhere
-        in this and other chapters&mdash;textual diff and merge
-        support, keyword substitution, newline translation, etc.  But
-        to get the full benefit of properties, they must be set on the
-        right files and directories.  Unfortunately, that can be a
-        step easily forgotten in the routine of things, especially
-        since failing to set a property doesn't usually result in an
-        obvious error condition (at least compared to, say, failing to
-        add a file to version control).  To help your properties get
-        applied to the places that need them, Subversion provides a
-        couple of simple but useful features.</para>
+      <para>Las propiedades son una poderosa característica de
+        Subversion, actuando como componentes clave de muchas
+        características de Subversion descritas en este y otros
+        capítulos&mdash;soporte de diferenciado de ficheros y
+        fusión textual, sustitución de palabras clave, traducción
+        de fines de línea, etc. Pero para obtener por completo
+        sus beneficios, debe ajustarlas en los ficheros y
+        directorios adecuados.  Desafortunadamente, este paso
+        puede ser fácilmente olvidado en la rutina, especialmente
+        dado que olvidar ajustar una propiedad normalmente no
+        se traduce en una condición de error obvia (al menos
+        si la compara, con digamos, olvidar añadir un fichero
+        al repositorio). Para ayudar a sus propiedades a que
+        sean aplicadas en los lugares necesarios, Subversion
+        proporciona un par de características simples pero
+        útiles.</para>
 
-      <para>Whenever you introduce a file to version control using the
-        <command>svn add</command> or <command>svn import</command>
-        commands, Subversion runs a very basic heuristic to determine
-        if that file consists of human-readable or non-human-readable
-        content.  If the latter is the decision made, Subversion will
-        automatically set the <literal>svn:mime-type</literal>
-        property on that file to
-        <literal>application/octet-stream</literal> (the generic
-        <quote>this is a collection of bytes</quote> MIME type).  Of
-        course, if Subversion guesses incorrectly, or if you wish to
-        set the <literal>svn:mime-type</literal> property to something
-        more precise&mdash;perhaps <literal>image/png</literal> or
-        <literal>application/x-shockwave-flash</literal>&mdash;you can
-        always remove or edit that property.</para>
+      <para>Siempre que pone un fichero bajo control de revisiones
+        usando los comandos <command>svn add</command> o
+        <command>svn import</command>, Subversion ejecuta una
+        heurística básica para determinar si el fichero se
+        compone de contenido legible o no legible por un ser
+        humano. Si decide lo último, Subversion ajustará
+        automáticamente la propiedad <literal>svn:mime-type</literal>
+        de ese fichero a <literal>application/octet-stream</literal>
+        (el tipo MIME genérico <quote>esto es un grupo de
+        bytes</quote>). Por supuesto, si Subversion no acierta,
+        puede ajustar la propiedad <literal>svn:mime-type</literal>
+        a otro valor más concreto&mdash;quizás
+        <literal>image/png</literal> o
+        <literal>application/x-shockwave-flash</literal>&mdash;siempre
+        puede eliminar o modificar esta propiedad.</para>
 
-      <para>Subversion also provides the auto-props feature, which
-        allows you to create mappings of filename patterns to property
-        names and values.  These mappings are made in your runtime
-        configuration area.  They again affect adds and imports, and
-        not only can override any default MIME type decision made by
-        Subversion during those operations, they can also set
-        additional Subversion or custom properties, too.  For example,
-        you might create a mapping that says that any time you add
-        JPEG files&mdash;ones that match the pattern
-        <literal>*.jpg</literal>&mdash;Subversion should automatically
-        set the <literal>svn:mime-type</literal> property on those
-        files to <literal>image/jpeg</literal>.  Or perhaps any files
-        that match <literal>*.cpp</literal> should have
-        <literal>svn:eol-style</literal> set to
-        <literal>native</literal>, and <literal>svn:keywords</literal>
-        set to <literal>Id</literal>.  Auto-prop support is perhaps
-        the handiest property related tool in the Subversion toolbox.
-        See <xref linkend="svn-ch-7-sect-1.3.2"/> for more about
-        configuring that support.</para>
+      <para>Subversion también proporciona la característica de
+        auto propiedades, las cuales le permiten crear una
+        relación de patrones de ficheros a nombres y valores
+        de propiedades.  Estas relaciones son creadas en su
+        área de parámetros de ejecución.  De nuevo, éstos afectan
+        a adiciones e importaciones, y no sólo pueden sobreescribir
+        cualquier tipo de decisión MIME por defecto tomada por
+        Subversion, también pueden ajustar otras propiedadesç
+        propias o de Subversion. Por ejemplo, podría crear una
+        relación que dice que cada vez que añada ficheros
+        JPEG&mdash;aquellos que coincidan con el patrón
+        <literal>*.jpg</literal>&mdash;Subversion debería ajustar
+        automáticamente la propiedad <literal>svn:mime-type</literal>
+        de esos ficheros a <literal>image/jpeg</literal>.  O
+        quizás cualquier fichero que concida con
+        <literal>*.cpp</literal> debería tener la propiedad
+        <literal>svn:eol-style</literal> ajustada a
+        <literal>native</literal>, y <literal>svn:keywords</literal>
+        ajustada a <literal>Id</literal>.  El soporte de
+        propiedades automáticas es quizás la herramienta de
+        Subversion más útil en cuanto a propiedades. Vea <xref
+        linkend="svn-ch-7-sect-1.3.2"/> para más información
+        sobre cómo configurar esta característica.</para>
 
     </sect2>     
   </sect1>
@@ -1814,33 +1836,33 @@ Cumulus clouds are appearing more frequently as summer approaches.
   <!-- *** SECTION 3:  EXTERNALS DEFINITIONS                           *** -->
   <!-- ******************************************************************* -->
   <sect1 id="svn-ch-7-sect-3">
-    <title>Externals Definitions</title>
+    <title>Repositorios externos</title>
     
-    <para>Sometimes it is useful to construct a working copy that is
-      made out of a number of different checkouts.  For example, you
-      may want different subdirectories to come from different
-      locations in a repository, or perhaps from different
-      repositories altogether.  You could certainly setup such a
-      scenario by hand&mdash;using <command>svn checkout</command> to
-      create the sort of nested working copy structure you are trying
-      to achieve.  But if this layout is important for everyone who
-      uses your repository, every other user will need to perform the
-      same checkout operations that you did.</para>
+    <para>A veces resulta útil construír una copia de trabajo local
+      compuesta a partir de varias.  Por ejemplo, podría querer que
+      diferentes subdirectorios provengan de repositorios completamente
+      diferentes. Decididamente puede configurar tal escenario a
+      mano&mdash;usando <command>svn checkout</command> para crear
+      una copia local con la estructura anidada que intenta alcanzar.
+      Pero si esta estructura es importante para cualquiera que use
+      el repositorio, cualquier otro usuario necesitará realizar
+      las mismas operaciones de obtención de copias locales que
+      usted hizo.</para>
 
-    <para>Fortunately, Subversion provides support for
-      <firstterm>externals definitions</firstterm>.  An externals
-      definition is a mapping of a local directory to the
-      URL&mdash;and possibly a particular revision&mdash;of a
-      versioned resource.  In Subversion, you declare externals
-      definitions in groups using the <literal>svn:externals</literal>
-      property.  You can create or modify this property using
-      <command>svn propset</command> or <command>svn
-      propedit</command> (see <xref linkend="svn-ch-7-sect-2.1"/>).  
-      It can be set on any versioned directory,
-      and its value is a multi-line table of subdirectories (relative
-      to the versioned directory on which the property is set) and
-      fully qualified, absolute Subversion repository URLs.</para>
-
+    <para>Afortunadamente, Subversion proporciona soporte de
+      <firstterm>definiciones externas</firstterm>. Una definición
+      externa es la relación de un directorio local con la URL&mdash;y
+      posiblemente una revisión particular&mdash;de un recurso
+      versionado.  En Subversion, declara definiciones externas en
+      grupos usando la propiedad <literal>svn:externals</literal>.
+      Puede crear o midifcar esta propiedad usando los comandos
+      <command>svn propset</command> o <command>svn propedit</command>
+      (vea <xref linkend="svn-ch-7-sect-2.1"/>). Puede ser ajustada
+      en un directorio versionado, y su valor es una tabla multi
+      línea de subdirectorios (relativos al directorio versionado
+      sobre el cual se pone la propiedad) y URLs de repositorios
+      Subversion absolutas, completamente cualificadas.</para>
+    
     <screen>
 $ svn propget svn:externals calc
 third-party/sounds             http://sounds.red-bean.com/repos
@@ -1848,19 +1870,21 @@ third-party/skins              http://skins.red-bean.com/repositories/skinproj
 third-party/skins/toolkit -r21 http://svn.red-bean.com/repos/skin-maker
 </screen>
 
-    <para>The convenience of the <literal>svn:externals</literal>
-      property is that once it is set on a versioned directory,
-      everyone who checks out a working copy with that directory also
-      gets the benefit of the externals definition.  In other words,
-      once one person has made the effort to define those nested
-      working copy checkouts, no one else has to
-      bother&mdash;Subversion will, upon checkout of the original
-      working copy, also checkout the external working copies.</para>
+    <para>La convenciencia de la propiedad <literal>svn:externals</literal>
+      es que una vez ha sido ajustada en un directorio versionado,
+      cualquiera que obtenga una copia local de trabajo de ese
+      directorio, también obtendrá el beneficio de la definición
+      externa. En otras palabras, una vez que una persona ha realizado
+      el esfuerzo de definir esa estructura anidada de direcciones
+      de repositorios, nadie más tiene que volver a repetirlo&mdash;ya
+      que Subversion, a la hora de obtener una copia local, también
+      obtendrá una copia de los repositorios externos.</para>
 
-    <para>Note the previous externals definition example.  When
-      someone checks out a working copy of the
-      <filename>calc</filename> directory, Subversion also continues
-      to checkout the items found in its externals definition.</para>
+    <para>Fíjese en la definición externa del ejemplo anterior.
+      Cuando alguien obtenga la copia local del directorio
+      <filename>calc</filename>, Subversion continuará obteniendo
+      copias locales de los elementos indicados por las definiciones
+      externas.</para>
 
     <screen>
 $ svn checkout http://svn.example.com/repos/calc
@@ -1883,51 +1907,53 @@ Fetching external item into calc/third-party/skins
 &hellip;
 </screen>
 
-    <para>If you need to change the externals definition, you can do
-      so using the regular property modification subcommands.  When
-      you commit a change to the <literal>svn:externals</literal>
-      property, Subversion will synchronize the checked-out items
-      against the changed externals definition when you next run
-      <command>svn update</command>.  The same thing will happen when
-      others update their working copies and receive your changes to
-      the externals definition.</para>
-
-    <para>The <command>svn status</command> command also recognizes
-      externals definitions, displaying a status code of
-      <literal>X</literal> for the disjoint subdirectories into which
-      externals are checked out, and then recursing into those
-      subdirectories to display the status of the external items
-      themselves.</para>
-
-    <para>The support that exists for externals definitions in
-      Subversion today can be a little misleading, though.  The
-      working copies created via the externals definition support are
-      still disconnected from the primary working copy (on whose
-      versioned directories the <literal>svn:externals</literal>
-      property was actually set).  And Subversion still only truly
-      operates on non-disjoint working copies.  So, for example, if
-      you want to commit changes that you've made in one or more of
-      those external working copies, you must run <command>svn
-      commit</command> explicitly on those working
-      copies&mdash;committing on the primary working copy will not
-      recurse into any external ones.</para>
-
-    <para>Also, since the definitions themselves use absolute URLs,
-      moving or copying a directory to which they are attached will
-      not affect what gets checked out as an external (though the
-      relative local target subdirectory will, of course, move with
-      renamed directory).  This can be confusing&mdash;even
-      frustrating&mdash;in certain situations.  For example, if you
-      use externals definitions on a directory in your
-      <filename>/trunk</filename> development line which point to
-      other areas of that same line, and then you use <command>svn
-      copy</command> to branch that line to some new location
-      <filename>/branches/my-branch</filename>, the externals
-      definitions on items in your new branch will still refer to
-      versioned resources in <filename>/trunk</filename>.  Also, be
-      aware that if you need to re-parent your working copy (using
-      <command>svn switch --relocate</command>), externals definitions
-      will <emphasis>not</emphasis> also be re-parented.</para>
+    <para>Si necesita cambiar las definiciones externas, puede
+      hacerlo usando los subcomandos habituales de modificación de
+      propiedades. Cuando envíe un cambio al repositorio de la
+      propiedad <literal>svn:externals</literal>, Subversion
+      sincronizará las copias locales obtenidas contra las definiciones
+      externas la siguiente vez que ejecute <command>svn update</command>.
+      Lo mismo ocurrirá cuando otras personas actualicen sus copias
+      locales y obtengan sus cambios sobre las definiciones
+      externas.</para>
+    
+    <para>El comando <command>svn status</command> también reconoce
+      definiciones externas, mostrando el código de estado
+      <literal>X</literal> para los subdirectorios disjuntos en los
+      cuales se almacenarán las copias locales, entrando después
+      de manera recursiva en estos directorios para mostrar el
+      estado de los propios elementos externos.</para>
+    
+    <para>No obstante, el soporte de definiciones externas que hay
+      hoy en Subversion puede ser ligeramente engañoso. Las copias
+      locales creadas vía definición externa todavía están desconectadas
+      de la copia local de trabajo primaria (en cuyos directorios
+      versionados ajustó la propiedad <literal>svn:externals</literal>).
+      Y Subversion todavía funciona sólamente sobre copias locales
+      no disjuntas. Así que, por ejemplo, si quiere enviar cambios
+      al repositorio realizados en una o más de esas copias locales
+      externas, debe ejecutar el comando <command>svn commit</command>
+      de forma explícita en esas copias locales&mdash;enviar los
+      cambios de la copia local de trabajo primaria no recurrirá
+      en las copias externas.</para>
+    
+    <para>Además, dado que las propias definiciones son URLs
+      absolutas, mover o copiar el directorio sobre el cual están
+      fijadas no afectará a aquello que se obtiene como copia externa
+      (aunque, claro está, el directorio local relativo indicado
+      será movido con el directorio renombrado). Esto puede ser
+      confuso&mdash;incluso frustrante&mdash;en ciertas situaciones.
+      Por ejemplo, si usa la definición externa sobre un directorio
+      en su línea de desarrollo principal (<filename>/trunk</filename>)
+      apuntando a otras áreas de la misma línea, y entonces usa
+      <command>svn copy</command> para crear una rama de esa línea
+      en <filename>/branches/my-branch</filename>, la definición
+      externa sobre los elementos en su nueva rama todavía se
+      referirán a los recursos versionados en <filename>/trunk</filename>.
+      Además, tenga en cuenta que si necesita relocalizar su copia
+      local de trabajo (usando <command>svn switch --relocate</command>),
+      las definiciones externas <emphasis>no</emphasis> serán
+      relocalizadas.</para>
 
   </sect1>
 
@@ -1935,110 +1961,125 @@ Fetching external item into calc/third-party/skins
   <!-- *** SECTION 4:  VENDOR BRANCHES                                 *** -->
   <!-- ******************************************************************* -->
   <sect1 id="svn-ch-7-sect-4">
-    <title>Vendor branches</title>
+    <title>Ramas de proveedores</title>
 
-    <para>As is especially the case when developing software, the data
-      that you maintain under version control is often closely related
-      to, or perhaps dependent upon, someone else's data.  Generally,
-      the needs of your project will dictate that you stay as
-      up-to-date as possible with the data provided by that external
-      entity without sacrificing the stability of your own project.
-      This scenario plays itself out all the time&mdash;anywhere that
-      the information generated by one group of people has a direct
-      effect on that which is generated by another group.</para>
- 
-    <para>For example, software developers might be working on an
-      application which makes use of a third-party library.
-      Subversion has just such a relationship with the Apache Portable
-      Runtime library (see <xref linkend="svn-ch-8-sect-2.1" />).  The
-      Subversion source code depends on the APR library for all its
-      portability needs.  In earlier stages of Subversion's
-      development, the project closely tracked APR's changing API,
-      always sticking to the <quote>bleeding edge</quote> of the
-      library's code churn.  Now that both APR and Subversion have
-      matured, Subversion attempts to synchronize with APR's library
-      API only at well-tested, stable release points.</para>
+    <para>En el caso especial del desarrollo de software, los datos
+      que mantiene bajo control de versiones están a menudo
+      relacionados con, o quizás dependan de, los datos de terceros.
+      Generalmente, las necesidades de su proyecto dictarán que
+      debe permanecer lo más actualizado posible con los datos
+      proporcionados por esa entidad externa sin sacrificar la
+      estabilidad de su propio proyecto. Este escenario ocurre
+      constantemente&mdash;siempre que la información generada por
+      un grupo de personas tiene un efecto directo en aquello
+      generado por otro grupo.</para>
+    
+    <para>Por ejemplo, desarrolladores de software podrían estar
+      trabajando en una aplicación que hace uso de una librería
+      externa. Subversion tiene justamente este tipo de relación
+      con la Apache Portable Runtime library <!-- TODO traducción
+      de APR?  --> (vea <xref linkend="svn-ch-8-sect-2.1" />). El
+      código fuente de Subversion depende de la librería APR para
+      sus necesidades de portabilidad. En fases iniciales del
+      desarrollo de Subversion, el proyecto seguía de cerca los
+      cambios de la API de la APR, siempre manteniéndose en <!--TODO
+      buscar bleeding edge, me suena que hay discusión de esto -->
+      la <quote>última versión</quote> recién salida del horno.
+      Ahora que tanto APR como Subversion han madurado, Subversion
+      sólo intenta sincronizarse con la API de APR en momentos bien
+      verificados, versiones estables públicas.</para>
+    
+    <para>Ahora, si su proyecto depende de la información de otros,
+      hay varios modos que podría intentar para sincronizar esa
+      información con la suya. La más dolorosa, sería ordenar
+      verbalmente, o por escrito, instrucciones a todos los
+      contribuyentes de su proyecto, indicándoles que se aseguren
+      de tener las versiones específicas de esa información externa
+      que su proyecto necesita.  Si la información externa se
+      mantiene en un repositorio Subversion, podría usar las
+      definiciones externas de Subversion para <quote>fijar</quote>
+      de forma efectiva versiones específicas de esa información
+      en alguno de los directorios de su copia local (vea <xref
+      linkend="svn-ch-7-sect-3" />).</para>
 
-    <para>Now, if your project depends on someone else's information,
-      there are several ways that you could attempt to synchronize that
-      information with your own.  Most painfully, you could issue oral
-      or written instructions to all the contributors of your project,
-      telling them to make sure that they have the specific versions
-      of that third-party information that your project needs.  If the
-      third-party information is maintained in a Subversion
-      repository, you could also use Subversion's externals
-      definitions to effectively <quote>pin down</quote> specific
-      versions of that information to some location in your own
-      working copy directory (see <xref linkend="svn-ch-7-sect-3" />).</para>
-
-    <para>But sometimes you want to maintain custom modifications to
-      third-party data in your own version control system.  Returning
-      to the software development example, programmers might need to
-      make modifications to that third-party library for their own
-      purposes.  These modifications might include new functionality
-      or bug fixes, maintained internally only until they become part
-      of an official release of the third-party library.  Or the
-      changes might never be relayed back to the library maintainers,
-      existing solely as custom tweaks to make the library further
-      suit the needs of the software developers.</para>
-
-    <para>Now you face an interesting situation.  Your project could
-      house its custom modifications to the third-party data in some
-      disjointed fashion, such as using patch files or full-fledged
-      alternate versions of files and directories.  But these quickly
-      become maintenance headaches, requiring some mechanism by which
-      to apply your custom changes to the third-party data, and
-      necessitating regeneration of those changes with each successive
-      version of the third-party data that you track.</para>
-
-    <para>The solution to this problem is to use <firstterm>vendor
-      branches</firstterm>.  A vendor branch is a directory tree in
-      your own version control system that contains information
-      provided by a third-party entity, or vendor.  Each version of
-      the vendor's data that you decide to absorb into your project is
-      called a <firstterm>vendor drop</firstterm>.</para> 
-
-    <para>Vendor branches provide two key benefits.  First, by storing
-      the currently supported vendor drop in your own version control
-      system, the members of your project never need to question
-      whether they have the right version of the vendor's data.  They
-      simply receive that correct version as part of their regular
-      working copy updates.  Secondly, because the data lives in your
-      own Subversion repository, you can store your custom changes to
-      it in-place&mdash;you have no more need of an automated (or
-      worse, manual) method for swapping in your customizations.</para>
-
+    <para>Pero a veces necesita mantener modificaciones propias a
+      los datos de terceros en su propio sistema de control de
+      versiones. Volviendo al ejemplo de desarrollo de software,
+      los programadores podrían necesitar hacer modificaciones a
+      esa librería exxterna para sus propios propósitos. Estas
+      modificaciones podrían incluir nueva funcionalidad o correcciones
+      de fallos, mantenidos internamente sólo hasta que se conviertan
+      en parte de un lanzamiento oficial de esa librería externa.
+      O los cambios quizás nunca sean enviados a los autores de la
+      librería, y existen solamente con el propósito de satisfacer
+      las necesidades de sus desarrolladores como modificaciones
+      personalizadas.</para>
+    
+    <para>Ahora se encuentra en una situación interesante. Su
+      proyecto podría almacenar sus modificaciones propias a los
+      datos de terceros de algún modo disjunto, como usando ficheros
+      parche o completas versiones alternativas de ficheros y
+      directorios.  Pero estos métodos se convierten rápidamente
+      en problemas de mantenimiento, requiriendo de algún mecanismo
+      que aplique sus cambios personales a los datos de terceros,
+      sin olvidar la necesidad de regenerar esos cambios con cada
+      versión sucesiva de los datos de terceros a los que sigue la
+      pista.</para>
+    
+    <para>La solución a este problema es usar <firstterm>ramas de
+      proveedor</firstterm>. Una rama de proveedor es un árbol de
+      directorios en su propio sistema de control de versiones que
+      contiene información proporcionada por una entidad externa,
+      o proveedor. Cada versión de los datos del proveedor que
+      decide absorber en su proyecto es llamada <firstterm>hito de
+      proveedor</firstterm>.</para> <!-- TODO hito del proveedor
+      != vendor drop. Buscar algo mejor. -->
+    
+    <para>Las ramas de proveedor proporcionan dos beneficios clave.
+      Primero, al almacenar el hito de proveedor actualmente soportado
+      en su propio sistema de control de versiones, los miembros
+      de su proyecto nunca tendrán que preguntarse si poseen la
+      versión correcta de los datos del proveedor. Simplemente
+      obtienen la versión correcta como parte de su actualización
+      habitual de sus copias locales de trabajo. Segundo, ya que
+      los datos viven en su propio repositorio Subversion, puede
+      almacenar cambios personalizados directamente en el mismo
+      lugar&mdash;ya no tiene necesidad de crear un método automático
+      (o peor aún, manual) para proporcionar sus modificaciones.</para>
+    
     <!-- ***************************************************************** -->
     <sect2 id="svn-ch-7-sect-4.1">
-      <title>General Vendor Branch Management Procedure</title>
+      <title>Procedimiento general de gestión de ramas de proveedor</title>
 
-      <para>Managing vendor branches generally works like this.  You
-        create a top-level directory (such as
-        <filename>/vendor</filename>) to hold the vendor branches.
-        Then you import the third party code into a subdirectory of
-        that top-level directory.  You then copy that subdirectory
-        into your main development branch (for example,
-        <filename>/trunk</filename>) at the appropriate location.  You
-        always make your local changes in the main development branch.
-        With each new release of the code you are tracking you bring
-        it into the vendor branch and merge the changes into
-        <filename>/trunk</filename>, resolving whatever conflicts
-        occur between your local changes and the upstream
-        changes.</para>
-
-      <para>Perhaps an example will help to clarify this algorithm.
-        We'll use a scenario where your development team is creating a
-        calculator program that links against a third-party complex
-        number arithmetic library, libcomplex.  We'll begin with the
-        initial creation of the vendor branch, and the import of the
-        first vendor drop.  We'll call our vendor branch directory
-        <filename>libcomplex</filename>, and our code drops will go
-        into a subdirectory of our vendor branch called
-        <filename>current</filename>.  And since <command>svn
-        import</command> creates all the intermediate parent
-        directories it needs, we can actually accomplish both of these
-        steps with a single command.</para>
-
+      <para>Gestionar ramas de vendedor generalmente funciona de
+        esta manera. Primero crea un directorio en la raíz de
+        su jerarquía (como por ejemplo <filename>/vendor</filename>)
+        para almacenar las ramas de proveedor. Entonces importa
+        el código de terceros en un subdirectorio de ese diretorio
+        principal. Luego copia ese subdirectorio en su rama
+        principal de desarrollo (por ejemplo,
+        <filename>/trunk</filename>) en un lugar apropiado.
+        Siempre realiza cambios locales en la rama de desarrollo
+        principal. Con cada nueva versión del código que está
+        siguiendo, lo incluye en la rama de proveedor y fusiona
+        los cambios en <filename>/trunk</filename>, resolviendo
+        cualquier conflicto entre sus cambios locales y los
+        cambios oficiales.</para>
+      
+      <para>Quizás un ejemplo ayude a aclarar este algoritmo.
+        Usaremos un escenario donde su equipo de desarrollo
+        está creando un programa calculador que enlaza contra
+        una librería externa de aritmética de números complejos,
+        libcomplex.  Comenzaremos con la creación inicial de
+        la rama de proveedor, y la importación del primer hito
+        de proveedor. Llamaremos al directorio de nuestra rama
+        de proveedor <filename>libcomplex</filename>, y nuestros
+        hitos de código irán en un subdirectorio de nuestra
+        rama de proveedor llamado <filename>current</filename>.
+        Y dado que <command>svn import</command> crea todos los
+        directorios padre intermedios que necesita, en realidad
+        podemos realizar ambos pasos con un único comando.</para>
+      
       <screen>
 $ svn import /path/to/libcomplex-1.0 \
              http://svn.example.com/repos/vendor/libcomplex/current \
@@ -2046,16 +2087,17 @@ $ svn import /path/to/libcomplex-1.0 \
 &hellip;
 </screen>
     
-      <para>We now have the current version of the libcomplex source
-        code in <filename>/vendor/libcomplex/current</filename>.  Now,
-        we tag that version (see <xref linkend="svn-ch-4-sect-6" />)
-        and then copy it into the main development branch.  Our copy
-        will create a new directory called
-        <filename>libcomplex</filename> in our existing
-        <filename>calc</filename> project directory.  It is in this
-        copied version of the vendor data that we will make our
-        customizations.</para>
-    
+      <para>Tenemos ahorala versión actual del código fuente de
+        libcomplex en <filename>/vendor/libcomplex/current</filename>.
+        Ahora, etiquetamos esa versión (vea <xref
+        linkend="svn-ch-4-sect-6" />) y luego la copiamos en
+        la rama principal de desarrollo.  Nuestra copia creará
+        un nuevo directorio llamado <filename>libcomplex</filename>
+        en nuestro directorio existente de proyecto
+        <filename>calc</filename>. Es en esta versión copiada
+        de los datos del proveedor que realizaremos nuestras
+        personalizaciones.</para>
+      
       <screen>
 $ svn copy http://svn.example.com/repos/vendor/libcomplex/current  \
            http://svn.example.com/repos/vendor/libcomplex/1.0      \
@@ -2067,61 +2109,71 @@ $ svn copy http://svn.example.com/repos/vendor/libcomplex/1.0  \
 &hellip;
 </screen>
 
-      <para>We check out our project's main branch&mdash;which now
-        includes a copy of the first vendor drop&mdash;and we get to
-        work customizing the libcomplex code.  Before we know it, our
-        modified version of libcomplex is now completely integrated
-        into our calculator program.
+      <para>Ahora obtenemos una copia local de la rama principal
+        de nuestro proyecto&mdash;que ahora incluye una copia
+        del primer hito de proveedor&mdash;y comenzamos a
+        personalizar el código de libcomplex. Antes de darnos
+        cuenta, nuestra versión modificada de libcomplex está
+        completamente integrada en nuestro programa calculador.
         <footnote>
-          <para>And entirely bug-free, of course!</para>
+          <para>¡Y por su puesto, completamente libre de fallos!</para>
         </footnote>
       </para>
 
-      <para>A few weeks later, the developers of libcomplex release a
-        new version of their library&mdash;version 1.1&mdash;which
-        contains some features and functionality that we really want.
-        We'd like to upgrade to this new version, but without losing
-        the customizations we made to the existing version.  What we
-        essentially would like to do is to replace our current
-        baseline version of libcomplex 1.0 with a copy of libcomplex
-        1.1, and then re-apply the custom modifications we previously
-        made to that library to the new version.  But we actually
-        approach the problem from the other direction, applying the
-        changes made to libcomplex between versions 1.0 and 1.1 to our
-        modified copy of it.</para>
+      <para>Unas pocas semanas después, los desarrolladores de
+        libcomplex lanzan una nueva versión de su librería&mdash;la
+        versión 1.1&mdash;la cual contiene algunas características
+        y funcionalidades que realmente deseamos. Nos gustaría
+        actualizarnos a esta nueva versión, pero sin perder las
+        personalizaciones que realizamos sobre la versión
+        anterior.  Lo que esencialmente nos gustaría hacer, es
+        reemplazar nuestra versión de línea base de libcomplex
+        1.0 con una copia de libcomplex 1.1, y entonces reaplicar
+        las modificaciones propias que anteriormente hicimos
+        sobre la librería antes de la nueva versión. Pero en
+        realidad nos acercaremos al problema desde otra dirección,
+        aplicando los cambios realizados sobre libcomplex entre
+        las versiones 1.0 y 1.1 sobre nuestra propia copia
+        modificada.</para>
       
-      <para>To perform this upgrade, we checkout a copy of our vendor
-        branch, and replace the code in the
-        <filename>current</filename> directory with the new libcomplex
-        1.1 source code.  We quite literally copy new files on top of
-        existing files, perhaps exploding the libcomplex 1.1 release
-        tarball atop our existing files and directories.  The goal
-        here is to make our <filename>current</filename> directory
-        contain only the libcomplex 1.1 code, and to ensure that all
-        that code is under version control.  Oh, and we want to do
-        this with as little version control history disturbance as
-        possible.</para>
+      <para>Para realizar esta actualización, obtenemos una copia
+        local de nuestra rama de proveedor, y reemplazamos el
+        código del directorio <filename>current</filename> con
+        el nuevo código fuente de libcomplex 1.1. Literalmente
+        copiamos nuevos ficheros sobre los existentes, quizás
+        expandiendo el fichero comprimido del distribución de
+        libcomplex 1.1 sobre nuestros ficheros y directorios.
+        El objetivo aquí es que el directorio
+        <filename>current</filename> solamente contenta el
+        código de libcomplex 1.1, y asegurarnos que todo ese
+        código fuente está bajo control de versiones. Oh, y
+        queremos realizar esto con la menor perturbación posible
+        sobre el historial del control de versiones.</para>
 
-      <para>After replacing the 1.0 code with 1.1 code, <command>svn
-        status</command> will show files with local modifications as
-        well as, perhaps, some unversioned or missing files.  If we
-        did what we were supposed to do, the unversioned files are
-        only those new files introduced in the 1.1 release of
-        libcomplex&mdash;we run <command>svn add</command> on those to
-        get them under version control.  The missing files are files
-        that were in 1.0 but not in 1.1, and on those paths we run
-        <command>svn remove</command>.  Finally, once our
-        <filename>current</filename> working copy contains only the
-        libcomplex 1.1 code, we commit the changes we made to get it
-        looking that way.</para>
-
-      <para>Our <filename>current</filename> branch now contains the
-        new vendor drop.  We tag the new version (in the same way we
-        previously tagged the version 1.0 vendor drop), and then merge
-        the differences between the tag of the previous version and
-        the new current version into our main development
-        branch.</para>
-
+      <para>Tras reemplazar el código de la versión 1.0 con el de
+        la 1.1, <command>svn status</command> mostrará los
+        ficheros con modificaciones locales, junto con quizás
+        algunos ficheros no versionados o ausentes. Si realizamos
+        lo que debíamos realizar, los ficheros no versionados
+        son aquellos ficheros nuevos introducidos en la versión
+        1.1 de libcomplex&mdash;ejecutamos <command>svn
+        add</command> sobre ellos para ponerlos bajo control
+        de versiones. Los ficheros ausentes son ficheros que
+        existían en la 1.0 pero no en la 1.1, y sobre éstos
+        usamos <command>svn remove</command>.  Finalmente, una
+        vezz que nuestra copia local de <filename>current</filename>
+        contiene únicamente el código de libcomplex 1.1, enviamos
+        al repositorio los cambios realizados para que tenga
+        este aspecto.</para>
+      
+      <para>Nuestra rama <filename>current</filename> ahora contiene
+        el hito de proveedor.  Etiquetamos la nueva versión
+        (del mismo modo que etiquetamos el anterior hito de
+        proveedor como la versión 1.0), y entonces fusionamos
+        las diferencias entre las etiquetas de la versión
+        anterior y la actual en nuestra rama principal de
+        desarrollo.</para>
+      
       <screen>
 $ cd working-copies/calc
 $ svn merge http://svn.example.com/repos/vendor/libcomplex/1.0      \
@@ -2132,28 +2184,31 @@ $ svn commit -m 'merging libcomplex-1.1 into the main branch'
 &hellip;
 </screen>
 
-      <para>In the trivial use-case, the new version of our
-        third-party tool would look, from a files-and-directories
-        point of view, just like the previous version.  None of the
-        libcomplex source files would have been deleted, renamed or
-        moved to different locations&mdash;the new version would
-        contain only textual modifications against the previous one.
-        In a perfect world, our modifications would apply cleanly to
-        the new version of the library, with absolutely no
-        complications or conflicts.</para>
-
-     <para>But things aren't always that simple, and in fact it is
-       quite common for source files to get moved around between
-       releases of software.  This complicates the process of ensuring
-       that our modifications are still valid for the new version of
-       code, and can quickly degrade into a situation where we have to
-       manually recreate our customizations in the new version.  Once
-       Subversion knows about the history of a given source
-       file&mdash;including all its previous locations&mdash;the
-       process of merging in the new version of the library is pretty
-       simple.  But we are responsible for telling Subversion how the
-       source file layout changed from vendor drop to vendor
-       drop.</para>
+      <para>En el caso de uso trivial, la nueva versión de nuestra
+        herramienta de terceros sería, desde un punto de vista
+        de ficheros y directorios, justo igual que nuestra
+        versión anterior. Ninguno de los ficheros de código
+        fuente de libcomplex habría sido borrado, renombrado o
+        movido a una localización diferente&mdash;la nueva
+        versión solamente tendría modificaciones textuales
+        contra la anterior. En un mundo perfecto, nuestras
+        modificaciones serían aplicadas limpiamente sobre la
+        nueva versión de la librería, absolutamente sin
+        complicaciones o conflictos.</para>
+      
+     <para>Pero las cosas no son siempre tan simples, y de hecho
+       es bastante habitual que ficheros de código fuente sean
+       desplazados entre versiones de un software. Esto complica
+       el proceso de asegurarnos que nuestras modificaciones son
+       todavía válidas para la nueva versión del código, y puede
+       degenerar rápidamente en la situación donde tenemos que
+       recrear manualmente nuestras personalizaciones para la nueva
+       versión. Una vez Subversion conoce la historia de un fichero
+       de código fuente determinado&mdash;incluyendo todas sus
+       localizaciones previas&mdash;el proceso de fusionar la nueva
+       versión de la librería es bastante simple. Pero somos
+       responsables de indicar a Subversion cómo ha cambiado la
+       estructura de ficheros de un hito de proveedor a otro.</para>
 
     </sect2>
 
