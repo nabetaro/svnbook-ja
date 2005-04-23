@@ -688,9 +688,86 @@ U   my-calc-branch/integer.c
     </sect2>
 
     <sect2 id="svn-ch-4-sect-3.2">
+      <title>The Key Concept Behind Merging</title>
+
+      <para>You've now seen an example of the <command>svn
+          merge</command> command, and you're about to see several
+          more.  If you're feeling confused about exactly how merging
+          works, you're not alone.  Many users (especially those new
+          to version control) are initially perplexed about the proper
+          syntax of the command, and about how and when the feature
+          should be used.  But fear not, this command is actually much
+          simpler than you think!  There's a very easy technique for
+          understanding exactly how <command>svn merge</command>
+          behaves.</para>
+
+      <para>The main source of confusion is the
+        <emphasis>name</emphasis> of the command.  The term
+        <quote>merge</quote> somehow denotes that branches are
+        combined together, or that there's some sort of mysterious
+        blending of data going on.  That's not the case.  A better
+        name for the command might have been <command>svn
+        diff-and-apply</command>, because that's all that happens:
+        two repository trees are compared, and the differences are
+        applied to a working copy.</para>
+
+      <para>The command takes three arguments:</para>
+
+      <orderedlist>
+
+        <listitem><para>An initial repository tree (often called the
+        <firstterm>left side</firstterm> of the
+        comparison),</para></listitem>
+
+        <listitem><para>An final repository tree (often called the
+        <firstterm>right side</firstterm> of the
+        comparison),</para></listitem>
+
+        <listitem><para>A working copy to accept the differences as
+        local changes (often called the <firstterm>target</firstterm>
+        of the merge.)</para></listitem>
+        
+      </orderedlist>
+
+      <para>Once these three arguments are specified, the two trees
+        are compared, and the resulting differences are applied to the
+        target working copy as local modifications.  When the command
+        is done, the results are no different than if you had
+        hand-edited the files, or run various <command>svn
+        add</command> or <command>svn delete</command> commands
+        yourself.  If you like the results, you can commit them.  If
+        you don't like the results, you can simply <command>svn
+        revert</command> all of the changes.</para>
+
+      <para>The syntax of <command>svn merge</command> allows you to
+        specify the three necessary arguments rather flexibly.  Here
+        are some examples:</para>
+
+<screen>      
+$ svn merge http://svn.example.com/repos/branch1@150 \
+            http://svn.example.com/repos/branch2@212 \
+            my-working-copy
+            
+$ svn merge -r 100:200 http://svn.example.com/repos/trunk my-working-copy
+
+$ svn merge -r 100:200 http://svn.example.com/repos/trunk
+</screen>
+
+      <para>The first syntax lays out all three arguments explictly,
+        naming each tree in the form <emphasis>URL@REV</emphasis> and
+        naming the working copy target.  The second syntax can be used
+        as a shorthand for situations when you're comparing two
+        different revisions of the same URL.  The last syntax shows
+        how the working-copy argument is optional; if omitted, it
+        defaults to the current directory.</para>
+
+
+    </sect2>
+    
+    <sect2 id="svn-ch-4-sect-3.3">
       <title>Best Practices for Merging</title>
 
-      <sect3 id="svn-ch-4-sect-3.2.1">
+      <sect3 id="svn-ch-4-sect-3.3.1">
         <title>Tracking Merges Manually</title>
 
         <para>Merging changes sounds simple enough, but in practice it
@@ -735,7 +812,7 @@ U   my-calc-branch/integer.c
 
       </sect3>
       
-      <sect3 id="svn-ch-4-sect-3.2.2">
+      <sect3 id="svn-ch-4-sect-3.3.2">
         <title>Previewing Merges</title>
         
         <para>Because merging only results in local modifications,
@@ -809,7 +886,7 @@ $ svn status
           changeset #9238 into your working copy.</para>
       </sidebar>
 
-      <sect3 id="svn-ch-4-sect-3.2.3">
+      <sect3 id="svn-ch-4-sect-3.3.3">
         <title>Merge Conflicts</title>
 
         <para>Just like the <command>svn update</command> command,
@@ -898,7 +975,7 @@ $
 
       </sect3>
       
-      <sect3 id="svn-ch-4-sect-3.2.4">
+      <sect3 id="svn-ch-4-sect-3.3.4">
         <title>Noticing or Ignoring Ancestry</title>
 
         <para>When conversing with a Subversion developer, you might
@@ -1500,7 +1577,7 @@ Committed revision 1390.
           merge the last week's worth of trunk changes to the branch.
           Take care when doing this; the merging needs to be
           hand-tracked to avoid the problem of repeated merges (as
-          described in <xref linkend="svn-ch-4-sect-3.2.1"/>).  You'll
+          described in <xref linkend="svn-ch-4-sect-3.3.1"/>).  You'll
           need to write careful log messages detailing exactly which
           revision ranges have been been merged already (as
           demonstrated in <xref linkend="svn-ch-4-sect-4.1"/>).  It
