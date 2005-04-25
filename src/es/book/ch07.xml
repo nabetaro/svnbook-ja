@@ -2221,52 +2221,59 @@ $ svn commit -m 'merging libcomplex-1.1 into the main branch'
     <sect2 id="svn-ch-7-sect-4.2">
       <title><command>svn_load_dirs.pl</command></title>
 
-      <para>Vendor drops that contain more than a few deletes,
-        additions and moves complicate the process of upgrading to
-        each successive version of the third-party data.  So
-        Subversion supplies the <command>svn_load_dirs.pl</command>
-        script to assist with this process.  This script automates the
-        importing steps we mentioned in the general vendor branch
-        management procedure to make sure that mistakes are minimized.
-        You will still be responsible for using the merge commands to
-        merge the new versions of the third-party data into your main
-        development branch, but <command>svn_load_dirs.pl</command>
-        can help you more quickly and easily arrive at that
-        stage.</para>
+      <para>Los hitos de proveedor que conllevan algo más que
+        algunos borrados, adiciones o movimientos de ficheros
+        complican el proceso de actualizarse a cada versión
+        sucesiva de los datos de terceros. Por lo que Subversion
+        proporciona el script <command>svn_load_dirs.pl</command>
+        para asistirle en este proces. Este script automatiza los
+        procesos de importado anteriormente mencionados en el proceso
+        de gestión de la rama del proveedor para minimizar el número
+        posible de errores. Todavía será responsable de usar los
+        comandos de fusionado para fusionar las nuevas versiones de
+        los datos de terceros en su rama de desarrollo principal,
+        pero <command>svn_load_dirs.pl</command> puede ayudarle a
+        llegar a esta fase más rápido y con facilidad.</para>
 
-      <para>In short, <command>svn_load_dirs.pl</command> is an
-        enhancement to <command>svn import</command> that has several
-        important characteristics:</para>
+      <para>En resumen, <command>svn_load_dirs.pl</command> es una
+        mejora a <command>svn import</command> que tiene ciertas
+        características importantes:</para>
 
       <itemizedlist>
         <listitem>
-          <para>It can be run at any point in time to bring an existing
-            directory in the repository to exactly match an external
-            directory, performing all the necessary adds and deletes,
-            and optionally performing moves, too.</para>
+          <para>Puede ser ejecutado en cualquier momento para
+            transformar un directorio existente del repositorio
+            para que sea una réplica de un directorio externo,
+            realizando todas las operaciones de adición y borrado
+            necesarias, y también opcionalmente haciendo algunas
+            operaciones de renombrado.</para>
         </listitem>
         <listitem>
-          <para>It takes care of complicated series of operations between
-            which Subversion requires an intermediate commit&mdash;such
-            as before renaming a file or directory twice.</para>
+          <para>Se encarga de una serie de operaciones complicadas
+            entre las cuales Subversion requiere como paso intermedio
+            enviar cambios al repositorio&mdash; como antes de
+            renombrar un fichero o directorio dos veces.</para>
         </listitem>
         <listitem>
-          <para>It will optionally tag the newly imported directory.</para>
+          <para>Opcionalmente etiquetará el nuevo directorio
+            importado.</para>
         </listitem>
         <listitem>
-          <para>It will optionally add arbitrary properties to files and
-            directories that match a regular expression.</para>
+          <para>Opcionalmente añadirá propiedades arbitrarias a
+            ficheros y directorios que coincidan con una expresión
+            regular.</para>
         </listitem>
       </itemizedlist>
 
-      <para><command>svn_load_dirs.pl</command> takes three mandatory
-        arguments.  The first argument is the URL to the base
-        Subversion directory to work in.  This argument is followed by
-        the URL&mdash;relative to the first argument&mdash;into which the
-        current vendor drop will be imported.  Finally, the third
-        argument is the local directory to import.  Using our previous
-        example, a typical run of <command>svn_load_dirs.pl</command>
-        might look like:</para>
+      <para><command>svn_load_dirs.pl</command> recibe tres
+        parámetros obligatorios.  El primer parámetro es la URL
+        al directorio base de Subversion en el que se realizará el
+        trabajo. Este parámetro es seguido por la URL&mdash;relativa
+        respecto al primer argumento&mdash;en la cual se importará el
+        hito de proveedor actual. Finalmente, el tercer parámetro
+        es el directorio local que desea importar. Usando
+        nuestro ejemplo anterior, una ejecución típica de
+        <command>svn_load_dirs.pl</command> podría ser:</para>
 
       <screen>
 $ svn_load_dirs.pl http://svn.example.com/repos/vendor/libcomplex \
@@ -2275,11 +2282,11 @@ $ svn_load_dirs.pl http://svn.example.com/repos/vendor/libcomplex \
 &hellip;
 </screen>
 
-      <para>You can indicate that you'd like
-        <command>svn_load_dirs.pl</command> to tag the new vendor drop
-        by passing the <option>-t</option> command-line option and
-        specifying a tag name.  This tag is another URL relative to
-        the first program argument.</para>
+      <para>Puede indicar que desearía que
+        <command>svn_load_dirs.pl</command> etiquete el nuevo hito
+        de proveedor pasando la línea de comando <option>-t</option>
+        e indicando un nombre de etiqueta. Esta etiqueta es otra
+        URL relativa al primer argumento pasado al programa.</para>
 
       <screen>
 $ svn_load_dirs.pl -t libcomplex-1.1                              \
@@ -2289,32 +2296,35 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
 &hellip;
 </screen>
 
-      <para>When you run <command>svn_load_dirs.pl</command>, it
-        examines the contents of your existing <quote>current</quote>
-        vendor drop, and compares them with the proposed new vendor
-        drop.  In the trivial case, there will be no files that are in
-        one version and not the other, and the script will perform the
-        new import without incident.  If, however, there are
-        discrepancies in the file layouts between versions,
-        <command>svn_load_dirs.pl</command> will prompt you for how
-        you would like to resolve those differences.  For example, you
-        will have the opportunity to tell the script that you know
-        that the file <filename>math.c</filename> in version 1.0 of
-        libcomplex was renamed to <filename>arithmetic.c</filename> in
-        libcomplex 1.1.  Any discrepancies not explained by moves
-        are treated as regular additions and deletions.</para>
+      <para>Cuando ejecuta <command>svn_load_dirs.pl</command>,
+        examina el contenido de su hito de proveedor
+        <quote>actual</quote>, y lo compara con el hito de proveedor
+        propuesto. En el caso trivial, no habrá ficheros que
+        existan en una versión pero no en la otra, así que el script
+        realizará la nueva importación sin incidentes. No obstante,
+        si hay discrepancias en la estructura de ficheros entre las
+        versiones, <command>svn_load_dirs.pl</command> le preguntará
+        cómo desea resolver esas diferencias. Por ejemplo, tendrá
+        la oportunidad de decirle al script que sabe que el fichero
+        <filename>math.c</filename> en la versión 1.0 de libcomplex
+        fue renombrado como <filename>arithmetic.c</filename> en
+        libcomplex 1.1.  Cualquier discrepancia no explicada como
+        renombramiento será tratada como una adición o borrado
+        normal.</para>
 
-      <para>The script also accepts a separate configuration file for
-        setting properties on files and directories matching a regular
-        expression that are <emphasis>added</emphasis> to the
-        repository.  This configuration file is specified to
-        <command>svn_load_dirs.pl</command> using the
-        <option>-p</option> command-line option.  Each line of the
-        configuration file is a whitespace-delimited set of two or
-        four values: a Perl-style regular expression to match the
-        added path against, a control keyword (either
-        <literal>break</literal> or <literal>cont</literal>), and then
-        optionally a property name and value.</para>
+      <para>El script también acepta un fichero de configuración
+        separado para ajustar propiedades sobre ficheros y
+        directorios que coincidan con una expresión regular
+        y que vayan a ser <emphasis>añadidos</emphasis> al
+        repositorio. Este fichero de configuración se le indica
+        a <command>svn_load_dirs.pl</command> usando la opción
+        de línea de comando <option>-p</option>. Cada línea del
+        fichero de configuración es un conjunto de dos o cuatro
+        valores separados por espacios en blanco: una expresión
+        regular estilo Perl que debe coincidir con una ruta,
+        una palabra de control (ya sea <literal>break</literal>
+        o <literal>cont</literal>), y opcionalmente, un nombre de
+        propiedad y su valor.</para>
 
       <screen>
 \.png$              break   svn:mime-type   image/png
@@ -2324,23 +2334,27 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
 .*                  break   svn:eol-style   native
 </screen>
 
-      <para>For each added path, the configured property changes whose
-        regular expression matches the path are applied in order,
-        unless the control specification is <literal>break</literal>
-        (which means that no more property changes should be applied
-        to that path).  If the control specification is
-        <literal>cont</literal>&mdash;an abbreviation for
-        <literal>continue</literal>&mdash;then matching will continue
-        with the next line of the configuration file.</para>
+      <para>Para cada ruta añadida, se aplicarán en orden los
+        cambios de propiedades configurados para las rutas que
+        coincidan con las expresiones regulares, a no ser que la
+        especificación de control sea <literal>break</literal>
+        (lo cual significa que no deben aplicarse más cambios
+        de propiedades a esa ruta).  Si la especificación de
+        control es <literal>cont</literal>&mdash;una abreviación
+        de <literal>continue</literal>&mdash;entonces se seguirá
+        buscando coincidencias con el patrón de la siguiente línea
+        del fichero de configuración.</para>
 
-      <para>Any whitespace in the regular expression, property name,
-        or property value must be surrounded by either single or
-        double quote characters.  You can escape quote characters that
-        are not used for wrapping whitespace by preceding them with a
-        backslash (<literal>\</literal>) character.  The backslash
-        escapes only quotes when parsing the configuration file, so do
-        not protect any other characters beyond what is necessary for
-        the regular expression.</para>
+      <para>Cualquier carácter de espaciado en la expresión regular,
+        nombre de la propiedad, o valor de la propiedad deberá ser
+        rodeado por caracteres de comillas simples o dobles. Puede
+        escapar los caracteres de comillas que no son usados
+        para envolver caracteres de espaciado precediéndolos
+        con un carácter de contrabarra (<literal>\</literal>).
+        Las contrabarras sólo escapan las comillas cuando se
+        procesa el fichero de configuración, así que no proteja
+        ningún otro carácter excepto lo necesario para la expresión
+        regular.</para>
 
     </sect2>
   </sect1>
