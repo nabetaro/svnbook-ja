@@ -577,7 +577,8 @@ $ svn checkout svn://host.example.com/project1
         externally authenticated via a tunnel agent, such as
         <command>SSH</command>.  In that case, the server simply
         examines the user it's running as, and uses it as the
-        authenticated username.</para>
+        authenticated username.  For more on this, see <xref
+        linkend="svn-ch-6-sect-3.4"/>.</para>
 
       <para>As you've already guessed, a repository's
         <filename>svnserve.conf</filename> file is the central
@@ -731,20 +732,45 @@ baz
 &hellip;
 </screen>
 
-      <para>What's happening here is that the Subversion client is
-        invoking a local <command>ssh</command> process, connecting to
-        <literal>host.example.com</literal>, authenticating as the user
-        <literal>harry</literal>, then spawning a private
-        <command>svnserve</command> process on the remote machine,
+      <para>In this example, the Subversion client is invoking a local
+        <command>ssh</command> process, connecting to
+        <literal>host.example.com</literal>, authenticating as the
+        user <literal>harry</literal>, then spawning a private
+        <command>svnserve</command> process on the remote machine
         running as the user <literal>harry</literal>.  The
         <command>svnserve</command> command is being invoked in tunnel
         mode (<option>-t</option>) and its network protocol is being
         <quote>tunneled</quote> over the encrypted connection by
         <command>ssh</command>, the tunnel-agent.
-        <command>svnserve</command> is aware that it's running as the user
-        <literal>harry</literal>, and if the client performs a commit,
-        the authenticated username will be attributed as the author of
-        the new revision.</para>
+        <command>svnserve</command> is aware that it's running as the
+        user <literal>harry</literal>, and if the client performs a
+        commit, the authenticated username will be attributed as the
+        author of the new revision.</para>
+
+      <para>The important thing to understand here is that the
+        Subversion client is <emphasis>not</emphasis> connecting to a
+        running <command>svnserve</command> daemon.  This method of
+        access doesn't require a daemon, nor does it notice one if
+        present.  It relies wholly on the ability of
+        <command>ssh</command> to spawn a temporary
+        <command>svnserve</command> process, which then terminates
+        when the network connection is closed.</para>
+
+      <para>When using <literal>svn+ssh://</literal> URLs to access a
+        repository, remember that it's the <command>ssh</command>
+        program prompting for authentication, and
+        <emphasis>not</emphasis> the <command>svn</command> client
+        program.  That means there's no automatic password caching
+        going on (see <xref linkend="svn-ch-6-sect-2.2"/>).  The
+        Subversion client often makes multiple connections to the
+        repository, though users don't normally notice this due to the
+        password caching feature.  When using
+        <literal>svn+ssh://</literal> URLs, however, users may be
+        annoyed by <command>ssh</command> repeatedly asking for a
+        password for every outbound connection.  The solution is to
+        use a separate SSH password-caching tool like
+        <command>ssh-agent</command> on a Unix-like system, or
+        <command>pageant</command> on Windows.</para>
 
       <para>When running over a tunnel, authorization is primarily
         controlled by operating system permissions to the repository's
@@ -806,24 +832,13 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
         a convenient way to override the default SSH tunnel agent.
         But if you need to have several different overrides for
         different servers, each perhaps contacting a different port or
-        passing a different set of options, you can use the mechanism
-        demonstrated in this example.  Now if we were to set the
-        <literal>JOESSH</literal> environment variable, its value
+        passing a different set of options to SSH, you can use the
+        mechanism demonstrated in this example.  Now if we were to set
+        the <literal>JOESSH</literal> environment variable, its value
         would override the entire value of the tunnel
         variable&mdash;<command>$JOESSH</command> would be executed
-        instead of <command>/opt/alternate/ssh -p 29934</command>.</para>
-
-      <para>A final note: when using <literal>svn+ssh://</literal>
-        URLs to access a repository, remember that it's the
-        <command>ssh</command> program prompting you for
-        authentication, and <emphasis>not</emphasis> the
-        <command>svn</command> program.  That means there's no
-        automatic password caching going on (see <xref
-        linkend="svn-ch-6-sect-2.2"/>).  If you want to prevent
-        <command>ssh</command> from repeatedly asking for your
-        password, you'll need to use a separate memory-caching tool
-        like <command>ssh-agent</command> on a Unix-like system, or
-        <command>pageant</command> on Windows.</para>
+        instead of <command>/opt/alternate/ssh -p
+        29934</command>.</para>
 
     </sect2>
 
