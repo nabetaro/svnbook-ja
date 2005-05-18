@@ -577,7 +577,8 @@ $ svn checkout svn://host.example.com/project1
         externally authenticated via a tunnel agent, such as
         <command>SSH</command>.  In that case, the server simply
         examines the user it's running as, and uses it as the
-        authenticated username.</para>
+        authenticated username.  For more on this, see <xref
+        linkend="svn-ch-6-sect-3.4"/>.</para>
 
       <para>As you've already guessed, a repository's
         <filename>svnserve.conf</filename> file is the central
@@ -731,20 +732,45 @@ baz
 &hellip;
 </screen>
 
-      <para>What's happening here is that the Subversion client is
-        invoking a local <command>ssh</command> process, connecting to
-        <literal>host.example.com</literal>, authenticating as the user
-        <literal>harry</literal>, then spawning a private
-        <command>svnserve</command> process on the remote machine,
+      <para>In this example, the Subversion client is invoking a local
+        <command>ssh</command> process, connecting to
+        <literal>host.example.com</literal>, authenticating as the
+        user <literal>harry</literal>, then spawning a private
+        <command>svnserve</command> process on the remote machine
         running as the user <literal>harry</literal>.  The
         <command>svnserve</command> command is being invoked in tunnel
         mode (<option>-t</option>) and its network protocol is being
         <quote>tunneled</quote> over the encrypted connection by
         <command>ssh</command>, the tunnel-agent.
-        <command>svnserve</command> is aware that it's running as the user
-        <literal>harry</literal>, and if the client performs a commit,
-        the authenticated username will be attributed as the author of
-        the new revision.</para>
+        <command>svnserve</command> is aware that it's running as the
+        user <literal>harry</literal>, and if the client performs a
+        commit, the authenticated username will be attributed as the
+        author of the new revision.</para>
+
+      <para>The important thing to understand here is that the
+        Subversion client is <emphasis>not</emphasis> connecting to a
+        running <command>svnserve</command> daemon.  This method of
+        access doesn't require a daemon, nor does it notice one if
+        present.  It relies wholly on the ability of
+        <command>ssh</command> to spawn a temporary
+        <command>svnserve</command> process, which then terminates
+        when the network connection is closed.</para>
+
+      <para>When using <literal>svn+ssh://</literal> URLs to access a
+        repository, remember that it's the <command>ssh</command>
+        program prompting for authentication, and
+        <emphasis>not</emphasis> the <command>svn</command> client
+        program.  That means there's no automatic password caching
+        going on (see <xref linkend="svn-ch-6-sect-2.2"/>).  The
+        Subversion client often makes multiple connections to the
+        repository, though users don't normally notice this due to the
+        password caching feature.  When using
+        <literal>svn+ssh://</literal> URLs, however, users may be
+        annoyed by <command>ssh</command> repeatedly asking for a
+        password for every outbound connection.  The solution is to
+        use a separate SSH password-caching tool like
+        <command>ssh-agent</command> on a Unix-like system, or
+        <command>pageant</command> on Windows.</para>
 
       <para>When running over a tunnel, authorization is primarily
         controlled by operating system permissions to the repository's
@@ -806,27 +832,139 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
         a convenient way to override the default SSH tunnel agent.
         But if you need to have several different overrides for
         different servers, each perhaps contacting a different port or
-        passing a different set of options, you can use the mechanism
-        demonstrated in this example.  Now if we were to set the
-        <literal>JOESSH</literal> environment variable, its value
+        passing a different set of options to SSH, you can use the
+        mechanism demonstrated in this example.  Now if we were to set
+        the <literal>JOESSH</literal> environment variable, its value
         would override the entire value of the tunnel
         variable&mdash;<command>$JOESSH</command> would be executed
-        instead of <command>/opt/alternate/ssh -p 29934</command>.</para>
-
-      <para>A final note: when using <literal>svn+ssh://</literal>
-        URLs to access a repository, remember that it's the
-        <command>ssh</command> program prompting you for
-        authentication, and <emphasis>not</emphasis> the
-        <command>svn</command> program.  That means there's no
-        automatic password caching going on (see <xref
-        linkend="svn-ch-6-sect-2.2"/>).  If you want to prevent
-        <command>ssh</command> from repeatedly asking for your
-        password, you'll need to use a separate memory-caching tool
-        like <command>ssh-agent</command> on a Unix-like system, or
-        <command>pageant</command> on Windows.</para>
+        instead of <command>/opt/alternate/ssh -p
+        29934</command>.</para>
 
     </sect2>
 
+    <sect2 id="svn-ch-6-sect-3.5">
+      <title>SSH configuration tricks</title>
+
+      <para>It's not only possible to control the way in which the
+        client invokes <command>ssh</command>, but also to control
+        the behavior of <command>sshd</command> on your server
+        machine.  In this section, we'll show how to control the
+        exact <command>svnserve</command> command executed
+        by <command>sshd</command>, as well as how to have multiple
+        users share a single system account.</para>
+      
+      <sect3 id="svn-ch-6-sect-3.5.1">
+        <title>Initial setup</title>
+        
+        <para>To begin, locate the home directory of the account
+          you'll be using to launch <command>svnserve</command>.  Make
+          sure the account has an SSH public/private keypair
+          installed, and that the user can log in via public-key
+          authentication.  Password authentication will not work,
+          since all of the following SSH tricks revolve around using
+          the SSH <filename>authorized_keys</filename> file.</para>
+
+        <para>If it doesn't already exist, create the
+          <filename>authorized_keys</filename> file (on Unix,
+          typically <filename>~/.ssh/authorized_keys</filename>).
+          Each line in this file describes a public key that is
+          allowed to connect.  The lines are typically of the
+          form:</para>
+
+<screen>
+  ssh-dsa AAAABtce9euch.... user@example.com
+</screen>
+          
+        <para>The first field describes the type of key, the second
+          field is the uuencoded key itself, and the third field is a
+          comment.  However, it's a lesser known fact that the entire
+          line can be preceded by a <literal>command</literal>
+          field:</para>
+
+<screen>
+  command="program" ssh-dsa AAAABtce9euch.... user@example.com
+</screen>
+
+        <para>When the <literal>command</literal> field is set, the
+          SSH daemon will run the named program instead of the
+          typical <command>svnserve -t</command> invocation that the
+          Subversion client asks for.  This opens the door to a number
+          of server-side tricks.  In the following examples, we
+          abbreviate the lines of the file as:</para>
+
+<screen>
+  command="program" TYPE KEY COMMENT
+</screen>
+
+      </sect3>
+      
+      <sect3 id="svn-ch-6-sect-3.5.2">
+        <title>Controlling the invoked command</title>
+
+        <para>Because we can specify the executed server-side command,
+          it's easy to name a specific <command>svnserve</command>
+          binary to run and to pass it extra arguments:</para>
+        
+<screen>
+  command="/path/to/svnserve -t -r /virtual/root" TYPE KEY COMMENT
+</screen>
+
+        <para>In this example, <filename>/path/to/svnserve</filename>
+          might be a custom wrapper script
+          around <command>svnserve</command> which sets the umask (see
+          <xref linkend="svn-ch-6-sect-5"/>).  It also shows how to
+          anchor <command>svnserve</command> in a virtual root
+          directory, just as one often does when
+          running <command>svnserve</command> as a daemon process.
+          This might be done either to restrict access to parts of the
+          system, or simply to relieve the user of having to type an
+          absolute path in the <literal>svn+ssh://</literal>
+          URL.</para>
+        
+        <para>It's also possible to have multiple users share a single
+          account.  Instead of creating a separate system account for
+          each user, generate a public/private keypair for each
+          person.  Then place each public key into
+          the <filename>authorized_users</filename> file, one per
+          line, and use the <option>--tunnel-user</option>
+          option:</para>
+
+<screen>
+  command="svnserve -t --tunnel-user=harry" TYPE1 KEY1 harry@example.com
+  command="svnserve -t --tunnel-user=sally" TYPE2 KEY2 sally@example.com
+</screen>
+
+        <para>This example allows both Harry and Sally to connect to
+          the same account via public-key authentication.  Each of
+          them has a custom command that will be executed;
+          the <option>--tunnel-user</option> option 
+          tells <command>svnserve -t</command> to assume that the named
+          argument is the authenticated user.  Without
+          <option>--tunnel-user</option>, it would appear as though
+          all commits were coming from the one shared system
+          account.</para>
+
+        <para>A final word of caution: giving a user access to the
+          server via public-key in a shared account might still allow
+          other forms of SSH access, even if you've set the
+          the <literal>command</literal> value
+          in <filename>authorized_keys</filename>.  For example, the
+          user may still get shell access through SSH, or be able to
+          perform X11 or general port-forwarding through your server.
+          To give the user as little permission as possible, you may
+          want to specify a number of restrictive options immediately
+          after the <literal>command</literal>:</para>
+
+<screen>
+  command="svnserve -t --tunnel-user=harry",no-port-forwarding,\
+           no-agent-forwarding,no-X11-forwarding,no-pty \
+           TYPE1 KEY1 harry@example.com
+</screen>
+
+      </sect3>
+
+    </sect2>
+    
   </sect1>
 
 
@@ -841,10 +979,10 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
       network server that Subversion can leverage.  Via a custom
       module, <command>httpd</command> makes Subversion repositories
       available to clients via the WebDAV/DeltaV protocol, which is an
-      extension to HTTP 1.1 (see <systemitem
-      class="url">http://www.webdav.org/</systemitem> for more
-      information.) This protocol takes the ubiquitous HTTP protocol
-      that is the core of the World Wide Web, and adds
+      extension to HTTP 1.1
+      (see <systemitem class="url">http://www.webdav.org/</systemitem>
+      for more information.) This protocol takes the ubiquitous HTTP
+      protocol that is the core of the World Wide Web, and adds
       writing&mdash;specifically, versioned
       writing&mdash;capabilities.  The result is a standardized,
       robust system that is conveniently packaged as part of the
@@ -1547,13 +1685,13 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
         <example id="svn-ch-6-sect-4.4.2-ex-1">
           <title>A sample configuration for anonymous access.</title>
           <programlisting>
-            &lt;Location /repos&gt;
-              DAV svn
-              SVNParentPath /usr/local/svn
+&lt;Location /repos&gt;
+  DAV svn
+  SVNParentPath /usr/local/svn
 
-              # our access control policy
-              AuthzSVNAccessFile /path/to/access/file                 
-            &lt;/Location&gt;
+  # our access control policy
+  AuthzSVNAccessFile /path/to/access/file                 
+&lt;/Location&gt;
           </programlisting>
         </example>
 
@@ -1567,21 +1705,21 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
         <example id="svn-ch-6-sect-4.4.2-ex-2">
           <title>A sample configuration for authenticated access.</title>
           <programlisting>
-            &lt;Location /repos&gt;
-              DAV svn
-              SVNParentPath /usr/local/svn
+&lt;Location /repos&gt;
+  DAV svn
+  SVNParentPath /usr/local/svn
             
-              # our access control policy
-              AuthzSVNAccessFile /path/to/access/file                 
+  # our access control policy
+  AuthzSVNAccessFile /path/to/access/file                 
             
-              # only authenticated users may access the repository
-              Require valid-user
+  # only authenticated users may access the repository
+  Require valid-user
             
-              # how to authenticate a user
-              AuthType Basic
-              AuthName "Subversion repository"
-              AuthUserFile /path/to/users/file                  
-            &lt;/Location&gt;
+  # how to authenticate a user
+  AuthType Basic
+  AuthName "Subversion repository"
+  AuthUserFile /path/to/users/file                  
+&lt;/Location&gt;
           </programlisting>
         </example>
 
@@ -1601,23 +1739,23 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           <title>A sample configuration for mixed
             authenticated/anonymous access.</title>
           <programlisting>
-            &lt;Location /repos&gt;
-              DAV svn
-              SVNParentPath /usr/local/svn
+&lt;Location /repos&gt;
+  DAV svn
+  SVNParentPath /usr/local/svn
             
-              # our access control policy
-              AuthzSVNAccessFile /path/to/access/file                 
+  # our access control policy
+  AuthzSVNAccessFile /path/to/access/file                 
             
-              # try anonymous access first, resort to real 
-              # authentication if necessary.
-              Satisfy Any
-              Require valid-user
+  # try anonymous access first, resort to real 
+  # authentication if necessary.
+  Satisfy Any
+  Require valid-user
             
-              # how to authenticate a user
-              AuthType Basic
-              AuthName "Subversion repository"
-              AuthUserFile /path/to/users/file                  
-            &lt;/Location&gt;
+  # how to authenticate a user
+  AuthType Basic
+  AuthName "Subversion repository"
+  AuthUserFile /path/to/users/file                  
+&lt;/Location&gt;
           </programlisting>
         </example>
         
@@ -1818,12 +1956,12 @@ jane = r
         <example id="svn-ch-6-sect-4.4.3-ex-1">
           <title>Disabling path checks altogether</title>
           <programlisting>
-            &lt;Location /repos&gt;
-              DAV svn
-              SVNParentPath /usr/local/svn
+&lt;Location /repos&gt;
+  DAV svn
+  SVNParentPath /usr/local/svn
             
-              SVNPathAuthz off
-            &lt;/Location&gt;            
+  SVNPathAuthz off
+&lt;/Location&gt;            
           </programlisting>
         </example>
 
