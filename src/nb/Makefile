@@ -11,13 +11,12 @@ COLLAB=http://svn.red-bean.com/svnbook
 BUILDTMP_DIR = build.tmp
 BOOKFILES = appa.xml appb.xml appc.xml appd.xml book.xml ch00.xml \
             ch01.xml ch02.xml ch03.xml ch04.xml ch05.xml ch06.xml \
-            ch07.xml ch08.xml ch09.xml colo.xml copyright.xml \
-            foreword.xml
+            ch07.xml ch08.xml ch09.xml copyright.xml foreword.xml
 
 BDTMP = bd.tmp
 BDFILES = book.xml foreword.xml ch00.xml ch01.xml ch02.xml ch03.xml \
           ch04.xml appa.xml ch05.xml ch06.xml ch07.xml ch08.xml \
-          ch09.xml appb.xml appc.xml appd.xml copyright.xml colo.xml
+          ch09.xml appb.xml appc.xml appd.xml copyright.xml
 
 build: dircheck htmlbook copytobuild
 
