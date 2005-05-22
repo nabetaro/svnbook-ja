@@ -62,7 +62,6 @@ def main():
         
     if not os.path.exists('book') or not os.path.exists('Makefile'):
         die('Please run this from the Subversion book source directory.\n')
-  
     os.putenv('FOP_OPTS', '-Xms100m -Xmx200m')
 
     def _cleanup_tmp_dirs():
