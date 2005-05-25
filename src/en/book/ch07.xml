@@ -2477,7 +2477,7 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
   </sect1>
 
   <!-- ******************************************************************* -->
-  <!-- *** SECTION 5:  LOCALIZATION                                 *** -->
+  <!-- *** SECTION 5:  LOCALIZATION                                    *** -->
   <!-- ******************************************************************* -->
   <sect1 id="svn-ch-7-sect-5">
     <title>Localization</title>
@@ -2554,7 +2554,7 @@ $ export LC_MESSAGES=de_DE
 $ svn help cat
 cat: Ausgabe des Inhaltes der angegebenen Dateien oder URLs
 Aufruf: cat ZIEL...
-[...]
+&hellip;
 </screen>
 
       <para>This behavior works identically on both Unix and Windows
@@ -2635,6 +2635,82 @@ Aufruf: cat ZIEL...
 
   </sect1>
 
+  <!-- ******************************************************************* -->
+  <!-- *** SECTION 6:  URL Construction                                *** -->
+  <!-- ******************************************************************* -->
+  <sect1 id="svn-ch-7-sect-6">
+    <title>URL Construction</title>
+
+    <para>In Chapter 2, you saw a table that listed the different URL
+      schemes available to a Subversion client.  That wasn't the
+      entire story.  Complex setups or server locations sometimes
+      demand more complex URLs.  Here we explain a few important
+      edge-cases in the way Subversion parses URLs.</para>
+
+    <para>For the most part, Subversion's URLs use the standard
+      syntax, allowing for server names and port numbers to be
+      specified as part of the URL:</para>
+
+    <screen>
+$ svn checkout http://svn.example.com:9834/repos
+&hellip;
+</screen>
+
+    <para>Remember that the <literal>file:</literal> access method is
+      valid only for local repositories&mdash;in fact, in accordance
+      with convention, the server name portion of the URL is required
+      to be either absent or <literal>localhost</literal>:</para>
+ 
+    <screen>
+$ svn checkout file:///path/to/repos
+&hellip;
+$ svn checkout file://localhost/path/to/repos
+&hellip;
+</screen>
+
+    <para>Also, users of the <literal>file:</literal> scheme on
+      Windows platforms will need to use an unofficially
+      <quote>standard</quote> syntax for accessing repositories
+      that are on the same machine, but on a different drive than
+      the client's current working drive.  Either of the two
+      following URL path syntaxes will work where
+      <literal>X</literal> is the drive on which the repository
+      resides:</para>
+
+    <screen>
+C:\&gt; svn checkout file:///X:/path/to/repos
+&hellip;
+C:\&gt; svn checkout "file:///X|/path/to/repos"
+&hellip;
+</screen>
+ 
+    <para>In the second syntax, you need to quote the URL so that the
+      vertical bar character is not interpreted as a pipe.  Also, note
+      that a URL uses ordinary slashes even though the native
+      (non-URL) form of a path on Windows uses backslashes.</para>
+    
+    <para>Finally, it should be noted that the Subverison client will
+      automatically encode URLs as necessary, just like a web browser
+      does.  For example, if a URL contains a space or upper-ASCII
+      character:</para>
+
+    <screen>
+$ svn checkout "http://host/path with space/project/españa"
+</screen>
+    
+    <para>&hellip;then Subversion will escape the unsafe characters
+      and behave as if you had typed:</para>
+
+    <screen>
+$ svn checkout http://host/path%20with%20space/project/espa%C3%B1a
+</screen>
+
+    <para>If the URL contains spaces, be sure to place it within quote
+      marks, so that your shell treats the whole thing as a single
+      argument to the <command>svn</command> program.</para>
+
+  </sect1>
+  
 </chapter>
 
 <!--
