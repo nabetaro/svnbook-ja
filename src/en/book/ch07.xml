@@ -2487,21 +2487,23 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
       formats numbers or dates in a way specific to your part of the
       world, or prints messages (or accepts input) in your native
       language, the program is said to
-      be <firstterm>localized</firstterm>.</para>
+      be <firstterm>localized</firstterm>.  This section describes
+      steps Subversion has made towards localization.</para>
 
     <sect2 id="svn-ch7-sect-5.1">
       <title>Understanding locales</title>
 
-      <para>Most modern operating systems have a notion
-        of <quote>current locale</quote>&mdash;that is, the current
-        region or country that the computer is located in.  The value
-        of the locale affects the way in which programs present data
-        to the user, as well as the way in which they accept user
-        input.</para>
+      <para>Most modern operating systems have a notion of the
+        <quote>current locale</quote>&mdash;that is, the region or
+        country whose localization conventions are honored.  These
+        conventions&mdash;typically chosen by some runtime
+        configuration mechanism on the computer&mdash;affect the way
+        in which programs present data to the user, as well as the way
+        in which they accept user input.</para>
 
-      <para>On Unix-like systems, the value of the current locale can
-        be seen by running the <command>locale</command>
-        command:</para>
+      <para>On Unix-like systems, you can check the values of the
+        locale-related runtime configuration options by running the
+        <command>locale</command> command:</para>
 
       <screen>
 $ locale
@@ -2520,32 +2522,35 @@ LC_ALL="C"
         variables are all set to the default <literal>C</literal>
         locale, but users can set these variables to specific
         country/language code combinations.  For example, if one were
-        to set the <literal>LC_TIME</literal> variable
-        to <literal>fr_CA</literal>, then programs would know to
-        present time and date information formatted according a
+        to set the <literal>LC_TIME</literal> variable to
+        <literal>fr_CA</literal>, then programs would know to present
+        time and date information formatted according a
         French-speaking Canadian's expectations.  And if one were to
-        set the <literal>LC_MESSAGES</literal> variable
-        to <literal>zh_TW</literal>, then programs would know to
-        present human-readable messages in Traditional Chinese.</para>
+        set the <literal>LC_MESSAGES</literal> variable to
+        <literal>zh_TW</literal>, then programs would know to present
+        human-readable messages in Traditional Chinese.  Setting the
+        <literal>LC_ALL</literal> variable has the effect of changing
+        every locale variable to the same value.  The value of
+        <literal>LANG</literal> is used as a default value for any
+        locale variable that is unset.  To see the list of available
+        locales on a Unix system, run the command <command>locale
+        -a</command>.</para>
 
-      <para>Setting the <literal>LC_ALL</literal> variable has the
-        effect of changing every locale variable to the same value.
-        The value of <literal>LANG</literal> is used as a default
-        value for any locale variable that is unset.</para>
-
-      <para>To see the list of available locales on a Unix system, run
-        the command <command>locale -a</command>.  On Windows, one can
-        open the <quote>Regional and Language Options</quote> control
-        panel to view and select available locales.</para>
+      <para>On Windows, locale configuration is done via the
+        <quote>Regional and Language Options</quote> control panel
+        item.  There you can view and select the values of individual
+        settings from the available locales, and even customize (at a
+        sickening level of detail) several of the display formatting
+        conventions.</para>
 
     </sect2>
 
     <sect2 id="svn-ch7-sect-5.2">
       <title>Subversion's use of locales</title>
 
-      <para>The Subversion client, <command>svn</command>, makes use
-        of the current locale in two ways.  First, it notices the
-        value of the <literal>LC_MESSAGES</literal> variable and
+      <para>The Subversion client, <command>svn</command>, honors the
+        current locale configuration in two ways.  First, it notices
+        the value of the <literal>LC_MESSAGES</literal> variable and
         attempts to print all messages in the specified language.  For
         example:</para>
 
@@ -2563,36 +2568,33 @@ Aufruf: cat ZIEL...
         may not be able to speak the particular language.  In order to
         produce localized messages, human volunteers must provide
         translations for each language.  The translations are written
-        using the GNU <command>gettext</command> package, which
-        results in translation <quote>modules</quote> that end
-        with <filename>.mo</filename> extensions.  For example, the
-        German translation file is named <filename>de.mo</filename>.
-        These translation files are installed somewhere on your
-        system.  On Unix, they typically live
-        in <filename>/usr/local/share/locale/</filename>, while on
-        Windows they're often found in
-        the <filename>\share\locale\</filename> folder in Subversion's
+        using the GNU gettext package, which results in translation
+        modules that end with the <filename>.mo</filename> filename
+        extension.  For example, the German translation file is named
+        <filename>de.mo</filename>.  These translation files are
+        installed somewhere on your system.  On Unix, they typically
+        live in <filename>/usr/share/locale/</filename>, while
+        on Windows they're often found in the
+        <filename>\share\locale\</filename> folder in Subversion's
         installation area.  Once installed, a module is named after
-        the program it provides translations for.  For example,
-        the <filename>de.mo</filename> file may ultimately end up
-        installed
-        as <filename>/usr/local/share/locale/de/LC_MESSAGES/subversion.mo</filename>.
+        the program it provides translations for.  For example, the
+        <filename>de.mo</filename> file may ultimately end up
+        installed as
+        <filename>/usr/share/locale/de/LC_MESSAGES/subversion.mo</filename>.
         By browsing the installed <filename>.mo</filename> files, you
         can see which languages the Subversion client is able to
         speak.</para>
 
-      <para>The second way in which locale is important is that it
-        tells the <command>svn</command> program how to interpret your
-        input.  The repository stores all paths, filenames, and log
-        messages in Unicode.  In that sense, the repository
-        is <firstterm>internationalized</firstterm>&mdash; that is,
-        the repository is ready to accept input in any human language.
-        The repository stores the Unicode data as UTF-8, which is a
-        particular encoding of Unicode.  This means, however, that the
-        Subversion client is responsible for sending only UTF-8
-        filenames and log messages into the repository.  In order to
-        do this, it must convert the data from the native locale into
-        UTF-8.</para>
+      <para>The second way in which the locale is honored involves how
+        <command>svn</command> interprets your input.  The repository
+        stores all paths, filenames, and log messages in Unicode,
+        encoded as UTF-8.  In that sense, the repository is
+        <firstterm>internationalized</firstterm>&mdash; that is, the
+        repository is ready to accept input in any human language.
+        This means, however, that the Subversion client is responsible
+        for sending only UTF-8 filenames and log messages into the
+        repository.  In order to do this, it must convert the data
+        from the native locale into UTF-8.</para>
 
       <para>For example, suppose you create a file
         named<filename>caffè.txt</filename>, and then when committing
@@ -2612,21 +2614,29 @@ Aufruf: cat ZIEL...
         contents.</para>
 
       <sidebar>
-        <title>"Error: can't recode string"</title>
-        
-        <para>Are you seeing this error?  It means that the Subversion
-          client has received a UTF-8 string from the repository, but
-          the characters can't be converted to the current locale.
-          For example, if your locale is <literal>en_US</literal> but
-          a collaborator has committed a Japanese filename, you're
-          likely to see this error when you receive the file during
-          an <command>svn update</command>.</para>
+        <title>Character set conversion errors</title>
+
+        <para>While using Subversion, you might get hit with an error
+          related to character set conversions:</para>
+
+        <screen>
+svn: Can't recode string.
+</screen>
+    
+        <para>The message is cryptic, but generally occurs when the
+          Subversion client has received a UTF-8 string from the
+          repository, but the characters can't be converted to the
+          current locale.  For example, if your locale is
+          <literal>en_US</literal> but a collaborator has committed a
+          Japanese filename, you're likely to see this error when you
+          receive the file during an <command>svn
+          update</command>.</para>
 
         <para>The solution is either to set your locale to something
           which <emphasis>can</emphasis> represent the incoming UTF-8
           data, or to change the filename or log message in the
           repository.  (And don't forget to slap your collaborator's
-          hand; projects should decide on common languages ahead of
+          hand&mdash;projects should decide on common languages ahead of
           time, so that all participants are using the same
           locale.)</para>
       </sidebar>
