@@ -12,17 +12,19 @@ def die(msg):
     sys.exit(1)
 
 
-def usage(errorcode):
-    stream = errorcode and sys.stderr or sys.stdout
+def usage(err_msg):
+    stream = err_msg and sys.stderr or sys.stdout
+    if err_msg:
+        stream.write("ERROR: %s\n\n" % (err_msg))
     stream.write("""Usage: %s OPTIONS
 
 Options:
    --html:         Make the single-page HTML book
    --html-chunk:   Make the chunked HTML book
-   --pdf:          Make the PDF book
+   --pdf:          Make the PDF book (requires JAVA_HOME environment variable)
    --name:         The base name of the tarball, and top-level tar directory
 """ % (os.path.basename(sys.argv[0])))
-    sys.exit(errorcode)
+    sys.exit(err_msg and 1 or 0)
     
 
 def main():
@@ -31,13 +33,13 @@ def main():
                                       ['help', 'html', 'html-chunk',
                                        'pdf', 'name='])
     except:
-        usage(1)
+        usage("Invalid syntax")
     html = html_chunk = pdf = 0
     name = 'svnbook'
     targets = []
     for opt, arg in optlist:
         if opt == '--help' or opt == '-h':
-            usage(0)
+            usage(None)
         if opt == '--html':
             html = 1
         if opt == '--html-chunk':
@@ -48,17 +50,17 @@ def main():
             name = arg
 
     if pdf and not os.getenv('JAVA_HOME'):
-        die('JAVA_HOME is not set.\n')
+        usage('JAVA_HOME is not set.')
 
     if os.path.basename(name) != name:
-        die('Name "%s" is not a single path component\n' % (name))
+        usage('Name "%s" is not a single path component' % (name))
         
     if html: targets.append('install-book-html')
     if html_chunk: targets.append('install-book-html-chunk')
     if pdf: targets.append('install-book-pdf')
 
     if len(targets) < 1:
-        die('No targets specified.\n')
+        usage('No targets specified.')
         
     if not os.path.exists('book') or not os.path.exists('Makefile'):
         die('Please run this from the Subversion book source directory.\n')
