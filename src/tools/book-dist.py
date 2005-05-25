@@ -75,8 +75,9 @@ def main():
         os.mkdir('__SVNBOOK_TMP__')
         os.system('DESTDIR=__SVNBOOK_TMP__ make book-clean %s' \
                   % (' '.join(targets)))
-        os.rename('__SVNBOOK_TMP__/usr/share/doc/subversion/book', name)
-        os.system('tar cvfz %s.tar.gz %s' % (name, name))
+        if os.path.isdir('__SVNBOOK_TMP__/usr/share/doc/subversion/book'):
+            os.rename('__SVNBOOK_TMP__/usr/share/doc/subversion/book', name)
+            os.system('tar cvfz %s.tar.gz %s' % (name, name))
     finally:
         _cleanup_tmp_dirs()
   
