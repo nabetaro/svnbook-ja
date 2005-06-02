@@ -461,10 +461,11 @@ $ svnadmin create /path/to/repos
       property, <literal>svn:date</literal>, set to the time at which
       the repository was created.</para>
 
-    <para>In Subversion 1.1, a repository is created with a Berkeley
-      DB back-end by default.  This behavior may change in future
-      releases.  Regardless, the type can be explicitly chosen with
-      the <option>--fs-type</option> argument:</para>
+    <para>In Subversion 1.2, a repository is created with a FSFS
+      back-end by default (see <xref
+      linkend="svn.reposadmin.basics.backends"/>). The back-end can be
+      explicitly chosen with the <option>--fs-type</option>
+      argument:</para>
 
     <screen>
 $ svnadmin create --fs-type fsfs /path/to/repos
@@ -605,9 +606,9 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
             
       <screen>
 $ ls repos/hooks/
-post-commit.tmpl          pre-revprop-change.tmpl
-post-revprop-change.tmpl  start-commit.tmpl
-pre-commit.tmpl           
+post-commit.tmpl          post-unlock.tmpl          pre-revprop-change.tmpl
+post-lock.tmpl            pre-commit.tmpl           pre-unlock.tmpl
+post-revprop-change.tmpl  pre-lock.tmpl             start-commit.tmpl
 </screen>
             
       <para>There is one template for each hook that the Subversion
@@ -653,8 +654,8 @@ pre-commit.tmpl
         programs.</para>
       </tip>
 
-      <para>Currently there are five hooks implemented by the
-        Subversion repository:</para>
+      <para>There are nine hooks implemented by the Subversion
+        repository:</para>
 
       <variablelist>
         <varlistentry>
@@ -790,6 +791,70 @@ pre-commit.tmpl
               contains the revision and name of the changed property,
               the user who made the change, and the new property
               value.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><filename>pre-lock</filename></term>
+          <listitem>
+            <para>This hook runs whenever someone attempts to lock a
+              file.  It can be used to prevent locks altogether, or to
+              create a more complex policy specifying exactly which
+              users are allowed to lock particular paths.  If the hook
+              notices a pre-existing lock, then it can also decide
+              whether a user is allowed to "steal" the existing lock.
+              The repository passes three arguments to the hook: the
+              path to the repository, the path being locked, and the
+              user attempting to perform the lock.  If the program
+              returns a non-zero exit value, the lock action is
+              aborted and anything printed to stderr is marshalled
+              back to the client.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><filename>post-lock</filename></term>
+          <listitem>
+            <para>This hook runs after a path is locked.  The locked
+              path is passed to the hook's stdin, and the hook also
+              receives two arguments:  the path to the repository, and
+              the user who performed the lock.  The hook is then free
+              to send email notification or record the event in any
+              way it chooses.  Because the lock already happened, the
+              output of the hook is ignored.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><filename>pre-unlock</filename></term>
+          <listitem>
+            <para>This hook runs whenever someone attempts to remove a
+              lock on a file.  It can be used to create policies that
+              specify which users are allowed to unlock particular
+              paths.  It's particularly important for determining
+              policies about lock breakage.  If user A locks a file,
+              is user B allowed to break the lock?  What if the lock
+              is more than a week old?  These sorts of things can be
+              decided and enforced by the hook.  The repository passes
+              three arguments to the hook: the path to the repository,
+              the path being unlocked, and the user attempting to
+              remove the lock.  If the program returns a non-zero exit
+              value, the unlock action is aborted and anything printed
+              to stderr is marshalled back to the client.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><filename>post-unlock</filename></term>
+          <listitem>
+            <para>This hook runs after a path is unlocked.  The
+              unlocked path is passed to the hook's stdin, and the
+              hook also receives two arguments: the path to the
+              repository, and the user who removed the lock.  The hook
+              is then free to send email notification or record the
+              event in any way it chooses.  Because the lock removal
+              already happened, the output of the hook is
+              ignored.</para>
           </listitem>
         </varlistentry>
       </variablelist>
@@ -1133,6 +1198,13 @@ $ svnlook tree /path/to/repos --show-ids
           </varlistentry>
 
           <varlistentry>
+            <term><literal>lock</literal></term>
+            <listitem>
+              <para>If a path is locked, describe the lock attributes.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term><literal>propget</literal></term>
             <listitem>
               <para>Print the value of a property on a path in the
@@ -1280,6 +1352,14 @@ Available subcommands:
           <varlistentry>
             <term><literal>lstxns</literal></term>
             <listitem>
+              <para>List and describe any locks that exist in the
+                repository.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><literal>lstxns</literal></term>
+            <listitem>
               <para>List the names of uncommitted Subversion
                 transactions that currently exist in the repository.</para>
             </listitem>
@@ -1292,6 +1372,14 @@ Available subcommands:
                 need of such, generally after a fatal error has
                 occurred that prevented a process from cleanly
                 shutting down its communication with the repository.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><literal>rmlocks</literal></term>
+            <listitem>
+              <para>Unconditionally remove locks from listed
+                paths.</para>
             </listitem>
           </varlistentry>
 
