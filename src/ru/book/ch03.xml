@@ -814,21 +814,27 @@ Updated to revision 2.
           actually printed by <command>svn status</command>.)</para>
       
         <screen>
-  L    abc.c               # svn has a lock in its .svn directory for abc.c
-M      bar.c               # the content in bar.c has local modifications
- M     baz.c               # baz.c has property but no content modifications
-X      3rd_party           # this dir is part of an externals definition
-?      foo.o               # svn doesn't manage foo.o
-!      some_dir            # svn manages this, but it's either missing or incomplete
-~      qux                 # versioned as file/dir/link, but type has changed
-I      .screenrc           # svn doesn't manage this, and is configured to ignore it
-A  +   moved_dir           # added with history of where it came from
-M  +   moved_dir/README    # added with history and has local modifications
-D      stuff/fish.c        # this file is scheduled for deletion
-A      stuff/loot/bloo.h   # this file is scheduled for addition
-C      stuff/loot/lump.c   # this file has conflicts from an update
-R      xyz.c               # this file is scheduled for replacement
-    S  stuff/squawk        # this file or dir has been switched to a branch
+  L     some_dir            # svn left a lock in the .svn area of some_dir
+M       bar.c               # the content in bar.c has local modifications
+ M      baz.c               # baz.c has property but no content modifications
+X       3rd_party           # dir is part of an externals definition
+?       foo.o               # svn doesn't manage foo.o
+!       some_dir            # svn manages this, but it's missing or incomplete
+~       qux                 # versioned as file/dir/link, but type has changed
+I       .screenrc           # svn doesn't manage this, and is set to ignore it
+A  +    moved_dir           # added with history of where it came from
+M  +    moved_dir/README    # added with history and has local modifications
+D       stuff/fish.c        # file is scheduled for deletion
+A       stuff/loot/bloo.h   # file is scheduled for addition
+C       stuff/loot/lump.c   # file has textual conflicts from an update
+ C      stuff/loot/glub.c   # file has property conflicts from an update
+R       xyz.c               # file is scheduled for replacement
+    S   stuff/squawk        # file or dir has been switched to a branch
+     K  dog.jpg             # file is locked locally; lock-token present 
+     O  cat.jpg             # file is locked in the repository by other user
+     B  bird.jpg            # file is locked locally, but lock has been broken
+     T  fish.jpg            # file is locked locally, but lock has been stolen
+
 </screen>
       
         <para>In this output format <command>svn status</command>
@@ -975,8 +981,8 @@ R      xyz.c               # this file is scheduled for replacement
         
         <para>The third column will only show whitespace or an
           <computeroutput>L</computeroutput> which means that
-          Subversion has locked the item in
-          the <filename>.svn</filename> working area.  You will see an
+          Subversion has locked the direcotry's
+          <filename>.svn</filename> working area.  You will see an
           <computeroutput>L</computeroutput> if you run <command>svn
           status</command> in a directory where an <command>svn
           commit</command> is in progress&mdash;perhaps when you are
@@ -1011,6 +1017,10 @@ R      xyz.c               # this file is scheduled for replacement
           file or directory has been switched from the path of the
           rest of the working copy (using <command>svn
           switch</command>) to a branch.</para>
+
+        <para>The sixth column shows information about locks, which is
+          further explained in <xref
+          linkend="svn.advanced.locking"/>.</para>
         
         <para>If you pass a specific path to <command>svn
           status</command>, it gives you information about that item
@@ -2123,7 +2133,8 @@ M      somedir/foo.c
 
       <screen>
 $ svnadmin create /usr/local/svn/newrepos
-$ svn import mytree file:///usr/local/svn/newrepos/some/project
+$ svn import mytree file:///usr/local/svn/newrepos/some/project \
+             -m "Initial import"
 Adding         mytree/foo.c
 Adding         mytree/bar.c
 Adding         mytree/subdir
