@@ -947,15 +947,15 @@ $ svnadmin create /sti/til/depot
       tidspunktet depotet ble opprettet.</para>
 
     <!-- @ENGLISH {{{
-    <para>In Subversion 1.1, a repository is created with a Berkeley
-      DB back-end by default.  This behavior may change in future
-      releases.  Regardless, the type can be explicitly chosen with
-      the <option>-&#64738;-fs-type</option> argument:</para>
+    <para>In Subversion 1.2, a repository is created with a FSFS
+      back-end by default (see <xref
+      linkend="svn.reposadmin.basics.backends"/>). The back-end can be
+      explicitly chosen with the <option>-&#64738;-fs-type</option>
+      argument:</para>
     @ENGLISH }}} -->
-    <para>I Subversion 1.1 blir et depot opprettet med en 
-      bakenforliggende Berkeley DB-database som standard.
-      Denne oppførselen kan forandre seg i fremtidige releaser.
-      Uansett, typen kan bli eksplisitt valgt med 
+    <para>I Subversion 1.2 blir et depot opprettet i FSFS-formatet som 
+      standard (se <xref linkend="svn.reposadmin.basics.backends"/>).
+      Formatet kan bli eksplisitt valgt med 
       <option>--fs-type</option>-valget:</para>
 
     <!-- @ENGLISH {{{
@@ -1226,16 +1226,16 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
       <!-- @ENGLISH {{{
       <screen>
 $ ls repos/hooks/
-post-commit.tmpl          pre-revprop-change.tmpl
-post-revprop-change.tmpl  start-commit.tmpl
-pre-commit.tmpl           
+post-commit.tmpl          post-unlock.tmpl          pre-revprop-change.tmpl
+post-lock.tmpl            pre-commit.tmpl           pre-unlock.tmpl
+post-revprop-change.tmpl  pre-lock.tmpl             start-commit.tmpl
 </screen>
       @ENGLISH }}} -->
       <screen>
 $ ls depot/hooks/
-post-commit.tmpl          pre-revprop-change.tmpl
-post-revprop-change.tmpl  start-commit.tmpl
-pre-commit.tmpl
+post-commit.tmpl          post-unlock.tmpl          pre-revprop-change.tmpl
+post-lock.tmpl            pre-commit.tmpl           pre-unlock.tmpl
+post-revprop-change.tmpl  pre-lock.tmpl             start-commit.tmpl
 </screen>
             
       <!-- @ENGLISH {{{
@@ -1329,11 +1329,10 @@ pre-commit.tmpl
       </tip>
 
       <!-- @ENGLISH {{{
-      <para>Currently there are five hooks implemented by the
-        Subversion repository:</para>
+      <para>There are nine hooks implemented by the Subversion
+        repository:</para>
       @ENGLISH }}} -->
-      <para>Foreløpig er det fem påhakninger som er lagt inn i 
-        Subversiondepotet:</para>
+      <para>Det er lagt inn ni påhakninger i Subversiondepotet:</para>
 
       <variablelist>
         <varlistentry>
@@ -1605,6 +1604,126 @@ pre-commit.tmpl
               Denne mailen inneholder revisjonen og navnet til den 
               forandrede egenskapen, brukeren som gjorde forandringen, 
               og den nye verdien til egenskapen.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><filename>pre-lock</filename></term>
+          <listitem>
+            <!-- @ENGLISH {{{
+            <para>This hook runs whenever someone attempts to lock a
+              file.  It can be used to prevent locks altogether, or to
+              create a more complex policy specifying exactly which
+              users are allowed to lock particular paths.  If the hook
+              notices a pre-existing lock, then it can also decide
+              whether a user is allowed to "steal" the existing lock.
+              The repository passes three arguments to the hook: the
+              path to the repository, the path being locked, and the
+              user attempting to perform the lock.  If the program
+              returns a non-zero exit value, the lock action is
+              aborted and anything printed to stderr is marshalled
+              back to the client.</para>
+            @ENGLISH }}} -->
+            <para>Denne påhakningen kjøres hver gang noen prøver å låse 
+              en fil.
+              Den kan bli brukt til å forby låser i det hele tatt, eller 
+              å definere et mer komplekst regelsett som spesifiserer 
+              nøyaktig hvilke brukere som får lov til å låse spesielle 
+              stier.
+              Hvis påhakningen finner en allerede eksisterende lås, kan 
+              den også bestemme om en bruker har lov til å 
+              <quote>stjele</quote> den eksisterende låsen.
+              Depotet leverer tre argumenter til påhakningen:
+              Stien til depotet, stien som blir låst, og navnet på 
+              brukeren som prøver å utføre låsingen.
+              Hvis programmet returnerer en verdi som ikke er null, blir 
+              låseprosessen avbrutt og alt som blir skrevet til standard 
+              feil blir sendt tilbake til klienten.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><filename>post-lock</filename></term>
+          <listitem>
+            <!-- @ENGLISH {{{
+            <para>This hook runs after a path is locked.  The locked
+              path is passed to the hook's stdin, and the hook also
+              receives two arguments:  the path to the repository, and
+              the user who performed the lock.  The hook is then free
+              to send email notification or record the event in any
+              way it chooses.  Because the lock already happened, the
+              output of the hook is ignored.</para>
+            @ENGLISH }}} -->
+            <para>Denne påhakningen kjører etter at en sti er låst.
+              Den låste stien sendes til påhakningens standard inn, og 
+              påhakningen mottar også to argumenter:
+              Stien til depotet og brukeren som utførte låsingen.
+              Skriptet kan dermed sende melding via epost eller logge 
+              hendelsen på den måten som er bestemt.
+              Fordi låsingen allerede har skjedd, blir utdataene fra 
+              påhakningen ignorert.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><filename>pre-unlock</filename></term>
+          <listitem>
+            <!-- @ENGLISH {{{
+            <para>This hook runs whenever someone attempts to remove a
+              lock on a file.  It can be used to create policies that
+              specify which users are allowed to unlock particular
+              paths.  It's particularly important for determining
+              policies about lock breakage.  If user A locks a file,
+              is user B allowed to break the lock?  What if the lock
+              is more than a week old?  These sorts of things can be
+              decided and enforced by the hook.  The repository passes
+              three arguments to the hook: the path to the repository,
+              the path being unlocked, and the user attempting to
+              remove the lock.  If the program returns a non-zero exit
+              value, the unlock action is aborted and anything printed
+              to stderr is marshalled back to the client.</para>
+            @ENGLISH }}} -->
+            <para>Denne påhakningen kjøres når noen prøver å fjerne en 
+              lås på en fil.
+              Den kan brukes til å lage regler som spesifiserer hvilke 
+              brukere som har lov til å låse opp spesielle stier.
+              Den er spesielt viktig for å avgjøre regler om bryting av 
+              låser.
+              Hvis bruker A låser en fil, får bruker B lov til å bryte 
+              låsen?
+              Hva hvis låsen er mer enn en uke gammel?
+              Denne typen ting kan bli bestemt og gjennomført av 
+              påhakningen.
+              Depotet leverer tre argumenter til påhakningen:
+              Stien til depotet, stien som låses opp, og navnet på 
+              brukeren som prøver å fjerne låsen.
+              Hvis programmet returnerer en verdi som ikke er null, blir 
+              opplåsingsprosessen avbrutt og alt som blir skrevet til 
+              standardfeil leveres til klienten.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><filename>post-unlock</filename></term>
+          <listitem>
+            <!-- @ENGLISH {{{
+            <para>This hook runs after a path is unlocked.  The
+              unlocked path is passed to the hook's stdin, and the
+              hook also receives two arguments: the path to the
+              repository, and the user who removed the lock.  The hook
+              is then free to send email notification or record the
+              event in any way it chooses.  Because the lock removal
+              already happened, the output of the hook is
+              ignored.</para>
+            @ENGLISH }}} -->
+            <para>Denne påhakningen kjøres etter at en sti er låst opp.
+              Stien som er låst opp sendes til skriptets standard inn, 
+              og det mottar også to argumenter:
+              Stien til depotet og brukeren som fjernet låsen.
+              Påhakningen kan dermed sende epost eller logge hendelsen 
+              på den måten som er valgt.
+              Fordi fjerningen av låsen allerede har skjedd, blir 
+              utdataene fra påhakningen ignorert.</para>
           </listitem>
         </varlistentry>
       </variablelist>
@@ -2252,6 +2371,17 @@ $ svnlook tree /sti/til/depot --show-ids
           </varlistentry>
 
           <varlistentry>
+            <term><literal>lock</literal></term>
+            <listitem>
+              <!-- @ENGLISH {{{
+              <para>If a path is locked, describe the lock attributes.</para>
+              @ENGLISH }}} -->
+              <para>Hvis en sti er låst, beskriv 
+                låseattributtene.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term><literal>propget</literal></term>
             <listitem>
               <!-- @ENGLISH {{{
@@ -2498,6 +2628,18 @@ Available subcommands:
             <term><literal>lstxns</literal></term>
             <listitem>
               <!-- @ENGLISH {{{
+              <para>List and describe any locks that exist in the
+                repository.</para>
+              @ENGLISH }}} -->
+              <para>List og beskriv enhver lås som eksisterer i 
+                depotet.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><literal>lstxns</literal></term>
+            <listitem>
+              <!-- @ENGLISH {{{
               <para>List the names of uncommitted Subversion
                 transactions that currently exist in the repository.</para>
               @ENGLISH }}} -->
@@ -2519,6 +2661,18 @@ Available subcommands:
                 vanligvis etter at en fatal feil er oppstått som 
                 forhindret en prosess fra å lukke kommunikasjonen med 
                 depotet på en skikkelig måte.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><literal>rmlocks</literal></term>
+            <listitem>
+              <!-- @ENGLISH {{{
+              <para>Unconditionally remove locks from listed
+                paths.</para>
+              @ENGLISH }}} -->
+              <para>Fjern låser fra listede stier 
+                betingelsesløst.</para>
             </listitem>
           </varlistentry>
 

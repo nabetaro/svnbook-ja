@@ -944,97 +944,204 @@ The following repository access (RA) modules are available:
         library suite, combined with a powerful, flexible binding
         language, is so appealing.</para>
 
-      <para>Let's look at an example that uses Subversion's Python
-        SWIG bindings.  Our example will do the same thing as our last
-        example.  Note the difference in size and complexity of the
-        function this time!</para>
+      <para>Let's look at a sample program that uses Subversion's
+        Python SWIG bindings to recursively crawl the youngest
+        repository revision, and print the various paths reached
+        during the crawl.</para>
 
       <example id="svn.developer.usingapi.otherlangs.ex-1">
         <title>Using the Repository Layer with Python</title>
 
         <programlisting>
-from svn import fs
+#!/usr/bin/python
+
+"""Crawl a repository, printing versioned object path names."""
+
+import sys
 import os.path
+import svn.fs, svn.core, svn.repos
 
-def crawl_filesystem_dir (root, directory, pool):
-  """Recursively crawl DIRECTORY under ROOT in the filesystem, and return
-  a list of all the paths at or below DIRECTORY.  Use POOL for all 
-  allocations."""
+def crawl_filesystem_dir(root, directory, pool):
+    """Recursively crawl DIRECTORY under ROOT in the filesystem, and return
+    a list of all the paths at or below DIRECTORY.  Use POOL for all 
+    allocations."""
 
-  # Get the directory entries for DIRECTORY.
-  entries = fs.dir_entries(root, directory, pool)
+    # Print the name of this path.
+    print directory + "/"
+    
+    # Get the directory entries for DIRECTORY.
+    entries = svn.fs.svn_fs_dir_entries(root, directory, pool)
 
-  # Initialize our returned list with the directory path itself.
-  paths = [directory]
+    # Use an iteration subpool.
+    subpool = svn.core.svn_pool_create(pool)
 
-  # Loop over the entries
-  names = entries.keys()
-  for name in names:
-    # Calculate the entry's full path.
-    full_path = os.path.join(basepath, name)
+    # Loop over the entries.
+    names = entries.keys()
+    for name in names:
+        # Clear the iteration subpool.
+        svn.core.svn_pool_clear(subpool)
 
-    # If the entry is a directory, recurse.  The recursion will return
-    # a list with the entry and all its children, which we will add to
-    # our running list of paths.
-    if fs.is_dir(fsroot, full_path, pool):
-      subpaths = crawl_filesystem_dir(root, full_path, pool)
-      paths.extend(subpaths)
+        # Calculate the entry's full path.
+        full_path = directory + '/' + name
 
-    # Else, it is a file, so add the entry's full path to the FILES list.
-    else:
-      paths.append(full_path)
+        # If the entry is a directory, recurse.  The recursion will return
+        # a list with the entry and all its children, which we will add to
+        # our running list of paths.
+        if svn.fs.svn_fs_is_dir(root, full_path, subpool):
+            crawl_filesystem_dir(root, full_path, subpool)
+        else:
+            # Else it's a file, so print its path here.
+            print full_path
 
-  return paths
+    # Destroy the iteration subpool.
+    svn.core.svn_pool_destroy(subpool)
+
+def crawl_youngest(pool, repos_path):
+    """Open the repository at REPOS_PATH, and recursively crawl its
+    youngest revision."""
+    
+    # Open the repository at REPOS_PATH, and get a reference to its
+    # versioning filesystem.
+    repos_obj = svn.repos.svn_repos_open(repos_path, pool)
+    fs_obj = svn.repos.svn_repos_fs(repos_obj)
+
+    # Query the current youngest revision.
+    youngest_rev = svn.fs.svn_fs_youngest_rev(fs_obj, pool)
+    
+    # Open a root object representing the youngest (HEAD) revision.
+    root_obj = svn.fs.svn_fs_revision_root(fs_obj, youngest_rev, pool)
+
+    # Do the recursive crawl.
+    crawl_filesystem_dir(root_obj, "", pool)
+    
+if __name__ == "__main__":
+    # Check for sane usage.
+    if len(sys.argv) != 2:
+        sys.stderr.write("Usage: %s REPOS_PATH\n"
+                         % (os.path.basename(sys.argv[0])))
+        sys.exit(1)
+
+    # Call the app-wrapper, which takes care of APR initialization/shutdown
+    # and the creation and cleanup of our top-level memory pool.
+    svn.core.run_app(crawl_youngest, os.path.normpath(sys.argv[1]))
 </programlisting>
       </example>
 
-      <para>An implementation in C of the previous example would
-        stretch on quite a bit longer.  The same routine in C would
-        need to pay close attention to memory usage, and need to use
-        custom datatypes for representing the hash of entries and the
-        list of paths.  Python has hashes (called
-        <quote>dictionaries</quote>) and lists as built-in datatypes,
-        and provides a wonderful selection of methods for operating on
-        those types.  And since Python uses reference counting and
-        garbage collection, users of the language don't have to bother
-        themselves with allocating and freeing memory.</para>
+      <para>This same program in C would need to deal with custom
+        datatypes (such as those provided by the APR library) for
+        representing the hash of entries and the list of paths, but
+        Python has hashes (called <quote>dictionaries</quote>) and
+        lists as built-in datatypes, and provides a rich collection of
+        functions for operating on those types.  So SWIG (with the
+        help of some customizations in Subversion's language bindings
+        layer) takes care of mapping those custom datatypes into the
+        native datatypes of the target language.  This provides a more
+        intuitive interface for users of that language.</para>
 
-      <para>In the previous section of this chapter, we mentioned the
-        <filename>libsvn_client</filename> interface, and how it
-        exists for the sole purpose of simplifying the process of
-        writing a Subversion client.  The following is a brief example
-        of how that library can be accessed via the SWIG bindings.  In
-        just a few lines of Python, you can check out a fully
-        functional Subversion working copy!</para>
+      <para>The Subversion Python bindings can be used for working
+        copy operations, too.  In the previous section of this
+        chapter, we mentioned the <filename>libsvn_client</filename>
+        interface, and how it exists for the sole purpose of
+        simplifying the process of writing a Subversion client.  The
+        following is a brief example of how that library can be
+        accessed via the SWIG bindings to recreate a scaled-down
+        version of the <command>svn status</command> command.</para>
 
       <example id="svn.developer.usingapi.otherlangs.ex-2">
-        <title>A Simple Script to Check Out a Working Copy.</title>
+        <title>A Python Status Crawler</title>
 
         <programlisting>
 #!/usr/bin/env python
+
+"""Crawl a working copy directory, printing status information."""
+
 import sys
-from svn import util, _util, _client
+import os.path
+import getopt
+import svn.core, svn.client, svn.wc
 
-def usage():
-  print "Usage: " + sys.argv[0] + " URL PATH\n"
-  sys.exit(0)
+def generate_status_code(status):
+    """Translate a status value into a single-character status code,
+    using the same logic as the Subversion command-line client."""
 
-def run(url, path):
-  # Initialize APR and get a POOL.
-  _util.apr_initialize()
-  pool = util.svn_pool_create(None)
+    if status == svn.wc.svn_wc_status_none:
+        return ' '
+    if status == svn.wc.svn_wc_status_normal:
+        return ' '
+    if status == svn.wc.svn_wc_status_added:
+        return 'A'
+    if status == svn.wc.svn_wc_status_missing:
+        return '!'
+    if status == svn.wc.svn_wc_status_incomplete:
+        return '!'
+    if status == svn.wc.svn_wc_status_deleted:
+        return 'D'
+    if status == svn.wc.svn_wc_status_replaced:
+        return 'R'
+    if status == svn.wc.svn_wc_status_modified:
+        return 'M'
+    if status == svn.wc.svn_wc_status_merged:
+        return 'G'
+    if status == svn.wc.svn_wc_status_conflicted:
+        return 'C'
+    if status == svn.wc.svn_wc_status_obstructed:
+        return '~'
+    if status == svn.wc.svn_wc_status_ignored:
+        return 'I'
+    if status == svn.wc.svn_wc_status_external:
+        return 'X'
+    if status == svn.wc.svn_wc_status_unversioned:
+        return '?'
+    return '?'
 
-  # Checkout the HEAD of URL into PATH (silently)
-  _client.svn_client_checkout(None, None, url, path, -1, 1, None, pool)
+def do_status(pool, wc_path, verbose):
+    # Calculate the length of the input working copy path.
+    wc_path_len = len(wc_path)
 
-  # Cleanup our POOL, and shut down APR.
-  util.svn_pool_destroy(pool)
-  _util.apr_terminate()
+    # Build a client context baton.
+    ctx = svn.client.svn_client_ctx_t()
 
+    def _status_callback(path, status, root_path_len=wc_path_len):
+        """A callback function for svn_client_status."""
+
+        # Print the path, minus the bit that overlaps with the root of
+        # the status crawl
+        text_status = generate_status_code(status.text_status)
+        prop_status = generate_status_code(status.prop_status)
+        print '%s%s  %s' % (text_status, prop_status, path[wc_path_len + 1:])
+        
+    # Do the status crawl, using _status_callback() as our callback function.
+    svn.client.svn_client_status(wc_path, None, _status_callback,
+                                 1, verbose, 0, 0, ctx, pool)
+
+def usage_and_exit(errorcode):
+    """Print usage message, and exit with ERRORCODE."""
+    stream = errorcode and sys.stderr or sys.stdout
+    stream.write("""Usage: %s OPTIONS WC-PATH
+Options:
+  --help, -h    : Show this usage message
+  --verbose, -v : Show all statuses, even uninteresting ones
+""" % (os.path.basename(sys.argv[0])))
+    sys.exit(errorcode)
+    
 if __name__ == '__main__':
-  if len(sys.argv) != 3:
-    usage()
-  run(sys.argv[1], sys.argv[2])
+    # Parse command-line options.
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hv", ["help", "verbose"])
+    except getopt.GetoptError:
+        usage_and_exit(1)
+    verbose = 0
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            usage_and_exit(0)
+        if opt in ("-v", "--verbose"):
+            verbose = 1
+    if len(args) != 1:
+        usage_and_exit(2)
+            
+    # Call the app-wrapper, which takes care of APR initialization/shutdown
+    # and the creation and cleanup of our top-level memory pool.
+    svn.core.run_app(do_status, os.path.normpath(args[0]), verbose)
 </programlisting>
       </example>
 
