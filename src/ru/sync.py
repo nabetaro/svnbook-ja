@@ -62,6 +62,7 @@ Continue? [y/N] """
             cmd = "svn merge" + " -r " + last_up_rev + ":" + "HEAD" + " " + \
                   book_src_url
             print cmd
+            os.system(cmd)
             os.chdir("..")
             os.system("svnversion . --no-newline > LAST_UPDATED")
         sys.exit()
