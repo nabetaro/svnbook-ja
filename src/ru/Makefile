@@ -16,19 +16,5 @@ book-last-updated:
 	  echo '<!ENTITY svn.version "">' > $(BOOK_VERSION_SOURCE); \
 	fi
 
-sync:
-	mkdir sync.LOCK
-	svn update
-	svn status -q
-	@echo
-	@echo Note local changes and press ENTER...
-	@read
-	svnversion . > HEADREV
-	svn merge -r$$(cat LAST_UPDATED):$$(cat HEADREV) \
-			https://svn.red-bean.com/svnbook/trunk/src/en/
-	@echo
-	mv HEADREV LAST_UPDATED
-	rmdir sync.LOCK
-
 dist-html-chunk:
 	../tools/book-dist.py --html-chunk --name svnbook-html-chunk-ru
