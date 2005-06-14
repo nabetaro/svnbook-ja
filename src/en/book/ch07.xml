@@ -1777,6 +1777,162 @@ Cumulus clouds are appearing more frequently as summer approaches.
   <sect1 id="svn.advanced.locking">
     <title>Locking</title>
 
+    <para>Subversion's <quote>copy-modify-merge</quote> model is
+      optimal when users are collaborating on projects that consist of
+      line-based text files, such as program source code.  However, as
+      discussed in <xref
+      linkend="svn.basic.vsn-models.copy-merge.sb-1"/>, sometimes one
+      has to use the <quote>lock-modify-unlock</quote> model instead
+      of Subversion's standard concurrent model.  When a file consists
+      of binary data, it's often difficult or impossible to merge two
+      sets of changes made in parallel by different users.  For this
+      reason, Subversion 1.2 and later offers a feature known as
+      <firstterm>locking</firstterm>, often known as <quote>reserved
+      checkouts</quote> in other version control systems.</para>
+
+    <para>Subversion's locking feature has two main goals:</para>
+
+    <itemizedlist>
+      <listitem><para><emphasis>Serializing access to a
+          resource</emphasis>.  Allow a user to grab an exclusive
+          right to change to a file in the repository.  If Harry
+          reserves the right to change <filename>foo.jpg</filename>,
+          then Sally should not be able to commit a change to that
+          file.</para>
+      </listitem>
+      <listitem><para><emphasis>Aiding communication</emphasis>.
+          Prevent users from wasting time on unmergeable changes.  If
+          Harry has reserved the right to change
+          <filename>foo.jpg</filename>, then it should be easy for
+          Sally to notice this fact and avoid working on the
+          file.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Subversion's locking feature is currently limited to files
+      only; it's not yet possible to recursively reserve access to a
+      whole directory tree.</para>
+
+    <sect2 id="svn.advanced.locking.file-reservation">
+      <title>Reserving a file</title>
+      
+      <para>In the Subverison repository, a
+        <firstterm>lock</firstterm> is a piece of metadata which
+        grants exclusive access to one user to change a file.  This
+        user is said to be the <firstterm>lock owner</firstterm>.
+        Each lock also has a unique identifier, typically a long
+        string of characters, known as the <firstterm>lock
+        token</firstterm>.  The repository manages locks in a separate
+        table, and enforces locks during commit.  If any commit
+        transaction attempts to modify or delete the file (or delete a
+        parent of the file), the repository will demand two pieces of
+        information:</para>
+      
+      <orderedlist>
+        <listitem><para><emphasis role="bold">User
+          authentication</emphasis>.  The client performing the commit
+          must be authenticated as the lock owner.</para>
+        </listitem>
+        <listitem><para><emphasis role="bold">Software
+          authorization</emphasis>.  The user's working copy must send
+          the lock token with the commit, proving that it knows
+          exactly which lock it's using.</para>
+        </listitem>
+      </orderedlist>
+      
+      <para>An example is in order, to demonstrate.  Let's say that
+        Harry has decided to change a JPEG image.  To prevent other
+        people from committing changes to the file, he locks the file
+        in the repository using the <command>svn lock</command>
+        command:</para>
+
+      <screen>
+$ svn lock banana.jpg -m "Editing file for tomorrow's release."
+'banana.jpg' locked by user 'harry'.
+
+$ svn status
+     K banana.jpg
+
+$ svn info banana.jpg
+Path: banana.jpg
+Name: banana.jpg
+URL: http://svn.example.com/repos/project/banana.jpg
+Repository UUID: edb2f264-5ef2-0310-a47a-87b0ce17a8ec
+Revision: 2198
+Node Kind: file
+Schedule: normal
+Last Changed Author: frank
+Last Changed Rev: 1950
+Last Changed Date: 2005-03-15 12:43:04 -0600 (Tue, 15 Mar 2005)
+Text Last Updated: 2005-06-08 19:23:07 -0500 (Wed, 08 Jun 2005)
+Properties Last Updated: 2005-06-08 19:23:07 -0500 (Wed, 08 Jun 2005)
+Checksum: 3b110d3b10638f5d1f4fe0f436a5a2a5
+Lock Token: opaquelocktoken:0c0f600b-88f9-0310-9e48-355b44d4a58e
+Lock Owner: harry
+Lock Created: 2005-06-14 17:20:31 -0500 (Tue, 14 Jun 2005)
+Lock Comment (1 line):
+Editing file for tomorrow's release.
+
+</screen>
+
+      <para>There are a number of new things demonstrated in the
+        previous example.  First, notice that Harry passed the
+        <option>-m</option> option to <command>svn lock</command>.
+        Similar to <command>svn commit</command>, the <command>svn
+        lock</command> command can take comments (either via
+        <option>-m</option> or <option>-F</option>) to describe the
+        reason for locking the file.  Unlike <command>svn
+        commit</command>, however, <command>svn lock</command> will
+        not demand a message by launching <literal>$EDITOR</literal>
+        or <literal>$SVN_EDITOR</literal>.  Lock comments are strictly
+        optional.</para>
+
+      <para>Also notice that after creating the lock in the
+        repository, the working copy has cached detailed information
+        about the lock&mdash;most importantly, the lock token.  The
+        presence of the lock token is critical;  it gives the working
+        copy authorization to make use of the lock later on.  The
+        <command>svn status</command> command shows a
+        <literal>K</literal> next to the file (short for locKed),
+        indicating that the lock token is present.</para>
+
+      <sidebar>
+        <title>Regarding lock tokens</title>
+
+        <para>A lock token isn't an authentication token, so much as
+          an <emphasis>authorization</emphasis> token.  The token
+          isn't a protected secret;  in fact, a lock's unique token is
+          discoverable by anyone who runs <command>svn info
+          URL</command>.</para>
+
+        <para>A lock token special only when it lives inside a working
+          copy.  It's proof that the lock was created in that
+          particular working copy, and not some other piece of
+          software.  Merely authenticating as the lock-owner isn't
+          enough to prevent chaos.</para>
+
+        <para>For example: suppose you lock an unmergeable file using
+         a computer at your office, perhaps as part of a changeset in
+         progress.  It should not be possible for a working copy (or
+         alternate Subversion client) on your home computer to
+         accidentally commit a change to that same file, just because
+         you've authenticated as the lock's owner.  In other words,
+         the lock token prevents one piece of Subversion-related
+         software from undermining the work of another.  (In our
+         example, if you really need to change the file from an
+         alternate working copy, you would need to break the lock and
+         re-lock the file.)</para>
+      </sidebar>
+
+
+
+    </sect2>
+
+
+
+
+
+
 
   </sect1>
 
