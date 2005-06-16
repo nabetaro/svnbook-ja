@@ -1693,25 +1693,10 @@ Cumulus clouds are appearing more frequently as summer approaches.
           file becomes read-write.  When the lock is released, the
           file becomes read-only again.</para>
 
-        <para>Users and administrators are encouraged to attach this
-          property to any file which cannot be contextually merged,
-          such as binary or proprietary-formatted files.  The main
-          idea is to prevent wasted time;  if the file is normally
-          read-only, then users will be reminded to lock the file
-          before editing, thus discovering any pre-existing
-          locks.</para>
-
-        <para>Note that this property is a communication system which
-          works independent of the locking system.  In other words,
-          any file can be locked, whether or not this property is
-          present.  And conversely, the presence of this property
-          doesn't make the repository require a lock.  It's possible
-          for a misbehaving application to "hijack" the read-only
-          file, edit it anyway, then allow the user to commit without
-          a lock.</para>
-
-        <para>For more on locking, see <xref
-        linkend="svn.advanced.locking"/>.</para>
+        <para>To learn more about how, when, and why this property
+          should be used, see
+          <xref
+          linkend="svn.advanced.locking.lock-communication"/>.</para>
       </sect3>
 
     </sect2>
@@ -2248,16 +2233,88 @@ $
 
     </sect2>
 
-    <sect2 id="svn.advanced.locking.prevent-wasted-time">
-      <title>Preventing wasted time</title>
+    <sect2 id="svn.advanced.locking.lock-communication">
+      <title>Lock Communication</title>
 
-      
-      
+      <para>We've seen how <command>svn lock</command>
+        and <command>svn unlock</command> can be used to create,
+        release, break, and steal locks.  This satisifies the goal of
+        serializing commit access to a file.  But what about the
+        larger problem of preventing wasted time?</para>
 
+      <para>For example, suppose Harry locks an image file and then
+        begins editing it.  Meanwhile, miles away, Sally wants to do
+        the same thing.  She doesn't think to run <command>svn status
+        --show-updates</command>, so she has no idea that Harry has
+        already locked the file.  She spends hours editing the file,
+        and when she tries to commit her change, she discovers that
+        either the file is locked or that she's out-of-date.
+        Regardless, her changes aren't mergeable with Harry's.  One of
+        these two people has to throw away their work, and a lot of
+        time has been wasted.</para>
+      
+      <para>Subversion's solution to this problem is provide a
+        mechanism to remind users that a file ought to be locked
+        <emphasis>before</emphasis> the editing begins.</para>
+
+      <para>The mechanism is a special
+        property, <literal>svn:needs-lock</literal>.  If the property
+        is attached to a file (the value is irrelevant), then the file
+        will have read-only permissions.  When the user locks the file
+        and receives a lock token, the file becomes read-write.  When
+        the lock is released&mdash;either explicitly unlocked, or
+        released via commit&mdash;the file returns to read-only
+        again.</para>
+      
+      <para>The theory, then, is that if the image file has this
+        property attached, then Sally would immediately notice
+        something is strange when she opens the file for editing.  Her
+        application would be unable to save changes, or (better yet)
+        tell her that the file is read-only.  This reminds her to lock
+        the file before editing, whereby she discovers the
+        pre-existing lock:</para>
+
+      <screen>
+$ /usr/local/bin/gimp raisin.jpg
+gimp: error: file is read-only!
+
+$ ls -l raisin.jpg
+-r--r--r--   1 sally   sally   215589 Jun  8 19:23 raisin.jpg
+
+$ svn lock raisin.jpg
+svn: Lock request failed: 423 Locked (http://svn.example.com)
+
+$ svn info http://svn.example.com/repos/project/raisin.jpg | grep Lock
+Lock Token: opaquelocktoken:fc2b4dee-98f9-0310-abf3-653ff3226e6b
+Lock Owner: harry
+Lock Created: 2005-06-08 07:29:18 -0500 (Thu, 08 June 2005)
+Lock Comment (1 line):
+Making some tweaks.  Locking for the next two hours.
+
+</screen>
+
+        <para>As a matter of <quote>best practice</quote>, both users
+          and administrators are encouraged to attach
+          the <literal>svn:needs-lock</literal> property to any file
+          which cannot be contextually merged.  It's the main
+          technique for encouraging good locking habits and preventing
+          wasted effort.</para>
+
+        <para>Note that this property is a communication tool which
+          works independently from the locking system.  In other
+          words, any file can be locked, whether or not this property
+          is present.  And conversely, the presence of this property
+          doesn't make the repository require a lock when
+          committing.</para>
+
+        <para>The system isn't flawless, either.  It's possible that
+          even when a file has the property, the read-only reminder
+          won't always work.  Sometimes applications misbehave and
+          <quote>hijack</quote> the read-only file, silently allowing
+          users to edit and save the file anyway.  Unfortunately,
+          there's not much Subversion can do about this.</para>
 
     </sect2>
-
-
 
   </sect1>
 
