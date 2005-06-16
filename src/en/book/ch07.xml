@@ -1797,8 +1797,7 @@ Cumulus clouds are appearing more frequently as summer approaches.
           resource</emphasis>.  Allow a user to grab an exclusive
           right to change to a file in the repository.  If Harry
           reserves the right to change <filename>foo.jpg</filename>,
-          then Sally should not be able to commit a change to that
-          file.</para>
+          then Sally should not be able to commit a change to it.</para>
       </listitem>
       <listitem><para><emphasis>Aiding communication</emphasis>.
           Prevent users from wasting time on unmergeable changes.  If
@@ -1810,23 +1809,23 @@ Cumulus clouds are appearing more frequently as summer approaches.
     </itemizedlist>
 
     <para>Subversion's locking feature is currently limited to files
-      only; it's not yet possible to reserve access to a whole
+      only&mdash;it's not yet possible to reserve access to a whole
       directory tree.</para>
 
     <sect2 id="svn.advanced.locking.creation">
       <title>Creating locks</title>
       
-      <para>In the Subverison repository, a
+      <para>In the Subversion repository, a
         <firstterm>lock</firstterm> is a piece of metadata which
         grants exclusive access to one user to change a file.  This
         user is said to be the <firstterm>lock owner</firstterm>.
         Each lock also has a unique identifier, typically a long
         string of characters, known as the <firstterm>lock
         token</firstterm>.  The repository manages locks in a separate
-        table, and enforces locks during commit.  If any commit
-        transaction attempts to modify or delete the file (or delete a
-        parent of the file), the repository will demand two pieces of
-        information:</para>
+        table, and enforces locks during a commit operation.  If any
+        commit transaction attempts to modify or delete the file (or
+        delete a parent of the file), the repository will demand two
+        pieces of information:</para>
       
       <orderedlist>
         <listitem><para><emphasis role="bold">User
@@ -1847,7 +1846,7 @@ Cumulus clouds are appearing more frequently as summer approaches.
         command:</para>
 
       <screen>
-$ svn lock banana.jpg -m "Editing file for tomorrow's release."
+$ svn lock banana.jpg --message "Editing file for tomorrow's release."
 'banana.jpg' locked by user 'harry'.
 
 $ svn status
@@ -1877,15 +1876,16 @@ Editing file for tomorrow's release.
 
       <para>There are a number of new things demonstrated in the
         previous example.  First, notice that Harry passed the
-        <option>-m</option> option to <command>svn lock</command>.
-        Similar to <command>svn commit</command>, the <command>svn
-        lock</command> command can take comments (either via
-        <option>-m</option> or <option>-F</option>) to describe the
-        reason for locking the file.  Unlike <command>svn
-        commit</command>, however, <command>svn lock</command> will
-        not demand a message by launching <literal>$EDITOR</literal>
-        or <literal>$SVN_EDITOR</literal>.  Lock comments are
-        optional, but still recommended to aid communication.</para>
+        <option>--message</option> option to <command>svn
+        lock</command>.  Similar to <command>svn commit</command>,
+        the <command>svn lock</command> command can take comments
+        (either via
+        <option>--message (-m)</option> or <option>--file
+        (-F)</option>) to describe the reason for locking the file.
+        Unlike <command>svn commit</command>, however, <command>svn
+        lock</command> will not demand a message by launching your
+        preferred text editor.  Lock comments are optional, but still
+        recommended to aid communication.</para>
 
       <para>Second, the lock attempt succeeded.  This means that the
         file wasn't already locked, and that Harry had the latest
@@ -1895,10 +1895,10 @@ Editing file for tomorrow's release.
         reattempt the locking command.</para>
 
       <para>Also notice that after creating the lock in the
-        repository, the working copy has cached detailed information
-        about the lock&mdash;most importantly, the lock token.  The
-        presence of the lock token is critical;  it gives the working
-        copy authorization to make use of the lock later on.  The
+        repository, the working copy has cached information about the
+        lock&mdash;most importantly, the lock token.  The presence of
+        the lock token is critical.  It gives the working copy
+        authorization to make use of the lock later on.  The
         <command>svn status</command> command shows a
         <literal>K</literal> next to the file (short for locKed),
         indicating that the lock token is present.</para>
@@ -1912,23 +1912,23 @@ Editing file for tomorrow's release.
           discoverable by anyone who runs <command>svn info
           URL</command>.</para>
 
-        <para>A lock token special only when it lives inside a working
-          copy.  It's proof that the lock was created in that
+        <para>A lock token is special only when it lives inside a
+          working copy.  It's proof that the lock was created in that
           particular working copy, and not somewhere else by some
-          other client.  Merely authenticating as the lock-owner isn't
-          enough to prevent chaos.</para>
+          other client.  Merely authenticating as the lock owner isn't
+          enough to prevent accidents.</para>
 
-        <para>For example: suppose you lock an unmergeable file using
-         a computer at your office, perhaps as part of a changeset in
-         progress.  It should not be possible for a working copy (or
-         alternate Subversion client) on your home computer to
-         accidentally commit a change to that same file, just because
-         you've authenticated as the lock's owner.  In other words,
-         the lock token prevents one piece of Subversion-related
-         software from undermining the work of another.  (In our
-         example, if you really need to change the file from an
-         alternate working copy, you would need to break the lock and
-         re-lock the file.)</para>
+        <para>For example: suppose you lock a file using a computer at
+         your office, perhaps as part of a changeset in progress.  It
+         should not be possible for a working copy (or alternate
+         Subversion client) on your home computer to accidentally
+         commit a change to that same file, just because you've
+         authenticated as the lock's owner.  In other words, the lock
+         token prevents one piece of Subversion-related software from
+         undermining the work of another.  (In our example, if you
+         really need to change the file from an alternate working
+         copy, you would need to break the lock and re-lock the
+         file.)</para>
       </sidebar>
 
       <para>Now that Harry has locked <filename>banana.jpg</filename>,
@@ -1988,8 +1988,10 @@ $
           files he needs to change.  He ends up making changes to only
           four files.  When he runs <command>svn commit
           images</command>, the process would still release all thirty
-          locks.  This behavior of automatically releasing locks can
-          be overridden with the <option>--no-unlock</option> option
+          locks.</para>
+
+      <para>This behavior of automatically releasing locks can be
+          overridden with the <option>--no-unlock</option> option
           to <command>svn commit</command>.  This is best used for
           those times when you want to commit changes, but still plan
           to make more changes and thus need to retain existing locks.
@@ -1999,7 +2001,8 @@ $
           linkend="svn.advanced.confarea"/>.)</para>
 
       <para>Of course, locking a file doesn't oblige one to commit a
-        change to it.  The lock can be released with a simple
+        change to it.  The lock can be released at any time with a
+        simple
         <command>svn unlock</command> command:</para>
 
       <screen>
@@ -2031,12 +2034,12 @@ Status against revision:     105
         <filename>foo.h</filename> is out-of-date, but that one of the
         two modified files she plans to commit is locked in the
         repository.  The <literal>O</literal> symbol stands for
-        <quote>(O)ther</quote>, meaning that a lock exists on the
-        file, and was created by somebody else.  If she were to
-        attempt a commit, the lock on <filename>raisin.jpg</filename>
-        would prevent it.  Sally is left wondering who made the lock,
-        when, and why.  Once again, <command>svn info</command> has
-        the answers:</para>
+        <quote>Other</quote>, meaning that a lock exists on the file,
+        and was created by somebody else.  If she were to attempt a
+        commit, the lock on <filename>raisin.jpg</filename> would
+        prevent it.  Sally is left wondering who made the lock, when,
+        and why.  Once again, <command>svn info</command> has the
+        answers:</para>
 
       <screen>
 $ svn info http://svn.example.com/repos/project/raisin.jpg
@@ -2204,60 +2207,60 @@ $
 
         <para>If the repository lock was broken, then <command>svn
             status --show-updates</command> displays
-            a <literal>B</literal> ((B)roken) symbol next to the file.
+            a <literal>B</literal> (Broken) symbol next to the file.
             If a new lock exists in place of the old one, then
-            a <literal>T</literal> (s(T)olen) symbol is shown.
+            a <literal>T</literal> (sTolen) symbol is shown.
             Finally, <command>svn update</command> notices any defunct
             lock tokens and removes them from the working copy.</para>
 
-    </sect2>
-
-
-    <sect2 id="svn.advanced.locking.policies">
-      <title>Locking policies</title>
+        <sidebar>
+          <title>Locking Policies</title>
         
-      <para>Different systems have different notions of how strict a
-        lock should be.  Some folks argue that locks must be strictly
-        enforced at all costs, releasable only by the original creator
-        or administrator.  They argue that if anyone can break a lock,
-        then chaos breaks loose, and the whole point of locking is
-        defeated.  The other side argues that locks are first and
-        foremost a communication tool.  If users are constantly
-        breaking each others' locks, then it represents a cultural
-        failure within the team, and the problem falls outside the
-        scope of software enforcement.</para>
+          <para>Different systems have different notions of how strict
+            a lock should be.  Some folks argue that locks must be
+            strictly enforced at all costs, releasable only by the
+            original creator or administrator.  They argue that if
+            anyone can break a lock, then chaos breaks loose and the
+            whole point of locking is defeated.  The other side argues
+            that locks are first and foremost a communication tool.
+            If users are constantly breaking each others' locks, then
+            it represents a cultural failure within the team and the
+            problem falls outside the scope of software
+            enforcement.</para>
 
-      <para>Subversion defaults to the <quote>softer</quote> approach,
-        but still allows administrators to create stricter enforcement
-        policies through the use of hook scripts.  (To learn more
-        about hooks, see
-        <xref linkend="svn.reposadmin.create.hooks"/>.)</para>
+          <para>Subversion defaults to the <quote>softer</quote>
+            approach, but still allows administrators to create
+            stricter enforcement policies through the use of hook
+            scripts.  (To learn more about hooks, see
+            <xref linkend="svn.reposadmin.create.hooks"/>.)</para>
 
-      <para>In particular, the <filename>pre-lock</filename>
-        and <filename>pre-unlock</filename> hooks allow administrators
-        to decide when lock creation and lock releases are allowed to
-        happen.  For example, an administrator can disable the locking
-        feature completely by making <filename>pre-lock</filename>
-        always return failure.  Depending on whether or not a lock
-        already exists, a <filename>pre-lock</filename>
-        or <filename>pre-unlock</filename> hook program can decide
-        whether or not to allow a certain user to break or steal the
-        lock; perhaps only certain users are allowed to break or steal
-        locks from certain other users.</para>
-
-      <para>The <filename>post-lock</filename>
-        and <filename>post-unlock</filename> hooks are also available,
-        and serve the same purpose
-        as <filename>post-commit</filename>:  communication.
-        Administrators may want to send e-mails whenever somebody
-        locks or unlocks a file, to help remind users of exactly how
-        file access is being serialized.</para>
+          <para>In particular, the <filename>pre-lock</filename>
+            and <filename>pre-unlock</filename> hooks allow
+            administrators to decide when lock creation and lock
+            releases are allowed to happen.  For example, an
+            administrator can disable the locking feature completely
+            by making <filename>pre-lock</filename> always return
+            failure.  Depending on whether or not a lock already
+            exists, a <filename>pre-lock</filename>
+            or <filename>pre-unlock</filename> hook program can decide
+            whether or not to allow a certain user to break or steal
+            the lock.  The <filename>post-lock</filename>
+            and <filename>post-unlock</filename> hooks are also
+            available, and serve the same purpose
+            as <filename>post-commit</filename>: communication.
+            Administrators may want to send e-mails whenever somebody
+            locks or unlocks a file, to help remind users of exactly
+            how file access is being serialized.</para>
+        </sidebar>
 
     </sect2>
 
 
     <sect2 id="svn.advanced.locking.prevent-wasted-time">
       <title>Preventing wasted time</title>
+
+      
+
 
     </sect2>
 
