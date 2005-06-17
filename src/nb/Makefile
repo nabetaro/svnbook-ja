@@ -74,7 +74,12 @@ sync:
 	@echo ======== END svn status ========
 	@echo If there are no local changes, press ENTER...
 	@read
-	svnversion . >HEADREV
+	if [ "$(HEAD)" = "" ]; then \
+		svnversion . >HEADREV; \
+	else \
+		echo $(HEAD) >HEADREV; \
+		echo "Note: Merging up to r$(HEAD) instead of actual repository HEAD"; \
+	fi;
 	$(MAKE) editmode
 	svn merge -r$$(cat LAST_UPDATED):$$(cat HEADREV) $(COLLAB)/trunk/src/en .
 	mv HEADREV LAST_UPDATED
