@@ -712,7 +712,7 @@
           Most SQL systems, for example, have a dedicated server
           process that mediates all access to tables.  If a program
           accessing the database crashes for some reason, the database
-          daemon notices the lost connection and clean up any mess
+          daemon notices the lost connection and cleans up any mess
           left behind.  And because the database daemon is the only
           process accessing the tables, applications don't need to
           worry about permission conflicts.  These things are not the
@@ -725,7 +725,7 @@
           Other things can cause a repository to <quote>wedge</quote>
           besides crashed processes, such as programs conflicting over
           ownership and permissions on the database files.  So while a
-          BerkeleyDB repository is quite fast and scalable, it's best
+          Berkeley DB repository is quite fast and scalable, it's best
           used by a single server process running as one
           user&mdash;such as Apache's <command>httpd</command> or
           <command>svnserve</command> (see <xref
@@ -741,8 +741,9 @@
           De fleste SQL-systemer har for eksempel en dedikert 
           tjenerprosess som fordeler all tilgang til tabeller.
           Hvis et program som aksesserer databasen krasjer av en eller 
-          annen grunn, oppdager daemonen som styrer databasen dette og 
-          ordner opp i eventuelt rot som blir liggende igjen.
+          annen grunn, oppdager daemonen som styrer databasen at 
+          forbindelsen er brutt og ordner opp i eventuelt rot som blir 
+          liggende igjen.
           Og fordi databasedaemonen er den eneste prosessen som 
           aksesserer tabellene, trenger ikke applikasjoner å tenke på 
           rettighetskonflikter.
@@ -837,7 +838,7 @@
           checking out the latest tree is a bit slower than fetching
           the fulltexts stored in a Berkeley DB HEAD revision.  FSFS
           also has a longer delay when finalizing a commit, which
-          could in extreme cases cause clients to time-out when
+          could in extreme cases cause clients to time out when
           waiting for a response.</para>
         @ENGLISH }}} -->
         <para>FSFS har også forskjellige karakteristikker når det 
@@ -1616,13 +1617,13 @@ post-revprop-change.tmpl  pre-lock.tmpl             start-commit.tmpl
               create a more complex policy specifying exactly which
               users are allowed to lock particular paths.  If the hook
               notices a pre-existing lock, then it can also decide
-              whether a user is allowed to "steal" the existing lock.
-              The repository passes three arguments to the hook: the
-              path to the repository, the path being locked, and the
-              user attempting to perform the lock.  If the program
-              returns a non-zero exit value, the lock action is
-              aborted and anything printed to stderr is marshalled
-              back to the client.</para>
+              whether a user is allowed to <quote>steal</quote> the
+              existing lock.  The repository passes three arguments to
+              the hook: the path to the repository, the path being
+              locked, and the user attempting to perform the lock.  If
+              the program returns a non-zero exit value, the lock
+              action is aborted and anything printed to stderr is
+              marshalled back to the client.</para>
             @ENGLISH }}} -->
             <para>Denne påhakningen kjøres hver gang noen prøver å låse 
               en fil.
@@ -2625,7 +2626,7 @@ Available subcommands:
           </varlistentry>
 
           <varlistentry>
-            <term><literal>lstxns</literal></term>
+            <term><literal>lslocks</literal></term>
             <listitem>
               <!-- @ENGLISH {{{
               <para>List and describe any locks that exist in the
@@ -4429,8 +4430,8 @@ $ svnadmin load newrepos &lt; dumpfile
 
 </screen>
       @ENGLISH }}} -->
-      <!-- ¤ --><screen>
-$ svnadmin load nyttdepot &lt; dumpfil
+      <screen>
+$ svnadmin load newrepos &lt; dumpfile
 &lt;&lt;&lt; Started new txn, based on original revision 1
      * adding path : A ... done.
      * adding path : A/B ... done.
@@ -4457,6 +4458,48 @@ $ svnadmin load nyttdepot &lt; dumpfil
 ------- Committed new rev 26 (loaded from original rev 26) &gt;&gt;&gt;
 
 </screen>
+
+      <!-- @ENGLISH {{{
+      <para>The result of a load is new revisions added to a
+        repository&mdash;the same thing you get by making commits
+        against that repository from a regular Subversion client.  And
+        just as in a commit, you can use hook scripts to perform
+        actions before and after each of the commits made during a load
+        process.  By passing the <option>-&#64738;-use-pre-commit-hook</option> 
+        and <option>-&#64738;-use-post-commit-hook</option> options to
+        <command>svnadmin load</command>, you can instruct Subversion
+        to execute the pre-commit and post-commit hook scripts,
+        respectively, for each loaded revision.  You might use these,
+        for example, to ensure that loaded revisions pass through the
+        same validation steps that regular commits pass through.  Of
+        course, you should use these options with care&mdash;if your
+        post-commit hook sends emails to a mailing list for each new
+        commit, you might not want to spew hundreds or thousands of
+        commit emails in rapid succession at that list for each of the
+        loaded revisions!  You can read more about the use of hook 
+        scripts in <xref linkend="svn.reposadmin.create.hooks"/>.</para>
+      @ENGLISH }}} -->
+      <para>Resultatet av en lasting er at nye revisjoner blir lagt til 
+        et depot – det samme som skjer når du legger inn revisjoner i 
+        depotet fra en vanlig Subversionklient.
+        Og akkurat som i en innlegging kan du bruke påhakningsskript for  
+        å utføre oppgaver før og etter hver av innleggingene som blir 
+        gjort under en lasteprosess.
+        Ved å angi valgene <option>--use-pre-commit-hook</option> og 
+        <option>--use-post-commit-hook</option> sammen med 
+        <command>svnadmin load</command>, kan du instruere Subversion 
+        til å utføre henholdsvis pre-commit- og post-commit-skriptene 
+        for hver lastede revisjon.
+        Du kan for eksempel bruke disse til å forsikre deg om at de 
+        lastede revisjonene går gjennom de samme valideringsstegene som 
+        vanlige innlegginger går gjennom.
+        Selvfølgelig bør du bruke disse valgene med forsiktighet – hvis 
+        post-commit-påhakningen sender epost til en postliste for hver 
+        ny revisjon, vil du nok ikke sende ut hundre- eller tusenvis av 
+        innleggingsmeldinger i rask rekkefølge til denne listen for hver 
+        eneste lastede revisjon!
+        Du kan lese mer om bruken av påhakningsskript i <xref 
+        linkend="svn.reposadmin.create.hooks"/>.</para>
 
       <!-- @ENGLISH {{{
       <para>Note that because <command>svnadmin</command> uses
@@ -4782,7 +4825,7 @@ $
         it should be relatively easy to describe generic sets of
         changes&mdash;each of which should be treated as a new
         revision&mdash;using this file format.  In fact, the
-        <command>cvs2svn.py</command> utility (see <xref
+        <command>cvs2svn</command> utility (see <xref
         linkend="svn.forcvs.convert"/>) uses the dump format to represent the
         contents of a CVS repository so that those contents can be
         moved in a Subversion repository.</para>
@@ -4796,10 +4839,10 @@ $
         eposter.</para></footnote> skulle det være relativt enkelt å 
         beskrive generelle sett med forandringer – ved å bruke dette 
         filformatet.
-        Faktisk bruker programmet <command>cvs2svn.py</command> (se 
-        <xref linkend="svn.forcvs.convert"/>) dumpformatet for å 
-        representere innholdet i et CVS-depot så dette innholdet kan bli 
-        flyttet inn i et Subversiondepot.</para>
+        Faktisk bruker programmet <command>cvs2svn</command> (se <xref 
+        linkend="svn.forcvs.convert"/>) dumpformatet for å representere 
+        innholdet i et CVS-depot så dette innholdet kan bli flyttet inn 
+        i et Subversiondepot.</para>
 
     </sect2>
 
