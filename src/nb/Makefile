@@ -74,8 +74,8 @@ sync:
 	@echo ======== END svn status ========
 	@echo If there are no local changes, press ENTER...
 	@read
-	if [ "$(HEAD)" = "" ]; then \
-		svnversion . >HEADREV; \
+	@if [ "$(HEAD)" = "" ]; then \
+		svnversion . | tr -d M >HEADREV; \
 	else \
 		echo $(HEAD) >HEADREV; \
 		echo "Note: Merging up to r$(HEAD) instead of actual repository HEAD"; \
