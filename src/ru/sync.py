@@ -14,8 +14,8 @@ Options:
    -b:     Merging ru/ with en/
 
 Examples:
-   %(name)s -f ch01.xml -a diff      <- view diff for ch01.xml
-   %(name)s -b                       <- merging ru/ with en/
+   %(name)s -f book/ch01.xml -a diff   <- view diff for ch01.xml
+   %(name)s -b                         <- merging ru/ with en/
 """ % { 'name' : os.path.basename(sys.argv[0]) })
     sys.exit(err_msg and 1 or 0)
 
@@ -34,11 +34,11 @@ def main():
 
     book_src = os.listdir("book")
     file_actions = ("log", "diff", "merge")
-    book_src_url = "https://svn.red-bean.com/svnbook/trunk/src/en/book/"
+    book_src_url = "https://svn.red-bean.com/svnbook/trunk/src/en/"
 
     for o, a in opts:
         if o == "-f":
-            if a in book_src:
+            if os.path.basename(a) in book_src:
                 fname = a
         elif o == "-a":
             if a in file_actions:
@@ -60,7 +60,7 @@ Continue? [y/N] """
             os.system("svn update")
             os.chdir("book")
             cmd = "svn merge" + " -r " + last_up_rev + ":" + "HEAD" + " " + \
-                  book_src_url
+                  book_src_url + "book/"
             print cmd
             os.system(cmd)
             os.chdir("..")
