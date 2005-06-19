@@ -63,8 +63,18 @@ bookdiff:
 		cat $(BDTMP)/eng/$$_ptd | bin/clean_files -e >>$(BDTMP)/eng.txt; \
 		cat book/$$_ptd | bin/clean_files -e >>$(BDTMP)/norw.txt; \
 	done
-	vimdiff $(BDTMP)/norw.txt $(BDTMP)/eng.txt
+	@echo
+	@echo Checking files against the English version. If everything is fine,
+	@echo you should see only one line of output between the ===== lines.
+	@echo =====
+	@diff -du $(BDTMP)/eng.txt $(BDTMP)/norw.txt | grep ^-
+	@echo =====
+	@echo
 	@echo The temporary files are still in $(BDTMP)/ for you to play with.
+	@echo
+	@echo -n Press Enter to launch vimdiff or CTRL-C to exit...
+	@read
+	vimdiff $(BDTMP)/norw.txt $(BDTMP)/eng.txt
 
 sync:
 	mkdir sync.LOCK
@@ -72,7 +82,7 @@ sync:
 	@echo ======= START svn status =======
 	@svn status -q
 	@echo ======== END svn status ========
-	@echo If there are no local changes, press ENTER...
+	@echo -n If there are no local changes, press Enter...
 	@read
 	@if [ "$(HEAD)" = "" ]; then \
 		svnversion . | tr -d M >HEADREV; \
