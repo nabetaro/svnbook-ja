@@ -229,14 +229,43 @@
         authenticate, then the client simply prompts the user for the
         information.</para>
 
-      <para>The security-paranoid people may be thinking to
-        themselves, <quote>Caching passwords on disk?  That's
-        terrible!  You should never do that!</quote>  But please remain
-        calm.  First, the <filename>auth/</filename> caching area is
-        permission-protected so that only the user (owner) can read
-        data from it, not the world at large.  If that's still not
-        safe enough for you, you can disable credential caching.  To
-        disable caching for a single command, pass the
+      <para>Security-conscious people may be thinking to themselves,
+        <quote>Caching passwords on disk?  That's terrible!  You
+        should never do that!</quote> Please remain calm, it's not as
+        dangerous as it sounds.</para>
+
+      <itemizedlist>
+
+        <listitem>
+          <para>The <filename>auth/</filename> caching area is
+            permission-protected so that only the user (owner) can
+            read data from it, not the world at large.  The operating
+            system's own file permissions are protecting the
+            password.</para>
+        </listitem>
+
+        <listitem>
+          <para>On Windows 2000 and later, the Subversion client uses
+            standard Windows cryptography services to encrypt the
+            password on disk.  Because the encryption key is managed
+            by Windows and is tied to the user's own login
+            credentials, only the user can decrypt the cached
+            password.  (Note: if the the user's Windows account
+            password is changed, all of the cached passwords become
+            undecipherable.  The Subversion client will behave as if
+            they don't exist, prompting for passwords when
+            required.)</para>
+        </listitem>
+
+        <listitem>
+          <para>For the truly paranoid willing to sacrifice all
+            convenience, it's possible to disable credential caching
+            altogether.</para>
+        </listitem>
+
+      </itemizedlist>
+
+      <para>To disable caching for a single command, pass the
         <option>--no-auth-cache</option> option:</para>
 
 <screen>
@@ -1901,6 +1930,16 @@ everyone = harry, sally, joe, frank, sally, jane
 [paint:/projects/paint]
 @paint-developers = rw
 jane = r 
+</screen>
+
+        <para>Groups can also be defined to contain other
+          groups:</para>
+
+        <screen>
+[groups]
+calc-developers = harry, sally, joe
+paint-developers = frank, sally, jane
+everyone = @calc-developers, @paint-developers
 </screen>
 
         <para>...and that's pretty much all there is to it.</para>
