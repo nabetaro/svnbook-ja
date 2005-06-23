@@ -16,5 +16,5 @@ book-last-updated:
 	  echo '<!ENTITY svn.version "">' > $(BOOK_VERSION_SOURCE); \
 	fi
 
-dist-html-chunk:
+dist-html-chunk: book-last-updated
 	../tools/book-dist.py --html-chunk --name svnbook-html-chunk-ru
