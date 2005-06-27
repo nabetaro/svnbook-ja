@@ -1973,19 +1973,30 @@ $ svn diff &gt; patchfile
       <sect3 id="svn.tour.cycle.examine.revert">
         <title><command>svn revert</command></title>
 
+        <!-- @ENGLISH {{{
         <para>Now suppose you see the above diff output, and realize
           that your changes to <filename>README</filename> are a
           mistake; perhaps you accidentally typed that text into the
           wrong file in your editor.</para>
+        @ ENGLISH }}} -->
+        <para>Теперь предположим, просмотрев вывод команды diff
+          вы обнаружили, что изменения в <filename>README</filename>
+          являются ошибочными; возможно, в своем редакторе, вы случайно
+          набрали этот текст, предназначавшийся для другого файла.</para>
 
+        <!-- @ENGLISH {{{
         <para>This is a perfect opportunity to use <command>svn
           revert</command>.</para>
+        @ ENGLISH }}} -->
+        <para>Это как раз возможность воспользоваться
+          <command>svn revert</command>.</para>
 
         <screen>
 $ svn revert README
 Reverted 'README'
 </screen>
 
+        <!-- @ENGLISH {{{
         <para>Subversion reverts the file to its pre-modified state by
           overwriting it with the cached <quote>pristine</quote> copy
           from the <filename>.svn</filename> area.  But also note that
@@ -1993,6 +2004,15 @@ Reverted 'README'
           <emphasis>any</emphasis> scheduled operations&mdash;for
           example, you might decide that you don't want to add a new
           file after all:</para>
+        @ ENGLISH }}} -->
+        <para>Subversion возвращает файл в состояние, предществующее
+          модификации, путем замены файла его кешированной
+          <quote>первоначальной</quote> копией из
+          <filename>.svn</filename>-области. Кроме того, обратите внимание,
+          что <command>svn revert</command> может отменить
+          <emphasis>любые</emphasis> заланированые операции &mdash;
+          например, вы можете прийти к решению таки не добавлять новый
+          файл:</para>
 
         <screen>
 $ svn status foo
@@ -2009,6 +2029,7 @@ $ svn status foo
 </screen>
 
         <note>
+          <!-- @ENGLISH {{{
           <para><command>svn revert</command>
             <replaceable>ITEM</replaceable> has exactly the same
             effect as deleting <replaceable>ITEM</replaceable> from
@@ -2018,10 +2039,23 @@ $ svn status foo
             has one very noticeable difference&mdash;it doesn't have
             to communicate with the repository to restore your
             file.</para>
+          @ ENGLISH }}} -->
+          <para><command>svn revert</command>
+            <replaceable>ITEM</replaceable> будет иметь точно такой же эффект,
+            как и удаление <replaceable>ITEM</replaceable> из вашей рабочей
+            копии, а затем выполение <command>svn update -r BASE</command>
+            <replaceable>ITEM</replaceable>. Однако, если вы отменяете
+            изменения для файла, <command>svn revert</command> будет иметь
+            одно значительное отличие &mdash; для востановления файла
+            не происходит соединения с хранилищем.</para>
         </note>
 
+        <!-- @ENGLISH {{{
         <para>Or perhaps you mistakenly removed a file from version
           control:</para>
+        @ ENGLISH }}} -->
+        <para>Или, допустим, вы ошибочно удалили файл из-под контроля
+          версий:</para>
 
         <screen>
 $ svn status README
@@ -2040,8 +2074,12 @@ $ svn status README
       </sect3>
 
       <sidebar>
+          <!-- @ENGLISH {{{
+          <title>Look Ma! No Network!</title>
+          @ ENGLISH }}} -->
           <title>Look Ma! No Network!</title>
 
+        <!-- @ENGLISH {{{
         <para>All three of these commands (<command>svn
           status</command>, <command>svn diff</command>, and
           <command>svn revert</command>) can be used without any
@@ -2049,7 +2087,17 @@ $ svn status README
           changes-in-progress when you are somewhere without a network
           connection, such as traveling on an airplane, riding a
           commuter train or hacking on the beach.</para>
+        @ ENGLISH }}} -->
+        <para>Все эти три команды (<command>svn
+          status</command>, <command>svn diff</command> и
+          <command>svn revert</command>) могут использоваться
+          при полном отсутствии сетевого доступа. Это позволяет
+          легко управлять рабочими изменениями кагда вы находитесь там
+          где нет сетевого соединения, например, находясь в самолете,
+          едучи в пригородном поезде или занимаясь хакерством на
+          пляже.</para>
 
+        <!-- @ENGLISH {{{
         <para>Subversion does this by keeping private caches of
           pristine versions of each versioned file inside of the
           <filename>.svn</filename> administrative areas.  This allows
@@ -2067,16 +2115,43 @@ $ svn status README
           imagine the repercussions if you try to commit a one line
           change to a 400MB file and have to send the whole file to
           the server!</para>
+        @ ENGLISH }}} -->
+        <para>Для этого Subversion использует отдельную для каждого
+          версионированого файла кешированую в административной области
+          <filename>.svn</filename> первоначальную версию. Это позволяет
+          Subversion показывать &mdash; и отменять &mdash; локальные
+          изменения таких файлов <emphasis>без необходимости сетевого
+          доступа</emphasis>. Этот кеш (называемый <quote>текстовой
+          базой</quote>), кроме всего прочего, позволяет Subversion
+          при фиксации отправлять локальные пользовательские изменения
+          в виде сжатой <firstterm>дельты</firstterm> (или
+          <quote>различий</quote>) первоначальной версии. Наличие такого
+          кеша ужастно выгодо &mdash; даже если у вас высокоскоростное
+          соединение намного быстрее отправлять на сервер только изменения
+          файла вместо отправки челого файла. На первый взгляд это может
+          показаться не таким уж и важным, но представьте себе последствия,
+          если вы попытаетесь зафиксировать изменения в одной строчке для
+          файла размером 400MБ и отправите на сервер весь файл!</para>
+
     </sidebar>
 
     </sect2>
 
     <sect2 id="svn.tour.cycle.resolve">
+      <!-- @ENGLISH {{{
       <title>Resolve Conflicts (Merging Others' Changes)</title>
+      @ ENGLISH }}} -->
+      <title>Решение конфликтов (при сливании чужих изменений)</title>
 
+      <!-- @ENGLISH {{{
       <para>We've already seen how <command>svn status -u</command>
         can predict conflicts.  Suppose you run <command>svn
         update</command> and some interesting things occur:</para>
+      @ ENGLISH }}} -->
+      <para>Мы уже видели как <command>svn status -u</command>
+        может предсказать конфликты. Предположим вы запустили
+        <command>svn update</command> и произошло кое-что
+        интересное:</para>
 
       <screen>
 $ svn update
@@ -2086,6 +2161,7 @@ C  bar.c
 Updated to revision 46.
 </screen>
 
+      <!-- @ENGLISH {{{
       <para>The <computeroutput>U</computeroutput> and
         <computeroutput>G</computeroutput> codes are no cause for
         concern; those files cleanly absorbed changes from the
@@ -2097,24 +2173,51 @@ Updated to revision 46.
         means that the file had local changes to begin with, but the
         changes coming from the repository didn't overlap with the local
         changes.</para>
+      @ ENGLISH }}} -->
+      <para>Коды <computeroutput>U</computeroutput> и
+        <computeroutput>G</computeroutput> интереса не представляют;
+        эти файлы без проблем поглотили изменения из хранилища.
+        Файлы, отмеченные <computeroutput>U</computeroutput> локальных
+        изменений не содержат и были <computeroutput>U</computeroutput>pdated
+        - обновлены изменениями из хранилища. Отмеченные
+        <computeroutput>G</computeroutput> были
+        mer<computeroutput>G</computeroutput>ed - слиты, это значит, что
+        файл имел локальные изменения, но изменения, пришедшие из хранилища,
+        не перекрываются с локальными изменениями.</para>
 
+      <!-- @ENGLISH {{{
       <para>But the <computeroutput>C</computeroutput> stands for
         conflict.  This means that the changes from the server overlapped
         with your own, and now you have to manually choose between
         them.</para>
+      @ ENGLISH }}} -->
+      <para>А вот отмеченые <computeroutput>C</computeroutput> имеют конфликт.
+        Это значит, что изменения с сервера пересеклись с вашими личными и
+        теперь вам вам нужно вручную сделать между ними выбор.</para>
 
+      <!-- @ENGLISH {{{
       <para>Whenever a conflict occurs, three things typically occur
         to assist you in noticing and resolving that conflict:</para>
+      @ ENGLISH }}} -->
+      <para>Всякий раз когда возникает конфликт, для того, чтобы помочь
+        вам заметить и решить этот конфликт, возникают как правило три
+        вещи:</para>
 
       <itemizedlist>
 
         <listitem>
+          <!-- @ENGLISH {{{
           <para>Subversion prints a <computeroutput>C</computeroutput>
             during the update, and remembers that the file is in a
             state of conflict.</para>
+          @ ENGLISH }}} -->
+          <para>Subversion печатает <computeroutput>C</computeroutput>
+            во время обновления и запоминает, что файл в состоянии
+            конфликта.</para>
         </listitem>
 
         <listitem>
+          <!-- @ENGLISH {{{
           <para>If Subversion considers the file to be of a mergable
             type, it places <firstterm>conflict
             markers</firstterm>&mdash;special strings of text which
@@ -2124,17 +2227,33 @@ Updated to revision 46.
             <literal>svn:mime-type</literal> property to decide if a
             file is capable of contextual, line-based merging.  See
             <xref linkend="svn.advanced.props.special.mime-type"/> to learn more.)</para>
+          @ ENGLISH }}} -->
+          <para>Если Subversion считает, что файл объединяемого типа
+            она помещает <firstterm>маркеры конфликта</firstterm> &mdash;
+            специальные текстовые строки которые отделяют
+            <quote>стороны</quote> конфликта &mdash; в файл, для того,
+            чтобы визуально показать пересекающиеся области.
+            (Subversion использует свойство <literal>svn:mime-type</literal>
+            для определения возможности контекстного, построчного слияния.
+            См. <xref linkend="svn.advanced.props.special.mime-type"/>
+            для более подробной информации.)</para>
         </listitem>
 
         <listitem>
+          <!-- @ENGLISH {{{
           <para>For every conflicted file, Subversion places up to
             three extra unversioned files in your working copy:</para>
+          @ ENGLISH }}} -->
+          <para>Для каждого конфликтного файла Subversion добавляет в
+            рабочую копию до трех неверсионированных дополнительных
+            файлов:</para>
 
           <variablelist>
 
             <varlistentry>
               <term><filename>filename.mine</filename></term>
               <listitem>
+                <!-- @ENGLISH {{{
                 <para>This is your file as it existed in your working
                   copy before you updated your working copy&mdash;that
                   is, without conflict markers.  This file has your
@@ -2143,46 +2262,79 @@ Updated to revision 46.
                   then the <filename>.mine</filename> file isn't
                   created, since it would be identical to the working
                   file.)</para>
+                @ ENGLISH }}} -->
+                <para>Это ваш файл в том виде в каком он был в
+                  рабочей копии до обновления &mdash; без маркеров
+                  конфликта. Этот файл сотержит в себе только ваши изменения
+                  и ничего больше. (Если Subversion решает, что файл не
+                  объединяемый, тогда файл <filename>.mine</filename>
+                  не создается, так как он будет идентичным рабочему
+                  файлу.)</para>
               </listitem>
             </varlistentry>
 
             <varlistentry>
               <term><filename>filename.rOLDREV</filename></term>
               <listitem>
+                <!-- @ENGLISH {{{
                 <para>This is the file that was the
                   <literal>BASE</literal> revision before you updated
                   your working copy.  That is, the file that you
                   checked out before you made your latest
                   edits.</para>
+                @ ENGLISH }}} -->
+                <para>Это файл правки <literal>BASE</literal>, где
+                  <literal>BASE</literal> - правка которая была до обновления
+                  рабочей копии. То есть это файл который у вас был до
+                  внесения изменений.</para>
               </listitem>
             </varlistentry>
 
             <varlistentry>
               <term><filename>filename.rNEWREV</filename></term>
               <listitem>
+                <!-- @ENGLISH {{{
                 <para>This is the file that your Subversion client
                   just received from the server when you updated your
                   working copy.  This file corresponds to the
                   <literal>HEAD</literal> revision of the
                   repository.</para>
+                @ ENGLISH }}} -->
+                <para>Это файл, который ваш Subversion-клиент
+                  только что получил с сервера, когда вы обновили
+                  рабочую копию. Этот файл соответствует правке
+                  <literal>HEAD</literal> хранилища.</para>
               </listitem>
             </varlistentry>
 
           </variablelist>
 
+          <!-- @ENGLISH {{{
           <para>Here <literal>OLDREV</literal> is the revision number
             of the file in your <filename>.svn</filename> directory
             and <literal>NEWREV</literal> is the revision number of
             the repository <literal>HEAD</literal>.</para>
+          @ ENGLISH }}} -->
+          <para>Здесь <literal>OLDREV</literal> - это номер правки файла
+            в директории <filename>.svn</filename>, а
+            <literal>NEWREV</literal> - это номер правки
+            <literal>HEAD</literal> хранилища.</para>
         </listitem>
 
       </itemizedlist>
 
+      <!-- @ENGLISH {{{
       <para>For example, Sally makes changes to the file
         <filename>sandwich.txt</filename> in the repository.  Harry has
         just changed the file in his working copy and checked it in.
         Sally updates her working copy before checking in and she gets
         a conflict:</para>
+      @ ENGLISH }}} -->
+      <para>Например, Салли внесла изменения в файл
+        <filename>sandwich.txt</filename> из хранилища. Гарри
+        одновременно изменил файл в своей рабочей копии и зафиксировал
+        его. Салли обновляет свою рабочую копию перед фиксацией и получает
+        конфликт:</para>
 
       <screen>
 $ svn update
@@ -2195,9 +2347,15 @@ sandwich.txt.r1
 sandwich.txt.r2
 </screen>
 
+      <!-- @ENGLISH {{{
       <para>At this point, Subversion will <emphasis>not</emphasis>
         allow you to commit the file <filename>sandwich.txt</filename>
         until the three temporary files are removed.</para>
+      @ ENGLISH }}} -->
+      <para>Теперь Subversion <emphasis>не</emphasis> позволит зафиксировать
+        файл <filename>sandwich.txt</filename> пока не будут удалены три
+        временных файла.</para>
+
 
       <screen>
 $ svn commit --message "Add a few more things"
@@ -2205,29 +2363,46 @@ svn: Commit failed (details follow):
 svn: Aborting commit: '/home/sally/svn-work/sandwich.txt' remains in conflict
 </screen>
 
+      <!-- @ENGLISH {{{
       <para>If you get a conflict, you need to do one of three
         things:</para>
+      @ ENGLISH }}} -->
+      <para>Если вы получили конфликт, у вас есть три варианта:</para>
 
         <itemizedlist>
 
           <listitem>
+            <!-- @ENGLISH {{{
             <para>Merge the conflicted text <quote>by hand</quote> (by
               examining and editing the conflict markers within the
               file).</para>
+            @ ENGLISH }}} -->
+            <para>Объединить конфликтующий текст <quote>вручную</quote>
+              (путем анализа и редактирования маркеров конфликта в
+              файле).</para>
           </listitem>
 
           <listitem>
+            <!-- @ENGLISH {{{
             <para>Copy one of the temporary files on top of your
               working file.</para>
+            @ ENGLISH }}} -->
+            <para>Скопровать один из временных файлов поверх
+              своего рабочего файла.</para>
           </listitem>
 
           <listitem>
+            <!-- @ENGLISH {{{
             <para>Run <command>svn revert &lt;filename&gt;</command>
               to throw away all of your local changes.</para>
+            @ ENGLISH }}} -->
+            <para>Выполнить <command>svn revert &lt;filename&gt;</command>
+              для того, чтобы убрать все ваши локальные измения.</para>
           </listitem>
 
         </itemizedlist>
 
+      <!-- @ENGLISH {{{
       <para>Once you've resolved the conflict, you need to let
         Subversion know by running <command>svn resolved</command>.
         This removes the three temporary files and Subversion no
@@ -2236,6 +2411,14 @@ svn: Aborting commit: '/home/sally/svn-work/sandwich.txt' remains in conflict
         files yourself, but would you really want to do that when
         Subversion can do it for you?  We didn't think so.</para>
         </footnote></para>
+      @ ENGLISH }}} -->
+      <para>После того, как вы решили конфликт, вам нужно поставить в
+        извесность Subversion, выполнив <command>svn resolved</command>.
+        Это удаляет три временных файла и Subversion больше не считает,
+        что файл находится в состоянии конфликта.
+        <footnote><para>Вы можете удалить временные файлы самостоятельно,
+        но нужно ли вам это делать, если это может сделать Subversion?
+        Нам так не кажется.</para></footnote></para>
 
       <screen>
 $ svn resolved sandwich.txt
@@ -2243,12 +2426,21 @@ Resolved conflicted state of 'sandwich.txt'
 </screen>
 
       <sect3 id="svn.tour.cycle.resolve.byhand">
+        <!-- @ENGLISH {{{
         <title>Merging Conflicts by Hand</title>
+        @ ENGLISH }}} -->
+        <title>Объединение конфликтов вручную</title>
 
+        <!-- @ENGLISH {{{
         <para>Merging conflicts by hand can be quite intimidating the
           first time you attempt it, but with a little practice, it
           can become as easy as falling off a bike.</para>
+        @ ENGLISH }}} -->
+        <para>Объединение конфликтов вручную может показаться пугающим,
+          когда вы делаете это в первый раз, но немного попрактиковавшись
+          это может стать таким же простым, как езда на велосипеде.</para>
 
+        <!-- @ENGLISH {{{
         <para>Here's an example.  Due to a miscommunication, you and
           Sally, your collaborator, both edit the file
           <filename>sandwich.txt</filename> at the same time.  Sally
@@ -2256,6 +2448,14 @@ Resolved conflicted state of 'sandwich.txt'
           copy, you get a conflict and we're going to have to edit
           <filename>sandwich.txt</filename> to resolve the conflicts.
           First, let's take a look at the file:</para>
+        @ ENGLISH }}} -->
+        <para>Вот пример. По недоразумению, вы и ваш соразработчик Салли,
+          оба одновременно редактируете файл
+          <filename>sandwich.txt</filename>.  Салли зафиксировала свои
+          изменения и когда вы ваполните обновление своей рабочей копии,
+          вы получите конфликт и для рещения конфликта вам необходимо
+          редактировать <filename>sandwich.txt</filename>. Для начала,
+          посмотрим на файл:</para>
 
         <screen>
 $ cat sandwich.txt
@@ -2276,6 +2476,7 @@ Creole Mustard
 Bottom piece of bread
 </screen>
 
+        <!-- @ENGLISH {{{
         <para>The strings of less-than signs, equal signs, and
           greater-than signs are conflict markers, and are not part of
           the actual data in conflict.  You generally want to ensure
@@ -2283,6 +2484,12 @@ Bottom piece of bread
           commit.  The text between the first two sets of markers is
           composed of the changes you made in the conflicting
           area:</para>
+        @ ENGLISH }}} -->
+        <para>Строки знаков меньше чем, знаков равенства и заков
+          больше чем являются маркерами конфликта. Перед следующей
+          фиксацией, вам необходимо будет убедиться, что они удалены из
+          файла. Текст между первыми двумя маркерами состоит из
+          ваших изменений конфликтующей области:</para>
 
         <screen>
 &lt;&lt;&lt;&lt;&lt;&lt;&lt; .mine
@@ -2292,8 +2499,12 @@ Prosciutto
 =======
 </screen>
 
+        <!-- @ENGLISH {{{
         <para>The text between the second and third sets of conflict
           markers is the text from Sally's commit:</para>
+        @ ENGLISH }}} -->
+        <para>Текст между вторым и третьим маркером конфликта &mdash;
+          это текст из фиксации Салли:</para>
 
         <screen>
 =======
@@ -2302,6 +2513,7 @@ Grilled Chicken
 &gt;&gt;&gt;&gt;&gt;&gt;&gt; .r2
 </screen>
 
+        <!-- @ENGLISH {{{
         <para>Usually you won't want to just delete the conflict
           markers and Sally's changes&mdash;she's going to be awfully
           surprised when the sandwich arrives and it's not what she
@@ -2312,6 +2524,16 @@ Grilled Chicken
           a rail.</para></footnote> Once you've agreed on the changes
           you will check in, edit your file and remove the conflict
           markers.</para>
+        @ ENGLISH }}} -->
+        <para>Скорее всего вы не захотите просто удалить маркеры конфликта
+          и изменения Салли &mdash; она ужастно удивится, когда дойдет до
+          сандвича и не увидит того, что ей нужнно. Так, что это тот случай
+          когда вы снимаете трубку или пересекаете офис и объясняете Салли,
+          что не можете получить из итальянского гастронома квашеную капусту.
+          <footnote><para>And if you ask them for it, they may very well
+          ride you out of town on a rail.</para></footnote> После того как
+          вы согласовали изменения, вам нужно выполнить фиксацию,
+          отредактируйте ваш файл и удалите маркеры конфликта.</para>
 
         <screen>
 Top piece of bread
@@ -2326,30 +2548,50 @@ Creole Mustard
 Bottom piece of bread
 </screen>
 
+        <!-- @ENGLISH {{{
         <para>Now run <command>svn resolved</command>, and you're
           ready to commit your changes:</para>
+        @ ENGLISH }}} -->
+        <para>Теперь выполните <command>svn resolved</command> и вы
+          готовы к фиксации изменений:</para>
 
         <screen>
 $ svn resolved sandwich.txt
 $ svn commit -m "Go ahead and use my sandwich, discarding Sally's edits."
 </screen>
 
+        <!-- @ENGLISH {{{
         <para>Remember, if you ever get confused while editing the
           conflicted file, you can always consult the three files that
           Subversion creates for you in your working
           copy&mdash;including your file as it was before you updated.
           You can even use a third-party interactive merging tool to
           examine those three files.</para>
+        @ ENGLISH }}} -->
+        <para>Помните, если вы станете в тупик при редактировании
+          конфликтующего файла, вы всегда можете обратиться к трем
+          файлам, которые Subversion создает в рабочей копии &mdash;
+          включая ваш файл в том виде в каком он был до обновления.
+          Для анализа этих трех файлов, вы даже можете воспользоваться
+          программами для объединения от сторонних разработчиков.</para>
 
       </sect3>
 
       <sect3 id="svn.tour.cycle.resolve.copyover">
+        <!-- @ENGLISH {{{
         <title>Copying a File Onto Your Working File</title>
+        @ ENGLISH }}} -->
+        <title>Копирование файла поверх вашего рабочего файла</title>
 
+        <!-- @ENGLISH {{{
         <para>If you get a conflict and decide that you want to throw
           out your changes, you can merely copy one of the temporary
           files created by Subversion over the file in your working
           copy:</para>
+        @ ENGLISH }}} -->
+        <para>Если вы получили конфликт и решили отказаться от своих
+          изменений, вы можете просто скопировать один из временных файлов
+          созданых Subversion поверх файла в рабочей копии:</para>
 
         <screen>
 $ svn update
@@ -2364,11 +2606,19 @@ $ svn resolved sandwich.txt
       </sect3>
 
       <sect3 id="svn.tour.cycle.resolve.revert">
+        <!-- @ENGLISH {{{
         <title>Punting: Using <command>svn revert</command></title>
+        @ ENGLISH }}} -->
+        <title>Использование <command>svn revert</command></title>
 
+        <!-- @ENGLISH {{{
         <para>If you get a conflict, and upon examination decide that
           you want to throw out your changes and start your edits
           again, just revert your changes:</para>
+        @ ENGLISH }}} -->
+        <para>Если вы получили конфликт и вместо анализирования решаете
+          отбросить изменения и начать сначала, просто отмените ваши
+          изменения:</para>
 
         <screen>
 $ svn revert sandwich.txt
@@ -2377,11 +2627,17 @@ $ ls sandwich.*
 sandwich.txt
 </screen>
 
+        <!-- @ENGLISH {{{
         <para>Note that when you revert a conflicted file, you don't
           have to run <command>svn resolved</command>.</para>
+        @ ENGLISH }}} -->
+        <para>Обратите внимание, что когда вы возвращаете файл к предыдущему
+        состоянию, вам не нужно выполнять <command>svn
+        resolved</command>.</para>
 
       </sect3>
 
+      <!-- @ENGLISH {{{
       <para>Now you're ready to check in your changes.  Note that
         <command>svn resolved</command>, unlike most of the other
         commands we've dealt with in this chapter, requires an
@@ -2390,24 +2646,50 @@ sandwich.txt
         fixed the conflict in your file&mdash;once the temporary files
         are removed, Subversion will let you commit the file even if
         it still contains conflict markers.</para>
+      @ ENGLISH }}} -->
+      <para>Теперь вы готовы к фиксации изменений. Обратите внимание на
+        то, что <command>svn resolved</command>, в отличие от большинства
+        команд с которыми мы имели дело в этой главе, требует аргумент.
+        В любом случае будте осторожны и выполняйте <command>svn
+        resolved</command> тогда, когда убеждены, что исправили конфликт в
+        файле &mdash; после того как временные файлы будут удалены, Subversion
+        позволит вам зафиксировать файл даже если он все еще содержит маркеры
+        конфликта.</para>
 
     </sect2>
 
     <sect2 id="svn.tour.cycle.commit">
+      <!-- @ENGLISH {{{
       <title>Commit Your Changes</title>
+      @ ENGLISH }}} -->
+      <title>Фиксация изменений</title>
 
+      <!-- @ENGLISH {{{
       <para>Finally!  Your edits are finished, you've merged all
         changes from the server, and you're ready to commit your
         changes to the repository.</para>
+      @ ENGLISH }}} -->
+      <para>Наконец то! Ваши редактирования закончены, вы слили
+        все изменения с сервера и вы готовы к тому, чтобы зафиксировать
+        их в хранилище.</para>
 
+      <!-- @ENGLISH {{{
       <para>The <command>svn commit</command> command sends all of
         your changes to the repository.  When you commit a change, you
         need to supply a <firstterm>log message</firstterm>,
         describing your change.  Your log message will be attached to
         the new revision you create.  If your log message is brief,
         you may wish to supply it on the command line using the
-        <option>--message</option> (or <option>-m</option>)
+        <option>-&#64738;-message</option> (or <option>-m</option>)
         option:</para>
+      @ ENGLISH }}} -->
+      <para>Команда <command>svn commit</command> отправляет все ваши
+        изменения в хранилище. При фиксации изменений необходимо указать
+        описывающие ваши изменения <firstterm>лог сообщение</firstterm>.
+        Лог сообщение будет присоединено к созданой правке. Если ваше
+        лог сообщение короткое, вы можете указать его в командной строке,
+        используя опцию <option>--message</option> (или
+        <option>-m</option>):</para>
 
       <screen>
 $ svn commit --message "Corrected number of cheese slices."
@@ -2416,10 +2698,15 @@ Transmitting file data .
 Committed revision 3.
 </screen>
 
+      <!-- @ENGLISH {{{
       <para>However, if you've been composing your log message as you
         work, you may want to tell Subversion to get the message from
         a file by passing the filename with the
-        <option>--file</option> switch:</para>
+        <option>-&#64738;-file</option> switch:</para>
+      @ ENGLISH }}} -->
+      <para>Однако, если вы составляли лог сообщение во время работы,
+        можно указать Subversion взять лог сообщение из файла, передавая
+        имя файла в параметре <option>--file</option>:</para>
 
       <screen>
 $ svn commit --file logmsg
@@ -2428,20 +2715,33 @@ Transmitting file data .
 Committed revision 4.
 </screen>
 
+      <!-- @ENGLISH {{{
       <para>If you fail to specify either the
-        <option>--message</option> or <option>--file</option> switch,
+        <option>-&#64738;-message</option> or <option>-&#64738;-file</option> switch,
         then Subversion will automatically launch your favorite editor
         (see the <literal>editor-cmd</literal> section in
         <xref linkend="svn.advanced.confarea.opts.config"/>) for composing a log
         message.</para>
+      @ ENGLISH }}} -->
+      <para>Если вы не укажите ни опции <option>--message</option> ни
+        опции <option>--file</option>, для составления лог сообщения
+        Subversion автоматически запустит ваш любимый редактор (см.
+        <literal>editor-cmd</literal> в разделе
+        <xref linkend="svn.advanced.confarea.opts.config"/>).</para>
 
 
       <tip>
+        <!-- @ENGLISH {{{
         <para>If you're in your editor writing a commit message and
           decide that you want to cancel your commit, you can just
           quit your editor without saving changes.  If you've already
           saved your commit message, simply delete the text and save
           again.</para>
+        @ ENGLISH }}} -->
+        <para>Если в редактире набирая сообщение решите отменить фиксацию,
+          вы можете просто выйти из редактора без сохранения изменений.
+          Если вы уже сохранили сообщение, просто удалите текст и
+          выполните сохранение еще раз.</para>
 
         <screen>
 $ svn commit
@@ -2454,12 +2754,20 @@ $
 </screen>
       </tip>
 
+      <!-- @ENGLISH {{{
       <para>The repository doesn't know or care if your changes make
         any sense as a whole; it only checks to make sure that nobody
         else has changed any of the same files that you did when you
         weren't looking.  If somebody <emphasis>has</emphasis> done
         that, the entire commit will fail with a message informing you
         that one or more of your files is out-of-date:</para>
+      @ ENGLISH }}} -->
+      <para>Хранилище, в целом, не знает и не заботится о смысле ваших
+        изменений; оно только контролирует, что бы никто не изменил
+        те же файлы что и вы. Если это все таки
+        <emphasis>случилось</emphasis> вся фиксация будет отклонена с
+        сообщением информирующим вас, что один или несколько файлов
+        устарели:</para>
 
 <screen>
 $ svn commit --message "Add another rule"
@@ -2468,16 +2776,27 @@ svn: Commit failed (details follow):
 svn: Out of date: 'rules.txt' in transaction 'g'
 </screen>
 
+      <!-- @ENGLISH {{{
       <para>At this point, you need to run <command>svn
         update</command>, deal with any merges or conflicts that
         result, and attempt your commit again.</para>
+      @ ENGLISH }}} -->
+      <para>Тепереь вам нужно выполнить <command>svn update</command>
+        разобраться со всеми объединениями и конфликтами и попытаться
+        выполнить фиксацию снова.</para>
 
-
+      <!-- @ENGLISH {{{
       <para>That covers the basic work cycle for using Subversion.
         There are many other features in Subversion that you can use
         to manage your repository and working copy, but you can get by
         quite easily using only the commands that we've discussed so
         far in this chapter.</para>
+      @ ENGLISH }}} -->
+      <para>Мы рассмотрели простейший рабочий цикл при использовании
+        Subversion. В Subversion существует много других возможностей
+        которые вы можете применять для управления рабочей копией и
+        хранилищем, но с помощью команд, которые мы рассмотрели
+        в этой главе вы уже можете многое сделать.</para>
 
     </sect2>
 
@@ -2487,8 +2806,12 @@ svn: Out of date: 'rules.txt' in transaction 'g'
   <!-- ======================== SECTION 6 ============================== -->
   <!-- ================================================================= -->
   <sect1 id="svn.tour.history">
+    <!-- @ENGLISH {{{
     <title>Examining History</title>
+    @ ENGLISH }}} -->
+    <title>Анализ истории</title>
 
+    <!-- @ENGLISH {{{
     <para>As we mentioned earlier, the repository is like a time
       machine.  It keeps a record of every change ever committed,
       and allows you to explore this history by examining previous
@@ -2499,43 +2822,75 @@ svn: Out of date: 'rules.txt' in transaction 'g'
       However, sometimes you just want to <emphasis>peer
       into</emphasis> the past instead of <emphasis>going
       into</emphasis> the past.</para>
+    @ ENGLISH }}} -->
+    <para>Как мы уже говорили, хранилище похоже на машину времени.
+      Оно хранит запись о любом когда либо зафиксированом изменении
+      и позваляет вам просмотреть его хронологию путем анализа
+      предыдущих версий файлов и директорий равно как и
+      метаданных присоединенных к ним. Одной командой Subversion
+      вы можете создать рабочую копию (или воснановить существующую)
+      точно в том виде, в котором она была в любой момент времени или номер
+      правки в прошлом. Однако, как правило, иногда вам просто нужно
+      <emphasis>заглянуть в</emphasis> прошлое, вместо <emphasis>возврашения
+      в</emphasis> прошлое.</para>
 
+    <!-- @ENGLISH {{{
     <para>There are several commands that can provide you with
       historical data from the repository:</para>
+    @ ENGLISH }}} -->
+    <para>Существует несколько команд которые могут обеспечить вас
+      хронологической информацией из хранилища:</para>
 
       <variablelist>
 
         <varlistentry>
           <term><command>svn log</command></term>
           <listitem>
+            <!-- @ENGLISH {{{
             <para>Shows you broad information: log messages attached
               to revisions, and which paths changed in each
               revision.</para>
+            @ ENGLISH }}} -->
+            <para>Показывает вам развернутую информацию: лог сообщения
+              присоединены к правкам и и изменениям в каждой правке.</para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
           <term><command>svn diff</command></term>
           <listitem>
+            <!-- @ENGLISH {{{
             <para>Shows you the specific details of how a file changed
               over time.</para>
+            @ ENGLISH }}} -->
+            <para>Показывает конкретные детеали того, как файл изменился
+              с течением времени.</para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
           <term><command>svn cat</command></term>
           <listitem>
+            <!-- @ENGLISH {{{
             <para>This is used to retrieve any file as it existed in a
               particular revision number and display it on your
               screen.</para>
+            @ ENGLISH }}} -->
+            <para>Эта команда используется для получения отдельного файла
+              в том виде, в каком он был в конкретной ревизии и вывода его
+              на экран.</para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
           <term><command>svn list</command></term>
           <listitem>
+            <!-- @ENGLISH {{{
             <para>Displays the files in a directory for any given
               revision.</para>
+            @ ENGLISH }}} -->
+            <para>Показывает файлы в директории для любой указаной
+              правки.</para>
           </listitem>
         </varlistentry>
 
@@ -2545,6 +2900,7 @@ svn: Out of date: 'rules.txt' in transaction 'g'
     <sect2 id="svn.tour.history.log">
       <title><command>svn log</command></title>
 
+      <!-- @ENGLISH {{{
       <para>To find information about the history of a file or
         directory, use the <command>svn log</command>
         command. <command>svn log</command> will provide you with a
@@ -2552,6 +2908,12 @@ svn: Out of date: 'rules.txt' in transaction 'g'
         revision it changed, the time and date of that revision, and,
         if it was provided, the log message that accompanied the
         commit.</para>
+      @ ENGLISH }}} -->
+      <para>Для того, чтобы найти информацию о хронологии файла
+        или директории воспользуйтесь командой <command>svn log</command>.
+        <command>svn log</command> показывает информацию о том, кто изменял
+        файл или директорию, в какой правке это было, дату и время этой правки
+        и присоедененное к фиксации лог сообщение, если оно доступно.</para>
 
       <screen>
 $ svn log
