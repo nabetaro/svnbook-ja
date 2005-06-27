@@ -11,6 +11,8 @@ candidate_xsldirs = (
     '/usr/share/docbook-xsl',
     # Debian
     '/usr/share/xml/docbook/stylesheet/nwalsh',
+    # SUSE
+    '/usr/share/xml/docbook/stylesheet/nwalsh/current',
     # FreeBSD
     '/usr/local/share/xsl/docbook',
     # Please add your OS's location here if not listed!
