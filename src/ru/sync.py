@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os, getopt, string
+import sys, os, string
 
 def usage(err_msg):
   stream = err_msg and sys.stderr or sys.stdout
@@ -45,6 +45,11 @@ def main():
     cmd = "svn " + action + " -r " + last_up_rev + ":HEAD " + book_src_url
     print cmd
     os.system(cmd)
+    if string.lower(raw_input("Whether to udate 'LAST_UPDATED'? [y/N] ")) == 'y':
+      os.chdir("..")
+      cmd = "svnversion . --no-newline > LAST_UPDATED"
+      print cmd
+      os.system(cmd)
 
 if __name__ == "__main__":
     main()
