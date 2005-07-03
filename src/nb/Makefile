@@ -76,6 +76,13 @@ bookdiff:
 	@read
 	vimdiff $(BDTMP)/norw.txt $(BDTMP)/eng.txt
 
+engdir:
+	@if [ -d book/eng ]; then \
+		svn up -r`cat LAST_UPDATED` book/eng; \
+	else \
+		svn co -r`cat LAST_UPDATED` $(COLLAB)/trunk/src/en/book book/eng; \
+	fi
+
 sync:
 	mkdir sync.LOCK
 	svn update
