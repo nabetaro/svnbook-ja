@@ -773,8 +773,12 @@ END
   <!-- ================================================================= -->
   <sect1 id="svn.serverconfig.svnserve">
     
+    <!-- @ENGLISH {{{
     <title>svnserve, a custom server</title>
+    @ENGLISH }}} -->
+    <title>svnserve, en tilpasset tjener</title>
 
+    <!-- @ENGLISH {{{
     <para>The <command>svnserve</command> program is a lightweight
       server, capable of speaking to clients over TCP/IP using a
       custom, stateful protocol.  Clients contact an
@@ -784,23 +788,47 @@ END
       <command>svnserve</command>, how clients authenticate themselves
       to the server, and how to configure appropriate access control
       to your repositories.</para>
+    @ENGLISH }}} -->
+    <para>Programmet <command>svnserve</command> er en lettvektstjener 
+      som er i stand til å snakke med klienter over TCP/IP ved å bruke 
+      en tilpasset, <!-- ¤ --><foreignphrase>stateful</foreignphrase> 
+      protokoll.
+      Klienter kontakter en <command>svnserve</command>-tjener ved å 
+      bruke URL-er som begynner med <literal>svn://</literal>- eller 
+      <literal>svn+ssh://</literal>-skjemaet.
+      Denne seksjonen vil forklare de forskjellige måtene å kjøre 
+      <command>svnserve</command> på, hvordan klienter autentiserer seg 
+      selv ovenfor tjeneren, og hvordan du setter opp en passende 
+      adgangskontroll til depotene dine.</para>
 
     <sect2 id="svn.serverconfig.svnserve.invoking">
+      <!-- @ENGLISH {{{
       <title>Invoking the Server</title>
+      @ENGLISH }}} -->
+      <title>Starte tjeneren</title>
 
+      <!-- @ENGLISH {{{
       <para>There are a few different ways to invoke the
         <command>svnserve</command> program.  If invoked with no
         options, you'll see nothing but a help message.  However, if
         you're planning to have <command>inetd</command> launch the
         process, then you can pass the <option>-i</option>
-        (<option>--inetd</option>) option:</para>
+        (<option>-&#64738;-inetd</option>) option:</para>
+      @ENGLISH }}} -->
+      <para>Det er forskjellige måter å starte 
+        <command>svnserve</command>-programmet.
+        Hvis det kjøres uten noen valg, vil du bare se en hjelpemelding.
+        Hvis du planlegger å la <command>inetd</command> starte 
+        prosessen, kan du angi valget <option>-i</option> 
+        (<option>--inetd</option>):</para>
 
 <screen>
 $ svnserve -i
 ( success ( 1 2 ( ANONYMOUS ) ( edit-pipeline ) ) )
 </screen>
 
-      <para>When invoked with the <option>--inetd</option> option,
+      <!-- @ENGLISH {{{
+      <para>When invoked with the <option>-&#64738;-inetd</option> option,
         <command>svnserve</command> attempts to speak with a
         Subversion client via <emphasis>stdin</emphasis> and
         <emphasis>stdout</emphasis> using a custom protocol.  This is
@@ -809,44 +837,100 @@ $ svnserve -i
         for the Subversion protocol, so on a Unix-like system you can
         add lines to <filename>/etc/services</filename> like these (if
         they don't already exist):</para>
+      @ENGLISH }}} -->
+      <para>Når programmet blir startet med 
+        <option>--inetd</option>-valget, prøver 
+        <command>svnserve</command> å snakke med en Subversionklient via 
+        <emphasis>standard inn</emphasis> og <emphasis>standard 
+        ut</emphasis> ved å bruke en tilpasset protokoll.
+        Dette er den vanlige oppførselen for et program som blir kjørt 
+        via <command>inetd</command>.
+        IANA har reservert port 3690 for Subversionprotokollen, så på et 
+        Unix-lignende system kan du legge til linjer som dette i 
+        <filename>/etc/services</filename> (hvis de ikke allerede 
+        eksisterer):</para>
 
 <screen>
 svn           3690/tcp   # Subversion
 svn           3690/udp   # Subversion
 </screen>
 
+      <!-- @ENGLISH {{{
       <para>And if your system is using a classic Unix-like
         <command>inetd</command> daemon, you can add this line to
         <filename>/etc/inetd.conf</filename>:</para>
+      @ENGLISH }}} -->
+      <para>Og hvis systemet ditt bruker en klassisk Unix-lignende 
+        <command>inetd</command>-daemon, kan du legge denne linjen til 
+        <filename>/etc/inetd.conf</filename>:</para>
 
+<!-- @ENGLISH {{{
 <screen>
 svn stream tcp nowait svnowner /usr/bin/svnserve svnserve -i
 </screen>
+@ENGLISH }}} -->
+      <screen>
+svn stream tcp nowait svnbruker /usr/bin/svnserve svnserve -i
+</screen>
 
+      <!-- @ENGLISH {{{
       <para>Make sure <quote>svnowner</quote> is a user which has
         appropriate permissions to access your repositories.  Now, when
         a client connection comes into your server on port 3690,
         <command>inetd</command> will spawn an
         <command>svnserve</command> process to service it.</para>
+      @ENGLISH }}} -->
+      <para>Pass på at <quote>svnbruker</quote> er en bruker som har 
+        tilstrekkelige rettigheter til å få tilgang til depotene dine.
+        Når nå en klientforbindelse kommer inn til tjeneren på port 
+        3690, vil <command>inetd</command> starte en egen 
+        <command>svnserve</command>-prosess for å ta seg av den.</para>
 
+      <!-- @ENGLISH {{{
       <para>On a Windows system, third-party tools exist to run
       <command>svnserve</command> as a service.  Look on Subversion's
       website for a list of these tools.</para>
+      @ENGLISH }}} -->
+      <para>På et MS Windows-system finnes det tredjeparts verktøy for å 
+        kjøre <command>svnserve</command> som en tjeneste.
+        Se på Subversions hjemmeside for en liste over disse 
+        verktøyene.</para>
 
+      <!-- @ENGLISH {{{
       <para>A second option is to run <command>svnserve</command> as a
         standalone <quote>daemon</quote> process.  Use the
         <option>-d</option> option for this:</para>
+      @ENGLISH }}} -->
+      <para>En annen måte er å kjøre <command>svnserve</command> som en 
+        selvstendig <quote>daemon</quote>-prosess.
+        Bruk <option>-d</option>-valget for dette:</para>
 
+        <!-- @ENGLISH {{{
         <screen>
 $ svnserve -d
 $               # svnserve is now running, listening on port 3690
 </screen>
+        @ENGLISH }}} -->
+      <screen>
+$ svnserve -d
+$               # nå kjører svnserve og lytter på port 3690
+</screen>
 
+      <!-- @ENGLISH {{{
       <para>When running <command>svnserve</command> in daemon mode,
-        you can use the <option>--listen-port=</option> and
-        <option>--listen-host=</option> options to customize the exact
+        you can use the <option>-&#64738;-listen-port=</option> and
+        <option>-&#64738;-listen-host=</option> options to customize the exact
         port and hostname to <quote>bind</quote> to.</para>
+      @ENGLISH }}} -->
+      <para>Når <command>svnserve</command> kjøres i daemon-modus, kan 
+        du bruke valgene <option>--listen-port</option> og 
+        <option>--listen-host=</option> for å sette den eksakte porten 
+        og vertsnavn som den skal <!-- ¤ Det er jo referert til bind(2), 
+        men kan man verbe det på en fornuftig måte uten å miste 
+        presensformen? Tror ikke det, så det fornorskes litt. 
+        --><quote>bindes</quote> til:</para>
 
+      <!-- @ENGLISH {{{
       <para>There's still a third way to invoke
         <command>svnserve</command>, and that's in <quote>tunnel
         mode</quote>, with the <option>-t</option> option.  This mode
@@ -865,10 +949,35 @@ $               # svnserve is now running, listening on port 3690
         linkend="svn.serverconfig.svnserve.invoking.sb-1"/>.)  It's essentially the same as
         a local user accessing the repository via
         <literal>file:///</literal> URLs.</para>
+      @ENGLISH }}} -->
+      <para>Og det er fortsatt en tredje måte å starte 
+        <command>svnserve</command> på, og det er i <quote>tunnel 
+        modus</quote>, med valget <option>-t</option>.
+        Denne modusen forutsetter at et fjerntjenesteprogram som 
+        <command>RSH</command> eller <command>SSH</command> har klart å 
+        autentisere som en bruker og nå skal starte en privat 
+        <command>svnserve</command>-prosess <emphasis>som denne 
+        brukeren</emphasis>.
+        <command>svnserve</command>-programmet oppfører seg normalt 
+        (kommuniserer via <emphasis>standard inn</emphasis> og 
+        <emphasis>standard ut</emphasis>, og går ut i fra at trafikken 
+        blir automatisk omdirigert gjennom en form for tunnel tilbake 
+        til klienten.
+        Når <command>svnserve</command> blir startet av en <!-- ¤ agent 
+        -->tunnelagent som dette, pass på at den autentiserte brukeren 
+        har full skrive- og leseaksess til databasefilene i depotet.
+        (Se <xref linkend="svn.serverconfig.svnserve.invoking.sb-1"/>.)
+        Det er hovedsaklig det samme prinsippet som når en lokal bruker 
+        får tilgang til depotet via 
+        <literal>file:///</literal>-URLer.</para>
 
       <sidebar id="svn.serverconfig.svnserve.invoking.sb-1">
+        <!-- @ENGLISH {{{
         <title>Servers and Permissions:  A Word of Warning</title>        
+        @ENGLISH }}} -->
+        <title>Tjenere og rettigheter: En liten advarsel</title>
 
+        <!-- @ENGLISH {{{
         <para>First, remember that a Subversion repository is a
           collection of database files; any process which accesses the
           repository directly needs to have proper read and write
@@ -876,7 +985,18 @@ $               # svnserve is now running, listening on port 3690
           careful, this can lead to a number of headaches, especially
           if you're using a BerkeleyDB database rather than FSFS.  Be
           sure to read <xref linkend="svn.serverconfig.multimethod"/>.</para>
+        @ENGLISH }}} -->
+        <para>For det første, husk at et Subversiondepot er en samling 
+          med databasefiler; enhver prosess som aksesserer depotet 
+          direkte må ha tilstrekkelige lese- og skriverettigheter til 
+          hele depotet.
+          Hvis du ikke er forsiktig, kan dette føre til en rekke 
+          hodepiner, spesielt hvis du bruker en Berkeley DB-database 
+          istedenfor FSFS.
+          Pass på å lese <xref 
+          linkend="svn.serverconfig.multimethod"/>.</para>
 
+        <!-- @ENGLISH {{{
         <para>Secondly, when configuring <command>svnserve</command>,
           Apache <command>httpd</command>, or any other server
           process, keep in mind that you might not want to launch the
@@ -889,9 +1009,23 @@ $               # svnserve is now running, listening on port 3690
           <literal>svn</literal>, grant that user exclusive ownership
           and rights to the exported Subversion repositories, and only
           run their server processes as that user.</para>
+        @ENGLISH }}} -->
+        <para>For det andre, når du setter opp 
+          <command>svnserve</command>, Apache <command>httpd</command> 
+          eller en annen tjenerprosess, husk på at du vil ikke starte 
+          tjenesten som <literal>root</literal>-brukeren (eller en annen 
+          bruker med ubegrensede rettigheter).
+          Avhengig av eierskapet og rettigjhetene på depotene du 
+          eksporterer, er det ofte fornuftig å bruke en annen – kanskje 
+          spesiallaget – bruker.
+          For eksempel lager mange administratorer en ny bruker kalt 
+          <literal>svn</literal>, gir denne eksklusivt eierskap og 
+          rettigheter til de eksporterte Subversiondepotene og kjører 
+          tjenerprosessene kun som denne brkeren.</para>
       </sidebar>
 
 
+      <!-- @ENGLISH {{{
       <para>Once the <command>svnserve</command> program is running,
         it makes every repository on your system available to the
         network.  A client needs to specify an
@@ -904,21 +1038,53 @@ $               # svnserve is now running, listening on port 3690
         <option>-r</option> option to <command>svnserve</command>,
         which restricts it to exporting only repositories below that
         path:</para>
+      @ENGLISH }}} -->
+      <para>Når <command>svnserve</command>-programmet kjører, gjør det 
+        alle depotene på systemet tilgjengelig på nettverket.
+        En klient må spesifisere en <emphasis>absolutt</emphasis> sti i 
+        depot-URLen.
+        Hvis for eksempel et depot ligger i 
+        <filename>/usr/local/depoter/prosjekt1</filename>, kan en klient 
+        nå det via <systemitem 
+        class="url">svn://tjener.example.com/usr/local/depoter/prosjekt1</systemitem>.
+        For å øke sikkerheten kan du angi <option>-r</option>-valget til 
+        <command>svnserve</command> som begrenser den til å kun 
+        ekportere depoter som ligger under denne stien:</para>
       
+<!-- @ENGLISH {{{
 <screen>
 $ svnserve -d -r /usr/local/repositories
 &hellip;
 </screen>
+@ENGLISH }}} -->
+      <screen>
+$ svnserve -d -r /usr/local/depoter
+…
+</screen>
 
+      <!-- @ENGLISH {{{
       <para>Using the <option>-r</option> option effectively
         modifies the location that the program treats as the root of
         the remote filesystem space.  Clients then use URLs that
         have that path portion removed from them, leaving much
         shorter (and much less revealing) URLs:</para>
+      @ENGLISH }}} -->
+      <para>Bruken av <option>-r</option>-valget forandrer plasseringen 
+        som programmet bruker som roten på det fjerntliggende 
+        filsystemet.
+        Klienter bruker dermed URLer som har fjernet denne delen av 
+        stien, noe som gir mye kortere (og mindre avslørende) 
+        URLer:</para>
       
+<!-- @ENGLISH {{{
 <screen>
 $ svn checkout svn://host.example.com/project1
 &hellip;
+</screen>
+@ENGLISH }}} -->
+      <screen>
+$ svn checkout svn://tjener.example.com/prosjekt1
+…
 </screen>
  
     </sect2>
