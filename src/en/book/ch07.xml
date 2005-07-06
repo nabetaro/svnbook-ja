@@ -499,7 +499,9 @@ collabnet = svn.collab.net
                 <command>svn diff</command> command).  By default
                 Subversion uses an internal differencing
                 library&mdash;setting this option will cause it to
-                perform this task using an external program.</para>
+                perform this task using an external program.  See
+                <xref linkend="svn.advanced.externaldifftools"/> for
+                more details on using such programs.</para>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -511,7 +513,9 @@ collabnet = svn.collab.net
                 from the repository.  By default Subversion uses an
                 internal differencing library&mdash;setting this
                 option will cause it to perform this task using an
-                external program.</para>
+                external program.  See <xref
+                linkend="svn.advanced.externaldifftools"/> for more
+                details on using such programs.</para>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -3082,7 +3086,7 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.l10n.understanding">
       <title>Understanding locales</title>
-
+      
       <para>Most modern operating systems have a notion of the
         <quote>current locale</quote>&mdash;that is, the region or
         country whose localization conventions are honored.  These
@@ -3237,6 +3241,123 @@ svn: Can't convert string from 'UTF-8' to native encoding:
 
     </sect2>
 
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.advanced.externaldifftools">
+    <title>Using External Differencing Tools</title>
+
+    <para>The presence of <option>--diff-cmd</option> and
+      <option>--diff3-cmd</option> options, and similarly named
+      runtime configuration parameters (see <xref
+      linkend="svn.advanced.confarea.opts.config"/>), can lead to a
+      false notion of how easy it is to use external differencing (or
+      <quote>diff</quote>) and merge tools with Subversion.  While
+      Subversion can use most of popular such tools available, the
+      effort invested in setting this up often turns out to be
+      non-trivial.</para>
+
+    <para>The interface between Subversion and external diff and merge
+      tools harkens back to a time when Subversion's only contextual
+      differencing capabilities were built around invocations of the
+      Gnu diffutils toolchain, specifically the
+      <command>diff</command> and <command>diff3</command> utilities.
+      To get the kind of behavior Subversion needed, it called these
+      utilities with more than a handful of options and parameters,
+      most of which were quite specific to the utilities.  Some time
+      later, Subversion grew its own internal differencing library,
+      and as a failover mechanism,
+      <footnote>
+        <para>Subversion developers are good, but even the best make
+          mistakes.</para>
+      </footnote>
+      the <option>--diff-cmd</option> and <option>--diff3-cmd</option>
+      options were added to the Subversion command-line client so
+      users could more easily indicate that they preferred to use the
+      Gnu diff and diff3 utilities instead of the newfangled internal
+      diff library.  If those options were used, Subversion would
+      simply ignore the internal diff library, and fall back to
+      running those external programs, lengthy argument lists and all.
+      And that's where things remain today.</para>
+
+    <para>It didn't take long for folks to realize that having such
+      easy configuration mechanisms for specifying that Subversion
+      should use the external Gnu diff and diff3 utilities located at
+      a particular place on the system could be applied toward the use
+      of other diff and merge tools, too.  After all, Subversion
+      didn't actually verify that the things it was being told to run
+      were members of the Gnu diffutils toolchain.  But the only
+      configurable aspect of using those external tools is their
+      location on the system&mdash;not the option set, parameter
+      order, etc.  Subversion continues throwing all those Gnu utility
+      options at your external diff tool regardless of whether or not
+      that program can understand those options.  And that's where
+      things get unintuitive for most users.</para>
+
+    <para>The key to using external diff and merge tools (other than
+      Gnu diff and diff3, of course) with Subversion is to use wrapper
+      scripts which convert the input from Subversion into something
+      that your differencing tool can understand, and then to convert
+      the output of your tool back into a format which Subversion
+      expects&mdash;the format that the Gnu tools would have used.
+      The following sections cover the specifics of those
+      expectations.</para>
+
+    <!-- ### TODO: Give examples of scripts in the sect2's below.  The
+         diffwrap.bat and diff3wrap.bat scripts in Subversion's
+         contrib/client-side are good starting points.  Might want to
+         point out why the SHIFT calls are there.  Might want to point
+         out that the diff3 script mustn't exit before the result is
+         printed (so, can't background the "real" tool).  Might want
+         to show Unix-y examples.  Also, talk about magic errorcodes
+         (success, conflict, etc.)  -->
+
+    <!-- ### TODO: For crying out loud, we might want to just fix
+         Subversion so that the diff-cmd option is a format string
+         which can employ %L, %R, %Y, %O and %M (left, right, yours,
+         older, and mine) as the case may be. -->
+
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.externaldifftools.diff">
+      <title>External diff</title>
+
+      <para>Subversion calls external diff programs with parameters
+        suitable for the Gnu diff utility, and expects only that the
+        external program return with a successful error code.  For
+        most alternative diff program, only the sixth and seventh
+        arguments, the paths of the files which represent the left and
+        right sides of the diff, respectively, are of interest.  Note
+        that Subversion runs the diff program once per modified file
+        covered by the Subversion operation, so if your program runs
+        in an asynchronous fashion (or <quote>backgrounded</quote>),
+        you might have several instances of it all running
+        simultaneously.</para>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.externaldifftools.diff3">
+      <title>External diff3</title>
+
+      <para>Subversion calls external merge programs with parameters
+        suitable for the Gnu diff3 utility, expecting that the
+        external program return with a successful error code and that
+        the full file contents which result from the completed merge
+        operation are printed on the standard output stream (so that
+        Subversion can redirect them into the appropriate version
+        controlled file).  For most alternative merge programs, only
+        the ninth, tenth, and eleventh arguments, the paths of the
+        files which represent the <quote>mine</quote>,
+        <quote>older</quote>, and <quote>yours</quote> inputs,
+        respectively, are of interest.  Note that because Subversion
+        depends on the output of your merge program, you wrapper
+        script must not exit before that output has been delivered to
+        Subversion.</para>
+
+    </sect2>
   </sect1>
 
   <!-- ================================================================= -->
