@@ -28,17 +28,19 @@ text is kept in the files, but are commented out with special markers:
 It may look as a tedious task to add those markers, but this is taken 
 care of by a macro defined in src/nb/tools/svnbook.vim . If you also set 
 "foldmethod=marker" in Vim, the translated English text is automatically 
-folded away.
+folded away. (The only editor that has been used for the translation is 
+Vim, so the description here evolves around that one.)
 
 Editmode and commitmode
 =======================
 
 Because the English text is still present, but merely commented out, it 
-leads to problems when double dashes ("--") is used there. Double dashes 
-inside XML comments are forbidden, so they have to be escaped in some 
-way to not cripple the XML. This is done by the src/nb/bin/clean_files 
-script which can switch the files between two modes: “commit mode” and 
-“edit mode”. The difference between those two modes are:
+leads to problems when double dashes ("--") are used there. Double 
+dashes inside XML comments are forbidden, so they have to be escaped in 
+some way to not cripple the XML. This is done by the 
+src/nb/bin/clean_files script which can switch the files between two 
+modes: “commit mode” and “edit mode”. The difference between those two 
+modes is:
 
   * Commit mode
     An unique character from the “private use” area in the Unicode table 
@@ -52,24 +54,21 @@ script which can switch the files between two modes: “commit mode” and
     won’t need to run this command unless you have to resolve conflicts 
     or check that nothing have changed in the English sections. This 
     mode is only for editing purposes, and the files must not be checked 
-    while in this mode. Run a “make commitmode” to get all files in 
-    shape.
+    in while in this mode. Run a “make commitmode” to get all files in 
+    shape first.
 
 Normally you don’t have to think about running these make commands, 
 except when you’ve translated text that contains double hyphens. If 
 there are some double slashes which needs escaping, the make process 
 (you always make before checkin, right?) will return errors like
 
-book/ch03.xml:327: parser error : Comment must not contain '--' 
-(double-hyphen)
+  book/ch03.xml:327: parser error : Comment must not contain '--' 
+  (double-hyphen)
 
-and you will need to run “make commitmode”.
+and you will need to run “make commitmode” to heal the files.
 
 The actual translation
 ======================
-
-The only editor that has been used for the translation is Vim, so the 
-description here evolves around that one.
 
 To translate a paragraph, the English text has to be commented out and 
 the translation follows immediately after the commented-out block. This 
@@ -116,7 +115,7 @@ the translator of some reason or another doesn’t want to work more on
 that file, the name is removed so another translator can continue on it. 
 When the file is finished, it is moved to the “Finished” section.
 
-Proofreading of the files are also logged in this file, in the 
+Proofreading of the files is also logged in this file, in the 
 “Proofread” section. When you start proofreading a file, add the name of 
 the file in this section along with the user name and the line number of 
 the current proofread position. Example:
@@ -178,5 +177,41 @@ following merges in decent steps:
 
 This will only merge the changes up to r999, hopefully making life 
 easier.
+
+Some make commands
+==================
+
+Almost every action on the files can be done from various make commands. 
+In addition to the makes available in the English version these can also 
+be used:
+
+* make sync
+    Merge all new changes from the English XML files to the translated 
+    version.
+* make bookdiff
+    Check that the English parts of the translated files are identical 
+    to the original English data. Creates two files — bd.tmp/eng.txt and 
+    bd.tmp/norw.txt — which can be studied if there are inconsistency 
+    between the versions.
+* make engdir
+    Create a book/eng/ directory which is nice to have around if it’s 
+    necessary to diff against the master files.
+
+Scripts
+=======
+
+* src/nb/bin/clean_files
+  Converts between editmode and commitmode.
+* src/nb/bin/dings_it
+  Used during the translation. Takes care of commenting out the English 
+  text and copies all the XML elements.
+* src/nb/bin/h2u
+* src/nb/bin/u2h
+  Two scripts which is not used anymore, converts to/from numerical 
+  entities to/from UTF-8.
+* src/nb/bin/strip_english
+  Removes the @ENGLISH markers with the English text from the XML files, 
+  useful if the XML source is going to be distributed and duplication of 
+  the English text is not a good thing.
 
 vim: set fo=tcq2w tw=72 fenc=utf8 ts=2 sw=2 sts=2 com=b\:#,fb\:-,fb\:*,n\:> et :
