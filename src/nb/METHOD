@@ -1,0 +1,182 @@
+Description of the translation system
+=====================================
+
+$Id$
+
+This is a description of the translation method used in the Norwegian 
+svnbook since it started way too long ago. The system is designed to try 
+to make translation and keeping the files in sync with the English files 
+as easy as possible. If you are new to the translation, browse through 
+this file, hopefully you won’t find the system too painful to follow.
+
+The translated files are copies of the English files, which all the 
+translations are based upon. To ensure proper updating and make 
+syntactically checks against the English files possible, nothing is 
+removed from the English sections in the files, only added. The English 
+text is kept in the files, but are commented out with special markers:
+
+    <!-- @ENGLISH {{{
+    <para>This edition of the book has been updated to cover new
+      features and behavioral changes in Subversion 1.1.  Here's a
+      brief list of pointers to major 1.1 changes.</para>
+    @ENGLISH }}} -->
+    <para>Denne utgaven av boken er blitt oppdatert for å dekke nye 
+      funksjoner og forandringer i oppførselen for Subversion 1.1. Her 
+      er en rask oversikt over pekere til store forandringer i 
+      1.1.</para>
+
+It may look as a tedious task to add those markers, but this is taken 
+care of by a macro defined in src/nb/tools/svnbook.vim . If you also set 
+"foldmethod=marker" in Vim, the translated English text is automatically 
+folded away.
+
+Editmode and commitmode
+=======================
+
+Because the English text is still present, but merely commented out, it 
+leads to problems when double dashes ("--") is used there. Double dashes 
+inside XML comments are forbidden, so they have to be escaped in some 
+way to not cripple the XML. This is done by the src/nb/bin/clean_files 
+script which can switch the files between two modes: “commit mode” and 
+“edit mode”. The difference between those two modes are:
+
+  * Commit mode
+    An unique character from the “private use” area in the Unicode table 
+    (&#64738;, U+FCE2) is inserted between all occurences of double 
+    dashes in everything that is commented out, i.e. the English text. 
+    This makes the XML valid and can be checked into the repository or 
+    be built.
+  * Edit mode
+    All the &#64738;s are removed, and the files are now ready for 
+    diffing against the English files or something else. You probably 
+    won’t need to run this command unless you have to resolve conflicts 
+    or check that nothing have changed in the English sections. This 
+    mode is only for editing purposes, and the files must not be checked 
+    while in this mode. Run a “make commitmode” to get all files in 
+    shape.
+
+Normally you don’t have to think about running these make commands, 
+except when you’ve translated text that contains double hyphens. If 
+there are some double slashes which needs escaping, the make process 
+(you always make before checkin, right?) will return errors like
+
+book/ch03.xml:327: parser error : Comment must not contain '--' 
+(double-hyphen)
+
+and you will need to run “make commitmode”.
+
+The actual translation
+======================
+
+The only editor that has been used for the translation is Vim, so the 
+description here evolves around that one.
+
+To translate a paragraph, the English text has to be commented out and 
+the translation follows immediately after the commented-out block. This 
+is done with the predefined macro in src/nb/tools/svnbook.vim which 
+filters the block through the src/nb/bin/dings_it script. Yeh, oddball 
+name, but it works.
+
+Mark the paragraph with Shift-V in Vim and press <F5>. The macro expects 
+the dings_it script to exist at ~/bin/dings_it, and if it does, the 
+block is automatically commented out and all the elements with the 
+attributes intact is copied after the block, and the cursor is placed in 
+the right position ready for writing. Repeat this process through the 
+file.
+
+Some conventions exists, much to the lack of protests, and to keep 
+things consistent, over to some formatting rules:
+
+  * Width of text lines are 72 characters.
+  * As usual, use no TABs, only spaces.
+  * When marking and commenting out English paragraphs, don’t break the 
+    element structure, for example by including a </listitem> without 
+    also including the start tag. In essence, try to only include the 
+    actual text when commenting out the original text, not block-level 
+    elements.
+  * To make reformatting cleaner and to avoid cluttering the diffs with 
+    large sections of wordwrapping, all the translations uses “flowed 
+    text” (wrapped lines are terminated by a space) and every sentence 
+    is written on a new line. This limits wordwrapping to the current 
+    sentence only and doesn’t mess up the whole paragraph.
+
+The TRANSLATION-STATUS file
+===========================
+
+The Subversion book isn’t exactly small, so to keep things tidy and 
+manageable, the current status of the translation should always be 
+logged in the TRANSLATION-STATUS file. If more translators are working 
+on the same translation, it’s probably best to let each translator work 
+on different files to avoid conflicts. When a translator grabs a new 
+file, the first thing to do is to move the name of the file from the 
+“Untranslated” section into the “In progress” section where it is marked 
+with the user name of the translator who wants that file. When this 
+commit succeeds, the file is officially that translator’s domain, and if 
+the translator of some reason or another doesn’t want to work more on 
+that file, the name is removed so another translator can continue on it. 
+When the file is finished, it is moved to the “Finished” section.
+
+Proofreading of the files are also logged in this file, in the 
+“Proofread” section. When you start proofreading a file, add the name of 
+the file in this section along with the user name and the line number of 
+the current proofread position. Example:
+
+  book/ch04.xml (USERNAME, line 2453)
+
+Keeping the translation updated
+===============================
+
+With the rapid development of Subversion, not keeping the translation in 
+sync with the English version soon makes the information old and 
+incomplete. To make the process of synchronising the translated version 
+with the English version as safe and easy as possible, Subversion itself 
+is merging new changes from the src/en/ directory structure into the 
+src/nb/ area. This is taken care of by “make sync”. The make process 
+merges in new changes since the last make sync into the English sections 
+in the files, and you can then copy the exact changes into the 
+translated sections. Using a visual diff tool in these circumstances is 
+a great help.
+
+To avoid unnecessary conflicts, it is very important that the English 
+text remain unchanged. Don’t remove or add whitespace, new content is 
+_added_ to the file, it is not _replacing_ something. Use those @ENGLISH 
+markers. If this is done properly, syncronising against the English 
+version is quite easy and seldom produces conflicts. An example of an 
+sync session goes as follows:
+
+  cd src/nb/
+  make sync
+  # New updates from the book are now merged into the working copy. By 
+  # using tools like svndiff 
+  # <http://svn.sunbase.org/repos/svnutils/trunk/src/svndiff> or vimdiff 
+  # (part of the Vim package) it is fairly easy to copy the changes from 
+  # the English sections to the translated sections.
+  #
+  # Ensure that all files are ready for commit:
+  make commitmode
+  # Then, check that nothing in the English parts have changed, i.e. the 
+  # XML file corresponds to the English copy:
+  make bookdiff
+  # Make a test build:
+  make book-html
+  # Commit:
+  svn checkin
+
+That’s mostly it. Doing this on a regular basis or when big things 
+happen in the English section eases the sync pain.
+
+But if the last sync was done a long time ago or there have been 
+horrible revolutions in the src/en/ directory so things gets really 
+messy after the merge, you have the option to do the merge in smaller 
+steps. Let’s say that a file rename happens in r1000 and there are lots 
+of file changes before and after this rename. What you can do, is to 
+first merge in all the changes from when the last syncronisation was 
+done (stored in the LAST_UPDATED file) up to r999, and then take the 
+following merges in decent steps:
+
+  make sync HEAD=999
+
+This will only merge the changes up to r999, hopefully making life 
+easier.
+
+vim: set fo=tcq2w tw=72 fenc=utf8 ts=2 sw=2 sts=2 com=b\:#,fb\:-,fb\:*,n\:> et :
