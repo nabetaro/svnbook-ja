@@ -499,7 +499,9 @@ collabnet = svn.collab.net
                 <command>svn diff</command> command).  By default
                 Subversion uses an internal differencing
                 library&mdash;setting this option will cause it to
-                perform this task using an external program.</para>
+                perform this task using an external program.  See
+                <xref linkend="svn.advanced.externaldifftools"/> for
+                more details on using such programs.</para>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -511,7 +513,9 @@ collabnet = svn.collab.net
                 from the repository.  By default Subversion uses an
                 internal differencing library&mdash;setting this
                 option will cause it to perform this task using an
-                external program.</para>
+                external program.  See <xref
+                linkend="svn.advanced.externaldifftools"/> for more
+                details on using such programs.</para>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -2665,6 +2669,24 @@ Fetching external item into calc/third-party/skins
       subdirectories to display the status of the external items
       themselves.</para>
 
+    <tip>
+      <para>You should strongly consider using explicit revision
+        numbers in all of your externals definitions.  Doing so means
+        that you get to decide when to pull down a different snapshot
+        of external information, and exactly which snapshot to pull.
+        Besides the common sense aspect of not being surprised by
+        changes to third-party repositories that you might not have
+        any control over, using explicit revision numbers also means
+        that as you backdate your working copy to a previous
+        revision, your externals definitions will also revert to the
+        way they looked in that previous revision, which in turn means
+        that the external working copies will be updated to match they
+        way <emphasis>they</emphasis> looked back when your repository was
+        at that previous revision.  For software projects, this could
+        be the difference between a successful and a failed build of
+        an older snapshot of your complex codebase.</para>
+    </tip>
+
     <para>The support that exists for externals definitions in
       Subversion today can be a little misleading, though.  First, an
       externals definition can only point to directories, not files.
@@ -2693,8 +2715,8 @@ Fetching external item into calc/third-party/skins
       copy</command> to branch that line to some new location
       <filename>/branches/my-branch</filename>, the externals
       definitions on items in your new branch will still refer to
-      versioned resources in <filename>/trunk</filename>.  Also, be
-      aware that if you need to re-parent your working copy (using
+      versioned resources in <filename>/trunk</filename>.  Be aware,
+      too, that if you need to re-parent your working copy (using
       <command>svn switch --relocate</command>), externals definitions
       will <emphasis>not</emphasis> also be re-parented.</para>
 
@@ -3082,7 +3104,7 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.l10n.understanding">
       <title>Understanding locales</title>
-
+      
       <para>Most modern operating systems have a notion of the
         <quote>current locale</quote>&mdash;that is, the region or
         country whose localization conventions are honored.  These
@@ -3237,6 +3259,244 @@ svn: Can't convert string from 'UTF-8' to native encoding:
 
     </sect2>
 
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.advanced.externaldifftools">
+    <title>Using External Differencing Tools</title>
+
+    <para>The presence of <option>--diff-cmd</option> and
+      <option>--diff3-cmd</option> options, and similarly named
+      runtime configuration parameters (see <xref
+      linkend="svn.advanced.confarea.opts.config"/>), can lead to a
+      false notion of how easy it is to use external differencing (or
+      <quote>diff</quote>) and merge tools with Subversion.  While
+      Subversion can use most of popular such tools available, the
+      effort invested in setting this up often turns out to be
+      non-trivial.</para>
+
+    <para>The interface between Subversion and external diff and merge
+      tools harkens back to a time when Subversion's only contextual
+      differencing capabilities were built around invocations of the
+      GNU diffutils toolchain, specifically the
+      <command>diff</command> and <command>diff3</command> utilities.
+      To get the kind of behavior Subversion needed, it called these
+      utilities with more than a handful of options and parameters,
+      most of which were quite specific to the utilities.  Some time
+      later, Subversion grew its own internal differencing library,
+      and as a failover mechanism,
+      <footnote>
+        <para>Subversion developers are good, but even the best make
+          mistakes.</para>
+      </footnote>
+      the <option>--diff-cmd</option> and <option>--diff3-cmd</option>
+      options were added to the Subversion command-line client so
+      users could more easily indicate that they preferred to use the
+      GNU diff and diff3 utilities instead of the newfangled internal
+      diff library.  If those options were used, Subversion would
+      simply ignore the internal diff library, and fall back to
+      running those external programs, lengthy argument lists and all.
+      And that's where things remain today.</para>
+
+    <para>It didn't take long for folks to realize that having such
+      easy configuration mechanisms for specifying that Subversion
+      should use the external GNU diff and diff3 utilities located at
+      a particular place on the system could be applied toward the use
+      of other diff and merge tools, too.  After all, Subversion
+      didn't actually verify that the things it was being told to run
+      were members of the GNU diffutils toolchain.  But the only
+      configurable aspect of using those external tools is their
+      location on the system&mdash;not the option set, parameter
+      order, etc.  Subversion continues throwing all those GNU utility
+      options at your external diff tool regardless of whether or not
+      that program can understand those options.  And that's where
+      things get unintuitive for most users.</para>
+
+    <para>The key to using external diff and merge tools (other than
+      GNU diff and diff3, of course) with Subversion is to use wrapper
+      scripts which convert the input from Subversion into something
+      that your differencing tool can understand, and then to convert
+      the output of your tool back into a format which Subversion
+      expects&mdash;the format that the GNU tools would have used.
+      The following sections cover the specifics of those
+      expectations.</para>
+
+    <note>
+      <para>The decision on when to fire off a contextual diff or
+        merge as part of a larger Subversion operation is made
+        entirely by Subversion, and is affected by, among other
+        things, whether or not the files being operated on are
+        human-readable as determined by their
+        <literal>svn:mime-type</literal> property.  This means, for
+        example, that even if you had the niftiest Microsoft
+        Word-aware differencing or merging tool in the Universe, it
+        would never be invoked by Subversion so long as your versioned
+        Word documents had a configured MIME type that denoted that
+        they were not human-readable (such as
+        <literal>application/msword</literal>).  For more about MIME
+        type settings, see <xref
+        linkend="svn.advanced.props.special.mime-type"/></para>
+    </note>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.externaldifftools.diff">
+      <title>External diff</title>
+
+      <para>Subversion calls external diff programs with parameters
+        suitable for the GNU diff utility, and expects only that the
+        external program return with a successful error code.  For
+        most alternative diff program, only the sixth and seventh
+        arguments, the paths of the files which represent the left and
+        right sides of the diff, respectively, are of interest.  Note
+        that Subversion runs the diff program once per modified file
+        covered by the Subversion operation, so if your program runs
+        in an asynchronous fashion (or <quote>backgrounded</quote>),
+        you might have several instances of it all running
+        simultaneously.  Finally, Subversion expects that your program
+        return an errorcode of 0 if your program detected differences,
+        or 1 if it did not&mdash;any other errorcode is considered a
+        fatal error.
+        <footnote>
+          <para>The GNU diff manual page puts it this way: <quote>An
+            exit status of 0 means no differences were found, 1 means some
+            differences were found, and 2 means trouble.</quote></para>
+        </footnote>
+      </para>
+
+      <para><xref linkend="svn.advanced.externaldifftools.diff.ex-1"/>
+        and <xref linkend="svn.advanced.externaldifftools.diff.ex-2"/>
+        are templates for external diff tool wrappers in the Bourne
+        shell and Windows batch scripting languages,
+        respectively.</para>
+
+      <example id="svn.advanced.externaldifftools.diff.ex-1">
+        <title>diffwrap.sh</title>
+        <programlisting>
+#!/bin/sh
+
+# Configure your favorite diff program here.
+DIFF="/usr/local/bin/my-diff-tool"
+
+# Subversion provides the paths we need as the sixth and seventh 
+# parameters.
+LEFT=${6}
+RIGHT=${7}
+
+# Call the diff command (change the following line to make sense for
+# your merge program).
+$DIFF --left $LEFT --right $RIGHT
+
+# Return an errorcode of 0 if no differences were detected, 1 if some were.
+# Any other errorcode will be treated as fatal.
+</programlisting>
+      </example>
+
+      <example id="svn.advanced.externaldifftools.diff.ex-2">
+        <title>diffwrap.bat</title>
+        <programlisting>
+@ECHO OFF
+
+REM Configure your favorite diff program here.
+SET DIFF="C:\Program Files\Funky Stuff\My Diff Tool.exe"
+
+REM Subversion provides the paths we need as the sixth and seventh 
+REM parameters.
+SET LEFT=%6
+SET RIGHT=%7
+
+REM Call the diff command (change the following line to make sense for
+REM your merge program).
+%DIFF% --left %LEFT% --right %RIGHT%
+
+REM Return an errorcode of 0 if no differences were detected, 1 if some were.
+REM Any other errorcode will be treated as fatal.
+</programlisting>
+      </example>
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.externaldifftools.diff3">
+      <title>External diff3</title>
+
+      <para>Subversion calls external merge programs with parameters
+        suitable for the GNU diff3 utility, expecting that the
+        external program return with a successful error code and that
+        the full file contents which result from the completed merge
+        operation are printed on the standard output stream (so that
+        Subversion can redirect them into the appropriate version
+        controlled file).  For most alternative merge programs, only
+        the ninth, tenth, and eleventh arguments, the paths of the
+        files which represent the <quote>mine</quote>,
+        <quote>older</quote>, and <quote>yours</quote> inputs,
+        respectively, are of interest.  Note that because Subversion
+        depends on the output of your merge program, you wrapper
+        script must not exit before that output has been delivered to
+        Subversion.  When it finally does exit, it should return an
+        errorcode of 0 if the merge was successful, or 1 if unresolved
+        conflicts remain in the output&mdash;any other errorcode is
+        considered a fatal error.</para>
+
+      <para><xref linkend="svn.advanced.externaldifftools.diff3.ex-1"/> 
+        and <xref linkend="svn.advanced.externaldifftools.diff3.ex-2"/> are
+        templates for external merge tool wrappers in the Bourne shell
+        and Windows batch scripting languages, respectively.</para>
+
+      <example id="svn.advanced.externaldifftools.diff3.ex-1">
+        <title>diff3wrap.sh</title>
+        <programlisting>
+#!/bin/sh
+
+# Configure your favorite diff3/merge program here.
+DIFF3="/usr/local/bin/my-merge-tool"
+
+# Subversion provides the paths we need as the ninth, tenth, and eleventh 
+# parameters.
+MINE=${9}
+OLDER=${10}
+YOURS=${11}
+
+# Call the merge command (change the following line to make sense for
+# your merge program).
+$DIFF3 --older $OLDER --mine $MINE --yours $YOURS
+
+# After performing the merge, this script needs to print the contents
+# of the merged file to stdout.  Do that in whatever way you see fit.
+# Return an errorcode of 0 on successful merge, 1 if unresolved conflicts
+# remain in the result.  Any other errorcode will be treated as fatal.
+</programlisting>
+      </example>
+
+      <example id="svn.advanced.externaldifftools.diff3.ex-2">
+        <title>diff3wrap.bat</title>
+        <programlisting>
+@ECHO OFF
+
+REM Configure your favorite diff3/merge program here.
+SET DIFF3="C:\Program Files\Funky Stuff\My Merge Tool.exe"
+
+REM Subversion provides the paths we need as the ninth, tenth, and eleventh 
+REM parameters.  But we only have access to nine parameters at a time, so we
+REM shift our nine-parameter window twice to let us get to what we need.
+SHIFT
+SHIFT
+SET MINE=%7
+SET OLDER=%8
+SET YOURS=%9
+
+REM Call the merge command (change the following line to make sense for
+REM your merge program).
+%DIFF3% --older %OLDER% --mine %MINE% --yours %YOURS%
+
+REM After performing the merge, this script needs to print the contents
+REM of the merged file to stdout.  Do that in whatever way you see fit.
+REM Return an errorcode of 0 on successful merge, 1 if unresolved conflicts
+REM remain in the result.  Any other errorcode will be treated as fatal.
+</programlisting>
+      </example>
+
+    </sect2>
   </sect1>
 
   <!-- ================================================================= -->
