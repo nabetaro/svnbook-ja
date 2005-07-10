@@ -1095,39 +1095,84 @@ $ svn checkout svn://tjener.example.com/prosjekt1
 
     <!-- =============================================================== -->
     <sect2 id="svn.serverconfig.svnserve.auth">
+      <!-- @ENGLISH {{{
       <title>Built-in authentication and authorization</title>
+      @ENGLISH }}} -->
+      <title>Innebygget autentisering og autorisasjon</title>
 
+      <!-- @ENGLISH {{{
       <para>When a client connects to an <command>svnserve</command>
         process, the following things happen:</para>
+      @ENGLISH }}} -->
+      <para>Når en klient kobler seg til en 
+        <command>svnserve</command>-prosess, skjer de følgende 
+        tingene:</para>
 
       <itemizedlist>
+        <!-- @ENGLISH {{{
         <listitem><para>The client selects a specific
         repository.</para></listitem>
+        @ENGLISH }}} -->
+        <listitem>
+          <para>Klienten velger et spesifikt depot.</para>
+        </listitem>
 
+        <!-- @ENGLISH {{{
         <listitem><para>The server processes the repository's
         <filename>conf/svnserve.conf</filename> file, and begins to
         enforce any authentication and authorization policies defined
         therein.</para></listitem>
+        @ENGLISH }}} -->
+        <listitem>
+          <para>Tjeneren går gjennom depotets 
+            <filename>conf/svnserve.conf</filename>-fil og begynner å 
+            gjennomføre alle autentiserings- og autorisasjonsregler som 
+            er definert i den.</para>
+        </listitem>
 
+        <!-- @ENGLISH {{{
         <listitem><para>Depending on the situation and authorization
         policies,</para>
+        @ENGLISH }}} -->
+        <listitem>
+          <para>Avhengig av situasjonen og autorisasjonsreglene,</para>
 
           <itemizedlist>
+            <!-- @ENGLISH {{{
             <listitem><para>the client may be allowed to make requests
               anonymously, without ever receiving an authentication
               challenge, OR</para></listitem>
+            @ENGLISH }}} -->
+            <listitem>
+              <para>kan klienten få lov til å foreta forespørsler 
+                anonymt, uten noen gang å motta en 
+                autentiseringsutfordring, ELLER</para>
+            </listitem>
 
+            <!-- @ENGLISH {{{
             <listitem><para>the client may be challenged for
               authentication at any time, OR</para></listitem>
+            @ENGLISH }}} -->
+            <listitem>
+              <para>klienten kan bli spurt etter autentiseringsinfo til 
+                enhver tid, ELLER</para>
+            </listitem>
 
+            <!-- @ENGLISH {{{
             <listitem><para>if operating in <quote>tunnel
               mode</quote>, the client will declare itself to be
               already externally authenticated.</para></listitem>
+            @ENGLISH }}} -->
+            <listitem>
+              <para>hvis den opererer i <quote>tunnelmodus</quote>, vil 
+                klienten erklære seg selv som å allerede være eksternt 
+                autentisert.</para></listitem>
           </itemizedlist>
         </listitem>
 
       </itemizedlist>
 
+      <!-- @ENGLISH {{{
       <para>At the time of writing, the server only knows how to send
         a CRAM-MD5 <footnote><para>See RFC 2195.</para></footnote>
         authentication challenge.  In essence, the server sends a bit
@@ -1137,14 +1182,37 @@ $ svn checkout svn://tjener.example.com/prosjekt1
         the same computation with the stored password to verify that
         the result is identical.  <emphasis>At no point does the
         actual password travel over the network.</emphasis></para>
+      @ENGLISH }}} -->
+      <para>Når dette skrives, vet tjeneren bare hvordan den skal sende 
+        en CRAM-MD5<footnote>
+          <para>Se RFC 2195.</para>
+        </footnote>-autentiseringsutfordring.
+        I hovedsak sender tjeneren litt data til klienten.
+        Klienten bruker MD5-algoritmen for å lage et fingeravtrykk av de 
+        kombinerte dataene og passordet og sender fingeravtrykket som 
+        svar.
+        Tjeneren foretar den samme utregningen med det lagrede passordet 
+        for å sjekke at resultatet er identisk.
+        <emphasis>Passordet blir ikke på noe tidspunkt sendt over 
+        nettverket.</emphasis></para>
 
+      <!-- @ENGLISH {{{
       <para>It's also possible, of course, for the client to be
         externally authenticated via a tunnel agent, such as
         <command>SSH</command>.  In that case, the server simply
         examines the user it's running as, and uses it as the
         authenticated username.  For more on this, see <xref
         linkend="svn.serverconfig.svnserve.sshauth"/>.</para>
+      @ENGLISH }}} -->
+      <para>Det er også selvfølgelig mulig for klienten å bli eksternt 
+        autentisert via en tunnelagent, som for eksempel 
+        <command>SSH</command>.
+        I dette tilfellet sjekker tjeneren rett og slett bare brukeren 
+        den kjører som, og bruker den som det autentiserte brukernavnet.
+        For mer om dette, se <xref 
+        linkend="svn.serverconfig.svnserve.sshauth"/>.</para>
 
+      <!-- @ENGLISH {{{
       <para>As you've already guessed, a repository's
         <filename>svnserve.conf</filename> file is the central
         mechanism for controlling authentication and authorization
@@ -1156,21 +1224,53 @@ $ svn checkout svn://tjener.example.com/prosjekt1
         specific variables that can be set (<literal>variable =
         value</literal>).  Let's walk through this file and learn how
         to use them.</para>
+      @ENGLISH }}} -->
+      <para>Som du allerede har gjettet, er 
+        <filename>svnserve.conf</filename>-filen i et depot den sentrale 
+        mekanismen for å kontrollere autentiserings- og 
+        autorisasjonsregler.
+        Filen har det samme formatet som andre konfigurasjonsfiler (se 
+        <xref linkend="svn.advanced.confarea"/>):
+        Seksjonsnavn er markert med klammeparenteser 
+        (<literal>[</literal> og <literal>]</literal>), kommentarer 
+        begynner med <!-- ¤ -->hashtegn (<literal>#</literal>), og hver 
+        seksjon inneholder spesifikke variabler som kan settes 
+        (<literal>variabel = verdi</literal>).
+        La oss gå gjennom denne filen og lære hvordan vi bruker 
+        dem.</para>
 
       <sect3 id="svn.serverconfig.svnserve.auth.users">
+        <!-- @ENGLISH {{{
         <title>Create a 'users' file and realm</title>
+        @ENGLISH }}} -->
+        <title>Opprette en brukerfil og område</title>
 
+        <!-- @ENGLISH {{{
         <para>For now, the <literal>[general]</literal> section of the
           <filename>svnserve.conf</filename> has all the variables you
           need.  Begin by defining a file which contains usernames and
           passwords, and an authentication realm:</para>
+        @ENGLISH }}} -->
+        <para>For øyeblikket har <literal>[general]</literal>-seksjonen 
+          i <filename>svnserve.conf</filename> alle variablene som du 
+          trenger.
+          Start ved å definere en fil som inneholder brukernavn og 
+          passord, og et autentiseringsområde:</para>
 
+<!-- @ENGLISH {{{
 <screen>
 [general]
 password-db = userfile
 realm = example realm
 </screen>
+@ENGLISH }}} -->
+<screen>
+[general]
+password-db = brukerfil
+realm = eksempelområde
+</screen>
 
+        <!-- @ENGLISH {{{
         <para>The <literal>realm</literal> is a name that you define.
           It tells clients which sort of <quote>authentication
           namespace</quote> they're connecting to; the Subversion
@@ -1181,13 +1281,34 @@ realm = example realm
           <literal>password-db</literal> variable points to a separate
           file that contains a list of usernames and passwords, using
           the same familiar format.  For example:</para>
+        @ENGLISH }}} -->
+        <para><literal>realm</literal> er et navn som du definerer.
+          Det forteller klienter hvilket 
+          <quote>autentiseringsnavnerom</quote> de kobler seg til; 
+          Subversionklienten viser det når den spør etter 
+          autentiseringsinfo, og bruker det som en nøkkel (sammen med 
+          tjenerens vertsnavn og port) for å lagre legitimasjonsinfo på 
+          disken (se <xref 
+          linkend="svn.serverconfig.netmodel.credcache"/>).
+          Variabelen <literal>password-db</literal> peker til en separat 
+          fil som inneholder en liste med brukernavn og passord, som 
+          bruker det samme kjente formatet.
+          For eksempel:</para>
 
+<!-- @ENGLISH {{{
 <screen>
 [users]
 harry = foopassword
 sally = barpassword
 </screen>
+@ENGLISH }}} -->
+<screen>
+[users]
+harry = foopassord
+sally = barpassord
+</screen>
 
+        <!-- @ENGLISH {{{
         <para>The value of <literal>password-db</literal> can be an
           absolute or relative path to the users file.  For many
           admins, it's easy to keep the file right in the
@@ -1202,12 +1323,34 @@ sally = barpassword
           set the file's read and write permissions appropriately.  If
           you know which user(s) <command>svnserve</command> will run
           as, restrict read access to the user file as necessary.</para>
+        @ENGLISH }}} -->
+        <para>Verdien i <literal>password-db</literal> kan være en 
+          absolutt eller relativ sti til brukerfila.
+          For mange administratorer er det enkelt å lagre fila i 
+          <filename>conf/</filename>-området i depotet, sammen med 
+          <filename>svnserve.conf</filename>.
+          På den annen side er det mulig at du vil ha to eller flere 
+          depoter som deler den samme brukerfila; i så tilfelle bør fila 
+          kanskje ligge på en mer offentlig plass.
+          Depotene som deler brukerfila bør også settes opp til å ha 
+          samme område (<foreignphrase>realm</foreignphrase>) siden 
+          brukerlista <!-- ¤ essentially -->hovedsaklig definerer et 
+          autentiseringsområde.
+          Hvor fila enn ligger, pass på å sette lese- og 
+          skriverettighetene på den.
+          Hvis du vet hvilke(n) bruker(e) <command>svnserve</command> 
+          vil kjøre som, begrens lesetilgangen til brukerfila etter hva 
+          som er nødvendig.</para>
 
       </sect3>
 
       <sect3 id="svn.serverconfig.svnserve.auth.general">
+        <!-- @ENGLISH {{{
         <title>Set access controls</title>
+        @ENGLISH }}} -->
+        <title>Sette tilgangskontroll</title>
 
+        <!-- @ENGLISH {{{
         <para>There are two more variables to set in the
           <filename>svnserve.conf</filename> file: they determine what
           unauthenticated (anonymous) and authenticated users are
@@ -1219,7 +1362,24 @@ sally = barpassword
           <literal>read</literal> allows read-only access to the
           repository, and <literal>write</literal> allows complete
           read/write access to the repository.  For example:</para>
+        @ENGLISH }}} -->
+        <para>Det er to variabler til som må settes i 
+          <filename>svnserve.conf</filename>-fila, de avgjør hva 
+          uautentiserte (anonyme) og autentiserte brukere får lov til å 
+          gjøre.
+          Variablene <literal>anon-access</literal> og 
+          <literal>auth-access</literal> kan settes til verdiene 
+          <literal>none</literal>, <literal>read</literal> eller 
+          <literal>write</literal>.
+          Ved å sette verdien til <literal>none</literal> begrenses alle 
+          typer tilganger; <literal>read</literal> tillater bare lesing 
+          fra depotet, og <literal>write</literal> gir fullstendig 
+          lese/skrive-tilgang til depotet.
+          For eksempel:</para>
 
+<!-- ¤ Her kopieres skjermteksten nøyaktig likt, så det med at «verdiene 
+har den standardverdien» blir riktig. Eller er de L10N’et? Sjekkes. -->
+<!-- @ENGLISH {{{
 <screen>
 [general]
 password-db = userfile
@@ -1231,12 +1391,31 @@ anon-access = read
 # authenticated users can both read and write
 auth-access = write
 </screen>
+@ENGLISH }}} -->
+<screen>
+[general]
+password-db = userfile
+realm = example realm
 
+# anonyme brukere kan bare lese depotet
+anon-access = read
+
+# autentiserte brukere kan både lese og skrive
+auth-access = write
+</screen>
+
+        <!-- @ENGLISH {{{
         <para>The example settings are, in fact, the default values of
           the variables, should you forget to define them.  If you
           want to be even more conservative, you can block anonymous
           access completely:</para>
+        @ENGLISH }}} -->
+        <para>Oppsettet i dette eksempelet viser standardverdiene som 
+          variablene har, i tilfelle du glemmer å definere dem.
+          Hvis du vil være enda mer konservativ, kan du blokkere anonym 
+          tilgang fullstendig:</para>
 
+<!-- @ENGLISH {{{
 <screen>
 [general]
 password-db = userfile
@@ -1248,7 +1427,20 @@ anon-access = none
 # authenticated users can both read and write
 auth-access = write
 </screen>
+@ENGLISH }}} -->
+<screen>
+[general]
+password-db = brukerfil
+realm = eksempelområde
 
+# anonyme brukere forbudt
+anon-access = none
+
+# autentiserte brukere kan både lese og skrive
+auth-access = write
+</screen>
+
+        <!-- @ENGLISH {{{
         <para>Notice that <command>svnserve</command> only understands
           <quote>blanket</quote> access control.  A user either has
           universal read/write access, universal read access, or no
@@ -1265,6 +1457,25 @@ auth-access = write
           <command>commit-access-control.pl</command> and the more
           sophisticated <command>svnperms.py</command> scripts for use
           in pre-commit scripts.</para>
+        @ENGLISH }}} -->
+        <para>Legg merke til at <command>svnserve</command> bare forstår 
+          <!-- ¤ blanket --><quote>fullstendig</quote> tilgangskontroll.
+          En bruker har enten universell lese/skrive-tilgang, universell 
+          lesetilgang eller ingen tilgang.
+          Det er ingen detaljert kontroll over tilgang til spesifikke 
+          stier i depotet.
+          For mange prosjekter og <!-- ¤ sites -->tjenere er dette 
+          nivået på tilgangskontroll mer enn nok.
+          Hvis du imidlertid trenger tilgangskontroll på katalognivå, må 
+          du enten bruke Apache med <command>mod_auth_svn</command> (se 
+          <xref linkend="svn.serverconfig.httpd.authz.perdir"/>) eller 
+          bruke et <command>pre-commit</command>-påhakningsskript for å 
+          kontrollere skrivetilgangen (se <xref 
+          linkend="svn.reposadmin.create.hooks"/>).
+          Subversiondistribusjonen kommer med skriptet 
+          <command>commit-access-control.pl</command> og det mer 
+          sofistikerte <command>svnperms.py</command> for bruk i 
+          <command>pre-commit</command>-skript.</para>
 
       </sect3>
     </sect2>
