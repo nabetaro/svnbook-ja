@@ -2446,23 +2446,45 @@ Making some tweaks.  Locking for the next two hours.
       sorts, and we know <emphasis>exactly</emphasis> where to
       go.</para>
 
-    <para>Subversion performs a fairly straightforward algorithm when
-      using peg and operative revisions to find real stuff to work on.
-      First, the path associated with the peg revision is located in
-      that revision in the repository.  From there, Subversion begins
-      stepping backwards through historical predecessors of the object
-      located at that path and peg revision.  Each of these
-      predecessors represents an earlier version of the object, and
-      each stores a record of which revision it was created in, and at
-      what path.  So, while traversing the set of predecessors,
-      Subversion notices whenever one of them is the youngest version
-      of the object to exist as of one of the operative revisions, and
-      if so, maps that operative revision to the created path/created
-      revision pair of the predecessor.  The algorithm terminates
-      either when all the operative revisions have been mapped to real
-      object locations, or once there are no more predecessors to
-      traverse, in which case any unmapped operative revisions are
-      marked as invalid for the object being operated on.</para>
+    <sidebar>
+      <title>The "peg-revision" algorithm</title>
+      
+      <para>When the commandline client sees a command of the
+        form:</para>
+
+      <screen>
+$ svn <emphasis>command</emphasis> -r <emphasis>OPERATIVE-REV</emphasis> item@<emphasis>PEG-REV</emphasis>
+</screen>
+      
+      <para>...it performs the following algorithm:</para>
+
+      <itemizedlist>
+        
+        <listitem>
+          <para>Go to revision <emphasis>PEG-REV</emphasis>, and
+          find <emphasis>item</emphasis>.  This locates a unique
+          object in the repository.</para>
+        </listitem>
+
+        <listitem>
+          <para>Trace the object's history backwards (through any
+            possible renames) to its ancestor in
+            revision <emphasis>OPERATIVE-REV</emphasis>.</para>
+        </listitem>
+
+        <listitem>
+          <para>Perform the requested action on that ancestor,
+            wherever it is located, or whatever its name might
+            be.</para>
+        </listitem>
+
+      </itemizedlist>
+
+      <para>Remember that even when you don't explicitly supply a
+        peg-revision, it's still present.  It defaults to BASE for
+        working copy items, and to HEAD for URLs.</para>
+        
+    </sidebar>
 
     <para>Say that long ago we created our repository, and in revision 1
       added our first <filename>concept</filename> directory, plus an
