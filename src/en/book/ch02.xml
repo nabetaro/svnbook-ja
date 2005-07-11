@@ -684,49 +684,135 @@ calc/Makefile:6
     
     <!-- =============================================================== -->
     <sect2 id="svn.basic.in-action.mixedrevs">
-      <title>The Limitations of Mixed Revisions</title>
+      <title>Mixed Revision Working Copies</title>
 
       <para>As a general principle, Subversion tries to be as flexible
         as possible.  One special kind of flexibility is the ability
-        to have a working copy containing mixed revision
-        numbers.</para>
+        to have a working copy containing files and directories with a
+        mix of different working revision numbers.  Unfortunately,
+        this flexibility tends to confuse a number of new users.  If
+        the earlier example showing mixed revisions perplexed you,
+        here's a primer on both why the feature exists and how to make
+        use of it.</para>
 
-      <para>At first, it may not be entirely clear why this sort of
-        flexibility is considered a feature, and not a liability.
-        After completing a commit to the repository, the freshly
-        committed files and directories are at a more recent working
-        revision than the rest of the working copy.  It looks like a
-        bit of a mess.  As demonstrated earlier, the working copy can
-        always be brought to a single working revision by running
-        <command>svn update</command>.  Why would someone
-        <emphasis>deliberately</emphasis> want a mixture of working
-        revisions?</para>
+      <sect3 id="svn.basic.in-action.mixedrevs.update-commit">
+        <title>Updates and Commits are Separate</title>
 
-      <para>Assuming your project is sufficiently complex, you'll
-        discover that it's sometimes nice to forcibly
-        <quote>backdate</quote> portions of your working copy to an
-        earlier revision; you'll learn how to do that in Chapter 3.
-        Perhaps you'd like to test an earlier version of a sub-module,
-        contained in a subdirectory, or perhaps you'd like to examine
-        a number of previous versions of a file in the context of the
-        latest tree.</para>
-        
-      <para>However you make use of mixed-revisions in your working
-        copy, there are limitations to this flexibility.</para>
+        <para>One of the fundamental rules of Subversion is that
+          a <quote>push</quote> action does not cause
+          a <quote>pull</quote>, nor the other way around.  Just
+          because you're ready to submit new changes to the repository
+          doesn't mean you're ready to receive changes from other
+          people.  And if you have new changes still in progress,
+          then <command>svn update</command> should gracefully merge
+          repository changes into your own, rather than forcing you to
+          publish them.</para>
 
-      <para>First, you cannot commit the deletion of a file or
-        directory which isn't fully up-to-date.  If a newer version of
-        the item exists in the repository, your attempt to delete will
-        be rejected, to prevent you from accidentally
-        destroying changes you've not yet seen.</para>
+        <para>The main side-effect of this rule is that it means a
+          working copy has to do extra bookkeeping to track mixed
+          revisions, and be tolerant of the mixture as well.  It's
+          made more complicated by the fact that directories
+          themselves are versioned.</para>
 
-      <para>Second, you cannot commit a metadata change to a directory
-        unless it's fully up-to-date.  You'll learn about attaching
-        <quote>properties</quote> to items in Chapter 6.  A
-        directory's working revision defines a specific set of entries
-        and properties, and thus committing a property change to an
-        out-of-date directory may destroy properties you've not yet
-        seen.</para>
+        <para>For example, suppose you have a working copy entirely at
+          revision 10.  You edit the
+          file <filename>foo.html</filename> and then perform
+          an <command>svn commit</command>, which creates revision 15
+          in the repository.  After the commit succeeds, many new
+          users would expect the working copy to be entirely at
+          revision 15, but that's not the case!  Any number of changes
+          might have happened in the repository between revisions 10
+          and 15.  It would be a lie to claim that we had a working
+          copy of revision 15, the client simply doesn't know.  If, on
+          the other hand, <command>svn commit</command> were to
+          automatically download the newest changes, then it would be
+          possible to set the entire working copy to revision
+          15&mdash;but then we'd be breaking the fundamental rule
+          of <quote>push</quote> and <quote>pull</quote> remaining
+          separate actions.  Therefore the only safe thing the
+          Subversion client can do is mark the one
+          file&mdash;<filename>foo.html</filename>&mdash;as being at
+          revision 15.  The rest of the working copy remains at
+          revision 10.  Only by running <command>svn update</command>
+          can the latest changes be downloaded, and the whole working
+          copy be marked as revision 15.</para>
+
+        </sect3>
+
+        <sect3 id="svn.basic.in-action.mixedrevs.normal">
+          <title>Mixed revisions are normal</title>
+          
+          <para>The fact is, <emphasis>every time</emphasis> you
+            run <command>svn commit</command>, your working copy ends
+            up with some mixture of revisions.  The things you just
+            committed are marked as having larger working revisions
+            than everything else.  After several commits (with no
+            updates in-between) your working copy will contain a whole
+            mixture of revisions.  Even if you're the only person
+            using the repository, you will still see this phenomenon.
+            To examine your mixture of working revisions, use
+            the <command>svn status --verbose</command> command (see
+            <xref linkend="svn.tour.cycle.examine.status"/> for more
+            information.)</para>
+
+          <para>Often, new users are completely unaware that their
+            working copy contains mixed revisions.  This can be
+            confusing, because many client commands are sensitive to
+            the working revision of the item they're examining.  For
+            example, the <command>svn log</command> command is used to
+            display the history of changes to a file or directory (see
+            <xref linkend="svn.tour.history.log"/>).  When the user
+            invokes this command on a working copy object, they expect
+            to see the entire history of the object.  But if the
+            object's working revision is quite old (often
+            because <command>svn update</command> hasn't been run in a
+            long time), then the history of
+            the <emphasis>older</emphasis> version of the object is
+            shown.</para>
+        </sect3>
+
+        <sect3 id="svn.basic.in-action.mixedrevs.useful">
+          <title>Mixed revisions are useful</title>
+
+          <para>If your project is sufficiently complex, you'll
+            discover that it's sometimes nice to forcibly
+            <quote>backdate</quote> portions of your working copy to
+            an earlier revision; you'll learn how to do that in
+            Chapter 3.  Perhaps you'd like to test an earlier version
+            of a sub-module contained in a subdirectory, or perhaps
+            you'd like to figure out when a bug first came into
+            existence in a specific file.  This is the <quote>time
+            machine</quote> aspect of a version control system &mdash;
+            the feature which allows you to move any portion of your
+            working copy forward and backward in history.</para>
+
+        </sect3>
+
+        <sect3 id="svn.basic.in-action.mixedrevs.limits">
+          <title>Mixed revisions have limitations</title>
+
+          <para>However you make use of mixed revisions in your
+            working copy, there are limitations to this
+            flexibility.</para>
+          
+          <para>First, you cannot commit the deletion of a file or
+            directory which isn't fully up-to-date.  If a newer
+            version of the item exists in the repository, your attempt
+            to delete will be rejected, to prevent you from
+            accidentally destroying changes you've not yet
+            seen.</para>
+
+          <para>Second, you cannot commit a metadata change to a
+            directory unless it's fully up-to-date.  You'll learn
+            about attaching
+            <quote>properties</quote> to items in Chapter 6.  A
+            directory's working revision defines a specific set of
+            entries and properties, and thus committing a property
+            change to an out-of-date directory may destroy properties
+            you've not yet seen.</para>
+
+        </sect3>
+
 
     </sect2>
 
