@@ -434,12 +434,8 @@
       <para>The following example assumes that you have
         <command>svn</command>, the Subversion command-line client,
         and <command>svnadmin</command>, the administrative tool,
-        ready to go.  It also assumes that your <command>svn</command>
-        client has been compiled against Berkeley DB.  To verify this,
-        run <command>svn --version</command> and make sure the
-        <literal>ra_local</literal> module is available.  Without this
-        module, the client cannot access <literal>file://</literal>
-        URLs.</para>
+        ready to go.  It also assumes you are using Subversion 1.2 or
+        later (run <command>svn --version</command> to check.)</para>
     </note>
 
     <para>Subversion stores all versioned data in a central
@@ -453,68 +449,92 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
 
     <para>This command creates a new directory
       <filename>/path/to/repos</filename> which contains a Subversion
-      repository.  Make sure that this directory lives on a local
-      disk, <emphasis>not</emphasis> a network share.  This new
-      directory mainly contains a collection of Berkeley DB database
-      files.  You won't see your versioned files if you peek inside.
-      For more information about repository creation and maintenance,
-      see <xref linkend="svn.reposadmin"/>.</para>
+      repository.  This new directory contains (among other things) a
+      collection of database files.  You won't see your versioned
+      files if you peek inside.  For more information about repository
+      creation and maintenance, see
+      <xref linkend="svn.reposadmin"/>.</para>
 
-    <para>Next, create a tree of files and directories to import into
-      the repository.  For reasons that will be clear later on (see
-      <xref linkend="svn.branchmerge"/>), your structure should contain three
-      top-level directories named <filename>branches</filename>,
+    <para>Subversion has no concept of a <quote>project</quote>.  The
+      repository is just a virtual versioned filesystem, a large tree
+      that can hold anything you wish.  Some administrators prefer to
+      store only one project in a repository, and others prefer to
+      store multiple projects in a repository by placing them into
+      separate directories.  The merits of each approach are discussed
+      in <xref linkend="svn.reposadmin.projects.chooselayout"/>.
+      Either way, the repository only manages files and directories,
+      so it's up to humans to interpret particular directories
+      as <quote>projects</quote>.</para>
+
+    <para>In this example, we assume that you already have some sort
+      of project (a collection of files and directories) that you wish
+      to import into your newly created Subversion repository.  Begin
+      by organizing them into a single directory
+      called <filename>myproject</filename> (or whatever you wish).
+      For reasons that will be clear later on (see
+      <xref linkend="svn.branchmerge"/>), your project's tree
+      structure should contain three top-level directories
+      named <filename>branches</filename>,
       <filename>tags</filename>, and
-      <filename>trunk</filename>:</para>
+      <filename>trunk</filename>.  The <filename>trunk</filename>
+      directory should contain all of your data,
+      while <filename>branches</filename>
+      and <filename>tags</filename> directories are empty:</para>
 
     <screen>
-/tmp/project/branches/
-/tmp/project/tags/
-/tmp/project/trunk/
-               foo.c
-               bar.c
-               Makefile
-               &hellip;
+/tmp/myproject/branches/
+/tmp/myproject/tags/
+/tmp/myproject/trunk/
+                    foo.c
+                    bar.c
+                    Makefile
+                    &hellip;
 </screen>
 
-    <para>Once you have a tree of data ready to go, import the data
-      into the repository with the <command>svn import</command>
-      command (see <xref linkend="svn.tour.other.import"/>):</para>
+    <para>Once you have your tree of data ready to go, import it into
+      the repository with the <command>svn import</command> command
+      (see <xref linkend="svn.tour.other.import"/>):</para>
 
     <screen>
-$ svn import /tmp/project file:///path/to/repos -m "initial import"
-Adding         /tmp/project/branches
-Adding         /tmp/project/tags
-Adding         /tmp/project/trunk
-Adding         /tmp/project/trunk/foo.c
-Adding         /tmp/project/trunk/bar.c
-Adding         /tmp/project/trunk/Makefile
+$ svn import /tmp/myproject file:///path/to/repos/myproject -m "initial import"
+Adding         /tmp/myproject/branches
+Adding         /tmp/myproject/tags
+Adding         /tmp/myproject/trunk
+Adding         /tmp/myproject/trunk/foo.c
+Adding         /tmp/myproject/trunk/bar.c
+Adding         /tmp/myproject/trunk/Makefile
 &hellip;
 Committed revision 1.
 $ 
 </screen>
 
-    <para>Now the repository contains this tree of data.  Note that
-      the original <filename>/tmp/project</filename> directory is
-      unchanged; Subversion is unaware of it.  (In fact, you can even
-      delete that directory if you wish.)  In order to start
-      manipulating repository data, you need to create a new
+    <para>Now the repository contains this tree of data.  As mentioned
+      earlier, you won't see your files by directly peeking into the
+      repository;  they're all stored within a database.  But the
+      repository's imaginary filesystem now contains a top-level
+      directory named <filename>myproject</filename>, which in turn
+      contains your data.</para>
+
+    <para>Note that the original <filename>/tmp/myproject</filename>
+      directory is unchanged; Subversion is unaware of it.  (In fact,
+      you can even delete that directory if you wish.)  In order to
+      start manipulating repository data, you need to create a new
       <quote>working copy</quote> of the data, a sort of private
       workspace.  Ask Subversion to <quote>check out</quote> a working
-      copy of the repository's <filename>trunk</filename>
-      directory:</para>
+      copy of the <filename>myproject/trunk</filename> directory in
+      the repository:</para>
 
     <screen>
-$ svn checkout file:///path/to/repos/trunk project
-A  project/foo.c
-A  project/bar.c
-A  project/Makefile
+$ svn checkout file:///path/to/repos/myproject/trunk myproject
+A  myproject/foo.c
+A  myproject/bar.c
+A  myproject/Makefile
 &hellip;
 Checked out revision 1.
 </screen>
 
     <para>Now you have a personal copy of part of the repository in a
-      new directory named <filename>project</filename>.  You can edit
+      new directory named <filename>myproject</filename>.  You can edit
       the files in your working copy and then commit those changes
       back into the repository.</para>
 
