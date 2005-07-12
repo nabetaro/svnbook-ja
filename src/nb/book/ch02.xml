@@ -1348,105 +1348,281 @@ calc/Makefile:6
     <!-- =============================================================== -->
     <sect2 id="svn.basic.in-action.mixedrevs">
       <!-- @ENGLISH {{{
-      <title>The Limitations of Mixed Revisions</title>
+      <title>Mixed Revision Working Copies</title>
       @ENGLISH }}} -->
-      <title>Begrensningene i blandede revisjoner</title>
+      <title>Arbeidskopier med blandede revisjonsnumre</title>
 
       <!-- @ENGLISH {{{
       <para>As a general principle, Subversion tries to be as flexible
         as possible.  One special kind of flexibility is the ability
-        to have a working copy containing mixed revision
-        numbers.</para>
+        to have a working copy containing files and directories with a
+        mix of different working revision numbers.  Unfortunately,
+        this flexibility tends to confuse a number of new users.  If
+        the earlier example showing mixed revisions perplexed you,
+        here's a primer on both why the feature exists and how to make
+        use of it.</para>
       @ENGLISH }}} -->
       <para>Som et generelt prinsipp prøver Subversion å være så 
         fleksibel som mulig.
-        En spesiell type av fleksibilitet er muligheten til å ha en 
-        arbeidskopi som inneholder blandede revisjonsnumre.</para>
+        En spesiell type fleksibilitet er muligheten til å ha en 
+        arbeidskopi som inneholder filer og kataloger med en blanding av 
+        forskjellige arbeidsrevisjonsnumre.
+        Uheldigvis har denne fleksibiliteten en tendens til å forvirre 
+        en del nye brukere.
+        Hvis det tidligere eksempelet som viser blandede revisjoner gjør 
+        deg litt perpleks, her kommer en forklaring på hvorfor denne 
+        funksjonaliteten finnes og hvordan du gjør bruk av den.</para>
 
-      <!-- @ENGLISH {{{
-      <para>At first, it may not be entirely clear why this sort of
-        flexibility is considered a feature, and not a liability.
-        After completing a commit to the repository, the freshly
-        committed files and directories are at a more recent working
-        revision than the rest of the working copy.  It looks like a
-        bit of a mess.  As demonstrated earlier, the working copy can
-        always be brought to a single working revision by running
-        <command>svn update</command>.  Why would someone
-        <emphasis>deliberately</emphasis> want a mixture of working
-        revisions?</para>
-      @ENGLISH }}} -->
-      <para>Til å begynne med er det ikke sikkert det er helt klart 
-        hvorfor denne typen fleksibilitet er å betrakte som en fordel, 
-        og ikke en svakhet.
-        Etter å ha fullført en innlegging i depotet, er de nylig 
-        innlagte filene og katalogene i en nyere arbeidsrevisjon enn 
-        resten av kopien.
-        Det ser ut som litt av et rot.
-        Som tidligere demonstrert, kan arbeidskopien alltid bli satt til 
-        en enkelt arbeidsrevisjon ved å kjøre <command>svn 
-        update</command>.
-        Hvorfor vil noen <emphasis>med vilje</emphasis> ønske seg en 
-        blanding av arbeidsrevisjoner?</para>
+      <sect3 id="svn.basic.in-action.mixedrevs.update-commit">
+        <!-- @ENGLISH {{{
+        <title>Updates and Commits are Separate</title>
+        @ENGLISH }}} -->
+        <title>Oppdateringer og innlegginger er separate</title>
 
-      <!-- @ENGLISH {{{
-      <para>Assuming your project is sufficiently complex, you'll
-        discover that it's sometimes nice to forcibly
-        <quote>backdate</quote> portions of your working copy to an
-        earlier revision; you'll learn how to do that in Chapter 3.
-        Perhaps you'd like to test an earlier version of a sub-module,
-        contained in a subdirectory, or perhaps you'd like to examine
-        a number of previous versions of a file in the context of the
-        latest tree.</para>
-      @ENGLISH }}} -->
-      <para>Forutsatt at prosjektet ditt er komplekst nok, vil du 
-        oppdage at det noen ganger er fint å kunne 
-        <quote>tilbakedatere</quote> deler av arbeidskopien til en 
-        tidligere revisjon; du vil lære hvordan du gjør dette i kapittel 
-        3.
-        Kanskje vil du prøve en tidligere versjon av en delmodul, lagret 
-        i en underkatalog, eller kanskje du vil utforske et antall 
-        tidligere versjoner av en fil sett i forhold til det seneste 
-        treet.</para>
-        
-      <!-- @ENGLISH {{{
-      <para>However you make use of mixed-revisions in your working
-        copy, there are limitations to this flexibility.</para>
-      @ENGLISH }}} -->
-      <para>Hvordan du enn gjør bruk av blandede revisjoner i 
-        arbeidskopien, er det begrensninger i denne 
-        fleksibiliteten.</para>
+        <!-- @ENGLISH {{{
+        <para>One of the fundamental rules of Subversion is that
+          a <quote>push</quote> action does not cause
+          a <quote>pull</quote>, nor the other way around.  Just
+          because you're ready to submit new changes to the repository
+          doesn't mean you're ready to receive changes from other
+          people.  And if you have new changes still in progress,
+          then <command>svn update</command> should gracefully merge
+          repository changes into your own, rather than forcing you to
+          publish them.</para>
+        @ENGLISH }}} -->
+        <para>En av de fundamentale reglene til Subversion er at en <!-- 
+          ¤ --><quote>skyveoperasjon</quote> ikke forårsaker en 
+          <quote>trekkoperasjon</quote>, heller ikke den andre veien.
+          Det at du er klar til å legge inn nye forandringer i depotet 
+          betyr ikke at du er klar til å motta forandringer fra andre 
+          folk.
+          Og hvis du har nye forandringer som fortsatt er under 
+          utvikling, bør <command>svn update</command> flette 
+          forandringer i depotet fint og forsiktig inn i dine egne 
+          istedenfor å tvinge deg til å publisere dem.</para>
 
-      <!-- @ENGLISH {{{
-      <para>First, you cannot commit the deletion of a file or
-        directory which isn't fully up-to-date.  If a newer version of
-        the item exists in the repository, your attempt to delete will
-        be rejected, to prevent you from accidentally
-        destroying changes you've not yet seen.</para>
-      @ENGLISH }}} -->
-      <para>For det første kan du ikke legge inn sletting av en fil 
-        eller katalog som ikke er fullstendig oppdatert.
-        Hvis en nyere versjon av elementet eksisterer i depotet, vil 
-        forsøket ditt på å slette bli avslått, for å forhindre deg å 
-        feilaktig ødelegge forandringer som du enda ikke har 
-        sett.</para>
+        <!-- @ENGLISH {{{
+        <para>The main side-effect of this rule is that it means a
+          working copy has to do extra bookkeeping to track mixed
+          revisions, and be tolerant of the mixture as well.  It's
+          made more complicated by the fact that directories
+          themselves are versioned.</para>
+        @ENGLISH }}} -->
+        <para>Den største sideeffekten av denne regelen er at det betyr 
+          at arbeidskopien må holde ekstra regnskap for å følge med på 
+          miksede revisjoner, og også være tolerant i forhold til 
+          blandingen.
+          Det blir ytterligere komplisert fordi også selve katalogene er 
+          versjonerte.</para>
 
-      <!-- @ENGLISH {{{
-      <para>Second, you cannot commit a metadata change to a directory
-        unless it's fully up-to-date.  You'll learn about attaching
-        <quote>properties</quote> to items in Chapter 6.  A
-        directory's working revision defines a specific set of entries
-        and properties, and thus committing a property change to an
-        out-of-date directory may destroy properties you've not yet
-        seen.</para>
-      @ENGLISH }}} -->
-      <para>For det andre kan du ikke legge inn en metadata-forandring 
-        til en katalog hvis den ikke er fullstendig oppdatert.
-        Du vil få lære om å legge til <quote>egenskaper</quote> til 
-        elementer i kapittel 6.
-        En katalogs arbeidsrevisjon definerer et spesifikt sett med 
-        poster og egenskaper, og en innlegging av forandringer i en 
-        egenskap for en utdatert katalog kan ødelegge egenskaper som du 
-        enda ikke har sett.</para>
+        <!-- @ENGLISH {{{
+        <para>For example, suppose you have a working copy entirely at
+          revision 10.  You edit the
+          file <filename>foo.html</filename> and then perform
+          an <command>svn commit</command>, which creates revision 15
+          in the repository.  After the commit succeeds, many new
+          users would expect the working copy to be entirely at
+          revision 15, but that's not the case!  Any number of changes
+          might have happened in the repository between revisions 10
+          and 15.  It would be a lie to claim that we had a working
+          copy of revision 15, the client simply doesn't know.  If, on
+          the other hand, <command>svn commit</command> were to
+          automatically download the newest changes, then it would be
+          possible to set the entire working copy to revision
+          15&mdash;but then we'd be breaking the fundamental rule
+          of <quote>push</quote> and <quote>pull</quote> remaining
+          separate actions.  Therefore the only safe thing the
+          Subversion client can do is mark the one
+          file&mdash;<filename>foo.html</filename>&mdash;as being at
+          revision 15.  The rest of the working copy remains at
+          revision 10.  Only by running <command>svn update</command>
+          can the latest changes be downloaded, and the whole working
+          copy be marked as revision 15.</para>
+        @ENGLISH }}} -->
+        <para>For eksempel, tenk deg at du har en arbeidskopi der alle 
+          elementene er på revisjon 10.
+          Du redigerer filen <filename>foo.html</filename> og utfører 
+          deretter en <command>svn commit</command> som lager revisjon 
+          15 i depotet.
+          Etter at innleggingen er fullført, vil mange brukere forvente 
+          at hele arbeidskopien er på revisjon 15, men det er ikke 
+          tilfellet!
+          Alle mulige forandringer kan ha skjedd mellom revisjonene 10 
+          og 15.
+          Det ville vært en løgn å påstå at vi har en arbeidskopi av 
+          revisjon 15, klienten kan rett og slett ikke vite det.
+          Hvis <command>svn commit</command> på den annen side hentet de 
+          nyeste forandringene automatisk, ville det være mulig å sette 
+          hele arbeidskopien til revisjon 15 – men da ville vi brutt den 
+          fundamentale regelen om at <!-- ¤ 
+          --><quote>skyveoperasjoner</quote> og 
+          <quote>trekkoperasjoner</quote> skal være separate handlinger.
+          Derfor, den eneste trygge tingen som Subversionklienten kan 
+          gjøre er å kun merke den ene fila – 
+          <filename>foo.html</filename> – som å være på revisjon 15.
+          Resten av arbeidskopien forblir på revisjon 10.
+          Bare ved å kjøre <command>svn update</command> kan de nyeste 
+          forandringene bli hentet, og hele arbeidskopien kan merkes som 
+          revisjon 15.</para>
+
+        </sect3>
+
+        <sect3 id="svn.basic.in-action.mixedrevs.normal">
+          <!-- @ENGLISH {{{
+          <title>Mixed revisions are normal</title>
+          @ENGLISH }}} -->
+          <title>Blandede revisjoner er normalt</title>
+          
+          <!-- @ENGLISH {{{
+          <para>The fact is, <emphasis>every time</emphasis> you
+            run <command>svn commit</command>, your working copy ends
+            up with some mixture of revisions.  The things you just
+            committed are marked as having larger working revisions
+            than everything else.  After several commits (with no
+            updates in-between) your working copy will contain a whole
+            mixture of revisions.  Even if you're the only person
+            using the repository, you will still see this phenomenon.
+            To examine your mixture of working revisions, use
+            the <command>svn status -&#64738;-verbose</command> command (see
+            <xref linkend="svn.tour.cycle.examine.status"/> for more
+            information.)</para>
+          @ENGLISH }}} -->
+          <para>Faktum er at <emphasis>hver gang</emphasis> du kjører 
+            <command>svn commit</command> ender arbeidskopien din opp 
+            med en form for blanding av revisjoner.
+            Det elementet som du akkurat la inn er merket som om det har 
+            et større revisjonsnummer enn alt det andre.
+            Etter flere innlegginger (uten noen oppdateringer i 
+            mellomtiden) vil arbeidskopien din inneholde en stor 
+            blanding av revisjoner.
+            Selv om du er den eneste personen som bruker depotet vil du 
+            fortsatt se dette fenomenet.
+            For å utforske blandingen din av blandede revisjoner kan du 
+            bruke kommandoen <command>svn status --verbose</command> (se 
+            <xref linkend="svn.tour.cycle.examine.status"/> for mer 
+            informasjon).</para>
+
+          <!-- @ENGLISH {{{
+          <para>Often, new users are completely unaware that their
+            working copy contains mixed revisions.  This can be
+            confusing, because many client commands are sensitive to
+            the working revision of the item they're examining.  For
+            example, the <command>svn log</command> command is used to
+            display the history of changes to a file or directory (see
+            <xref linkend="svn.tour.history.log"/>).  When the user
+            invokes this command on a working copy object, they expect
+            to see the entire history of the object.  But if the
+            object's working revision is quite old (often
+            because <command>svn update</command> hasn't been run in a
+            long time), then the history of
+            the <emphasis>older</emphasis> version of the object is
+            shown.</para>
+          @ENGLISH }}} -->
+          <para>Ofte er nye brukere ikke klar over at arbeidskopiene 
+            deres inneholder miksede revisjoner.
+            Dette kan være forvirrende, fordi mange klientkommandoer er 
+            sensitiv ovenfor arbeidsrevisjonen til elementet som de 
+            utforsker.
+            For eksempel, <command>svn log</command>-kommandoen blir 
+            brukt til å vise historien til en fil eller katalog (se 
+            <xref linkend="svn.tour.history.log"/>).
+            Når brukeren kjører denne kommandoen på et objekt i 
+            arbeidskopien, forventer de å se hele historien til 
+            objektet.
+            Men hvis objektets arbeidsrevisjon er ganske gammel (ofte 
+            fordi <command>svn update</command> ikke har vært kjørt på 
+            aldri så lenge), blir historien til den 
+            <emphasis>eldre</emphasis> versjonen av objektet 
+            vist.</para>
+        </sect3>
+
+        <sect3 id="svn.basic.in-action.mixedrevs.useful">
+          <!-- @ENGLISH {{{
+          <title>Mixed revisions are useful</title>
+          @ENGLISH }}} -->
+          <title>Blandede revisjoner er nyttige</title>
+
+          <!-- @ENGLISH {{{
+          <para>If your project is sufficiently complex, you'll
+            discover that it's sometimes nice to forcibly
+            <quote>backdate</quote> portions of your working copy to
+            an earlier revision; you'll learn how to do that in
+            Chapter 3.  Perhaps you'd like to test an earlier version
+            of a sub-module contained in a subdirectory, or perhaps
+            you'd like to figure out when a bug first came into
+            existence in a specific file.  This is the <quote>time
+            machine</quote> aspect of a version control system &mdash;
+            the feature which allows you to move any portion of your
+            working copy forward and backward in history.</para>
+          @ENGLISH }}} -->
+          <para>Forutsatt at prosjektet ditt er komplekst nok, vil du 
+            oppdage at det noen ganger er fint å kunne 
+            <quote>tilbakedatere</quote> deler av arbeidskopien til en 
+            tidligere revisjon; du vil lære hvordan du gjør dette i 
+            kapittel 3.
+            Kanskje vil du prøve en tidligere versjon av en delmodul som 
+            ligger i en underkatalog lagret i en underkatalog, eller 
+            kanskje du vil finne ut når en feil først oppsto i en 
+            spesiell fil.
+            Dette er <quote>tidsmaskin-aspektet</quote> i et 
+            versjonskontrollsystem – funksjonaliteten som lar deg flytte 
+            alle deler av arbeidskopien din framover og bakover i 
+            historien.</para>
+
+        </sect3>
+
+        <sect3 id="svn.basic.in-action.mixedrevs.limits">
+          <!-- @ENGLISH {{{
+          <title>Mixed revisions have limitations</title>
+          @ENGLISH }}} -->
+          <title>Blandede revisjoner har begrensninger</title>
+
+          <!-- @ENGLISH {{{
+          <para>However you make use of mixed revisions in your
+            working copy, there are limitations to this
+            flexibility.</para>
+          @ENGLISH }}} -->
+          <para>Hvordan du enn gjør bruk av blandede revisjoner i 
+            arbeidskopien din, er det begrensninger i denne 
+            fleksibiliteten.</para>
+          
+          <!-- @ENGLISH {{{
+          <para>First, you cannot commit the deletion of a file or
+            directory which isn't fully up-to-date.  If a newer
+            version of the item exists in the repository, your attempt
+            to delete will be rejected, to prevent you from
+            accidentally destroying changes you've not yet
+            seen.</para>
+          @ENGLISH }}} -->
+          <para>For det første kan du ikke legge inn sletting av en fil 
+            eller katalog som ikke er fullstendig oppdatert.
+            Hvis en nyere versjon av elementet eksisterer i depotet, vil 
+            forsøket ditt på å slette bli avslått, for å forhindre deg å 
+            feilaktig ødelegge forandringer som du enda ikke har 
+            sett.</para>
+
+          <!-- @ENGLISH {{{
+          <para>Second, you cannot commit a metadata change to a
+            directory unless it's fully up-to-date.  You'll learn
+            about attaching
+            <quote>properties</quote> to items in Chapter 6.  A
+            directory's working revision defines a specific set of
+            entries and properties, and thus committing a property
+            change to an out-of-date directory may destroy properties
+            you've not yet seen.</para>
+          @ENGLISH }}} -->
+          <para>For det andre kan du ikke legge inn en 
+            metadata-forandring til en katalog hvis den ikke er 
+            fullstendig oppdatert.
+            Du vil få lære om å legge til <quote>egenskaper</quote> til 
+            elementer i kapittel 6.
+            En katalogs arbeidsrevisjon definerer et spesifikt sett med 
+            poster og egenskaper, og en innlegging av forandringer i en 
+            egenskap for en utdatert katalog kan ødelegge egenskaper som 
+            du enda ikke har sett.</para>
+
+        </sect3>
+
 
     </sect2>
 

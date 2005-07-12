@@ -218,6 +218,15 @@ $ svn status -v myfile
               concatenation.</para>
           </listitem>
         </varlistentry>
+      
+        <varlistentry>
+          <term><option>--limit</option>
+            <replaceable>NUM</replaceable></term>
+          <listitem>
+            <para>Show only the first <replaceable>NUM</replaceable>
+              log messages.</para>
+          </listitem>
+        </varlistentry>
         
         <varlistentry>
           <term><option>--message</option> (<option>-m</option>)
@@ -261,6 +270,17 @@ $ svn commit -m "They don't make Sunday."
         </varlistentry>
 
         <varlistentry>
+          <term><option>--no-diff-added</option></term>
+        <listitem>
+          <para>Prevents Subversion from printing differences for
+            added files.  The default behavior when you add a file is
+            for <command>svn diff</command> to print the same
+            differences that you would see if you had added the entire
+            contents of an existing (empty) file.</para>
+          </listitem>
+        </varlistentry>
+        
+        <varlistentry>
           <term><option>--no-diff-deleted</option></term>
         <listitem>
             <para>Prevents Subversion from printing differences for
@@ -281,6 +301,16 @@ $ svn commit -m "They don't make Sunday."
               linkend="svn.advanced.confarea.opts.config"/> and <xref
               linkend="svn.advanced.props.special.ignore"/> for more
               information.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--no-unlock</option></term>
+          <listitem>
+            <para>Don't automatically unlock files (the default commit
+              behavior is to unlock all files listed as part of the
+              commit).  See <xref linkend="svn.advanced.locking"/> for
+              more information.</para>
           </listitem>
         </varlistentry>
 
@@ -602,7 +632,7 @@ A         otherdir/docs/baz.doc
         </refnamediv>
         <refsect1>
           <title>Synopsis</title>
-          <programlisting>svn blame TARGET...</programlisting>
+          <programlisting>svn blame TARGET[@REV]...</programlisting>
         </refsect1>
         <refsect1>
           <title>Description</title>
@@ -783,6 +813,7 @@ Latest revision fresh from the repository!
 --password PASS
 --no-auth-cache
 --non-interactive
+--ignore-externals
 --config-dir DIR
 </screen>
         </refsect1>
@@ -956,6 +987,11 @@ $ svn cleanup /path/to/working-copy
             <literal>editor-cmd</literal> section in <xref
             linkend="svn.advanced.confarea.opts.config"/>.</para>
 
+          <para><command>svn commit</command> will send found lock
+            tokens and release locks on all
+            <replaceable>PATHS</replaceable> committed (recursively)
+            unless <option>--no-unlock</option> is passed.</para>
+
           <tip>
             <para>If you begin a commit and Subversion launches your
               editor to compose the commit message, you can still
@@ -994,6 +1030,7 @@ $ svn cleanup /path/to/working-copy
 --message (-m) TEXT
 --file (-F) FILE
 --quiet (-q)
+--no-unlock
 --non-recursive (-N)
 --targets FILENAME
 --force-log
@@ -1588,7 +1625,7 @@ Index: COMMITTERS
         <refsect1>
           <title>Synopsis</title>
           <programlisting>svn export [-r REV] URL[@PEGREV] [PATH]</programlisting>
-          <programlisting>svn export PATH1[@PEGREV] PATH2</programlisting>
+          <programlisting>svn export [-r REV] PATH1[@PEGREV] [PATH2]</programlisting>
         </refsect1>
         <refsect1>
           <title>Description</title>
@@ -1636,6 +1673,7 @@ Index: COMMITTERS
 --password PASS
 --no-auth-cache
 --non-interactive
+--non-recursive
 --config-dir DIR
 --native-eol EOL
 --ignore-externals
@@ -1828,19 +1866,21 @@ Committed revision 19.
         </refnamediv>
         <refsect1>
           <title>Synopsis</title>
-          <programlisting>svn info [PATH...]</programlisting>
+          <programlisting>svn info [TARGET...]</programlisting>
         </refsect1>
         <refsect1>
           <title>Description</title>
 
-          <para>Print information about paths in your working copy,
-            including:</para>
+          <para>Print information about both working copy paths and
+            URLs, including:</para>
 
           <itemizedlist>
             <listitem><para>Path</para></listitem>
             <listitem><para>Name</para></listitem>
             <listitem><para>URL</para></listitem>
             <listitem><para>Revision</para></listitem>
+            <listitem><para>Repository Root</para></listitem>
+            <listitem><para>Repository UUID</para></listitem>
             <listitem><para>Node Kind</para></listitem>
             <listitem><para>Last Changed Author</para></listitem>
             <listitem><para>Last Changed Revision</para></listitem>
@@ -1848,6 +1888,9 @@ Committed revision 19.
             <listitem><para>Text Last Updated</para></listitem>
             <listitem><para>Properties Last Updated</para></listitem>
             <listitem><para>Checksum</para></listitem>
+            <listitem><para>Lock Token</para></listitem>
+            <listitem><para>Lock Owner</para></listitem>
+            <listitem><para>Lock Creation Date</para></listitem>
           </itemizedlist>
         </refsect1>
 
@@ -1872,6 +1915,7 @@ Committed revision 19.
           <screen>
 --targets FILENAME
 --recursive (-R)
+--revision (-r)
 --config-dir DIR
 </screen>
         </refsect1>
@@ -1888,6 +1932,8 @@ $ svn info foo.c
 Path: foo.c
 Name: foo.c
 URL: http://svn.red-bean.com/repos/test/foo.c
+Repository Root: http://svn.red-bean.com/repos/test
+Repository UUID: 5e7d134a-54fb-0310-bd04-b611643e5c25
 Revision: 4417
 Node Kind: file
 Schedule: normal
@@ -1903,8 +1949,10 @@ Checksum: /3L38YwzhT93BWvgpdF6Zw==
 
           <screen>
 $ svn info vendors
-Path: trunk
+Path: vendors
 URL: http://svn.red-bean.com/repos/test/vendors
+Repository Root: http://svn.red-bean.com/repos/test
+Repository UUID: 5e7d134a-54fb-0310-bd04-b611643e5c25
 Revision: 19
 Node Kind: directory
 Schedule: normal
@@ -1912,6 +1960,32 @@ Last Changed Author: harry
 Last Changed Rev: 19
 Last Changed Date: 2003-01-16 23:21:19 -0600 (Thu, 16 Jan 2003)
 </screen>
+
+           <para><command>svn info</command> also acts on URLs (also
+             note that the file readme.doc in this example is locked,
+             so lock information is also provided):</para>
+
+           <screen>
+$ svn info http://svn.red-bean.com/repos/test/readme.doc
+Path: readme.doc
+Name: readme.doc
+URL: http://svn.red-bean.com/repos/test/readme.doc
+Repository Root: http://svn.red-bean.com/repos/test
+Repository UUID: 5e7d134a-54fb-0310-bd04-b611643e5c25
+Revision: 1
+Node Kind: file
+Schedule: normal
+Last Changed Author: sally
+Last Changed Rev: 42
+Last Changed Date: 2003-01-14 23:21:19 -0600 (Tue, 14 Jan 2003)
+Text Last Updated: 2003-01-14 23:21:19 -0600 (Tue, 14 Jan 2003)
+bChecksum: d41d8cd98f00b204e9800998ecf8427e
+Lock Token: opaquelocktoken:14011d4b-54fb-0310-8541-dbd16bd471b2
+Lock Owner: harry
+Lock Created: 2003-01-15 17:35:12 -0600 (Wed, 15 Jan 2003)
+</screen>
+
+
           
         </refsect1>
       </refentry>
@@ -2021,6 +2095,100 @@ $ svn list --verbose file:///tmp/repos
         </refsect1>
       </refentry>
 
+
+      <refentry id="svn.ref.svn.c.lock">
+        <refnamediv>
+          <refname>svn lock</refname> 
+            <refpurpose>Lock working copy paths or URLs in the
+              repository, so that no other user can commit changes to
+              them.</refpurpose>
+        </refnamediv>
+        <refsect1>
+          <title>Synopsis</title>
+          <programlisting>svn lock TARGET...</programlisting>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+
+          <para>Lock each <replaceable>TARGET</replaceable>.  If any
+            <replaceable>TARGET</replaceable> is already locked by
+            another user, print a warning and continue locking the
+            rest of the <replaceable>TARGET</replaceable>s.  Use
+            <option>--force</option> to steal a lock from another user
+            or working copy.</para>
+
+        </refsect1>
+
+        <refsect1>
+          <title>Alternate Names</title>
+          <para>None</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Changes</title>
+          <para>Working Copy, Repository</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Accesses Repository</title>
+          <para>Yes</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Switches</title>
+
+          <screen>
+--targets ARG
+--message (-m) ARG
+--file (-F) ARG
+--force-log
+--encoding ARG
+--username ARG
+--password ARG
+--no-auth-cache
+--non-interactive
+--config-dir ARG
+--force
+</screen>
+        </refsect1>
+
+        <refsect1>
+          <title>Examples</title>
+
+          <para>Lock two files in your working copy:</para>
+
+          <screen>
+
+$ svn lock tree.jpg house.jpg
+'tree.jpg' locked by user 'harry'.
+'house.jpg' locked by user 'harry'.
+</screen>
+
+          <para>Lock a file in your working copy that is currently
+            locked by another user:</para>
+
+          <screen>
+$ svn lock tree.jpg
+svn: warning: Path '/tree.jpg is already locked by user 'harry in \
+     filesystem '/svn/repos/db'
+garibaldi: /tmp/r>svn lock --force foo
+'tree.jpg' locked by user 'sally'.
+</screen>
+
+          <para>Lock a file without a working copy:</para>
+
+          <screen>
+$ svn lock http://svn.red-bean.com/repos/test/tree.jpg
+'tree.jpg' locked by user 'sally'.
+</screen>
+
+          <para>For further details, see <xref
+            linkend="svn.advanced.locking"/>.</para>
+
+        </refsect1>
+      </refentry>
+
+
       <refentry id="svn.ref.svn.c.log">
         <refnamediv>
           <refname>svn log</refname>
@@ -2088,6 +2256,7 @@ $ svn list --verbose file:///tmp/repos
 --targets FILENAME
 --stop-on-copy
 --incremental
+--limit NUM
 --xml
 --username USER
 --password PASS
@@ -3183,10 +3352,9 @@ $ svn status
             <option>--verbose</option>, print full revision
             information on every item.</para>
 
-          <para>The first five columns in the output are each one
+          <para>The first six columns in the output are each one
             character wide, and each column gives you information
-            about different aspects of each working copy
-            item.</para>
+            about different aspects of each working copy item.</para>
           
           <para>The first column indicates that an item
             was added, deleted, or otherwise changed.</para>
@@ -3375,7 +3543,64 @@ $ svn status
 
           </variablelist>
 
-          <para>The out-of-date information appears in the eighth
+          <para>The sixth column is populated with lock information.</para>
+          
+          <variablelist>
+            
+            <varlistentry>
+              <term>' '</term>
+              <listitem>
+                <para>When <option>--show-updates</option> is used,
+                the file is not locked.  If
+                <option>--show-updates</option> is
+                <emphasis>not</emphasis> used, this merely means that
+                the file is not locked in this working copy.</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>K</term>
+              <listitem>
+                <para>File is locked in this working copy.</para>
+              </listitem>
+            </varlistentry>
+            
+            <varlistentry>
+              <term>O</term>
+              <listitem>
+                <para>File is locked either by another user or in
+                another working copy.  This only appears when
+                <option>--show-updates</option> is used.</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>T</term>
+              <listitem>
+                <para>File was locked in this working copy, but the
+                lock has been <quote>stolen</quote>and is invalid.
+                The file is currently locked in the repository.  This
+                only appears when <option>--show-updates</option> is
+                used.</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>B</term>
+              <listitem>
+                <para>File was locked in this working copy, but the
+                lock has been <quote>broken</quote>and is invalid.
+                The file is no longer locked This only appears when
+                <option>--show-updates</option> is used.</para>
+              </listitem>
+            </varlistentry>
+
+          </variablelist>
+
+
+
+
+          <para>The out-of-date information appears in the seventh
             column (only if you pass the
             <option>--show-updates</option> switch).</para>
 
@@ -3655,6 +3880,95 @@ At revision 3.
         </refsect1>
       </refentry>
 
+
+      <refentry id="svn.ref.svn.c.unlock">
+        <refnamediv>
+          <refname>svn unlock</refname> 
+            <refpurpose>Unlock working copy paths or
+              URLs..</refpurpose>
+        </refnamediv>
+        <refsect1>
+          <title>Synopsis</title>
+          <programlisting>svn unlock TARGET...</programlisting>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+
+          <para>Unlock each <replaceable>TARGET</replaceable>.  If any
+            <replaceable>TARGET</replaceable> is either locked by
+            another user or no valid lock token exists in the working
+            copy, print a warning and continue unlocking the rest of
+            the <replaceable>TARGET</replaceable>s.  Use
+            <option>--force</option> to break a lock belonging to
+            another user or working copy.</para>
+
+        </refsect1>
+
+        <refsect1>
+          <title>Alternate Names</title>
+          <para>None</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Changes</title>
+          <para>Working Copy, Repository</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Accesses Repository</title>
+          <para>Yes</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Switches</title>
+
+          <screen>
+--targets ARG
+--username ARG
+--password ARG
+--no-auth-cache
+--non-interactive
+--config-dir ARG
+--force
+</screen>
+        </refsect1>
+
+        <refsect1>
+          <title>Examples</title>
+
+          <para>Unlock two files in your working copy:</para>
+
+          <screen>
+
+$ svn unlock tree.jpg house.jpg
+'tree.jpg' unlocked.
+'house.jpg' unlocked.
+</screen>
+
+          <para>Unlock a file in your working copy that is currently
+            locked by another user:</para>
+
+          <screen>
+$ svn unlock tree.jpg
+svn: 'tree.jpg' is not locked in this working copy
+$ svn unlock --force tree.jpg
+'tree.jpg' unlocked.
+</screen>
+
+          <para>Unlock a file without a working copy:</para>
+
+          <screen>
+$ svn unlock http://svn.red-bean.com/repos/test/tree.jpg
+'tree.jpg unlocked.
+</screen>
+
+          <para>For further details, see <xref
+            linkend="svn.advanced.locking"/>.</para>
+
+        </refsect1>
+      </refentry>
+
+
       <refentry id="svn.ref.svn.c.update">
         <refnamediv>
           <refname>svn update</refname>
@@ -3672,7 +3986,9 @@ At revision 3.
             it brings your working copy up-to-date with the
             <literal>HEAD</literal> revision.  Otherwise, it
             synchronizes the working copy to the revision given by the
-            <option>--revision</option> switch.</para>
+            <option>--revision</option> switch.  As part of the
+            synchronization, <command>svn update</command> also
+            removes any stale locks found in the working copy.</para>
 
           <para>For each updated item a line will start with a
             character reporting the action taken.  These characters
@@ -3950,7 +4266,10 @@ Updated to revision 30.
               created for you.<footnote><para>Remember,
               <command>svnadmin</command> works only with local
               <emphasis>paths</emphasis>, not
-              <emphasis>URLs</emphasis>.</para></footnote></para>
+              <emphasis>URLs</emphasis>.</para></footnote> As of
+              Subversion 1.2, <command>svnadmin</command> creates new
+              repositories with the <literal>fsfs</literal> filesystem
+              backend by default.</para>
           </refsect1>
 
         <refsect1>
@@ -4284,6 +4603,47 @@ $ svnadmin load --parent-dir new/subdir/for/project /usr/local/svn/restored &lt;
         </refsect1>
       </refentry>
 
+      <refentry id="svn.ref.svnadmin.c.lslocks">
+        <refnamediv>
+          <refname>svnadmin lslocks</refname> 
+          <refpurpose>Print descriptions of all locks.</refpurpose>
+        </refnamediv>
+        <refsect1>
+          <title>Synopsis</title>
+          <programlisting>svnadmin lslocks REPOS_PATH</programlisting>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+
+          <para>Print descriptions of all locks in a repository.</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Switches</title>
+          
+          <para>None</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Example</title>
+
+
+          <para>This lists the one locked file in the repository at
+            <filename>/svn/repos</filename></para>
+
+          <screen>
+$ svnadmin lslocks /svn/repos
+Path: /tree.jpg
+UUID Token: opaquelocktoken:ab00ddf0-6afb-0310-9cd0-dda813329753
+Owner: harry
+Created: 2005-07-08 17:27:36 -0500 (Fri, 08 Jul 2005)
+Expires: 
+Comment (1 line):
+Rework the uppermost branches on the bald cypress in the foreground.
+</screen>
+        </refsect1>
+      </refentry>
+
       <refentry id="svn.ref.svnadmin.c.lstxns">
         <refnamediv>
           <refname>svnadmin lstxns</refname>
@@ -4320,9 +4680,13 @@ $ svnadmin lstxns /usr/local/svn/repos/
       <refentry id="svn.ref.svnadmin.c.recover">
         <refnamediv>
           <refname>svnadmin recover</refname>
+
           <refpurpose>Bring a repository database back into a
           consistent state (applies only to repositories using the
-          <literal>bdb</literal> backend).</refpurpose>
+          <literal>bdb</literal> backend).  In addition, if
+          <filename>repos/conf/passwd</filename> does not exist, it
+          will create a default password file .</refpurpose>
+
         </refnamediv>
         <refsect1>
           <title>Synopsis</title>
@@ -4383,6 +4747,45 @@ Recovery completed.
 The latest repos revision is 34.
 </screen>
 
+        </refsect1>
+      </refentry>
+
+
+      <refentry id="svn.ref.svnadmin.c.rmlocks">
+        <refnamediv>
+          <refname>svnadmin rmlocks</refname>
+          <refpurpose>Unconditionally remove one or more locks from a
+          repository.</refpurpose>
+        </refnamediv>
+        <refsect1>
+          <title>Synopsis</title>
+          <programlisting>svnadmin rmlocks REPOS_PATH LOCKED_PATH...</programlisting>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+
+          <para>Remove lock from each <replaceable>LOCKED_PATH</replaceable>.</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Switches</title>
+          
+          <para>None</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Example</title>
+
+          <para>This deletes the locks on
+            <filename>tree.jpg</filename> and
+            <filename>house.jpg</filename> in the repository at
+            <filename>/svn/repos</filename></para>
+
+          <screen>
+$ svnadmin rmlocks /svn/repos tree.jpg house.jpg
+Removed lock on '/tree.jpg.
+Removed lock on '/house.jpg.
+</screen>
         </refsect1>
       </refentry>
 
@@ -4575,6 +4978,19 @@ $ svnadmin verify /usr/local/svn/repos/
           <listitem>
             <para>Specify a particular revision number that you wish
               to examine.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--revprop</option></term>
+          <listitem>
+            <para>Operates on a revision property instead of a
+              Subversion property specific to a file or directory.
+              This switch requires that you also pass a revision
+              with the <option>--revision</option>
+              (<option>-r</option>) switch. See <xref
+              linkend="svn.reposadmin.basics.revprops"/> for more details on
+              unversioned properties.</para>
           </listitem>
         </varlistentry>
 
@@ -4801,6 +5217,7 @@ $ svnlook date -r 40 /tmp/repos/
           <screen>
 --revision (-r)
 --transaction (-t)
+--no-diff-added
 --no-diff-deleted
 </screen>
         </refsect1>
@@ -5008,6 +5425,52 @@ Rearrange lunch.
         </refsect1>
       </refentry>
 
+
+      <refentry id="svn.ref.svnlook.c.lock">
+        <refnamediv>
+          <refname>svnlook lock</refname>
+          <refpurpose>If a lock exists on a path in the repository,
+            describe it.</refpurpose>
+        </refnamediv>
+        <refsect1>
+          <title>Synopsis</title>
+          <programlisting>svnlook lock REPOS_PATH PATH_IN_REPOS</programlisting>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+
+          <para>Print all information available for the lock at
+              <replaceable>PATH_IN_REPOS</replaceable>.  If
+              <replaceable>PATH_IN_REPOS</replaceable> is not locked,
+              print nothing.</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Switches</title>
+            
+          <para>None</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Examples</title>
+
+          <para>This describes the lock on the file
+            <filename>tree.jpg</filename>.</para>
+
+          <screen>
+$ svnlook lock /svn/repos tree.jpg
+UUID Token: opaquelocktoken:ab00ddf0-6afb-0310-9cd0-dda813329753
+Owner: harry
+Created: 2005-07-08 17:27:36 -0500 (Fri, 08 Jul 2005)
+Expires: 
+Comment (1 line):
+Rework the uppermost branches on the bald cypress in the foreground.
+</screen>
+          
+        </refsect1>
+      </refentry>
+
+
       <refentry id="svn.ref.svnlook.c.log">
         <refnamediv>
           <refname>svnlook log</refname>
@@ -5075,6 +5538,7 @@ Rearrange lunch.
           <screen>
 --revision (-r)
 --transaction (-t)
+--revprop
 </screen>
         </refsect1>
 
@@ -5123,6 +5587,7 @@ mustard
 --revision (-r)
 --transaction (-t)
 --verbose (-v)
+--revprop
 </screen>
         </refsect1>
 
@@ -5589,6 +6054,25 @@ exported</screen>
                 <literal>Location</literal> block for a Subversion
                 repository.  It tells httpd to use the Subversion
                 backend for mod_dav to handle all requests.</para>
+
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><literal>SVNAutoversioning On</literal></term>
+            <listitem>
+
+              <para>This directive allows write requests from WebDAV
+                clients to result in automatic commits.  A generic log
+                message is auto-generated and attached to each
+                revision.  If you enable Autoversioning, you'll likely
+                want to set <literal>ModMimeUsePathInfo On</literal>
+                so that <literal>mod_mime</literal> can set
+                <literal>svn:mime-type</literal> to the correct
+                mime-type automatically (as best as
+                <literal>mod_mime</literal> is able to, of course).
+                For more information, see <xref
+                linkend="svn.webdav"/></para>
 
             </listitem>
           </varlistentry>
