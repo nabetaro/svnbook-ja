@@ -58,7 +58,8 @@ convfiles:
 
 bookdiff:
 	mkdir $(BDTMP)
-	svn co -N -r`cat LAST_UPDATED` $(COLLAB)/trunk/src/en/book $(BDTMP)/eng
+	$(MAKE) engdir
+	cp -a book/eng $(BDTMP)/
 	for _ptd in $(BDFILES); do \
 		cat $(BDTMP)/eng/$$_ptd | bin/clean_files -e >>$(BDTMP)/eng.txt; \
 		cat book/$$_ptd | bin/clean_files -e >>$(BDTMP)/norw.txt; \
