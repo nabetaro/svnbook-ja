@@ -2032,8 +2032,12 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
   <!-- ================================================================= -->
   <sect1 id="svn.serverconfig.httpd">
     
+    <!-- @ENGLISH {{{
     <title>httpd, the Apache HTTP server</title>
+    @ENGLISH }}} -->
+    <title>HTTP-tjeneren Apache (httpd)</title>
 
+    <!-- @ENGLISH {{{
     <para>The Apache HTTP Server is a <quote>heavy duty</quote>
       network server that Subversion can leverage.  Via a custom
       module, <command>httpd</command> makes Subversion repositories
@@ -2054,7 +2058,30 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
       While an Apache-Subversion server has more features than
       <command>svnserve</command>, it's also a bit more difficult
       to set up.  With flexibility often comes more complexity.</para>
+    @ENGLISH }}} -->
+    <para>HTTP-tjeneren Apache er en nettverkstjener i tungvektsklassen 
+      som Subversion kan bruke.
+      Ved hjelp av en spesiallaget modul gjør <command>httpd</command> 
+      Subversiondepoter tilgjengelig for klienter via 
+      WebDAV/DeltaV-protokollen, som er en utvidelse av HTTP 1.1 (se 
+      <systemitem class="url">http://www.webdav.org</systemitem> for mer 
+      informasjon).
+      Denne protokollen tar HTTP-protokollen som vi finner over alt, 
+      kjernen av <!-- ¤ -->World Wide Web, og legger til muligheter for 
+      skriving – mer spesifikt, versjonert skriving.
+      Resultatet er et standardisert, robust system som går godt sammen  
+      med Apache 2.0-programvaren, støttet av et stort antall 
+      operativsystemer og tredjeparts programvare.
+      Og systemadministratorer trenger ikke å åpne enda en port på 
+      systemet.<footnote>
+        <para>Det er noe som de virkelig hater.</para>
+      </footnote>
+      En Apache/Subversion-tjener har større funksjonalitet enn 
+      <command>svnserve</command>, men er også vanskeligere å sette opp.
+      Med fleksibilitet kommer det ofte mer kompleksitet med på 
+      kjøpet.</para>
 
+    <!-- @ENGLISH {{{
     <para>Much of the following discussion includes references to
       Apache configuration directives.  While some examples are given
       of the use of these directives, describing them in full is
@@ -2064,7 +2091,20 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
       For example, a general reference for the configuration
       directives is located at <systemitem class="url">
       http://httpd.apache.org/docs-2.0/mod/directives.html</systemitem>.</para>
+    @ENGLISH }}} -->
+    <para>Mye av den følgende diskusjonen inneholder referanser til 
+      konfigurasjonsdirektiver for Apache.
+      Selv om noen eksempler inneholder bruk av disse direktivene, er 
+      det å beskrive dem i full detalj utenfor det som dette kapittelet 
+      dekker.
+      Utviklerne bak Apache vedlikeholder fortreffelig dokumentasjon, 
+      offentlig tilgjengelig på hjemmesiden <systemitem 
+      class="url">http://httpd.apache.org</systemitem>.
+      En generell oversikt over konfigurasjonsdirektivene er for 
+      eksempel tilgjengelig på <systemitem 
+      class="url">http://httpd.apache.org/docs-2.0/mod/directives.html</systemitem>.</para>
     
+    <!-- @ENGLISH {{{
     <para>Also, as you make changes to your Apache setup, it is likely
       that somewhere along the way a mistake will be made.  If you are
       not already familiar with Apache's logging subsystem, you should
@@ -2077,10 +2117,29 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
       the contents of those files for information that might reveal
       the source of a problem that is not clearly noticeable
       otherwise.</para>
+    @ENGLISH }}} -->
+    <para>I tillegg, etter hvert som du gjør forandringer til 
+      Apacheoppsettet, kan det skje at en feil blir gjort på veien.
+      Hvis du ikke allerede kjenner til Apaches loggesystem, bør du bli 
+      kjent med det.
+      I <filename>httpd.conf</filename>-filen din er det direktiver som 
+      spesifiserer plasseringer på disken av aksess- og 
+      feilmeldingsloggene som genereres av Apache (henholdsvis 
+      direktivene <literal>CustomLog</literal> og 
+      <literal>ErrorLog</literal>).
+      Subversions mod_dav_svn bruker også Apaches logging av 
+      feilmeldinger.
+      Du kan alltids gå gjennom innholdet av disse filene etter 
+      informasjon som kan vise kilden til et problem som ellers ikke er 
+      lett å få øye på.</para>
     
     <sidebar>
+      <!-- @ENGLISH {{{
       <title>Why Apache 2?</title>
+      @ENGLISH }}} -->
+      <title>Hvorfor Apache 2?</title>
 
+      <!-- @ENGLISH {{{
       <para>If you're a system administrator, it's very likely that
         you're already running the Apache web server and have some
         prior experience with it.  At the time of writing, Apache 1.3
@@ -2092,25 +2151,61 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
         are waiting for a 2.X port.  Whatever the reason, many people
         begin to worry when they first discover that Subversion's
         Apache module is written specifically for the Apache 2 API.</para>
+      @ENGLISH }}} -->
+      <para>Hvis du er en systemadministrator, er det ganske sannsynlig 
+        at du allerede kjører webtjeneren Apache og har noe tidligere 
+        erfaring med den.
+        Når dette skrives, er Apache 1.3 med god margin den mest 
+        populære versjonen av Apache.
+        Verden har vært ganske sen med å oppgradere til Apache 
+        2.X-serien av diverse grunner:
+        Noen folk frykter forandringer, spesielt det å forandre noe så 
+        kritisk som en webtjener.
+        Andre folk er avhenging av <!-- ¤ -->innpluggingsmoduler som 
+        bare virker mot Apache 1.3-<!-- ¤ API -->grensesnittet, og 
+        venter på en versjon for 2.X.
+        Hva grunnen enn er, begynner mange personer å bekymre seg når de 
+        oppdager at Subversions Apachemodul er skrevet spesifikt for 
+        grensesnittet for Apache 2.</para>
 
+      <!-- @ENGLISH {{{
       <para>The proper response to this problem is: don't worry about
         it.  It's easy to run Apache 1.3 and Apache 2 side-by-side;
         simply install them to separate places, and use Apache 2 as a
         dedicated Subversion server that runs on a port other than 80.
         Clients can access the repository by placing the port number
         into the URL:</para>
+      @ENGLISH }}} -->
+      <para>Svaret på dette problemet er:
+        Ikke noe å bekymre seg for.
+        Det er lett å kjøre Apache 1.3 og Apache 2 side ved side; bare 
+        installer dem på forskjellige plasser på disken, og bruk Apache 
+        2 som en dedisert Subversiontjener som bruker en annen port enn 
+        80.
+        Klienter kan aksessere depotet ved å plassere portnummeret i 
+        URLen:</para>
 
+      <!-- @ENGLISH {{{
       <screen>
 $ svn checkout http://host.example.com:7382/repos/project
 &hellip;
+</screen>
+      @ENGLISH }}} -->
+      <screen>
+$ svn checkout http://tjener.example.com:7382/repos/prosjekt
+…
 </screen>
     </sidebar>
 
 
     <!-- =============================================================== -->
     <sect2 id="svn.serverconfig.httpd.prereqs">
+      <!-- @ENGLISH {{{
       <title>Prerequisites</title>
+      @ENGLISH }}} -->
+      <title>Systemkrav</title>
       
+      <!-- @ENGLISH {{{
       <para>To network your repository over HTTP, you basically need
         four components, available in two packages.  You'll need
         Apache <command>httpd</command> 2.0, the
@@ -2119,23 +2214,45 @@ $ svn checkout http://host.example.com:7382/repos/project
         filesystem provider module distributed with Subversion.
         Once you have all of those components, the process of
         networking your repository is as simple as:</para>
+      @ENGLISH }}} -->
+      <para>For å få depotet ditt på nettverk over HTTP, trenger du 
+        hovedsaklig fire komponenter, tilgjengelig i to pakker.
+        Du trenger Apache <command>httpd</command> 2.0, DAV-modulen 
+        <command>mod_dav</command> som følger med Apache, Subversion og 
+        filsystemmodulen <command>mod_dav_svn</command> som kommer 
+        sammen med Subversion.
+        Når du har alle disse komponentene er prosessen å få depotet på 
+        nett så enkel som å:</para>
       
       <itemizedlist>
         <listitem>
+          <!-- @ENGLISH {{{
           <para>getting httpd 2.0 up and running with the mod_dav
             module,</para>
+          @ENGLISH }}} -->
+          <para>få httpd 2.0 opp og kjøre med mod_dav-modulen,</para>
         </listitem>
         <listitem>
+          <!-- @ENGLISH {{{
           <para>installing the mod_dav_svn plugin to mod_dav, which
             uses Subversion's libraries to access the repository,
             and</para>
+          @ENGLISH }}} -->
+          <para>installere programtillegget mod_dav_svn til mod_dav, som 
+            bruker Subversions biblioteker til å aksessere depotet, 
+            og</para>
         </listitem>
         <listitem>
+          <!-- @ENGLISH {{{
           <para>configuring your <filename>httpd.conf</filename>
             file to export (or expose) the repository.</para>
+          @ENGLISH }}} -->
+          <para>konfigurere <filename>httpd.conf</filename>-filen din 
+            til å eksportere (eller vise) depotet.</para>
         </listitem>
       </itemizedlist>
       
+      <!-- @ENGLISH {{{
       <para>You can accomplish the first two items either by
         compiling <command>httpd</command> and Subversion from
         source code, or by installing pre-built binary packages of
@@ -2144,13 +2261,26 @@ $ svn checkout http://host.example.com:7382/repos/project
         as well as how to compile and configure Apache itself for
         this purpose, see the <filename>INSTALL</filename> file in
         the top level of the Subversion source code tree.</para>
+      @ENGLISH }}} -->
+      <para>Du kan sette opp de første to elementene enten ved å 
+        kompilere <command>httpd</command> og Subversion fra kildekode 
+        eller ved å installere ferdigbygde pakker med dem på systemet.
+        For den mest oppdaterte informasjonen om hvordan du kompilerer 
+        Subversion for bruk sammen med Apache HTTP-tjeneren og hvordan 
+        kompilere og sette opp selve Apache for dette, se 
+        <filename>INSTALL</filename>-filen på toppnivået av 
+        kildekodetreet til Subversion.</para>
       
     </sect2>
 
     <!-- =============================================================== -->
     <sect2 id="svn.serverconfig.httpd.basic">
+      <!-- @ENGLISH {{{
       <title>Basic Apache Configuration</title>
+      @ENGLISH }}} -->
+      <title>Grunnleggende oppsett av Apache</title>
       
+      <!-- @ENGLISH {{{
       <para>Once you have all the necessary components installed on
         your system, all that remains is the configuration of Apache
         via its <filename>httpd.conf</filename> file.  Instruct Apache
@@ -2165,16 +2295,40 @@ $ svn checkout http://host.example.com:7382/repos/project
         <literal>LoadModule</literal> directive has a simple syntax,
         mapping a named module to the location of a shared library on
         disk:</para>
+      @ENGLISH }}} -->
+      <para>Når du har alle de nødvendige komponentene installert på 
+        systemet ditt, er alt som gjenstår å konfigurere Apache ved 
+        hjelp av <filename>httpd.conf</filename>-filen.
+        Få Apache til å laste mod_dav_svn-modulen ved å bruke 
+        <literal>LoadModule</literal>-direktivet.
+        Dette direktivet må komme foran alle andre Subversion-relaterte 
+        elementer.
+        Hvis Apache ble installert med standard filplasseringer, er 
+        <command>mod_dav_svn</command>-modulen plassert i 
+        <filename>modules</filename>-katalogen der Apache er installert 
+        (ofte <filename>/usr/local/apache2</filename>).
+        <literal>LoadModule</literal>-direktivet har en enkel syntaks 
+        som <!-- ¤ mapping --> kobler en navngitt modul til plasseringen 
+        av et delt bibliotek på disken:</para>
     
         <screen>
 LoadModule dav_svn_module     modules/mod_dav_svn.so
 </screen>
 
+      <!-- @ENGLISH {{{
       <para>Note that if <command>mod_dav</command> was compiled as a
         shared object (instead of statically linked directly to the
         <command>httpd</command> binary), you'll need a similar
         <literal>LoadModule</literal> statement for it, too.  Be sure
         that it comes before the <command>mod_dav_svn</command> line:</para>
+      @ENGLISH }}} -->
+      <para>Legg merke til at hvis <command>mod_dav</command> ble 
+        kompilert som et delt objekt (istedenfor å bli statisk linket 
+        direkte til binærfilen <command>httpd</command>) vil du også 
+        trenge en tilsvarende <literal>LoadModule</literal>-linje for 
+        dette.
+        Pass på at den kommer før 
+        <command>mod_dav_svn</command>-linjen:</para>
 
         <screen>
 LoadModule dav_module         modules/mod_dav.so
@@ -2182,6 +2336,7 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
 </screen>
 
     
+      <!-- @ENGLISH {{{
       <para>At a later location in your configuration file, you now
         need to tell Apache where you keep your Subversion repository
         (or repositories).  The <literal>Location</literal> directive
@@ -2200,14 +2355,44 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
         repository is located at
         <filename>/absolute/path/to/repository</filename> using the
         following <filename>httpd.conf</filename> syntax:</para>
+      @ENGLISH }}} -->
+      <!-- ¤ Dette avsnittet kan med fordel finleses litt sånn 
+      etterhvert. -->
+      <para>På en senere plassering i konfigurasjonsfilen må du fortelle 
+        Apache hvor du har lagt Subversiondepotet (eller depotene).
+        <literal>Location</literal>-direktivet har en XML-lignende 
+        notasjon som starter med et åpningselement og slutter med et 
+        sluttelement med diverse andre konfigurasjonsdirektiver i 
+        midten.
+        Formålet med <literal>Location</literal>-direktivet er å 
+        instruere Apache til å gjøre noe spesielt når den behandler 
+        forespørsler som går til en gitt URL eller et av dens barn.
+        I tilfellet med Subversion vil du at Apache gir støtte for URLer 
+        som peker til en versjonert ressurs i DAV-laget.
+        Du kan instruere Apache til å delegere håndteringen av alle 
+        URLer der en del av stien (den delen av URLen som kommer etter 
+        tjenernavnet og det valgfrie portnummeret) som begynner med 
+        <filename>/repos/</filename> til en DAV-tjeneste som har depotet 
+        plassert som <filename>/absolutt/sti/til/depotet</filename> ved 
+        å bruke den følgende 
+        <filename>httpd.conf</filename>-syntaksen:</para>
                 
+        <!-- @ENGLISH {{{
         <screen>
 &lt;Location /repos&gt;
   DAV svn
   SVNPath /absolute/path/to/repository
 &lt;/Location&gt;
 </screen>
+        @ENGLISH }}} -->
+        <screen>
+&lt;Location /repos&gt;
+  DAV svn
+  SVNPath /absolutt/sti/til/depotet
+&lt;/Location&gt;
+</screen>
             
+      <!-- @ENGLISH {{{
       <para>If you plan to support multiple Subversion repositories
         that will reside in the same parent directory on your local
         disk, you can use an alternative directive, the
@@ -2221,7 +2406,24 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
         class="url">http://my.server.com/svn/repos2</systemitem>, and
         so on, you could use the <filename>httpd.conf</filename>
         configuration syntax in the following example:</para>
+      @ENGLISH }}} -->
+      <para>Hvis du planlegger å ha flere Subversiondepoter som vil 
+        ligge i den samme foreldrekatalogen på en lokal disk, kan du 
+        bruke et alternativt direktiv, 
+        <literal>SVNParentPath</literal>-direktivet, for å indikere 
+        denne felles foreldrekatalogen.
+        Hvis du for eksempel vet at du vil opprette flere 
+        Subversiondepoter i katalogen 
+        <filename>/usr/local/svn</filename> som vil bli aksessert vie 
+        URLer som <systemitem 
+        class="url">http://min.tjener.com/svn/depot1</systemitem>, 
+        <systemitem 
+        class="url">http://min.tjener.com/svn/depot2</systemitem> og så 
+        videre, kan du bruke 
+        <filename>httpd.conf</filename>-konfigurasjonssyntaksen i det 
+        følgende eksempelet:</para>
               
+        <!-- @ENGLISH {{{
         <screen>
 &lt;Location /svn&gt;
   DAV svn
@@ -2230,7 +2432,17 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
   SVNParentPath /usr/local/svn
 &lt;/Location&gt;
 </screen>
+        @ENGLISH }}} -->
+        <screen>
+&lt;Location /svn&gt;
+  DAV svn
+
+  # alle "/svn/foo"-URLer vil kobles til katalogen /usr/local/svn/foo
+  SVNParentPath /usr/local/svn
+&lt;/Location&gt;
+</screen>
             
+      <!-- @ENGLISH {{{
       <para>Using the previous syntax, Apache will delegate the
         handling of all URLs whose path portions begin with
         <filename>/svn/</filename> to the Subversion DAV provider,
@@ -2241,7 +2453,19 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
         <literal>SVNPath</literal> directive, you don't have to
         restart Apache in order to create and network new
         repositories.</para>      
+      @ENGLISH }}} -->
+      <para>Ved å bruke den foregående syntaksen vil Apache delegere 
+        håndteringen av alle URLer der stien begynner med 
+        <filename>/svn/</filename> til DAV-tjenesten for Subversion som 
+        deretter vil gå ut i fra at alle elementer i katalogen 
+        spesifisert med <literal>SVNParentPath</literal>-direktivet 
+        faktisk er Subversiondepoter.
+        Dette er en spesielt lettvint syntaks fordi i motsetning til 
+        bruken av <literal>SVNPath</literal>-direktivet trenger du ikke 
+        å starte Apache på nytt for å opprette nye depoter og få dem på 
+        nett.</para>
 
+      <!-- @ENGLISH {{{
       <para>Be sure that when you define your new
         <literal>Location</literal>, it doesn't overlap with other
         exported Locations.  For example, if your main
@@ -2254,10 +2478,27 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
         <command>mod_dav_svn</command> to return
         <filename>foo.c</filename> from the Subversion
         repository.</para>
+      @ENGLISH }}} -->
+      <para>Pass på at den nye <literal>Location</literal>-defineringen 
+        ikke overlapper med andre eksporterte plasseringer.
+        For eksempel, hvis hovedplasseringen av 
+        <literal>DocumentRoot</literal> er <filename>/www</filename>, 
+        ikke eksporter et Subversiondepot med <literal>&lt;Location 
+        /www/repos&gt;</literal>.
+        Hvis en forespørsel kommer for URIen 
+        <filename>/www/repos/foo.c</filename>, vet ikke Apache om den 
+        skal se etter filen <filename>repos/foo.c</filename> i 
+        <literal>DocumentRoot</literal> eller om den skal delegere 
+        jobben til <command>mod_dav_svn</command> for å returnere 
+        <filename>foo.c</filename> fra Subversiondepotet.</para>
 
       <sidebar>
+        <!-- @ENGLISH {{{
         <title>Server Names and the COPY Request</title>
+        @ENGLISH }}} -->
+        <title>Tjenernavn og COPY-forespørselen</title>
         
+        <!-- @ENGLISH {{{
         <para>Subversion makes use of the <literal>COPY</literal>
           request type to perform server-side copies of files and
           directories.  As part of the sanity checking done by the
@@ -2267,19 +2508,41 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
           the name you use as the hostname of your server.  Generally,
           you can use the <literal>ServerName</literal> directive in
           <filename>httpd.conf</filename> to accomplish this.</para>
+        @ENGLISH }}} -->
+        <para>Subversion gjør bruk av 
+          <literal>COPY</literal>-forespørselstypen for å utføre 
+          kopiering av filer og kataloger på tjenersiden.
+          Som en del av de <!-- ¤ sanity checking -->interne kontrollene 
+          gjort av Apachemoduler, blir det forventet at kilden til 
+          kopien ligger på den samme maskinen som målet til kopien.
+          For å tilfredsstille dette kravet, kan det hende at du må 
+          fortelle mod_dav navnet som du bruker som tjenernavn på 
+          tjeneren.
+          Vanligvis kan du bruke 
+          <literal>ServerName</literal>-direktivet i 
+          <filename>httpd.conf</filename> for å få dette til.</para>
         
         <screen>
 ServerName svn.example.com
 </screen>
             
+        <!-- @ENGLISH {{{
         <para>If you are using Apache's virtual hosting support via
           the <literal>NameVirtualHost</literal> directive, you may
           need to use the <literal>ServerAlias</literal> directive to
           specify additional names that your server is known by.
           Again, refer to the Apache documentation for full
           details.</para>
+        @ENGLISH }}} -->
+        <para>Hvis du bruker Apaches virtuelle tjenerstøtte med 
+          <literal>NameVirtualHost</literal>-direktivet, kan det hende 
+          at du må bruke <literal>ServerAlias</literal>-direktivet for å 
+          spesifisere flere navn som tjeneren din er kjent som.
+          Les i dokumentasjonen for Apache for fullstendige detaljer om 
+          dette.</para>
       </sidebar>
 
+      <!-- @ENGLISH {{{
       <para>At this stage, you should strongly consider the question
         of permissions.  If you've been running Apache for some time
         now as your regular web server, you probably already have a
@@ -2290,7 +2553,21 @@ ServerName svn.example.com
         Apache, when used as a Subversion server, will also need the
         correct permissions to read and write to your Subversion
         repository.  (See <xref linkend="svn.serverconfig.svnserve.invoking.sb-1"/>.)</para>
+      @ENGLISH }}} -->
+      <para>På dette steget bør du sterkt vurdere spørsmålet angående 
+        rettigheter.
+        Hvis du har kjørt Apache en stund som din vanlige webtjener, har 
+        du sannsynligvis en samling med innhold – hjemmesider, skript og 
+        lignende.
+        Disse elementene er allerede blitt satt opp med et sett 
+        rettigheter som gjør at de fungerer med Apache, eller rettere 
+        sagt, som gjør at Apache virker med disse filene.
+        Når Apache brukes som en Subversiontjener vil den også trenge de 
+        riktige rettighetene for å lese og skrive til Subversiondepotet.
+        (Se <xref 
+        linkend="svn.serverconfig.svnserve.invoking.sb-1"/>.)</para>
     
+      <!-- @ENGLISH {{{
       <para>You will need to determine a permission system setup that
         satisfies Subversion's requirements without messing up any
         previously existing web page or script installations.  This
@@ -2306,15 +2583,38 @@ ServerName svn.example.com
         aware that permission-related problems are perhaps the most
         common oversight when configuring a Subversion repository for
         use with Apache.</para>
+      @ENGLISH }}} -->
+      <para>Du må finne fram til et oppsett for rettighetssystemet som 
+        tilfredsstiller Subversions krav uten å rote til noen av de 
+        nettsidene eller skriptene som er installert fra før.
+        Dette kan bety å forandre rettighetene på Subversiondepotet til 
+        å samsvare med de som brukes av andre ting som Apache håndterer 
+        for deg, eller det kan innebære å bruke direktivene 
+        <literal>User</literal> og <literal>Group</literal> i 
+        <filename>httpd.conf</filename> for å spesifisere at Apache må 
+        kjøre som den brukeren og gruppen som eier Subversiondepotet.
+        Det er ingen enkelt universalløsning for å sette opp 
+        rettighetene, og hver administrator vil ha forskjellige grunner 
+        for å gjøre ting på en spesiell måte.
+        Bare husk at rettighetsrelaterte problemer kanskje er det som 
+        oftest blir oversett når et Subversiondepot settes opp for bruk 
+        med Apache.</para>
 
     </sect2>
 
     <!-- =============================================================== -->
     <sect2 id="svn.serverconfig.httpd.authn">
+      <!-- @ENGLISH {{{
       <title>Authentication Options</title>
+      @ENGLISH }}} -->
+      <title>Autentiseringsvalg</title>
 
+      <!-- @ENGLISH {{{
       <para>At this point, if you configured
         <filename>httpd.conf</filename> to contain something like</para>
+      @ENGLISH }}} -->
+      <para>På dette punktet, hvis du satte opp 
+        <filename>httpd.conf</filename> til å inneholde noe som</para>
 
       <screen>
 &lt;Location /svn&gt;
@@ -2323,32 +2623,58 @@ ServerName svn.example.com
 &lt;/Location&gt;
 </screen>
 
+      <!-- @ENGLISH {{{
       <para>...then your repository is <quote>anonymously</quote>
         accessible to the world.  Until you configure some
         authentication and authorization policies, the Subversion
         repositories you make available via the
         <literal>Location</literal> directive will be generally
         accessible to everyone.  In other words,</para>
+      @ENGLISH }}} -->
+      <para>…er depotet ditt <quote>anonymt</quote> tilgjengelig for 
+        hele verden.
+        Inntil du setter opp regler for autentisering og autorisasjon, 
+        vil Subversiondepotene som du gjør tilgjengelig via 
+        <literal>Location</literal>-direktivet generelt være 
+        tilgjengelig for alle.
+        Med andre ord,</para>
       
       <itemizedlist>
         <listitem>
+          <!-- @ENGLISH {{{
           <para>anyone can use their Subversion client to checkout a
             working copy of a repository URL (or any of its
             subdirectories),</para>
+          @ENGLISH }}} -->
+          <para>alle kan bruke Subversionklienten sin til å hente ut e 
+            arbeidskopi av en URL i depotet (eller enhver underkatalog 
+            under det),</para>
         </listitem>
         <listitem>
+          <!-- @ENGLISH {{{
           <para>anyone can interactively browse the repository's
             latest revision simply by pointing their web browser to
             the repository URL, and</para>
+          @ENGLISH }}} -->
+          <para>alle kan interaktivt bla igjennom depotets seneste 
+            revisjon ved å bare gå til depot-URLen med nettleseren, 
+            og</para>
         </listitem>
         <listitem>
+          <!-- @ENGLISH {{{
           <para>anyone can commit to the repository.</para>
+          @ENGLISH }}} -->
+          <para>alle kan foreta innlegginger i depotet.</para>
         </listitem>
       </itemizedlist>
 
       <sect3 id="svn.serverconfig.httpd.authn.basic">
+        <!-- @ENGLISH {{{
         <title>Basic HTTP Authentication</title>
+        @ENGLISH }}} -->
+        <title>Enkel HTTP-autentisering</title>
         
+        <!-- @ENGLISH {{{
         <para>The easiest way to authenticate a client is via the
           HTTP Basic authentication mechanism, which simply uses a
           username and password to verify that a user is who she says
@@ -2358,7 +2684,19 @@ ServerName svn.example.com
           your Subversion repository.  Let's grant commit access to
           Sally and Harry.  First, we need to add them to the password
           file.</para>
+        @ENGLISH }}} -->
+        <para>Den enkleste måten å autentisere en klient er via den 
+          grunnleggende HTTP-autentiseringsmekanismen som rett og slett 
+          bruker et brukernavn og passord for å kontrollere at en bruker 
+          er den som hun sier at hun er.
+          Apache har et program kalt <command>htpasswd</command> for å 
+          vedlikeholde listen med akseptable brukernavn og passord for 
+          de som du vil gi spesialtilgang til Subversiondepotet ditt.
+          La oss gi Sally og Harry tilgang til å legge inn forandringer 
+          i depotet.
+          Først må vi legge dem til passordfilen.</para>
     
+        <!-- @ENGLISH {{{
         <screen>
 $ ### First time: use -c to create the file
 $ ### Use -m to use MD5 encryption of the password, which is more secure
@@ -2372,7 +2710,22 @@ Re-type new password: *******
 Adding password for user sally
 $
 </screen>
+        @ENGLISH }}} -->
+        <screen>
+$ ### Første gang: Bruk -c for å opprette filen
+$ ### Bruk -m for å bruke MD5-kryptering av passordet, noe som er sikrere
+$ htpasswd -cm /etc/svn-passord-fil harry
+New password: ***** 
+Re-type new password: *****
+Adding password for user harry
+$ htpasswd -m /etc/svn-passord-fil sally
+New password: *******
+Re-type new password: *******
+Adding password for user sally
+$
+</screen>
 
+        <!-- @ENGLISH {{{
         <para>Next, you need to add some more
           <filename>httpd.conf</filename> directives inside your
           <literal>Location</literal> block to tell Apache what to do
@@ -2387,11 +2740,34 @@ $
           use the <literal>AuthUserFile</literal> directive to specify
           the location of the password file you created using
           <command>htpasswd</command>.</para>
+        @ENGLISH }}} -->
+        <para>Det neste som du må gjøre er å legge til noen flere 
+          <filename>httpd.conf</filename>-direktiver inne i 
+          <literal>Location</literal>-blokken for å fortelle Apache hva 
+          den skal gjøre med den nye passordfilen.
+          <literal>AuthType</literal>-direktivet spesifiserer hvilken 
+          type autentiseringssystem som skal brukes.
+          I dette tilfellet vil vi spesifisere 
+          <literal>Basic</literal>-autentiseringssystemet.
+          <literal>AuthName</literal> er et vilkårlig navn som du angir 
+          for autentiseringsområdet.
+          De fleste nettleserne vil vise dette navnet i et 
+          oppsprettsvindu når nettleseren spør brukeren etter navn og 
+          passord.
+          Til sist, bruk <literal>AuthUserFile</literal>-direktivet for 
+          å angi plasseringen til passordfilen som du opprettet ved å 
+          bruke <command>htpasswd</command>.</para>
     
+        <!-- @ENGLISH {{{
         <para>After adding these three directives, your
           <literal>&lt;Location&gt;</literal> block should look
           something like this:</para>
+        @ENGLISH }}} -->
+        <para>Etter at du har lagt til disse tre direktivene, skal 
+          <literal>&lt;Location&gt;</literal>-blokken din se ut omtrent 
+          som dette:</para>
     
+        <!-- @ENGLISH {{{
         <screen>
 &lt;Location /svn&gt;
   DAV svn
@@ -2401,7 +2777,18 @@ $
   AuthUserFile /etc/svn-auth-file
 &lt;/Location&gt;
 </screen>
+        @ENGLISH }}} -->
+        <screen>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNParentPath /usr/local/svn
+  AuthType Basic
+  AuthName "Subversiondepot"
+  AuthUserFile /etc/svn-passord-fil
+&lt;/Location&gt;
+</screen>
 
+        <!-- @ENGLISH {{{
         <para>This <literal>&lt;Location&gt;</literal> block is not
           yet complete, and will not do anything useful.  It's merely
           telling Apache that whenever authorization is required,
@@ -2414,7 +2801,23 @@ $
           all requests.  Adding <literal>Require valid-user</literal>
           tells Apache that all requests require an authenticated
           user:</para>
+        @ENGLISH }}} -->
+        <para>Denne <literal>&lt;Location&gt;</literal>-blokken er ikke 
+          komplett enda, og vil ikke gjøre noe nyttig.
+          Den forteller bare Apache at hver gang det kreves autorisasjon 
+          skal Apache hente et brukernavn og passord fra 
+          Subversionklienten.
+          Det som mangler her er direktiver som forteller Apache 
+          <emphasis>hvilke</emphasis> typer klientforespørsler som 
+          krever autorisasjon.
+          Der autorisasjon kreves, vil Apache også forlange 
+          autentisering.
+          Den enkleste tingen er å beskytte alle forespørsler.
+          Ved å legge til <literal>Require valid-user</literal> 
+          forteller vi Apache at alle forespørsler må komme fra en 
+          autentisert bruker:</para>
 
+        <!-- @ENGLISH {{{
         <screen>
 &lt;Location /svn&gt;
   DAV svn
@@ -2425,12 +2828,30 @@ $
   Require valid-user
 &lt;/Location&gt;
 </screen>
+        @ENGLISH }}} -->
+        <screen>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNParentPath /usr/local/svn
+  AuthType Basic
+  AuthName "Subversiondepot"
+  AuthUserFile /etc/svn-passord-fil
+  Require valid-user
+&lt;/Location&gt;
+</screen>
 
+        <!-- @ENGLISH {{{
         <para>Be sure to read the next section (<xref
           linkend="svn.serverconfig.httpd.authz"/>) for more detail on the
           <literal>Require</literal> directive and other ways to set
           authorization policies.</para>
+        @ENGLISH }}} -->
+        <para>Pass på å lese den neste seksjonen (<xref 
+          linkend="svn.serverconfig.httpd.authz"/>) for flere detaljer 
+          om <literal>Require</literal>-direktivet og andre måter å 
+          sette opp autorisasjonsregler på.</para>
 
+        <!-- @ENGLISH {{{
         <para>One word of warning: HTTP Basic Auth passwords pass in
           very nearly plain-text over the network, and thus are
           extremely insecure.  If you're worried about password
@@ -2448,20 +2869,51 @@ $
           </footnote>
           Consult Apache's documentation (and OpenSSL documentation)
           about how to do that.</para>
+        @ENGLISH }}} -->
+        <para>En advarsel:
+          <!-- ¤ --><quote>HTTP Basic Auth</quote>-passord blir sendt 
+          omtrent i klartekst over nettverket, og er derfor ekstremt 
+          usikkert.
+          Hvis du er bekymret for passordsniffing, er det best å bruke 
+          en form for SSL-kryptering, så klienter autentiserer via 
+          <literal>https://</literal> istedenfor 
+          <literal>http://</literal>; som et <!-- ¤ -->minimum kan du 
+          sette opp Apache til å bruke et selvsignert 
+          sertifikat.<footnote>
+            <para>Selv om selvsignerte tjenersertifikater også er 
+              sårbare for <quote>mann-i-midten</quote>-angrep, vil et 
+              slikt angrep for en vanlig observatør være mye 
+              vanskeligere å få til, sammenlignet med å sniffe 
+              ubeskyttede passord</para>
+          </footnote>
+          Konsulter Apaches dokumentasjon (og dokmentasjon om OpenSSL) 
+          om hvordan det gjøres.</para>
 
       </sect3>
 
 
       <sect3 id="svn.serverconfig.httpd.authn.sslcerts">
+        <!-- @ENGLISH {{{
         <title>SSL Certificate Management</title>
+        @ENGLISH }}} -->
+        <title>Håndtering av SSL-sertifikater</title>
         
+        <!-- @ENGLISH {{{
         <para>Businesses that need to expose their repositories for access
           outside the company firewall should be conscious of the
           possibility that unauthorized parties could be
           <quote>sniffing</quote> their network traffic.  SSL makes
           that kind of unwanted attention less likely to result in
           sensitive data leaks.</para>
+        @ENGLISH }}} -->
+        <para>Forretninger som har behov for å utsette depotene for 
+          tilgang fra utsiden av firmabrannveggen bør være bevisst på 
+          muligheten for at uautoriserte parter kan 
+          <quote>sniffe</quote> nettverkstrafikken deres.
+          SSL minsker sjansen for at denne formen for uønsket 
+          oppmerksomhet resulterer i sensitive datalekkasjer.</para>
 
+        <!-- @ENGLISH {{{
         <para>If a Subversion client is compiled to use OpenSSL, then
           it gains the ability to speak to an Apache server via
           <literal>https://</literal> URLs.  The Neon library used by
@@ -2470,7 +2922,18 @@ $
           challenged.  When the client and server have exchanged SSL
           certificates and successfully authenticated one another, all
           further communication is encrypted via a session key.</para>
+        @ENGLISH }}} -->
+        <para>Hvis en Subversionklient er kompilert for å kunne bruke 
+          OpenSSL, gir det muligheten til å snakke til en Apachetjener 
+          via <literal>http://</literal>-URLer.
+          Neon-biblioteket som brukes av Subversionklienten er ikke bare 
+          i stand til å kontrollere tjenersertifikater, men kan også 
+          oppgi klientsertifikater når den blir spurt om det.
+          Når klienten og tjeneren har vekslet SSL-sertifikater og klart 
+          å autentisere hverandre, vil all videre kommunikasjon bli 
+          kryptert med en sesjonsnøkkel.</para>
 
+        <!-- @ENGLISH {{{
         <para>It's beyond the scope of this book to describe how to
           generate client and server certificates, and how to
           configure Apache to use them.  Many other books, including
@@ -2478,16 +2941,40 @@ $
           <emphasis>can</emphasis> be covered here is how to manage
           server and client certificates from an ordinary Subversion
           client.</para>
+        @ENGLISH }}} -->
+        <para>Det er utenfor temaet for denne boken å beskrive hvordan 
+          man lager klient- og tjenersertifikater, og hvordan Apache 
+          settes opp for å bruke dem.
+          Mange andre bøker, inkludert Apaches egen dokumentasjon, 
+          beskriver denne oppgaven.
+          Men det som <emphasis>kan</emphasis> bli dekket her er hvordan 
+          man vedlikeholder tjener- og klientsertifikater <!-- ¤ Kanskje 
+          det blir bedre med «for» her? -->fra en vanlig 
+          Subversionklient.</para>
 
+        <!-- @ENGLISH {{{
         <para>When speaking to Apache via <literal>https://</literal>,
           a Subversion client can receive two different types of
           information:</para>
+        @ENGLISH }}} -->
+        <para>Mens det snakkes med Apache via 
+          <literal>https://</literal> kan en Subversionklient motta to 
+          typer informasjon:</para>
 
         <itemizedlist>
+          <!-- @ENGLISH {{{
           <listitem><para>a server certificate</para></listitem>
           <listitem><para>a demand for a client certificate</para></listitem>
+          @ENGLISH }}} -->
+          <listitem>
+            <para>et tjenersertifikat</para>
+          </listitem>
+          <listitem>
+            <para>krav om et klientsertifikat</para>
+          </listitem>
         </itemizedlist>
 
+        <!-- @ENGLISH {{{
         <para>If the client receives a server certificate, it needs to
           verify that it trusts the certificate: is the server really
           who it claims to be?  The OpenSSL library does this by
@@ -2498,7 +2985,24 @@ $
           hostname mismatch), the Subversion command-line client will
           ask you whether you want to trust the server certificate
           anyway:</para>
+        @ENGLISH }}} -->
+        <para>Hvis klienten mottar et tjenersertifikat, må den sjekke at 
+          den stoler på sertifikatet – er tjeneren virkelig den som den 
+          påstår at den er?
+          OpenSSL-biblioteket gjør dette ved å undersøke <!-- ¤ Ah, fint 
+          ord. Eller har man ikke lov å si det? -->signatøren av 
+          tjenersertifikatet eller 
+          <firstterm>godkjenningsinstansen</firstterm> – 
+          <foreignphrase>certifying authority</foreignphrase> (CA).
+          Hvis OpenSSL ikke er i stand til å automatisk stole på <!-- ¤ 
+          Eller er det bedre å bruke CA her? -->godkjenningsinstansen, 
+          eller hvis et annet problem oppstår (som et utgått sertifikat 
+          eller at tjenernavnet ikke stemmer), vil <!-- ¤ Dæsken for et 
+          ord. Bør det deles opp? -->Subversionkommandolinjeklienten vil 
+          spørre deg om du vil stole på tjenersertifikatet 
+          uansett:</para>
 
+        <!-- @ENGLISH {{{
         <screen>
 $ svn list https://host.example.com/repos/project
 
@@ -2513,7 +3017,23 @@ Certificate information:
 
 (R)eject, accept (t)emporarily or accept (p)ermanently?
 </screen>
+        @ENGLISH }}} -->
+        <!-- ¤ --><screen>
+$ svn list https://tjener.example.com/repos/prosjekt
 
+Error validating server certificate for 'https://tjener.example.com:443':
+ - The certificate is not issued by a trusted authority. Use the
+   fingerprint to validate the certificate manually!
+Certificate information:
+ - Hostname: tjener.example.com
+ - Valid: from Jan 30 19:23:56 2004 GMT until Jan 30 19:23:56 2006 GMT
+ - Issuer: CA, example.com, Sometown, California, US
+ - Fingerprint: 7d:e1:a9:34:33:39:ba:6a:e9:a5:c4:22:98:7b:76:5c:92:a0:9c:7b
+
+(R)eject, accept (t)emporarily or accept (p)ermanently?
+</screen>
+
+        <!-- @ENGLISH {{{
         <para>This dialogue should look familiar; it's essentially the
           same question you've probably seen coming from your web
           browser (which is just another HTTP client like Subversion!).
@@ -2524,26 +3044,63 @@ Certificate information:
           linkend="svn.serverconfig.netmodel.credcache"/>.)  If cached, Subversion will
           automatically remember to trust this certificate in future
           negotiations.</para>
+        @ENGLISH }}} -->
+        <para>Denne dialogen skulle se kjent ut, det er hovedsaklig det 
+          samme spørsmålet som du har sett i nettleseren din (som jo 
+          bare er en annen HTTP-klient lik Subversion!).
+          Hvis du velger det (p)ermanente valget, vil tjenersertifikatet 
+          bli lagret i ditt private <filename>auth/</filename>-område 
+          som brukes under kjøring på omtrent den samme måten som 
+          brukernavnet og passordet ditt blir lagret (se <xref 
+          linkend="svn.serverconfig.netmodel.credcache"/>).
+          Hvis det blir lagret, vil Subversion automatisk huske dette 
+          sertifikatet i framtidige <!-- ¤ -->forhandlinger.</para>
 
+        <!-- @ENGLISH {{{
         <para>Your run-time <filename>servers</filename> file also gives
           you the ability to make your Subversion client automatically
           trust specific CAs, either globally or on a per-host basis.
           Simply set the <literal>ssl-authority-files</literal>
           variable to a semicolon-separated list of PEM-encoded CA
           certificates:</para>
+        @ENGLISH }}} -->
+        <para><filename>servers</filename>-filen som brukes under 
+          kjøring gir deg også muligheten til å la Subversionklienten 
+          automatisk stole på spesifikke <!-- ¤ Eller bruke CA? 
+          -->godkjenningsinstanser, enten globalt eller på en <!-- ¤ 
+          --><quote>per tjener</quote>-basis.
+          Sett ganske enkelt variabelen 
+          <literal>ssl-authority-files</literal> til en 
+          semikolonseparert liste med PEM-kodede sertifikater:</para>
 
+        <!-- @ENGLISH {{{
         <screen>
 [global]
 ssl-authority-files = /path/to/CAcert1.pem;/path/to/CAcert2.pem
 </screen>
+        @ENGLISH }}} -->
+        <screen>
+[global]
+ssl-authority-files = /sti/til/CAcert1.pem;/sti/til/CAcert2.pem
+</screen>
         
+        <!-- @ENGLISH {{{
         <para>Many OpenSSL installations also have a pre-defined set
           of <quote>default</quote> CAs that are nearly universally
           trusted.  To make the Subversion client automatically trust
           these standard authorities, set the
           <literal>ssl-trust-default-ca</literal> variable to
           <literal>true</literal>.</para>
+        @ENGLISH }}} -->
+        <para>Mange OpenSSL-installasjoner har også et forhåndsdefinert 
+          sett av <quote>standardiserte</quote> godkjenningsinstanser 
+          som det stoles omtrent universelt på.
+          Får å få Subversionklienten til å automatisk stole på disse 
+          standardautoritetene, sett variabelen 
+          <literal>ssl-trust-default-ca</literal> til 
+          <literal>true</literal>.</para>
 
+        <!-- @ENGLISH {{{
         <para>When talking to Apache, a Subversion client might also
           receive a challenge for a client certificate.  Apache is
           asking the client to identify itself: is the client really
@@ -2554,7 +3111,21 @@ ssl-authority-files = /path/to/CAcert1.pem;/path/to/CAcert2.pem
           When Subversion receives this challenge, it will ask you for
           both a path to the certificate and the password which
           protects it:</para>
+        @ENGLISH }}} -->
+        <para>Mens den snakker med Apache, kan en Subversionklient også 
+          motta et krav om et klientsertifikat.
+          Apache spør klienten om å identifisere seg selv:
+          Er klienten virkelig den som den sier at den er?
+          Hvis alt går riktig for seg, sender Subversionklienten tilbake 
+          et privat sertifikat signert av en godkjenningsinstans som 
+          Apache stoler på.
+          Et klientsertifikat blir vanligvis lagret på disken i et 
+          kryptert format, beskyttet av et lokalt passord.
+          Når Subversion mottar denne utfordringen, vil den spørre deg 
+          etter både en sti til sertifikatet og passordet som beskytter 
+          det:</para>
 
+        <!-- @ENGLISH {{{
         <screen>
 $ svn list https://host.example.com/repos/project
 
@@ -2563,7 +3134,17 @@ Client certificate filename: /path/to/my/cert.p12
 Passphrase for '/path/to/my/cert.p12':  ********
 &hellip;
 </screen>
+        @ENGLISH }}} -->
+        <screen>
+$ svn list https://tjener.example.com/repos/prosjekt
 
+Authentication realm: https://tjener.example.com:443
+Client certificate filename: /sti/til/mitt/cert.p12
+Passphrase for '/sti/til/mitt/cert.p12':  ********
+&hellip;
+</screen>
+
+        <!-- @ENGLISH {{{
         <para>Notice that the client certificate is a
           <quote>p12</quote> file.  To use a client certificate with
           Subversion, it must be in PKCS#12 format, which is a
@@ -2571,12 +3152,29 @@ Passphrase for '/path/to/my/cert.p12':  ********
           import and export certificates in that format.   Another
           option is to use the OpenSSL command-line tools to convert
           existing certificates into PKCS#12.</para>
+        @ENGLISH }}} -->
+        <para>Legg merke til at klientsertifikatet er en 
+          <quote>p12</quote>-fil.
+          For å bruke et klientsertifikat med Subversion, må det være i 
+          PKCS#12-format som er en portabel standard.
+          De fleste nettlesere klarer allerede å importere og eksportere 
+          sertifikater i dette formatet.
+          En annen mulighet er å bruke kommandolinjeverktøyene i OpenSSL 
+          for å konvertere eksisterende sertifikater til PKCS#12.</para>
 
+        <!-- @ENGLISH {{{
         <para>Again, the runtime <filename>servers</filename> file
           allows you to automate this challenge on a per-host basis.
           Either or both pieces of information can be described in
           runtime variables:</para>
+        @ENGLISH }}} -->
+        <para><filename>servers</filename>-filen som brukes under 
+          kjøring lar deg automatisere denne <!-- ¤ -->utfordringen på 
+          en per-tjener-basis.
+          <!-- ¤ Either -->En av eller begge delene informasjon kan bli  
+          beskrevet med kjørevariabler:</para>
 
+        <!-- @ENGLISH {{{
         <screen>
 [groups]
 examplehost = host.example.com
@@ -2585,7 +3183,17 @@ examplehost = host.example.com
 ssl-client-cert-file = /path/to/my/cert.p12
 ssl-client-cert-password = somepassword
 </screen>
+        @ENGLISH }}} -->
+        <screen>
+[groups]
+examplehost = tjener.example.com
 
+[examplehost]
+ssl-client-cert-file = /sti/til/mitt/cert.p12
+ssl-client-cert-password = etellerannetpassord
+</screen>
+
+        <!-- @ENGLISH {{{
         <para>Once you've set the
           <literal>ssl-client-cert-file</literal> and
           <literal>ssl-client-cert-password</literal> variables, the
@@ -2597,6 +3205,16 @@ ssl-client-cert-password = somepassword
               <filename>servers</filename> file.</para>
           </footnote>
         </para>
+        @ENGLISH }}} -->
+        <para>Når du har satt variablene 
+          <literal>ssl-client-cert-file</literal> og 
+          <literal>ssl-client-cert-password</literal>, kan 
+          Subversionklienten automatisk svare på en 
+          klientsertifikatutfordring uten å spørre deg.<footnote>
+            <para>Mer sikkerhetsbevisste folk vil kanskje ikke lagre 
+              klientsertifikatpassordet i kjørefilen 
+              <filename>servers</filename>.</para>
+          </footnote></para>
 
       </sect3>
 
