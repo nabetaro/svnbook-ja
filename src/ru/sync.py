@@ -1,55 +1,91 @@
 #!/usr/bin/env python
 
-import sys, os, string
-
-subcmd = ("diff", "di", "log", "merge")
+import sys, os, string, getopt, re, glob
 
 def usage(err_msg):
   stream = err_msg and sys.stderr or sys.stdout
   if err_msg:
     stream.write("ERROR: %s\n\n" % (err_msg))
-  stream.write("""Usage: %(name)s <subcommand> [filename]
+  stream.write("""Usage: %s [-f <filename>] [-lv]
 
-Valid subcommands: %(valid_subcmd)s
-
-Examples:
-   %(name)s log book/foreword.xml
-   %(name)s diff
-""" % { 'name' : os.path.basename(sys.argv[0]), 'valid_subcmd' : subcmd })
+Options:
+    -f:    File which needs to be synchronized
+    -l:    List all files and revisions with which they are sinchronized
+    -v:    Print incorporated revision number of the book (for use in Makefile)
+""" % (os.path.basename(sys.argv[0])))
   sys.exit(err_msg and 1 or 0)
 
-def main():
+def get_last(fname):
+  f = file(fname)
+  for line in f:
+    if re.search('<edition>([0-9]+)</edition>', line):
+      return int(re.sub(' *</*[a-z]*>', '', line))
 
+def set_last(fname, last):
+  f = file(fname)
+  tf = file(fname+'.temp', 'w')
+  for line in f:
+    if re.search('<edition>([0-9]+)</edition>', line):
+      tf.write(re.sub('<edition>([0-9]+)</edition>', '<edition>'+last+'</edition>', line))
+    else:
+      tf.write(line)
+  f.close()
+  tf.close()
+  os.rename(fname+'.temp', fname)
+
+def get_base():
+  for line in os.popen('svn info'):
+    if re.match('Revision: ', line):
+      return int(re.sub('Revision: ', '', line))
+
+def get_list():
+  fnames = glob.glob('*.xml')
+  fnames.sort()
+  for file in fnames:
+    print file, '\t', get_last(file)
+
+def get_version():
+  fnames = glob.glob('*.xml')
+  rev = []
+  for file in fnames:
+    r = get_last(file)
+    if r:
+      rev.append(r)
+  r_max = max(rev)
+  r_min = min(rev)
+  if r_max == r_min:
+    sys.stdout.write(str(r_max))
+  else:
+    sys.stdout.write(str(r_min)+':'+str(r_max))
+
+def main():
   if len(sys.argv) < 2:
     usage(None)
-
-  if not sys.argv[1] in subcmd:
-    usage("Invalid syntax")
-
-  book_src_url = "https://svn.red-bean.com/svnbook/trunk/src/en/book/"
-  fd = open("LAST_UPDATED", "r")
-  last_up_rev = fd.readline()
-  fd.close()
-
-  print "svn update"
-  os.system("svn update")
-  os.chdir("book")
-
-  if len(sys.argv) > 2:
-    cmd = "svn " + sys.argv[1] + " -r " + last_up_rev + ":HEAD " + book_src_url + \
-          os.path.basename(sys.argv[2])
-    print cmd
-    os.system(cmd)
-  else:
-    cmd = "svn " + sys.argv[1] + " -r " + last_up_rev + ":HEAD " + book_src_url
-    print cmd
-    os.system(cmd)
-    if sys.argv[1] == 'merge':
-      if string.lower(raw_input("Whether to udate 'LAST_UPDATED'? [y/N] ")) == 'y':
-        os.chdir("..")
-        cmd = "svnversion . --no-newline > LAST_UPDATED"
-        print cmd
-        os.system(cmd)
+  os.chdir('book')
+  try:
+    opts, args = getopt.getopt(sys.argv[1:], "f:lv")
+  except:
+    usage('Invalid syntax')
+  fname = ''
+  for o, a in opts:
+    if o == '-f':
+      fname =  os.path.basename(a)
+    elif o == '-l':
+      return get_list()
+    elif o == '-v':
+      return get_version()
+  cmd = string.Template('svn $a -r $r1:$r2 https://svn.red-bean.com/svnbook/trunk/src/en/book/$t')
+  last = get_last(fname)
+  base = get_base()
+  print ('########################################################################')
+  print 'Sync r%(r1)s:r%(r2)s' % { 'r1' :  last, 'r2' : base }
+  diff = os.popen(cmd.substitute(a='diff', r1=last, r2=base, t=fname)).read()
+  if len(diff) != 0:
+    print os.popen(cmd.substitute(a='log', r1=last, r2=base, t=fname)).read()
+    raw_input('Above is log message, to see diff press ENTER')
+    print diff
+    print os.popen(cmd.substitute(a='merge', r1=last, r2=base, t=fname)).read()
+  set_last(fname, str(base))
 
 if __name__ == "__main__":
     main()
