@@ -9,8 +9,7 @@ L10N_REVISION = в редакции
 $(BOOK_VERSION_SOURCE): book-last-updated
 
 book-last-updated:
-	@echo '<!ENTITY svn.version "$(L10N_REVISION) '`python sync.py -v`'">' \
-	    > $(BOOK_VERSION_SOURCE)
+	@python sync.py -v
 
 dist-html-chunk: book-last-updated
 	../tools/book-dist.py --html-chunk --name svnbook-html-chunk-ru

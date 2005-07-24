@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import sys, os, string, getopt, re, glob
 
@@ -45,6 +46,8 @@ def get_list():
     print file, '\t', get_last(file)
 
 def get_version():
+  v = string.Template('<!ENTITY svn.version "в редакции $r1, на основе $r2">')
+  f = open('version.xml', 'w')
   fnames = glob.glob('*.xml')
   rev = []
   for file in fnames:
@@ -54,9 +57,9 @@ def get_version():
   r_max = max(rev)
   r_min = min(rev)
   if r_max == r_min:
-    sys.stdout.write(str(r_max))
+    f.write(v.substitute(r1=get_base(), r2=r_max))
   else:
-    sys.stdout.write(str(r_min)+':'+str(r_max))
+    f.write(v.substitute(r1=get_base(), r2=str(r_min)+':'+str(r_max)))
 
 def main():
   if len(sys.argv) < 2:
