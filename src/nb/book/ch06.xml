@@ -3222,22 +3222,46 @@ ssl-client-cert-password = etellerannetpassord
     
     <!-- =============================================================== -->
     <sect2 id="svn.serverconfig.httpd.authz">
+      <!-- @ENGLISH {{{
       <title>Authorization Options</title>
+      @ENGLISH }}} -->
+      <title>Autorisasjonsvalg</title>
 
+      <!-- @ENGLISH {{{
       <para>At this point, you've configured authentication, but not
         authorization.  Apache is able to challenge clients and
         confirm identities, but it has not been told how to allow or
         restrict access to the clients bearing those identities.  This
         section describes two strategies for controlling access to
         your repositories.</para>
+      @ENGLISH }}} -->
+      <para>På dette punktet har du konfigurert autentisering, men ikke 
+        autorisasjon.
+        Apache er i stand til å utfordre klienter og godkjenne 
+        identiteter, men er ikke blitt fortalt hvordan adgangen skal 
+        begrenses eller hva disse klientene som har disse identitetene 
+        skal få lov til.
+        Denne seksjonen beskriver to strategier for å kontrollere 
+        tilgangen til depotene dine.</para>
 
       <sect3 id="svn.serverconfig.httpd.authz.blanket">
+        <!-- @ENGLISH {{{
         <title>Blanket Access Control</title>
+        @ENGLISH }}} -->
+        <title><!-- ¤ «Blanket». Tar en nødløsning til jeg finner en 
+          grei oversettelse for det ordet. -->Adgangskontroll for hele 
+          depotet</title>
 
+        <!-- @ENGLISH {{{
         <para>The simplest form of access control is to authorize
           certain users for either read-only access to a repository,
           or read/write access to a repository.</para>
+        @ENGLISH }}} -->
+        <para>Den enkleste formen for adgangskontroll er å autorisere 
+          visse brukere enten for <!-- ¤ -->leseaksess til et depot 
+          eller lese/skrive-tilgang til et depot.</para>
 
+        <!-- @ENGLISH {{{
         <para>You can restrict access on all repository operations by
           adding the <literal>Require valid-user</literal> directive
           to your <literal>&lt;Location&gt;</literal> block.  Using
@@ -3246,7 +3270,18 @@ ssl-client-cert-password = etellerannetpassord
           <literal>sally</literal>, and provided the correct
           password for their respective username, would be allowed to
           do anything with the Subversion repository:</para>
+        @ENGLISH }}} -->
+        <para>Du kan begrense tilgangen til alle depotoperasjoner ved å 
+          legge til <literal>Require valid-user</literal>-direktivet i 
+          <literal>&lt;Location&gt;</literal>-blokken.
+          Ved å bruke det foregående eksempelet vil dette bety at bare 
+          klienter som påstår å være enten <literal>harry</literal> 
+          eller <literal>sally</literal> og som oppga korrekt passord 
+          for de respektive brukernavnene vil få tilgang til å gjøre 
+          <!-- ¤ «anything» i denne sammenhengen -->noe med 
+          Subversiondepotet:</para>
     
+        <!-- @ENGLISH {{{
         <screen>
 &lt;Location /svn&gt;
   DAV svn
@@ -3261,7 +3296,23 @@ ssl-client-cert-password = etellerannetpassord
   Require valid-user
 &lt;/Location&gt;
 </screen>
+        @ENGLISH }}} -->
+        <screen>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNParentPath /usr/local/svn
 
+  # hvordan brukeren autentiseres
+  AuthType Basic
+  AuthName "Subversiondepot"
+  AuthUserFile /sti/til/brukerfil
+
+  # bare autentiserte brukere får tilgang til depotet
+  Require valid-user
+&lt;/Location&gt;
+</screen>
+
+        <!-- @ENGLISH {{{
         <para>Sometimes you don't need to run such a tight ship.  For
           example, Subversion's own source code repository at
           <systemitem
@@ -3276,7 +3327,23 @@ ssl-client-cert-password = etellerannetpassord
           <literal>Location</literal> directive, these blocks have
           starting and ending tags, and you would nest them inside
           your <literal>&lt;Location&gt;</literal> block.</para>
+        @ENGLISH }}} -->
+        <para>Noen ganger trenger du ikke å <!-- ¤ -->ha en like streng 
+          adgangskontroll.
+          Depotet til Subversions kildekodedepot på <systemitem 
+          class="url">http://svn.collab.net/repos/svn</systemitem> 
+          tillater alle i verden å utføre leseoperasjoner i depotet (som 
+          å hente ut arbeidskopier og bla gjennom depotet med en 
+          nettleser), men begrenser alle skriveoperasjoner til 
+          autentiserte brukere.
+          For å få til denne typen selektiv begrensning kan du bruke 
+          konfigurasjonsdirektivene <literal>Limit</literal> og 
+          <literal>LimitExcept</literal>.
+          I likhet med <literal>Location</literal>-direktivet har disse 
+          blokkene start- og sluttelementer, og du legger dem inn i 
+          <literal>&lt;Location&gt;</literal>-blokken.</para>
   
+        <!-- @ENGLISH {{{
         <para>The parameters present on the <literal>Limit</literal>
           and <literal>LimitExcept</literal> directives are HTTP
           request types that are affected by that block.  For example,
@@ -3290,7 +3357,22 @@ ssl-client-cert-password = etellerannetpassord
           directive would be placed inside the
           <literal>&lt;LimitExcept&gt;</literal> block instead of just
           inside the <literal>&lt;Location&gt;</literal> block.</para>
+        @ENGLISH }}} -->
+        <para>Parametrene som brukes sammen med direktivene 
+          <literal>Limit</literal> og <literal>LimitExcept</literal> er 
+          typer av HTTP-forespørsler som blir påvirket av den blokken.
+          Hvis du for eksempel vil forby all tilgang til depotet unntatt 
+          de foreløpig støttede leseoperasjonene, vil du bruke 
+          <literal>LimitExcept</literal>-direktivet sammen med 
+          forespørselstypene <literal>GET</literal>, 
+          <literal>PROPFIND</literal>, <literal>OPTIONS</literal> og 
+          <literal>REPORT</literal>.
+          Deretter plasseres det tidligere nevnte direktivet 
+          <literal>Require valid-user</literal> inne i 
+          <literal>&lt;LimitExcept&gt;</literal>-blokken istedenfor bare 
+          inne i <literal>&lt;Location&gt;</literal>-blokken.</para>
     
+        <!-- @ENGLISH {{{
         <screen>
 &lt;Location /svn&gt;
   DAV svn
@@ -3307,20 +3389,49 @@ ssl-client-cert-password = etellerannetpassord
   &lt;/LimitExcept&gt;
 &lt;/Location&gt;
 </screen>
+        @ENGLISH }}} -->
+        <screen>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNParentPath /usr/local/svn
 
+  # hvordan brukeren skal autentiseres
+  AuthType Basic
+  AuthName "Subversiondepot"
+  AuthUserFile /sti/til/brukerfil
+
+  # For alle andre operasjoner enn disse kreves en autentisert bruker.
+  &lt;LimitExcept GET PROPFIND OPTIONS REPORT&gt;
+    Require valid-user
+  &lt;/LimitExcept&gt;
+&lt;/Location&gt;
+</screen>
+
+        <!-- @ENGLISH {{{
         <para>These are only a few simple examples.  For more in-depth
           information about Apache access control and the
           <literal>Require</literal> directive, take a look at the
           <literal>Security</literal> section of the Apache
           documentation's tutorials collection at <systemitem
           class="url">http://httpd.apache.org/docs-2.0/misc/tutorials.html</systemitem>.</para>
+        @ENGLISH }}} -->
+        <para>Dette er bare noen få enkle eksempler.
+          For informasjon som går mer i dybden om Apaches 
+          adgangskontroll og <literal>Require</literal>-direktivet, ta 
+          en kikk på <literal>Security</literal>-seksjonen i 
+          dokmentasjonssamlingen for Apache på <systemitem 
+          class="url">http://httpd.apache.org/docs-2.0/misc/tutorials.html</systemitem>.</para>
               
 
       </sect3>
 
       <sect3 id="svn.serverconfig.httpd.authz.perdir">
+        <!-- @ENGLISH {{{
         <title>Per-Directory Access Control</title>
+        @ENGLISH }}} -->
+        <title>Adgangskontroll på katalognivå</title>
 
+        <!-- @ENGLISH {{{
         <para>It's possible to set up finer-grained permissions using
           a second Apache httpd module,
           <command>mod_authz_svn</command>.  This module grabs the
@@ -3328,7 +3439,19 @@ ssl-client-cert-password = etellerannetpassord
           <command>mod_dav_svn</command> to decode them, and then
           possibly vetoes requests based on access policies defined in
           a configuration file.</para>
+        @ENGLISH }}} -->
+        <para>Det er mulig å sette opp mer <!-- ¤ -->finjusterte 
+          rettigheter ved å bruke en annen Apache httpd-modul, 
+          <command>mod_authz_svn</command>.
+          Denne modulen <!-- ¤ grabs – «tar tak i», «grabber» (er det 
+          dialekt?) eller noe annet. -->tar for seg de forskjellige <!-- 
+          ¤ opaque --><quote>uklare</quote>
+          URLene som blir sendt fra klienten til tjeneren, spør 
+          <command>mod_dav_svn</command> om å dekode dem og avgjør etter 
+          dette om forespørsler skal nektes, basert på tilgangsregler 
+          som er definert i en konfigurasjonsfil.</para>
 
+        <!-- @ENGLISH {{{
         <para>If you've built Subversion from source code,
           <command>mod_authz_svn</command> is automatically built
           and installed alongside <command>mod_dav_svn</command>.
@@ -3337,6 +3460,15 @@ ssl-client-cert-password = etellerannetpassord
           right after <command>mod_dav_svn</command>'s
           <literal>LoadModule</literal> directive in
           <filename>httpd.conf</filename>:</para>
+        @ENGLISH }}} -->
+        <para>Hvis du har bygget Subversion fra kildekode, blir 
+          <command>mod_authz_svn</command> automatisk bygget og 
+          installert sammen med <command>mod_dav_svn</command>.
+          Mange binærdistribusjoner installerer den også automatisk.
+          For å kontrollere at den er riktig installert, pass på at den 
+          kommer rett etter <command>mod_dav_svn</command>s 
+          <literal>LoadModule</literal>-direktiv i 
+          <filename>httpd.conf</filename>:</para>
 
         <screen>
 LoadModule dav_module         modules/mod_dav.so
@@ -3344,27 +3476,55 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
 LoadModule authz_svn_module   modules/mod_authz_svn.so
 </screen>
 
+        <!-- @ENGLISH {{{
         <para>To activate this module, you need to configure your
           <literal>Location</literal> block to use the
           <literal>AuthzSVNAccessFile</literal> directive, which
           specifies a file containing the permissions policy for paths
           within your repositories.  (In a moment, we'll discuss the
           format of that file.)</para>
+        @ENGLISH }}} -->
+        <para>For å aktivere denne modulen må du sette opp 
+          <literal>Location</literal>-blokken til å bruke 
+          <literal>AuthSVNAccessFile</literal>-direktivet, som 
+          spesifiserer en fil som inneholder regler for rettigheter til 
+          stier i depotene dine.
+          (Vil vil diskutere formatet på denne filen om et 
+          øyeblikk.)</para>
 
+        <!-- @ENGLISH {{{
         <para>Apache is flexible, so you have the option to configure
           your block in one of three general patterns.  To begin,
           choose one of these basic configuration patterns.  (The
           examples below are very simple; look at Apache's own
           documentation for much more detail on Apache authentication
           and authorization options.)</para>
+        @ENGLISH }}} -->
+        <para>Apache er fleksibel, så du har muligheten til å sette opp 
+          blokken etter ett av tre generelle mønstre.
+          For å begynne, velg ett av disse grunnleggende 
+          konfigurasjonsmønstrene.
+          (Eksemplene nedenfor er veldig enkle; se på Apaches egen 
+          dokumentasjon for mange flere detaljer om autentiserings- og 
+          autorisasjonsvalg i Apache.)</para>
 
+        <!-- @ENGLISH {{{
         <para>The simplest block is to allow open access to everyone.
           In this scenario, Apache never sends authentication
           challenges, so all users are treated as
           <quote>anonymous</quote>.</para>
+        @ENGLISH }}} -->
+        <para>Den enkleste blokken gir tilgang til alle.
+          I dette scenariet sender Apache aldri 
+          autentiseringsutfordringer, så alle brukerne blir behandlet 
+          som anonyme.</para>
 
         <example id="svn.serverconfig.httpd.authz.perdir.ex-1">
+          <!-- @ENGLISH {{{
           <title>A sample configuration for anonymous access.</title>
+          @ENGLISH }}} -->
+          <title>Et eksempel på oppsett for anonym tilgang.</title>
+          <!-- @ENGLISH {{{
           <programlisting>
 &lt;Location /repos&gt;
   DAV svn
@@ -3374,17 +3534,39 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
   AuthzSVNAccessFile /path/to/access/file                 
 &lt;/Location&gt;
           </programlisting>
+          @ENGLISH }}} -->
+          <programlisting>
+&lt;Location /repos&gt;
+  DAV svn
+  SVNParentPath /usr/local/svn
+
+  # våre regler for tilgang
+  AuthzSVNAccessFile /sti/til/aksessfil
+&lt;/Location&gt;
+          </programlisting>
         </example>
 
+        <!-- @ENGLISH {{{
         <para>On the opposite end of the paranoia scale, you can
           configure your block to demand authentication from everyone.
           All clients must supply credentials to identify themselves.
           Your block unconditionally requires authentication via the
           <literal>Require valid-user</literal> directive, and defines
           a means to authenticate.</para>
+        @ENGLISH }}} -->
+        <para>I den andre enden av paranoiaskalaen kan du sette opp 
+          blokken din til å forlange autentisering av alle.
+          Alle klienter må oppgi legitimasjon for å identifisere seg.
+          Blokken krever betingelsesløst autentisering via 
+          <literal>Require valid-user</literal>-direktivet og definerer 
+          en <!-- ¤ -->autentiseringsmåte.</para>
 
         <example id="svn.serverconfig.httpd.authz.perdir.ex-2">
+          <!-- @ENGLISH {{{
           <title>A sample configuration for authenticated access.</title>
+          @ENGLISH }}} -->
+          <title>Eksempel på oppsett for autentisert tilgang.</title>
+          <!-- @ENGLISH {{{
           <programlisting>
 &lt;Location /repos&gt;
   DAV svn
@@ -3402,8 +3584,27 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
   AuthUserFile /path/to/users/file                  
 &lt;/Location&gt;
           </programlisting>
+          @ENGLISH }}} -->
+          <programlisting>
+&lt;Location /repos&gt;
+  DAV svn
+  SVNParentPath /usr/local/svn
+
+  # våre regler for tilgang
+  AuthzSVNAccessFile /sti/til/aksessfil
+
+  # kun autentiserte brukere får tilgang til depotet
+  Require valid-user
+
+  # hvordan brukeren skal autentiseres
+  AuthType Basic
+  AuthName "Subversiondepot"
+  AuthUserFile /sti/til/brukerfil
+&lt;/Location&gt;
+          </programlisting>
         </example>
 
+        <!-- @ENGLISH {{{
         <para>A third very popular pattern is to allow a combination
           of authenticated and anonymous access.  For example, many
           administrators want to allow anonymous users to read certain
@@ -3415,10 +3616,30 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           To do this, you use both the <literal>Satisfy Any</literal>
           and <literal>Require valid-user</literal> directives
           together.</para>
+        @ENGLISH }}} -->
+        <para>Et tredje, meget populært mønster er å tillate en 
+          kombinasjon av autentisert og anonym tilgang.
+          For eksempel ønsker mange administratorer å tillate alle 
+          anonyme brukere å lese visse depotkataloger, men vil at kun 
+          autentiserte brukere kan lese (eller skrive til) mer sensitive 
+          områder.
+          Med dette oppsettet starter alle brukerne med å aksessere 
+          depotet anonymt.
+          Hvis reglene for adgangskontrollen på et eller annet punkt 
+          krever et brukernavn, vil Apache forlange autentisering av 
+          klienten.
+          For å gjøre dette, bruker du både <literal>Satisfy 
+          Any</literal> og <literal>Require 
+          Valid-user</literal>-direktivene sammen.</para>
 
         <example id="svn.serverconfig.httpd.authz.perdir.ex-3">
+          <!-- @ENGLISH {{{
           <title>A sample configuration for mixed
             authenticated/anonymous access.</title>
+          @ENGLISH }}} -->
+          <title>Eksempel på oppsett for blandet autentisert/anonym 
+            tilgang.</title>
+          <!-- @ENGLISH {{{
           <programlisting>
 &lt;Location /repos&gt;
   DAV svn
@@ -3438,12 +3659,38 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
   AuthUserFile /path/to/users/file                  
 &lt;/Location&gt;
           </programlisting>
+          @ENGLISH }}} -->
+          <programlisting>
+&lt;Location /repos&gt;
+  DAV svn
+  SVNParentPath /usr/local/svn
+
+  # våre regler for tilgang
+  AuthzSVNAccessFile /sti/til/aksessfil
+
+  # prøv først anononym tilgang og fall tilbake på skikkelig 
+  # autentisering hvis det er nødvendig.
+  Satisfy Any
+  Require valid-user
+
+  # hvordan brukeren skal autentiseres
+  AuthType Basic
+  AuthName "Subversiondepot"
+  AuthUserFile /sti/til/brukerfil
+&lt;/Location&gt;
+          </programlisting>
         </example>
         
+        <!-- @ENGLISH {{{
         <para>Once your basic <literal>Location</literal> block is
           configured, you can create an access file and define some
           authorization rules in it.</para>
+        @ENGLISH }}} -->
+        <para>Når den grunnleggende <literal>Location</literal>-blokken 
+          er satt opp, kan du opprette en aksessfil og definere noen 
+          autorisasjonsregler i den.</para>
 
+        <!-- @ENGLISH {{{
         <para>The syntax of the access file is the same familiar one
           used by <command>svnserve.conf</command> and the runtime
           configuration files.  Lines that start with a hash
@@ -3455,7 +3702,23 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           <literal>r</literal> (read-only) or <literal>rw</literal>
           (read-write).  If the user is not mentioned at all, no
           access is allowed.</para>
+        @ENGLISH }}} -->
+        <para>Syntaksen til aksessfilnen er den samme kjente som brukes 
+          av <command>svnserve.conf</command> og konfigurasjonsfilene 
+          som brukes under kjøring.
+          Linjer som starter med en hash (<literal>#</literal>) 
+          ignoreres.
+          I sin enkleste form <!-- ¤ -->navngir hver seksjon et depot og 
+          en sti i det, og de autentiserte brukernavnene er <!-- ¤ 
+          -->valgnavnene innenfor hver seksjon.
+          Verdien til hvert valg beskriver brukerens adgangsnivå til 
+          depotstien:
+          Enten <literal>r</literal> (kun lesing) eller 
+          <literal>rw</literal> (både skriving og lesing).
+          Hvis brukeren ikke nevnes i det hele tatt, gis ingen tilgang i 
+          det hele tatt.</para>
 
+        <!-- @ENGLISH {{{
         <para>To be more specific: the value of the section-names are
           either of the form <literal>[repos-name:path]</literal> or
           the form <literal>[path]</literal>.  If you're using the
@@ -3468,6 +3731,21 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           directive, however, then it's fine to only define paths in
           your sections&mdash;after all, there's only one
           repository.</para>
+        @ENGLISH }}} -->
+        <para>For å være mer spesifikk:
+          Verdien til seksjonsnavnene er enten på formen 
+          <literal>[depotnavn:sti]</literal> eller på formen 
+          <literal>[sti]</literal>.
+          Hvis du bruker <literal>SVNParentPath</literal>-direktivet, er 
+          det viktig å spesifisere depotnavnet i seksjonene dine.
+          Hvis du utelater dem, vil en seksjon som 
+          <literal>[en/katalog]</literal> samsvare med stien 
+          <filename>en/katalog</filename> i <emphasis>hvert 
+          eneste</emphasis> depot.
+          Hvis du bruker imidlertid bruker 
+          <literal>SVNPath</literal>-direktivet, er det greit å bare 
+          definere stier i seksjonene dine — når alt kommer til alt, 
+          finnes det bare ett depot.</para>
           
         <screen>
 [calc:/branches/calc/bug-142]
@@ -3475,18 +3753,33 @@ harry = rw
 sally = r
 </screen>
 
+        <!-- @ENGLISH {{{
         <para>In this first example, the user <literal>harry</literal> has
           full read and write access on the
           <filename>/branches/calc/bug-142</filename> directory in the
           <literal>calc</literal> repository, but the user
           <literal>sally</literal> has read-only access.  Any other
           users are blocked from accessing this directory.</para>
+        @ENGLISH }}} -->
+        <para>I dette første eksempelet har brukeren 
+          <literal>harry</literal> full lese- og skrivetilgang i 
+          katalogen <filename>/branches/calc/big-142</filename> i 
+          <literal>calc</literal>-depotet, men brukeren 
+          <literal>sally</literal> har kun lesetilgang.
+          Alle andre brukere nektes tilgang til depotet.</para>
 
+        <!-- @ENGLISH {{{
         <para>Of course, permissions are inherited from
           parent to child directory.  That means that we can specify a
           subdirectory with a different access policy for
           Sally:</para>
+        @ENGLISH }}} -->
+        <para>Alle tilganger arves selvfølgelig fra foreldrekataloger 
+          til underkataloger.
+          Dette betyr at vi kan spesifisere en underkatalog med en 
+          forskjellig adgangsregel for Sally:</para>
 
+        <!-- @ENGLISH {{{
         <screen>
 [calc:/branches/calc/bug-142]
 harry = rw
@@ -3496,16 +3789,39 @@ sally = r
 [calc:/branches/calc/bug-142/testing]
 sally = rw
 </screen>
+        @ENGLISH }}} -->
+        <screen>
+[calc:/branches/calc/bug-142]
+harry = rw
+sally = r
 
+# gi sally skrivetilgang kun til underkatalogen «testing»
+[calc:/branches/calc/bug-142/testing]
+sally = rw
+</screen>
+
+        <!-- @ENGLISH {{{
         <para>Now Sally can write to the <filename>testing</filename>
           subdirectory of the branch, but can still only read other
           parts.  Harry, meanwhile, continues to have complete
           read-write access to the whole branch.</para>
+        @ENGLISH }}} -->
+        <para>Nå kan Sally skrive til underkatalogen 
+          <filename>testing</filename> på grenen, men kan fortsatt bare 
+          lese andre deler.
+          Imens fortsetter Harry å ha både lese- og skrivetilgang til 
+          hele grenen.</para>
 
+        <!-- @ENGLISH {{{
         <para>It's also possible to explicitly deny permission to
           someone via inheritance rules, by setting the username
           variable to nothing:</para>
+        @ENGLISH }}} -->
+        <para>Det er også mulig å eksplisitt nekte <!-- ¤ -->adgang til 
+          noen ved hjelp av <!-- ¤ -->arveregler, ved å sette 
+          brukernavnvariabelen til ingenting:</para>
 
+        <!-- @ENGLISH {{{
         <screen>
 [calc:/branches/calc/bug-142]
 harry = rw
@@ -3514,12 +3830,28 @@ sally = r
 [calc:/branches/calc/bug-142/secret]
 harry =
 </screen>
+        @ENGLISH }}} -->
+        <screen>
+[calc:/branches/calc/bug-142]
+harry = rw
+sally = r
+
+[calc:/branches/calc/bug-142/hemmelig]
+harry =
+</screen>
         
+        <!-- @ENGLISH {{{
         <para>In this example, Harry has read-write access to the
           entire <filename>bug-142</filename> tree, but has absolutely no
           access at all to the <filename>secret</filename>
           subdirectory within it.</para>
+        @ENGLISH }}} -->
+        <para>I dette eksempelet har Harry både lese- og skrivetilgang 
+          til hele <filename>bug-142</filename>-treet, men har absolutt 
+          ingen tilgang i det hele tatt til underkatalogen 
+          <filename>hemmelig</filename> innenfor det.</para>
 
+        <!-- @ENGLISH {{{
         <para>The thing to remember is that the most specific path
           always matches first.  The <command>mod_authz_svn</command>
           module tries to match the path itself, and then the parent
@@ -3527,19 +3859,39 @@ harry =
           effect is that mentioning a specific path in the accessfile
           will always override any permissions inherited from parent
           directories.</para>
+        @ENGLISH }}} -->
+        <para>Tingen å huske på er at den mest spesifikke stien alltid 
+          samsvarer først.
+          <command>mod_authz_svn</command>-modulen prøver selv å få 
+          stien til å stemme, deretter forelderen til stien, så 
+          forelderen til den, og så videre.
+          Netteffekten er at det å nevne en spesifikk sti i aksessfilen 
+          alltid vil overstyre alle rettigheter som er arvet fra 
+          foreldrekataloger.</para>
 
+        <!-- @ENGLISH {{{
         <para>By default, nobody has any access to the repository at
           all.  That means that if you're starting with an empty file,
           you'll probably want to give at least read permission to all
           users at the root of the repository.  You can do this by
           using the asterisk variable (<literal>*</literal>), which
           means <quote>all users</quote>:</para>
+        @ENGLISH }}} -->
+        <para>Som standard har ingen noen tilgang til depotet i det hele 
+          tatt.
+          Det betyr at hvis du starter med en tom fil, vil du 
+          sannsynligvis ønske å i det minste gi leserettigheter til alle 
+          brukere ved roten av depotet.
+          Du kan gjøre dette ved å bruke asteriskvariabelen 
+          (<literal>*</literal>), som betyr <quote>alle 
+          brukere</quote>:</para>
 
         <screen>
 [/]
 * = r
 </screen>
 
+        <!-- @ENGLISH {{{
         <para>This is a common setup; notice that there's no
           repository name mentioned in the section name.  This makes
           all repositories world readable to all users, whether you're
@@ -3548,7 +3900,17 @@ harry =
           read-access to the repositories, you can give explicit
           <literal>rw</literal> permission to certain users on specific
           subdirectories within specific repositories.</para>
+        @ENGLISH }}} -->
+        <para>Dette er et vanlig oppsett; legg merke til at det ikke 
+          nevnes noen depotnavn i seksjonsnavnet.
+          Dette gjør alle depotene fullstendig lesbare for alle 
+          brukerne, enten du bruker <literal>SVNPath</literal> eller 
+          <literal>SVNParentPath</literal>
+          Når alle brukerne har lesetilgang til depotene, kan du gi 
+          eksplisitt <literal>rw</literal>-rettigheter til visse brukere 
+          i spesifikke underkataloger inne i spesifikke depoter.</para>
 
+        <!-- @ENGLISH {{{
         <para>The asterisk variable (<literal>*</literal>) is also
           worth special mention here: it's the
           <emphasis>only</emphasis> pattern which matches an anonymous
@@ -3559,22 +3921,53 @@ harry =
           <literal>*</literal> value defined for the path being
           accessed;  if it can't find one, then Apache demands real
           authentication from the client.</para>
+        @ENGLISH }}} -->
+        <para>Asteriskvariabelen (<literal>*</literal>) er også verdt 
+          litt spesiell omtale her:
+          Det er det <emphasis>eneste</emphasis> mønsteret som samsvarer 
+          med en anonym bruker.
+          Hvis du har satt opp <literal>Location</literal>-blokken din 
+          til å tillate en blanding av anonym og autentisert tilgang, 
+          starter alle brukere med å aksessere Apache anonymt.
+          <command>mod_authz_svn</command> ser etter en 
+          <literal>*</literal>-verdi for stien som blir aksessert; hvis 
+          den ikke finner noen, forlanger Apache skikkelig autentisering 
+          fra klienten.</para>
 
+        <!-- @ENGLISH {{{
         <para>The access file also allows you to define whole groups
           of users, much like the Unix <filename>/etc/group</filename>
           file:</para>
+        @ENGLISH }}} -->
+        <para>Aksessfilen lar deg også definere hele grupper med 
+          brukere, ganske likt <filename>/etc/group</filename> på 
+          Unix-systemer:</para>
 
+        <!-- @ENGLISH {{{
         <screen>
 [groups]
 calc-developers = harry, sally, joe
 paint-developers = frank, sally, jane
 everyone = harry, sally, joe, frank, sally, jane
 </screen>
+        @ENGLISH }}} -->
+        <screen>
+[groups]
+calc-utviklere = harry, sally, joe
+paint-utviklere = frank, sally, jane
+alle = harry, sally, joe, frank, sally, jane
+</screen>
 
+        <!-- @ENGLISH {{{
         <para>Groups can be granted access control just like users.
           Distinguish them with an <quote>at</quote> (<literal>@</literal>)
           prefix:</para>
+        @ENGLISH }}} -->
+        <para>Grupper kan bli gitt tilgang akkurat som brukere.
+          Skill mellom dem ved å sette en krøllalfa 
+          (<literal>@</literal>) foran gruppenavnet:</para>
 
+        <!-- @ENGLISH {{{
         <screen>
 [calc:/projects/calc]
 @calc-developers = rw
@@ -3583,24 +3976,52 @@ everyone = harry, sally, joe, frank, sally, jane
 @paint-developers = rw
 jane = r 
 </screen>
+        @ENGLISH }}} -->
+        <screen>
+[calc:/prosjekter/calc]
+@calc-utviklere = rw
 
+[paint:/prosjekter/paint]
+@paint-utviklere = rw
+jane = r 
+</screen>
+
+        <!-- @ENGLISH {{{
         <para>Groups can also be defined to contain other
           groups:</para>
+        @ENGLISH }}} -->
+        <para>Grupper kan også bli definert til å inneholde andre 
+          grupper:</para>
 
+        <!-- @ENGLISH {{{
         <screen>
 [groups]
 calc-developers = harry, sally, joe
 paint-developers = frank, sally, jane
 everyone = @calc-developers, @paint-developers
 </screen>
+        @ENGLISH }}} -->
+        <screen>
+[groups]
+calc-utviklere = harry, sally, joe
+paint-utviklere = frank, sally, jane
+alle = @calc-utviklere, @paint-utviklere
+</screen>
 
+        <!-- @ENGLISH {{{
         <para>...and that's pretty much all there is to it.</para>
+        @ENGLISH }}} -->
+        <para>…og det er omtrent det som er å si om den saken.</para>
 
       </sect3>
 
       <sect3 id="svn.serverconfig.httpd.authz.pathauthzoff">
+        <!-- @ENGLISH {{{
         <title>Disabling Path-based Checks</title>
+        @ENGLISH }}} -->
+        <title>Slå av stibaserte kontroller</title>
 
+        <!-- @ENGLISH {{{
         <para>The <command>mod_dav_svn</command> module goes through a
           lot of work to make sure that data you've marked
           <quote>unreadable</quote> doesn't get accidentally leaked.
@@ -3615,14 +4036,32 @@ everyone = @calc-developers, @paint-developers
           renamed long ago&mdash;the rename tracking will simply halt
           if one of the object's former names is determined to be
           read-restricted.</para>
+        @ENGLISH }}} -->
+        <para><command>mod_dav_svn</command>-modulen går gjennom en 
+          masse arbeid for å forsikre seg om at dataene som du har 
+          markert som <quote>uleselig</quote> ikke blir lekket ved en 
+          ulykke.
+          Dette betyr at den må passe nøye på alle stiene og filinnhold 
+          som blir returnert av kommandoer som <command>svn 
+          checkout</command> eller <command>svn update</command>.
+          Hvis disse kommandoene kommer over en sti som ikke er lesbar i 
+          følge en eller annen autorisasjonsregel, blir stien <!-- ¤ 
+          -->vanligvis totalt utelatt.
+          Når det gjelder <!-- ¤ -->tråling av historien og navneskifter 
+          – for eksempel å kjøre en kommando som <command>svn cat -r 
+          GAMMELREV foo.c</command> på en fil som skiftet navn for lenge 
+          siden – vil trålingen av navneskiftet ganske enkelt stoppe 
+          hvis et av objektets tidligere navn blir anslått til å være 
+          beskyttet mot lesing.</para>
 
+        <!-- @ENGLISH {{{
         <para>All of this path-checking can sometimes be quite
           expensive, especially in the case of <command>svn
           log</command>.  When retrieving a list revisions, the server
           looks at every changed path in each revision and checks it
           for readability.  If an unreadable path is discovered, then
           it's omitted from the list of the revision's changed paths
-          (normally seen with the <option>--verbose</option> option),
+          (normally seen with the <option>-&#64738;-verbose</option> option),
           and the whole log message is suppressed.  Needless to say,
           this can be time-consuming on revisions that affect a large
           number of files.  This is the cost of security: even if you
@@ -3634,7 +4073,31 @@ everyone = @calc-developers, @paint-developers
           no idea what authorization modules have been installed, so
           all it can do is ask Apache to invoke whatever might be
           present.</para>
+        @ENGLISH }}} -->
+        <para>Alle disse kontrollene av stier kan noen ganger være 
+          ganske dyrekjøpte, spesielt i tilfellet med <command>svn 
+          log</command>.
+          Når det hentes en liste med revisjoner, ser tjeneren på alle 
+          stier som har forandret seg i hver revisjon og sjekker om 
+          stien er leselig.
+          Hvis en uleselig sti blir funnet, utelates den fra listen med 
+          forandrede stier i revisjonen (som man vanligvis ser med 
+          <option>--verbose</option>-valget), og hele loggmeldingen blir 
+          utelatt.
+          Dette kan føre til at mye tid blir brukt på revisjoner som 
+          påvirker et stort antall filer.
+          Dette er prisen for sikkerhet:
+          Selv om du ikke har satt opp en modul som 
+          <command>mod_authz_svn</command> i det hele tatt, ber 
+          <command>mod_dav_svn</command>-modulen fortsatt Apache 
+          <command>httpd</command> om å kjøre autorisasjonssjekker på 
+          hver eneste sti.
+          <command>mod_dav_svn</command>-modulen har ingen formening om 
+          hvilke autorisasjonsmoduler som er installert, så alt den kan 
+          gjøre er å be Apache om å utføre alle som kan 
+          eksistere.</para>
 
+        <!-- @ENGLISH {{{
         <para>On the other hand, there's also an escape-hatch of
           sorts, one which allows you to trade security features for
           speed.  If you're not enforcing any sort of per-directory
@@ -3643,9 +4106,22 @@ everyone = @calc-developers, @paint-developers
           you can disable all of this path-checking.  In your
           <filename>httpd.conf</filename> file, use the
           <literal>SVNPathAuthz</literal> directive:</para>
+        @ENGLISH }}} -->
+        <para>På den annen side finnes det en slags <!-- ¤ escape-hatch 
+          -->nødløsning for dette, en som lar deg bytte 
+          sikkerhetsfunksjonalitet mot hastighet.
+          Hvis du ikke gjennomfører noen form for katalogbasert 
+          autorisasjon (det vil si at <command>mod_authz_svn</command> 
+          eller en lignende modul ikke brukes) kan du slå av alt av 
+          stikontroller.
+          Bruk <literal>SVNPathAuthz</literal>-direktivet i 
+          <filename>httpd.conf</filename>-filen:</para>
 
         <example id="svn.serverconfig.httpd.authz.pathauthzoff.ex-1">
+          <!-- @ENGLISH {{{
           <title>Disabling path checks altogether</title>
+          @ENGLISH }}} -->
+          <title>Slå av alle filstikontroller</title>
           <programlisting>
 &lt;Location /repos&gt;
   DAV svn
@@ -3656,11 +4132,19 @@ everyone = @calc-developers, @paint-developers
           </programlisting>
         </example>
 
+        <!-- @ENGLISH {{{
         <para>The <literal>SVNPathAuthz</literal> directive is <quote>on</quote> by
           default.  When set <quote>off</quote>, all path-based
           authorization checking is disabled;
           <command>mod_dav_svn</command> stops invoking authorization
           checks on every path it discovers.</para>
+        @ENGLISH }}} -->
+        <para><literal>SVNPathAuthz</literal>-direktivet er 
+          <quote>on</quote> (aktivt) som standard.
+          Når det settes til <quote>off</quote>, slås all stibasert 
+          autorisasjonskontroll av; <command>mod_dav_svn</command> lar 
+          være å utføre autorisasjonssjekker på hver sti som den 
+          finner.</para>
 
       </sect3>
 
