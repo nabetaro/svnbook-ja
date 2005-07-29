@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import sys, os, string, getopt, re, glob
 
@@ -12,7 +11,6 @@ def usage(err_msg):
 Options:
     -f:    File which needs to be synchronized
     -l:    List all files and revisions with which they are sinchronized
-    -v:    Print incorporated revision number of the book (for use in Makefile)
 """ % (os.path.basename(sys.argv[0])))
   sys.exit(err_msg and 1 or 0)
 
@@ -45,28 +43,12 @@ def get_list():
   for file in fnames:
     print file, '\t', get_last(file)
 
-def get_version():
-  v = string.Template('<!ENTITY svn.version "в редакции $r1, на основе $r2">')
-  f = open('version.xml', 'w')
-  fnames = glob.glob('*.xml')
-  rev = []
-  for file in fnames:
-    r = get_last(file)
-    if r:
-      rev.append(r)
-  r_max = max(rev)
-  r_min = min(rev)
-  if r_max == r_min:
-    f.write(v.substitute(r1=get_base(), r2=r_max))
-  else:
-    f.write(v.substitute(r1=get_base(), r2=str(r_min)+':'+str(r_max)))
-
 def main():
   if len(sys.argv) < 2:
     usage(None)
   os.chdir('book')
   try:
-    opts, args = getopt.getopt(sys.argv[1:], "f:lv")
+    opts, args = getopt.getopt(sys.argv[1:], "f:l")
   except:
     usage('Invalid syntax')
   fname = ''
@@ -75,8 +57,6 @@ def main():
       fname =  os.path.basename(a)
     elif o == '-l':
       return get_list()
-    elif o == '-v':
-      return get_version()
   cmd = string.Template('svn $a -r $r1:$r2 https://svn.red-bean.com/svnbook/trunk/src/en/book/$t')
   last = get_last(fname)
   base = get_base()
