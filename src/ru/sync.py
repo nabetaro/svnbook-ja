@@ -40,8 +40,24 @@ def get_base():
 def get_list():
   fnames = glob.glob('*.xml')
   fnames.sort()
+  frlist = ()
+  rmin = 0xffffffff
+  rbase = get_base() + 1
   for file in fnames:
-    print file, '\t', get_last(file)
+    rev = get_last(file)
+    if rev:
+      if rev < rmin:
+        rmin = rev
+      frlist += (file, rev),
+  rdelta1 = rmin + ((rbase - rmin) / 3)
+  rdelta2 = rbase - ((rbase - rmin) / 3)
+  for f, r in frlist:
+    if r in range(rdelta2, rbase):
+      print '\x1b[32m', f, '\t', r, '\x1b[0m'
+    elif r in range(rdelta1, rdelta2):
+      print '\x1b[33m', f, '\t', r, '\x1b[0m'
+    elif r in range(rmin, rdelta1):
+      print '\x1b[31m', f, '\t', r, '\x1b[0m'
 
 def main():
   if len(sys.argv) < 2:
