@@ -1041,6 +1041,136 @@ $
 
       </sect3>
 
+      <!-- Delete this entire warning once issue #895 is fixed. -->
+      <warning>
+        <title>Avoid Restructuring Directories in a Branch</title>
+
+        <para>There's one thing that branches are
+          <emphasis>not</emphasis> good for: moving directories around.
+          This is due to issue #895 in Subversion's issue tracker,
+          <systemitem
+          class="url">http://subversion.tigris.org/issues/show_bug.cgi?id=895</systemitem>,
+          "renames delete by name, not by object identity".</para>
+          
+        <para>Here's a simple example of what doesn't work the way you'd
+        expect.  Suppose you have a project that looks like this:
+
+<screen>
+trunk/
+trunk/Makefile
+trunk/bar.c
+trunk/foo.c
+&hellip;
+</screen>
+
+          ... and you'd like to add a new directory
+          <filename>bar</filename>, and move
+          <filename>bar.c</filename> into it.  So you create a branch
+          called <filename>big-directory-restructuring</filename> to
+          do your work, switch your working copy to that branch, and
+          then do
+
+<screen>
+$ svn mkdir bar
+A         bar
+$ svn mv bar.c bar
+A         bar/bar.c
+D         bar.c
+$ svn ci -m "moved bar.c into new subdirectory 'bar'"
+Adding         big-directory-restructuring/bar
+Adding         big-directory-restructuring/bar/bar.c
+Deleting       big-directory-restructuring/bar.c
+
+Committed revision 5.
+</screen>
+
+          So far, so good.  But in the meantime, your co-worker has
+          made some edits to <filename>bar.c</filename> on the trunk,
+          and checked them in.  <quote>That's OK</quote>, thinks you;
+          <quote>her changes and my move will conflict, and thus
+          there's no risk of any work being lost; I'll just resolve
+          the conflict when it happens</quote>.  Think again.  Here's
+          what happens: You switch back to the trunk, and merge in the
+          changes from the branch.  You'll see this:
+
+<screen>
+$ svn up
+M bar.c
+$ svn merge -r4:5 http://svn.example.com/repos/calc/branches/big-directory-restructuring .
+A  bar
+A  bar/bar.c
+D  bar.c
+$ svn ci -m "Unintentionally clobbering trunk changes"
+Adding         trunk/bar
+Adding         trunk/bar/bar.c
+Deleting       trunk/bar.c
+
+Committed revision 7.
+</screen>
+
+          Now, guess what?  Your co-worker's changes to
+          <filename>bar.c</filename>, which you just received via
+          <command>svn up</command>, are lost&mdash;file
+          <filename>bar.c</filename> was deleted, and replaced with
+          the version that was on the branch&mdash;<emphasis>and that
+          version doesn't contain her edits</emphasis>.  Therefore you
+          <emphasis>have</emphasis> lost work, at least in the sense
+          that the work is no longer on the head of the trunk.</para>
+
+        <para>
+          The only way that Your Obedient Servant knows to remedy this
+          situation, after the branch has been checked in, is to
+          review all the changes that were made on the trunk between
+          the creation of the branch and its merging, and reapply them
+          one at a time<footnote><para>You'll have to apply them one
+          at a time because each file is in a different directory in
+          your working copy than it was when the missing change was
+          applied.</para></footnote> to the trunk.  For example:
+
+<screen>
+$ svn log -v http://svn.example.com/repos/calc
+&hellip;
+------------------------------------------------------------------------
+r7 | erich | 2004-10-31 11:16:22 -0800 (Sun, 31 Oct 2004) | 1 line
+Changed paths:
+   A /trunk/bar (from /branches/big-directory-restructuring/bar:5)
+   D /trunk/bar.c
+
+Clobbering trunk changes
+------------------------------------------------------------------------
+r6 | erich | 2004-10-31 11:13:55 -0800 (Sun, 31 Oct 2004) | 1 line
+Changed paths:
+   M /trunk/bar.c
+
+*** empty log message ***
+&hellip;
+------------------------------------------------------------------------
+r4 | erich | 2004-10-31 11:08:13 -0800 (Sun, 31 Oct 2004) | 1 line
+Changed paths:
+   A /branches/big-directory-restructuring (from /trunk:3)
+
+&hellip;
+</screen>
+
+          In the example above, we see that the branch was created at
+          revision 4, and merged into the trunk at revision 7.
+          Therefore we need to reapply all changes to the trunk that
+          occurred between those revisions.  In this example, that's
+          just revision 6:
+
+<screen>
+$ svn merge http://svn.example.com/repos/calc/trunk/bar.c@5 \
+            http://svn.example.com/repos/calc/trunk/bar.c@6 \
+            bar/bar.c 
+U  bar/bar.c
+$ svn ci -m "Reapplying changes that were clobbered at revision 7"
+Sending        trunk/bar/bar.c
+Transmitting file data .
+Committed revision 9.
+</screen>
+
+        </para>
+      </warning>
     </sect2>
 
 
