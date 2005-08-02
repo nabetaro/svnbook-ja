@@ -1,19 +1,11 @@
-<chapter id="svn-ch-4">
-<title>Branching and Merging</title>
+﻿<chapter id="svn-ch-4">
+<title>分支与合并</title>
 
   <simplesect>
 
-    <para>Branching, tagging, and merging are concepts common to
-      almost all version control systems.  If you're not familiar with
-      these ideas, we provide a good introduction in this chapter.  If
-      you are familiar, then hopefully you'll find it interesting to
-      see how Subversion implements these ideas.</para>
+    <para>分支、标签和合并是所有版本控制系统的共同概念，如果你并不熟悉这些概念，我们会在这一章里很好的介绍，如果你很熟悉，非常希望你有兴趣知道Subversion是怎样实现这些概念的。</para>
 
-    <para>Branching is a fundamental part of version control.  If
-      you're going to allow Subversion to manage your data, then this
-      is a feature you'll eventually come to depend on.  This chapter
-      assumes that you're already familiar with Subversion's basic
-      concepts (<xref linkend="svn-ch-2"/>).</para>
+    <para>分支是版本控制的基础组成部分，如果你允许Subversion来管理你的数据，这个特性将是你所必须依赖的 ，这一章假定你已经熟悉了subversion的基本概念（<xref linkend="svn-ch-2"/>）。</para>
 
   </simplesect>
 
@@ -21,47 +13,22 @@
   <!-- ======================== SECTION 1 ============================== -->
   <!-- ================================================================= -->
   <sect1 id="svn-ch-4-sect-1">
-    <title>What's a Branch?</title> 
+    <title>什么是分支？</title> 
 
-    <para>Suppose it's your job to maintain a document for a division
-      in your company, a handbook of some sort.  One day a different
-      division asks you for the same handbook, but with a few parts
-      <quote>tweaked</quote> for them, since they do things slightly
-      differently.</para>
+    <para>假设你的工作是维护本公司一个部门手册一类的文档，一天，另一个部门问你要相同的手册，但一些地方会有<quote>区别</quote>，因为他们有不同的需要。</para>
 
-    <para>What do you do in this situation?  You do the obvious thing:
-      you make a second copy of your document, and begin maintaining
-      the two copies separately.  As each department asks you to make
-      small changes, you incorporate them into one copy or the
-      other.</para>
+    <para>这种情况下你会怎样做？显而易见的方法是：作一个版本的拷贝，然后分别维护两个版本，只要任何一个部门告诉你做一些小修改，你必须在两个版本都作相应的更改。</para>
 
-    <para>You often want to make the same change to both copies.  For
-      example, if you discover a typo in the first copy, it's very
-      likely that the same typo exists in the second copy.  The two
-      documents are almost the same, after all; they only differ in
-      small, specific ways.</para>
+    <para>你也许希望在两个版本同时作修改，举个例子，你在第一个版本发现了一个拼写错误，很显然这个错误也会出现在第二个版本里。两份文档几乎相同，毕竟，只有许多特定的微小区别。</para>
 
-    <para>This is the basic concept of a
-      <firstterm>branch</firstterm>&mdash;namely, a line of
-      development that exists independently of another line, yet still
-      shares a common history if you look far enough back in time.  A
-      branch always begins life as a copy of something, and moves on
-      from there, generating its own history (see <xref
-      linkend="svn-ch-4-dia-1"/>).</para>
+    <para>这是<firstterm>分支</firstterm>的基本概念&mdash;正如它的名字，开发的一条线独立于另一条线，如果回顾历史，可以发现两条线分享共同的历史，一个分支总是从一个备份开始的，从那里开始，发展自己独有的历史（见 <xref linkend="svn-ch-4-dia-1"/>）。</para>
 
       <figure id="svn-ch-4-dia-1">
-        <title>Branches of development</title>
+        <title>分支开发</title>
         <graphic fileref="images/ch04dia1.png"/>
       </figure>
 
-    <para>Subversion has commands to help you maintain parallel
-      branches of your files and directories.  It allows you to create
-      branches by copying your data, and remembers that the copies are
-      related to one another.  It also helps you duplicate changes
-      from one branch to another.  Finally, it can make portions of
-      your working copy reflect different branches, so that you can
-      <quote>mix and match</quote> different lines of development in
-      your daily work.</para>
+    <para>Subversion允许你并行的维护文件和目录的分支，它允许你通过拷贝数据建立分支，记住，分支互相联系，它也帮助你从一个分支复制修改到另一个分支。最终，它可以让你的工作拷贝反映到不同的分支上，所以你在日常工作可以<quote>混合和比较</quote>不同的开发线。</para>
 
   </sect1>
   
@@ -69,100 +36,31 @@
   <!-- ======================== SECTION 2 ============================== -->
   <!-- ================================================================= -->
   <sect1 id="svn-ch-4-sect-2">
-    <title>Using Branches</title> 
+    <title>使用分支</title> 
 
-    <para>At this point, you should understand how each commit creates
-      an entire new filesystem tree (called a <quote>revision</quote>)
-      in the repository.  If not, go back and read about revisions in
-      <xref linkend="svn-ch-2-sect-3.2"/>.</para>
+    <para>在这一点上，你必须理解每一次提交是怎样建立整个新的文件系统树（叫做<quote>修订版本</quote>）的，如果没有，可以回头去读<xref linkend="svn-ch-2-sect-3.2"/>。</para>
 
-    <para>For this chapter, we'll go back to the same example from
-      Chapter 2.  Remember that you and your collaborator, Sally, are
-      sharing a repository that contains two projects,
-      <filename>paint</filename> and <filename>calc</filename>.
-      Notice that in <xref linkend="svn-ch-4-dia-2"/>, however, each
-      project directory now contains subdirectories named
-      <filename>trunk</filename> and <filename>branches</filename>.
-      The reason for this will soon become clear.</para>
+    <para>对于本章节，我们会回到第2章同一个例子，还记得你和你的合作者Sally分享一个包含两个项目的版本库，<filename>paint</filename>和<filename>calc</filename>。注意<xref linkend="svn-ch-4-dia-2"/>，然而,每一个工程的目录现在存在子目录叫做<filename>trunk</filename>和<filename>branches</filename>.，它们存在的理由很快就会清晰起来。</para>
     
       <figure id="svn-ch-4-dia-2">
-        <title>Starting repository layout</title>
+        <title>开始规划版本库</title>
         <graphic fileref="images/ch04dia2.png"/>
       </figure>
 
-    <para>As before, assume that Sally and you both have working
-      copies of the <quote>calc</quote> project.  Specifically, you
-      each have a working copy of <filename>/calc/trunk</filename>.
-      All the files for the project are in this subdirectory rather
-      than in <filename>/calc</filename> itself, because your team has
-      decided that <filename>/calc/trunk</filename> is where the
-      <quote>main line</quote> of development is going to take
-      place.</para>
+    <para>像以前一样，假定Sally和你都有<quote>calc</quote>项目的一份拷贝，进一步说，你有一份<filename>/calc/trunk</filename>的工作拷贝，这个项目的所有的文件在子目录，而不是在<filename>/calc</filename>下，因为你的小组决定使用<filename>/calc/trunk</filename>作为开发使用的<quote>主线</quote>。</para>
 
-    <para>Let's say that you've been given the task of performing a
-      radical reorganization of the project.  It will take a long time
-      to write, and will affect all the files in the project.  The
-      problem here is that you don't want to interfere with Sally, who
-      is in the process of fixing small bugs here and there.  She's
-      depending on the fact that the latest version of the project (in
-      <filename>/calc/trunk</filename>) is always usable.  If you
-      start committing your changes bit-by-bit, you'll surely break
-      things for Sally.</para>
+    <para>假定你有一个任务，将要对项目作激进的重新组织，这会花费大量时间来写，会影响项目的所有文件，问题是你不会希望打扰Sally，她正在处理到处的程序小Bug，一直使用整个项目（<filename>/calc/trunk</filename>）最新版本，如果你一点点提交你的修改，你一定会干扰Sally的工作。</para>
 
-    <para>One strategy is to crawl into a hole: you and Sally can stop
-      sharing information for a week or two.  That is, start gutting
-      and reorganizing all the files in your working copy, but don't
-      commit or update until you're completely finished with the task.
-      There are a number of problems with this, though.  First, it's
-      not very safe.  Most people like to save their work to the
-      repository frequently, should something bad accidentally happen
-      to their working copy.  Second, it's not very flexible.  If you
-      do your work on different computers (perhaps you have a working
-      copy of <filename>/calc/trunk</filename> on two different
-      machines), you'll need to manually copy your changes back and
-      forth, or just do all the work on a single computer.  By that
-      same token, it's difficult to share your changes-in-progress
-      with anyone else.  A common software development <quote>best
-      practice</quote> is to allow your peers to review your work as you
-      go.  If nobody sees your intermediate commits, you lose
-      potential feedback.  Finally, when you're finished with all your
-      changes, you might find it very difficult to re-merge your final
-      work with the rest of the company's main body of code.  Sally
-      (or others) may have made many other changes in the repository
-      that are difficult to incorporate into your working
-      copy&mdash;especially if you run <command>svn update</command>
-      after weeks of isolation.</para>
+    <para>一个策略是缓慢爬入洞口：你和Sally可以停止一个到两个星期的共享，也就是说，开始掏空和重新组织你的工作拷贝的文件，但是在完成这个任务之前不做提交和更新。这样会有很多问题，首先，这样并不安全，许多人习惯频繁的保存修改到版本库，工作拷贝一定有许多意外的修改。第二，这样并不灵活，如果你的工作在不同的计算机（或许你在不同的机器有两份<filename>/calc/trunk</filename>的工作拷贝），你需要手工的来回拷贝修改，或者只在一个计算机上工作，这时很难做到共享你即时的修改，一项软件开发的<quote>最佳实践</quote>就是允许审核你做过的工作，如果没有人人看到你的提交，你失去了潜在的反馈。最后，当你完成了公司主干代码的修改工作，你会发现合并你的工作拷贝和公司的主干代码会是一件非常困难的事情，Sally（或者其他人）也许也许对版本库做了许多修改，已经很难和你的工作拷贝结合&mdash;就是当你在几周的单独工作后运行<command>svn update</command>。</para>
 
-    <para>The better solution is to create your own branch, or line of
-      development, in the repository.  This allows you to save your
-      half-broken work frequently without interfering with others, yet
-      you can still selectively share information with your
-      collaborators.  You'll see exactly how this works later
-      on.</para>
+    <para>最佳方案是创建你自己的分支，或者是版本库的开发线。这允许你保存破坏了一半的工作而不打扰别人，尽管你仍可以选择性的同你的合作者分享信息，你将会看到这是怎样工作的。</para>
 
     <sect2 id="svn-ch-4-sect-2.1">
-      <title>Creating a Branch</title> 
+      <title>创建分支</title> 
       
-      <para>Creating a branch is very simple&mdash;you make a copy of
-        the project in the repository using the <command>svn
-        copy</command> command.  Subversion is not only able to copy
-        single files, but whole directories as well.  In this case,
-        you want to make a copy of the
-        <filename>/calc/trunk</filename> directory.  Where should the
-        new copy live?  Wherever you wish&mdash;it's a matter of
-        project policy.  Let's say that your team has a policy of
-        creating branches in the <filename>/calc/branches</filename>
-        area of the repository, and you want to name your branch
-        <literal>my-calc-branch</literal>.  You'll want to create a
-        new directory,
-        <filename>/calc/branches/my-calc-branch</filename>, which
-        begins its life as a copy of
-        <filename>/calc/trunk</filename>.</para>
+      <para>建立分支非常的简单&mdash;使用<command>svn      copy</command>命令给你的工程做个拷贝，Subversion不仅可以拷贝单个文件，也可以拷贝整个目录，在目前情况下，你希望作<filename>/calc/trunk</filename>的拷贝，新的拷贝应该在哪里？在你希望的任何地方&mdash;它只关于项目的政策，我们假设你们项目的政策是在<filename>/calc/branches</filename>建立分支，并且你希望把你的分支叫做<literal>my-calc-branch</literal>，你希望建立一个新的目录<filename>/calc/branches/my-calc-branch</filename>，作为/calc/trunk的拷贝开始它的生命周期。</para>
 
-      <para>There are two different ways to make a copy.  We'll
-        demonstrate the messy way first, just to make the concept
-        clear.  To begin, check out a working copy of the project's
-        root directory, <filename>/calc</filename>:</para>
+      <para>有两个方法作拷贝，我们首先介绍一个混乱的方法，只是让概念更清楚，作为开始，取出一个工程的根目录，<filename>/calc</filename>：</para>
 
 <screen>
 $ svn checkout http://svn.example.com/repos/calc bigwc
@@ -174,9 +72,7 @@ A  bigwc/branches/
 Checked out revision 340.
 </screen>
 
-      <para>Making a copy is now simply a matter of passing two
-        working-copy paths to the <command>svn copy</command>
-        command:</para>
+      <para>建立一个备份只是传递两个目录参数到<command>svn copy</command>命令：</para>
 
 <screen>
 $ cd bigwc
@@ -185,20 +81,7 @@ $ svn status
 A  +   branches/my-calc-branch
 </screen>
 
-      <para>In this case, the <command>svn copy</command> command
-        recursively copies the <filename>trunk</filename> working
-        directory to a new working directory,
-        <filename>branches/my-calc-branch</filename>.  As you can see
-        from the <command>svn status</command> command, the new
-        directory is now scheduled for addition to the repository.
-        But also notice the <quote>+</quote> sign next to the letter
-        A.  This indicates that the scheduled addition is a
-        <emphasis>copy</emphasis> of something, not something new.
-        When you commit your changes, Subversion will create
-        <filename>/calc/branches/my-calc-branch</filename> in the
-        repository by copying <filename>/calc/trunk</filename>, rather
-        than resending all of the working copy data over the
-        network:</para>
+      <para>在这个情况下，<command>svn copy</command>命令迭代的将<filename>trunk</filename>工作目录拷贝到一个新的目录branhes/my-calc-branch，像你从<command>svn status</command>看到的，新的目录是准备添加到版本库的，但是也要注意A后面的<quote>+</quote>号，这表明这个准备添加的东西是一份<emphasis>备份</emphasis>，而不是新的东西。当你提交修改，Subversion会通过拷贝<filename>/calc/trunk</filename>建立<filename>/calc/branches/my-calc-branch</filename>目录，而不是通过网络传递所有数据：</para>
 
 <screen>
 $ svn commit -m "Creating a private branch of /calc/trunk."
@@ -206,9 +89,8 @@ Adding         branches/my-calc-branch
 Committed revision 341.
 </screen>
 
-      <para>And now the easier method of creating a branch, which we
-        should have told you about in the first place: <command>svn
-        copy</command> is able to operate directly on two URLs.</para>
+      <para>现在，我们必须告诉你建立分支最简单的方法：<command>svn
+        copy</command>可以直接对两个URL操作。</para>
 
 <screen>
 $ svn copy http://svn.example.com/repos/calc/trunk \
@@ -218,22 +100,11 @@ $ svn copy http://svn.example.com/repos/calc/trunk \
 Committed revision 341.
 </screen>
 
-      <para>There's really no difference between these two methods.
-        Both procedures create a new directory in revision 341, and
-        the new directory is a copy of
-        <filename>/calc/trunk</filename>.  This is shown in <xref
-        linkend="svn-ch-4-dia-3"/>.  Notice that the second method,
-        however, performs an <emphasis>immediate</emphasis> commit.
-        <footnote> 
-          <para>Subversion does not support
-            cross-repository copying.  When using URLs with <command>svn
-            copy</command> or <command>svn move</command>, you can only
-            copy items within the same repository.</para>
-        </footnote>
-        It's an easier procedure, because it doesn't require you to
-        check out a large mirror of the repository.  In fact, this
-        technique doesn't even require you to have a working copy at
-        all.</para>
+      <para>其实这两种方法没有什么区别，两个过程都在版本341建立了一个新目录作为<filename>/calc/trunk</filename>的一个备份，这些可以在<xref
+        linkend="svn-ch-4-dia-3"/>看到，注意第二种方法，只是执行了一个<emphasis>立即</emphasis>提交。        <footnote> 
+          <para>Subversion不支持跨版本库的拷贝，当使用<command>svn
+            copy</command>或者<command>svn move</command>直接操作URL时你只能在同一个版本库内操作。</para>
+        </footnote>这是一个简单的过程，因为你不需要取出版本库一个庞大的镜像，事实上，这个技术不需要你有工作拷贝。</para>
       
       <figure id="svn-ch-4-dia-3">
         <title>Repository with new copy</title>
@@ -241,46 +112,21 @@ Committed revision 341.
       </figure>
       
       <sidebar>
-        <title>Cheap Copies</title>
+        <title>代价低廉的拷贝</title>
                 
-        <para>Subversion's repository has a special design.  When you
-          copy a directory, you don't need to worry about the
-          repository growing huge&mdash;Subversion doesn't actually
-          duplicate any data.  Instead, it creates a new directory
-          entry that points to an <emphasis>existing</emphasis> tree.
-          If you're a Unix user, this is the same concept as a
-          hard-link.  From there, the copy is said to be
-          <quote>lazy</quote>.  That is, if you commit a change to one
-          file within the copied directory, then only that file
-          changes&mdash;the rest of the files continue to exist as
-          links to the original files in the original
-          directory.</para>
+        <para>Subversion的版本库有特殊的设计，当你复制一个目录，你不需要担心版本库会变得十分巨大&mdash;Subversion并不是拷贝所有的数据，相反，它建立了一个<emphasis>已存在</emphasis>目录树的入口，如果你是Unix用户，这就像硬链接是同一个概念，在这里，这个拷贝被可以被认为是<quote>懒的</quote>，如果你提交一个文件的修改，只有这个文件改变了&mdash;余下的文件还是作为原来目录的链接存在。</para>
       
-        <para>This is why you'll often hear Subversion users talk
-          about <quote>cheap copies</quote>.  It doesn't matter how
-          large the directory is&mdash;it takes a very tiny, constant
-          amount of time to make a copy of it.  In fact, this feature
-          is the basis of how commits work in Subversion: each
-          revision is a <quote>cheap copy</quote> of the previous
-          revision, with a few items lazily changed within.  (To read
-          more about this, visit Subversion's website and read about
-          the <quote>bubble up</quote> method in Subversion's design
-          documents.)</para>
+        <para>这就是为什么经常听到Subversion用户谈论<quote>廉价的拷贝</quote>，与目录有多大无关&mdash;这个操作会使用很少的时间，事实上，这个特性是subversion提交工作的基础：每一次版本都是前一个版本的一个<quote>廉价的拷贝</quote>，只有少数项目修改了。（要阅读更多关于这部分的内容，访问subversion网站并且阅读设计文档中的<quote>bubble up</quote>方法）。</para>
 
-        <para>Of course, these internal mechanics of copying and
-          sharing data are hidden from the user, who simply sees
-          copies of trees.  The main point here is that copies are
-          cheap, both in time and space.  Make branches as often as
-          you want.</para>
+        <para> 当然，拷贝与分享的内部机制对用户来讲是不可见的，用户只是看到拷贝树，这里的要点是拷贝的时间与空间代价很小，所以你可以随意做想要的分支。</para>
       </sidebar>
 
     </sect2>
     
     <sect2 id="svn-ch-4-sect-2.2">
-      <title>Working with Your Branch</title> 
+      <title>在分支上工作</title> 
 
-      <para>Now that you've created a branch of the project, you can
-        check out a new working copy to start using it:</para>
+      <para>现在你已经在工程上建立分支了，你可以取出一个新的工作拷贝来开始使用：</para>
 
 <screen>
 $ svn checkout http://svn.example.com/repos/calc/branches/my-calc-branch
@@ -290,50 +136,38 @@ A  my-calc-branch/button.c
 Checked out revision 341.
 </screen>
 
-      <para>There's nothing special about this working copy; it simply
-        mirrors a different directory in the repository.  When you
-        commit changes, however, Sally won't ever see them when she
-        updates.  Her working copy is of
-        <filename>/calc/trunk</filename>.  (Be sure to read <xref
-        linkend="svn-ch-4-sect-5"/> later in this chapter: the
-        <command>svn switch</command> command is an alternate way of
-        creating a working copy of a branch.)</para>
+      <para>这一份工作拷贝没有什么特别的，它只是版本库另一个目录的一个镜像罢了，当你提交修改时，Sally在更新时不会看到改变，她的是<filename>/calc/trunk</filename>的工作拷贝。（确定要读本章后面的<xref
+        linkend="svn-ch-4-sect-5"/>，<command>svn switch</command>命令是建立分支的工作拷贝的另一个选择。）</para>
 
-      <para>Let's pretend that a week goes by, and the following
-        commits happen:</para>
+      <para>我们假定本周就要过去了，如下的提交发生：</para>
 
       <itemizedlist>
         <listitem><para>
-          You make a change to
-          <filename>/calc/branches/my-calc-branch/button.c</filename>,
-          which creates revision 342.</para>
+        你修改<filename>/calc/branches/my-calc-branch/button.c</filename>，生成版本号342。
+        </para>
         </listitem>
 
         <listitem><para>
-          You make a change to
+           你修改了
           <filename>/calc/branches/my-calc-branch/integer.c</filename>,
-          which creates revision 343.</para>
+          生成版本号343。</para>
         </listitem>
 
         <listitem><para>
-          Sally makes a change to
-          <filename>/calc/trunk/integer.c</filename>, which creates
-          revision 344.</para>
+          Sally修改了
+          <filename>/calc/trunk/integer.c</filename>生成了版本号344。
+          </para>
         </listitem>
       </itemizedlist>
 
-      <para>There are now two independent lines of development, shown
-        in <xref linkend="svn-ch-4-dia-4"/>, happening on
-        <filename>integer.c</filename>.</para>
+      <para>现在有两个独立开发线，<xref linkend="svn-ch-4-dia-4"/>显示了<filename>integer.c</filename>的历史。</para>
 
       <figure id="svn-ch-4-dia-4">
-        <title>The branching of one file's history</title>
+        <title>一个文件的分支历史</title>
         <graphic fileref="images/ch04dia4.png"/>
       </figure>
 
-      <para>Things get interesting when you look at the history of
-        changes made to your copy of
-        <filename>integer.c</filename>:</para>
+      <para>当你看到<filename>integer.c</filename>的改变时，你会发现很有趣：</para>
 
 <screen>
 $ pwd
@@ -371,14 +205,7 @@ Changed paths:
 ------------------------------------------------------------------------
 </screen>
 
-      <para>Notice that Subversion is tracing the history of your
-        branch's <filename>integer.c</filename> all the way back
-        through time, even traversing the point where it was copied.
-        It shows the creation of the branch as an event in the
-        history, because <filename>integer.c</filename> was implicitly
-        copied when all of <filename>/calc/trunk/</filename> was
-        copied.  Now look what happens when Sally runs the same
-        command on her copy of the file:</para>
+      <para>注意，Subversion追踪分支上的<filename>integer.c</filename>的历史，包括所有的操作，甚至追踪到拷贝之前。他表示了建立分支也是历史中的一次事件，因为<filename>integer.c</filename>在拷贝<filename>/calc/trunk/</filename>时已经暗中拷贝了一份。现在看Sally在她的工作拷贝运行同样的命令：</para>
 
 <screen>
 $ pwd
@@ -409,40 +236,22 @@ Changed paths:
 ------------------------------------------------------------------------
 </screen>
 
-      <para>Sally sees her own revision 344 change, but not the change
-        you made in revision 343.  As far as Subversion is concerned,
-        these two commits affected different files in different
-        repository locations.  However, Subversion
-        <emphasis>does</emphasis> show that the two files share a
-        common history.  Before the branch-copy was made in revision
-        341, they used to be the same file.  That's why you and Sally
-        both see the changes made in revisions 303 and 98.</para>
+      <para>sally看到她自己的344修订，你做的343修改她看不到，从Subversion看来，两次提交只是影响版本库中不同位置上的两个文件。然而，Subversion<emphasis>显示</emphasis>了两个文件有共同的历史，在分支拷贝至前，他们使用同一个文件，所以你和Sally都看到版本号303到98的修改。</para>
 
     </sect2>
 
     <sect2 id="svn-ch-4-sect-2.3">
-      <title>The Key Concepts Behind Branches</title> 
+      <title>分支后面的关键概念</title> 
 
-      <para>There are two important lessons that you should remember
-        from this section.</para>
+      <para>在这个章节你需要记住两个重要的课程。
+      </para>
 
       <orderedlist>
         <listitem>
-          <para>Unlike many other version control systems,
-            Subversion's branches exist as <emphasis>normal filesystem
-            directories</emphasis> in the repository, not in an extra
-            dimension.  These directories just happen to carry some
-            extra historical information.</para>
+          <para>不像其他版本控制系统，Subversion的分支存在于真实的<emphasis>正常文件系统</emphasis>，并不是存在于另外的维度，这些目录只是恰巧保留了额外的历史信息。</para>
         </listitem>
         <listitem>
-          <para>Subversion has no internal concept of a
-            branch&mdash;only copies.  When you copy a directory, the
-            resulting directory is only a <quote>branch</quote>
-            because <emphasis>you</emphasis> attach that meaning to
-            it.  You may think of the directory differently, or treat
-            it differently, but to Subversion it's just an ordinary
-            directory that happens to have been created by
-            copying.</para>
+          <para>Subversion并没有内在的分支概念&mdash;只有拷贝，当你拷贝一个目录，这个结果目录就是一个<quote>分支</quote>，只是因为你给他这样一个含义。你可以换一种角度考虑，或者特别处理，但是对于Subversion它只是一个普通的拷贝的结果。</para>
         </listitem>
       </orderedlist>
 
@@ -454,59 +263,24 @@ Changed paths:
   <!-- ======================== SECTION 3 ============================== -->
   <!-- ================================================================= -->
   <sect1 id="svn-ch-4-sect-3">
-    <title>Copying Changes Between Branches</title>
+    <title>在分支间拷贝修改</title>
 
-    <para>Now you and Sally are working on parallel branches of the
-      project: you're working on a private branch, and Sally is
-      working on the <firstterm>trunk</firstterm>, or main line of
-      development.</para>
+    <para>现在你与Sally在同一个项目的并行分支上工作：你在私有分支上，而Sally在主干（<firstterm>trunk</firstterm>）上，或者叫做开发主线。</para>
 
-    <para>For projects that have a large number of contributors, it's
-      common for most people to have working copies of the trunk.
-      Whenever someone needs to make a long-running change that is
-      likely to disrupt the trunk, a standard procedure is to create a
-      private branch and commit changes there until all the work is
-      complete.</para>
+    <para>由于有众多的人参与项目，大多数人拥有主干拷贝是很正常的，任何人如果进行一个长周期的修改会使得主干陷入混乱，所以通常的做法是建立一个私有分支，提交修改到自己的分支，直到这阶段工作结束。</para>
 
-    <para>So, the good news is that you and Sally aren't interfering
-      with each other.  The bad news is that it's very easy to drift
-      <emphasis>too</emphasis> far apart.  Remember that one of the
-      problems with the <quote>crawl in a hole</quote> strategy is
-      that by the time you're finished with your branch, it may be
-      near-impossible to merge your changes back into the trunk
-      without a huge number of conflicts.</para>
+    <para>所以，好消息就是你和Sally不会互相打扰，坏消息是有时候分离会<emphasis>太</emphasis>远。记住<quote>在洞中爬行</quote>策略的问题，当你完成你的分支后，可能因为太多冲突，已经无法轻易合并你的分支和主干的修改。</para>
     
-    <para>Instead, you and Sally might continue to share changes as
-      you work.  It's up to you to decide which changes are worth
-      sharing; Subversion gives you the ability to selectively
-      <quote>copy</quote> changes between branches.  And when you're
-      completely finished with your branch, your entire set of branch
-      changes can be copied back into the trunk.</para>
+    <para>相反，当你工作的时候你和Sally可以继续分享修改，这依赖于你决定什么值得分享，Subversion给你在分支间选择性<quote>拷贝</quote>修改的能力，当你完成了分支上的所有工作，所有的分支修改可以被拷贝回到主干。</para>
     
 
     <sect2 id="svn-ch-4-sect-3.1">
-      <title>Copying Specific Changes</title>
+      <title>拷贝特定的修改</title>
       
 
-      <para>In the previous section, we mentioned that both you and
-        Sally made changes to <filename>integer.c</filename> on
-        different branches.  If you look at Sally's log message for
-        revision 344, you can see that she fixed some spelling errors.
-        No doubt, your copy of the same file still has the same spelling
-        errors.  It's likely that your future changes to this file will
-        be affecting the same areas that have the spelling errors, so
-        you're in for some potential conflicts when you merge your
-        branch someday.  It's better, then, to receive Sally's change
-        now, <emphasis>before</emphasis> you start working too heavily
-        in the same places.</para>
+      <para>在上一章节，我们提到你和Sally对<filename>integer.c</filename>在不同的分支上做过修改，，如果你看了Sally的344版本的日志信息，你会知道她修正了一些拼写错误，毋庸置疑，你的拷贝的文件也一定存在这些拼写错误，所以你以后的对这个文件修改也会保留这些拼写错误，所以你会在将来合并时得到许多冲突。最好是现在接收Sally的修改，而不是作了许多工作之后才来做。</para>
 
-      <para>It's time to use the <command>svn merge</command> command.
-        This command, it turns out, is a very close cousin to the
-        <command>svn diff</command> command (which you read about in
-        Chapter 3).  Both commands are able to compare any two objects
-        in the repository and describe the differences.  For example,
-        you can ask <command>svn diff</command> to show you the exact
-        change made by Sally in revision 344:</para>
+      <para>是时间使用<command>svn merge</command>命令，这个命令的结果非常像<command>svn diff</command>命令的表亲（在第3章的内容），两个命令都可以比较版本库中的任何两个对象并且描述其区别，举个例子，你可以使用<command>svn diff</command>来查看Sally在版本344作的修改：</para>
 
 <screen>
 $ svn diff -r 343:344 http://svn.example.com/repos/calc/trunk
@@ -553,10 +327,7 @@ Index: integer.c
      printf("error: fseek() returned non-zero\n");
 </screen>
       
-      <para>The <command>svn merge</command> command is almost exactly
-        the same.  Instead of printing the differences to your
-        terminal, however, it applies them directly to your working
-        copy as <emphasis>local modifications</emphasis>:</para>
+      <para><command>svn merge</command>命令几乎完全相同，但不是打印区别到你的终端，它会直接作为<emphasis>本地修改</emphasis>作用到你的本地拷贝：</para>
     
 <screen>
 $ svn merge -r 343:344 http://svn.example.com/repos/calc/trunk
@@ -566,31 +337,13 @@ $ svn status
 M  integer.c
 </screen>
 
-      <para>The output of <command>svn merge</command> shows that your
-        copy of <filename>integer.c</filename> was patched.  It now
-        contains Sally's change&mdash;the change has been
-        <quote>copied</quote> from the trunk to your working copy of
-        your private branch, and now exists as a local modification.
-        At this point, it's up to you to review the local modification
-        and make sure it works correctly.</para>
+      <para><command>svn merge</command>的输出告诉你的<filename>integer.c</filename>文件已经作了补丁（patched），现在已经保留了Sally修改&mdash;修改从主干<quote>拷贝</quote>到你的私有分支的工作拷贝，现在作为一个本地修改，在这种情况下，要靠你审查本地的修改来确定它们工作正常。</para>
 
-      <para>In another scenario, it's possible that things may not have
-        gone so well, and that <filename>integer.c</filename> may have
-        entered a conflicted state.  You might need to resolve the
-        conflict using standard procedures (see Chapter 3), or if you
-        decide that the merge was a bad idea altogether, simply give up
-        and <command>svn revert</command> the local change.</para>
+      <para>在另一种情境下，事情并不会运行得这样正常，也许<filename>integer.c</filename>也许会进入冲突状态，你必须使用标准过程（见第三章）来解决这种状态，或者你认为合并是一个错误的决定，你只需要运行<command>svn revert</command>放弃。</para>
 
-      <para>But assuming that you've reviewed the merged change, you can
-        <command>svn commit</command> the change as usual.  At that
-        point, the change has been merged into your repository branch.
-        In version control terminology, this act of copying changes
-        between branches is commonly called
-        <firstterm>porting</firstterm> changes.</para>
+      <para>但是当你审查过你的合并结果后，你可以使用<command>svn commit</command>提交修改，在那一刻，修改已经合并到你的分支上了，在版本控制术语中，这种在分支之间拷贝修改的行为叫做<firstterm>搬运</firstterm>修改。</para>
 
-      <para>When you commit the local modification, make sure your log
-        message mentions that you're porting a specific change from
-        one branch to another.  For example:</para>
+      <para>当你提交你的修改时，确定你的日志信息中说明你是从某一版本搬运了修改，举个例子：</para>
 
 <screen>
 $ svn commit -m "integer.c: ported r344 (spelling fixes) from trunk."
@@ -599,17 +352,12 @@ Transmitting file data .
 Committed revision 360.
 </screen>
 
-      <para>As you'll see in the next sections, this is a very
-        important <quote>best practice</quote> to follow.</para>
+      <para>你将会在下一节看到，这是一条非常重要的<quote>最佳实践</quote>。</para>
 
       <sidebar>
-        <title>Why Not Use Patches Instead?</title>
+        <title>为什么不使用补丁？</title>
         
-        <para>A question may be on your mind, especially if you're a
-          Unix user: why bother to use <command>svn merge</command> at
-          all?  Why not simply use the operating system's
-          <command>patch</command> command to accomplish the same job?
-          For example:</para>
+        <para>也许你的脑中会出现一个问题，特别如果你是Unix用户，为什么非要使用<command>svn merge</command>？为什么不简单的使用操作系统的<command>patch</command>命令来进行相同的工作？举个例子：</para>
 
 <screen>
 $ svn diff -r 343:344 http://svn.example.com/repos/calc/trunk &gt; patchfile
@@ -622,63 +370,28 @@ Hunk #4 succeeded at 249.
 done
 </screen>
 
-        <para>In this particular case, yes, there really is no
-          difference.  But <command>svn merge</command> has special
-          abilities that surpass the <command>patch</command> program.
-          The file format used by <command>patch</command> is quite
-          limited; it's only able to tweak file contents.  There's no
-          way to represent changes to <emphasis>trees</emphasis>, such
-          as the addition, removal, or renaming of files and
-          directories.  If Sally's change had, say, added a new
-          directory, the output of <command>svn diff</command>
-          wouldn't have mentioned it at all.  <command>svn
-          diff</command> only outputs the limited patch-format, so
-          there are some ideas it simply can't express.
-          <footnote>
-            <para>In the future, the Subversion project plans to use
-              (or invent) an expanded patch format that describes
-              tree-changes.</para>
+        <para>在这种情况下，确实没有区别，但是<command>svn merge</command>有超越<command>patch</command>的特别能力，使用<command>patch</command>对文件格式有一定的限制，它只能察觉文件内容，没有方法表现<emphasis>目录树</emphasis>的修改，像添加、删除或是改名。如果Sally‘s的修改包括增加一个新的目录，<command>svn diff</command>不会注意到这些，<command>svn diff</command>只会输出有限的补丁格式，所以有些问题无法表达。<footnote>
+            <para>在将来，Subversion项目将会计划（或者发明）一种扩展补丁格式来描述目录树改变。</para>
           </footnote>
-          The <command>svn merge</command> command, however, can express
-          tree-changes by directly applying them to your working
-          copy.</para>
+          但是<command>svn merge</command>命令会通过直接作用你的工作拷贝来表示目录树的修改。</para>
 
       </sidebar>
       
-      <para>A word of warning: while <command>svn diff</command> and
-        <command>svn merge</command> are very similar in concept, they
-        do have different syntax in many cases.  Be sure to read about
-        them in Chapter 9 for details, or ask <command>svn
-        help</command>.  For example, <command>svn merge</command>
-        requires a working-copy path as a target, i.e. a place where
-        it should apply the tree-changes.  If the target isn't
-        specified, it assumes you are trying to perform one of the
-        following common operations:</para>
+      <para>一个警告：为什么<command>svn diff</command>和<command>svn merge</command>在概念上是很接近，但语法上有许多不同，一定阅读第9章来查看其细节或者使用<command>svn
+        help</command>查看帮助。举个例子，<command>svn merge</command>需要一个工作拷贝作为目标，就是一个地方来施展目录树修改，如果一个目标都没有指定，它会假定你要做以下某个普通的操作：</para>
 
       <orderedlist>
         <listitem>
-          <para>You want to merge directory changes into your current
-            working directory.</para>
+          <para>你希望合并目录修改到工作拷贝的当前目录。</para>
         </listitem>
         <listitem>
-          <para>You want to merge the changes in a specific file into
-            a file by the same name which exists in your current working 
-            directory.</para>
+          <para>你希望合并修改到你的当前工作目录的相同文件名的文件。</para>
         </listitem>
       </orderedlist>
 
-      <para>If you are merging a directory and haven't specified a
-        target path, <command>svn merge</command> assumes the first case
-        above and tries to apply the changes into your current
-        directory.  If you are merging a file, and that file (or a file
-        by the same name) exists in your current working directory,
-        <command>svn merge</command> assumes the second case and tries
-        to apply the changes to a local file with the same name.</para>
+      <para>如果你合并一个目录而没有指定特定的目标，<command>svn merge</command>假定第一种情况，在你的当前目录应用修改。如果你合并一个文件，而这个文件（或是一个有相同的名字文件）在你的当前工作目录存在，<command>svn merge</command>假定第二种情况，你想对这个同名文件使用合并。</para>
       
-      <para>If you want changes applied somewhere else, you'll
-        need to say so.  For example, if you're sitting in the parent
-        directory of your working copy, you'll have to specify the
-        target directory to receive the changes:</para>
+      <para>如果你希望修改应用到别的目录，你需要说出来。举个例子，你在工作拷贝的父目录，你需要指定目标目录：</para>
       
 <screen>
 $ svn merge -r 343:344 http://svn.example.com/repos/calc/trunk my-calc-branch
@@ -688,60 +401,30 @@ U   my-calc-branch/integer.c
     </sect2>
 
     <sect2 id="svn-ch-4-sect-3.2">
-      <title>The Key Concept Behind Merging</title>
+      <title>合并背后的关键概念</title>
 
-      <para>You've now seen an example of the <command>svn
-          merge</command> command, and you're about to see several
-          more.  If you're feeling confused about exactly how merging
-          works, you're not alone.  Many users (especially those new
-          to version control) are initially perplexed about the proper
-          syntax of the command, and about how and when the feature
-          should be used.  But fear not, this command is actually much
-          simpler than you think!  There's a very easy technique for
-          understanding exactly how <command>svn merge</command>
-          behaves.</para>
+      <para>你已经看到了<command>svn merge</command>命令的例子，你将会看到更多，如果你对合并是如何工作的感到迷惑，许多新用户（特别是对版本控制很陌生的用户）会对这个命令的正确语法感到不知所措，不知道怎样和什么时候使用这个特性，不要害怕，这个命令实际上比你想象的简单！有一个简单的技巧来帮助理解<command>svn merge</command>的行为。</para>
 
-      <para>The main source of confusion is the
-        <emphasis>name</emphasis> of the command.  The term
-        <quote>merge</quote> somehow denotes that branches are
-        combined together, or that there's some sort of mysterious
-        blending of data going on.  That's not the case.  A better
-        name for the command might have been <command>svn
-        diff-and-apply</command>, because that's all that happens:
-        two repository trees are compared, and the differences are
-        applied to a working copy.</para>
+      <para>迷惑的主要原因是这个命令的<emphasis>名称</emphasis>，术语<quote>合并</quote>不知为什么用来表明分支的组合，或者是其他什么神奇的数据混合，这不是事实，一个更好的命令应该被使用<command>svn
+        diff-and-apply</command>，这是所发生的所有事：两个版本库树比较，区别应用到本地拷贝。</para>
 
-      <para>The command takes three arguments:</para>
+      <para>这个命令包括三个参数：</para>
 
       <orderedlist>
 
-        <listitem><para>An initial repository tree (often called the
-        <firstterm>left side</firstterm> of the
-        comparison),</para></listitem>
+        <listitem><para>初始的版本树（通常叫做比较的<firstterm>左边</firstterm>），</para></listitem>
 
-        <listitem><para>An final repository tree (often called the
-        <firstterm>right side</firstterm> of the
-        comparison),</para></listitem>
+        <listitem><para>最终的版本树（通常叫做比较的<firstterm>右边</firstterm>），</para></listitem>
 
-        <listitem><para>A working copy to accept the differences as
-        local changes (often called the <firstterm>target</firstterm>
-        of the merge).</para></listitem>
+        <listitem><para>一个接收区别的工作拷贝（通常叫做合并的<firstterm>目标</firstterm>）。</para></listitem>
         
       </orderedlist>
 
-      <para>Once these three arguments are specified, the two trees
-        are compared, and the resulting differences are applied to the
-        target working copy as local modifications.  When the command
-        is done, the results are no different than if you had
-        hand-edited the files, or run various <command>svn
-        add</command> or <command>svn delete</command> commands
-        yourself.  If you like the results, you can commit them.  If
-        you don't like the results, you can simply <command>svn
-        revert</command> all of the changes.</para>
+      <para>一旦这三个参数指定以后，两个目录树将要做比较，比较结果将会作为本地修改应用到目标工作拷贝，当命令结束后，结果同你手工修改没有什么区别，或者是使用<command>svn
+        add</command>或<command>svn delete</command>，如果你喜欢这结果，你可以提交，如果你不喜欢结果，你可以使用<command>svn
+        revert</command>恢复修改。</para>
 
-      <para>The syntax of <command>svn merge</command> allows you to
-        specify the three necessary arguments rather flexibly.  Here
-        are some examples:</para>
+      <para><command>svn merge</command>的语法允许非常灵活的必要参数，如下是一些例子：</para>
 
 <screen>      
 $ svn merge http://svn.example.com/repos/branch1@150 \
@@ -753,87 +436,38 @@ $ svn merge -r 100:200 http://svn.example.com/repos/trunk my-working-copy
 $ svn merge -r 100:200 http://svn.example.com/repos/trunk
 </screen>
 
-      <para>The first syntax lays out all three arguments explictly,
-        naming each tree in the form <emphasis>URL@REV</emphasis> and
-        naming the working copy target.  The second syntax can be used
-        as a shorthand for situations when you're comparing two
-        different revisions of the same URL.  The last syntax shows
-        how the working-copy argument is optional; if omitted, it
-        defaults to the current directory.</para>
+      <para>第一种语法使用<emphasis>URL@REV</emphasis>的形式直接列出了所有参数，第二种语法可以用来作为比较同一个URL的不同版本的简略写法，最后一种语法表示工作拷贝是可选的，如果省略，默认是当前目录。</para>
 
 
     </sect2>
     
     <sect2 id="svn-ch-4-sect-3.3">
-      <title>Best Practices for Merging</title>
+      <title>合并的最佳实践</title>
 
       <sect3 id="svn-ch-4-sect-3.3.1">
-        <title>Tracking Merges Manually</title>
+        <title>手工追踪合并</title>
 
-        <para>Merging changes sounds simple enough, but in practice it
-          can become a headache.  The problem is that if you
-          repeatedly merge changes from one branch to another, you
-          might accidentally merge the same change
-          <emphasis>twice</emphasis>.  When this happens, sometimes
-          things will work fine.  When patching a file, Subversion
-          typically notices if the file already has the change, and
-          does nothing.  But if the already-existing change has been
-          modified in any way, you'll get a conflict.</para>
+        <para>合并修改听起来很简单，但是实践起来会是很头痛的事，问题是如果你重复的合并来两个分支的修改，你也许会合并<emphasis>两次</emphasis>同样的修改。什么时候发生呢？有时候事情会依然正常，当对文件打补丁时，Subversion如果注意到这个文件没有改变，不会作任何操作，但是如果已经存在的修改已经被修改了，你会得到冲突。</para>
 
-        <para>Ideally, your version control system should prevent the
-          double-application of changes to a branch.  It should
-          automatically remember which changes a branch has already
-          received, and be able to list them for you.  It should use
-          this information to help automate merges as much as
-          possible.</para>
+        <para>理想情况下，你的版本控制系统会阻止对一个分支做两次改变操作，必须自动的记住那一个分支的修改已经接收了，并且可以显示出来，用来尽可能帮助自动化的合并。</para>
 
-        <para>Unfortunately, Subversion is not such a system.  Like
-          CVS, Subversion does not yet record any information about
-          merge operations.  When you commit local modifications, the
-          repository has no idea whether those changes came from
-          running <command>svn merge</command>, or from just
-          hand-editing the files.</para>
+        <para>不幸的是，Subversion不是这样一个系统，像CVS，subversion并不记录任何合并操作，当你提交本地修改，版本库并不能判断出你是通过<command>svn merge</command>还是手工修改得到这些文件。</para>
 
-        <para>What does this mean to you, the user?  It means that
-          until the day Subversion grows this feature, you'll have to
-          track merge information yourself.  The best place to do this
-          is in the commit log-message.  As demonstrated in the
-          earlier example, it's recommended that your log-message
-          mention a specific revision number (or range of revisions)
-          that are being merged into your branch.  Later on, you can
-          run <command>svn log</command> to review which changes your
-          branch already contains.  This will allow you to carefully
-          construct a subsequent <command>svn merge</command> command
-          that won't be redundant with previously ported
-          changes.</para>
+        <para>这对你这样的用户意味着什么？这意味着除非Subversion以后发展这个特性，你必须手工的记录这些信息。最佳的方式是使用提交日志信息，像前面的例子提到的，推荐你在日志信息中说明合并的特定版本号（或是版本号的范围），之后，你可以运行<command>svn log</command>来查看你的分支包含哪些修改。这可以帮助你小心的依序运行<command>svn merge</command>命令而不会进行多余的合并。</para>
 
-        <para>In the next section, we'll show some examples of this
-          technique in action.</para>
+        <para>在下一小节，我们要展示一些这些技巧的例子。</para>
 
       </sect3>
       
       <sect3 id="svn-ch-4-sect-3.3.2">
-        <title>Previewing Merges</title>
+        <title>预览合并</title>
         
-        <para>Because merging only results in local modifications,
-          it's not usually a high-risk operation.  If you get the
-          merge wrong the first time, simply <command>svn
-          revert</command> the changes and try again.</para>
+        <para>因为合并只是导致本地修改，它不是一个高风险的操作，如果你在第一次操作错误，你可以运行<command>svn
+          revert</command>来再试一次。</para>
         
-        <para>It's possible, however, that your working copy might
-          already have local modifications.  The changes applied by a
-          merge will be mixed with your pre-existing ones, and running
-          <command>svn revert</command> is no longer an option.  The
-          two sets of changes may be impossible to separate.</para>
+        <para>有时候你的工作拷贝很可能已经改变了，合并会针对存在的那一个文件，这时运行<command>svn revert</command>不会恢复你在本地作的修改，两部分的修改无法识别出来。</para>
 
-        <para>In cases like this, people take comfort in being able to
-          predict or examine merges before they happen.  One simple
-          way to do that is to run <command>svn diff</command> with
-          the same arguments you plan to pass to <command>svn
-          merge</command>, as we already showed in our first example
-          of merging.  Another method of previewing is to pass the
-          <option>--dry-run</option> option to the merge
-          command:</para>
+        <para>在这个情况下，人们很乐意能够在合并之前预测一下，一个简单的方法是使用运行<command>svn diff</command>同样的参数运行<command>svn diff</command>，另一种方式是传递<option>--dry-run</option>选项到merge命令：</para>
 
         <screen>
 $ svn merge --dry-run -r 343:344 http://svn.example.com/repos/calc/trunk
@@ -843,82 +477,27 @@ $ svn status
 #  nothing printed, working copy is still unchanged.
 </screen>
 
-        <para>The <option>--dry-run</option> option doesn't actually
-          apply any local changes to the working copy.  It only shows
-          status codes that <emphasis>would</emphasis> be printed in a
-          real merge.  It's useful for getting a <quote>high
-          level</quote> preview of the potential merge, for those
-          times when running <command>svn diff</command> gives too
-          much detail.</para>
+        <para><option>--dry-run</option>选项实际上并不修改本地拷贝，它只是显示实际合并时的状态信息，对于得到<quote>整体</quote>的印象，这个命令很有用，因为<command>svn diff</command>包括太多细节。</para>
 
       </sect3>
 
       <sidebar>
-        <title>Subversion and Changesets</title>
+        <title>Subversion与变化集</title>
 
-        <para>Everyone seems to have a slightly different definition
-          of <quote>changeset</quote>, or at least a different
-          expectation of what it means for a version control system to
-          have <quote>changeset features</quote>.  For our purpose,
-          let's say that a changeset is just a collection of changes
-          with a unique name.  The changes might include textual edits
-          to file contents, modifications to tree structure, or tweaks
-          to metadata.  In more common speak, a changeset is just a
-          patch with a name you can refer to.</para>
+        <para>每一个人对于<quote>变化集</quote>的概念都有些不一样，至少对于版本控制系统的<quote>变化集特性</quote>这一概念有着不同的期望，我们的目的只是说变化集之事一系列有独一无二名字的变化集合，修改也许包括文件内容的修改，目录树结构的修改，或是元数据的调整，更通常的说法，一个变化集就是我们可以引用的有名字的补丁。</para>
 
-        <para>In Subversion, a global revision number N names a tree
-          in the repository: it's the way the repository looked after
-          the Nth commit.  It's also the name of an implicit
-          changeset: if you compare tree N with tree N-1, you can
-          derive the exact patch that was committed.  For this reason,
-          it's easy to think of <quote>revision N</quote> as not just
-          a tree, but a changeset as well.  If you use an issue
-          tracker to manage bugs, you can use the revision numbers to
-          refer to particular patches that fix bugs&mdash;for example,
-          <quote>this issue was fixed by revision 9238.</quote>.
-          Somebody can then run <command>svn log -r9238</command> to
-          read about the exact changeset which fixed the bug, and run
-          <command>svn diff -r9237:9238</command> to see the patch
-          itself.  And Subversion's merge command also uses revision
-          numbers.  You can merge specific changesets from one branch
-          to another by naming them in the merge arguments:
-          <command>svn merge -r9237:9238</command> would merge
-          changeset #9238 into your working copy.</para>
+        <para>在Subversion里，一个全局的修订版本号N标示一个版本库中的树：它代表版本库在N次提交后的样子，它也是隐含的一个变化集的名字：如果你比较树N与树N-1，你可以得到你提交的补丁。出于这个原因，想象<quote>版本N</quote>并不只是一棵树，也是一个变化集。如果你使用一个问题追踪工具来管理bug，你可以使用版本号来表示特定的补丁修正了bug&mdash;举个例子，<quote>这个问题是在版本9238修正的</quote>，然后其他人可以运行<command>svn log -r9238</command>来查看修正这个bug的变化集，或者使用<command>svn diff -r9237:9238</command>来看补丁本身。Subversion合并命令也使用版本号，可以从合并两个分支特定的变化集：<command>svn merge -r9237:9238</command>将会合并变化集#9238到本地拷贝。</para>
       </sidebar>
 
       <sect3 id="svn-ch-4-sect-3.3.3">
-        <title>Merge Conflicts</title>
+        <title>合并冲突</title>
 
-        <para>Just like the <command>svn update</command> command,
-          <command>svn merge</command> applies changes to your working
-          copy.  And therefore it's also capable of creating
-          conflicts.  The conflicts produced by <command>svn
-          merge</command>, however, are sometimes different, and this
-          section explains those differences.</para>
+        <para>就像<command>svn update</command>命令，<command>svn merge</command>会将修改应用到工作拷贝，因此它也会造成冲突，因为<command>svn
+          merge</command>造成的冲突有时候会有些不同，本小节会解释这些区别。</para>
 
-        <para>To begin with, assume that your working copy has no
-          local edits.  When you <command>svn update</command> to a
-          particular revision, the changes sent by the server will
-          always apply <quote>cleanly</quote> to your working copy.
-          The server produces the delta by comparing two trees: a
-          virtual snapshot of your working copy, and the revision tree
-          you're interested in.  Because the left-hand side of the
-          comparison is exactly equal to what you already have, the
-          delta is guaranteed to correctly convert your working copy
-          into the right-hand tree.</para>
+        <para>为了开始，我们假定本地没有修改，当你<command>svn update</command>到一个特定修订版本时，修改会<quote>干净的</quote>应用到工作拷贝，服务器产生比较两树的增量数据：一个工作拷贝和你关注的版本树的虚拟快照，因为比较的左边同你拥有的完全相同，增量数据确保你把工作拷贝转化到右边的树。</para>
 
-        <para>But <command>svn merge</command> has no such guarantees
-          and can be much more chaotic: the user can ask the server to
-          compare <emphasis>any</emphasis> two trees at all, even ones
-          that are unrelated to the working copy!  This means there's
-          large potential for human error.  Users will sometimes
-          compare the wrong two trees, creating a delta that doesn't
-          apply cleanly.  <command>svn merge</command> will do its
-          best to apply as much of the delta as possible, but some
-          parts may be impossible.  Just like the Unix
-          <command>patch</command> command sometimes complains about
-          <quote>failed hunks</quote>, <command>svn merge</command>
-          will complain about <quote>skipped targets</quote>:</para>
+        <para>但是<command>svn merge</command>没有这样的保证，会导致很多的混乱：用户可以询问服务器比较<emphasis>任何</emphasis>两个树，即使一个与工作拷贝不相关！这意味着有潜在的人为错误，用户有时候会比较两个错误的树，创建的增量数据不会干净的应用，<command>svn merge</command>会尽力应用更多的增量数据，但是有一些部分也许会难以完成，就像<command>patch</command>命令，有时候会报告错误<quote>failed hunks</quote>，<command>svn merge</command>会报告<quote>skipped targets</quote>：</para>
 
 <screen>
 $ svn merge -r 1288:1351 http://svn.example.com/repos/branch
@@ -931,107 +510,27 @@ C  glorb.h
 $
 </screen>
 
-        <para>In the previous example it might be the case that
-          <filename>baz.c</filename> exists in both snapshots of the
-          branch being compared, and the resulting delta wants to
-          change the file's contents, but the file doesn't exist in
-          the working copy.  Whatever the case, the
-          <quote>skipped</quote> message means that the user is most
-          likely comparing the wrong two trees; they're the classic
-          sign of driver error.  When this happens, it's easy to
-          recursively revert all the changes created by the merge
-          (<command>svn revert --recursive</command>), delete any
-          unversioned files or directories left behind after the
-          revert, and re-run <command>svn merge</command> with
-          different arguments.</para>
+        <para>在前一个例子中，<filename>baz.c</filename>也许会存在于比较的分支快照里，结果数据希望修改文件的内容，但是这个文件在工作拷贝里不存在，这种情况下该怎样做，但是<quote>跳过的</quote>信息意味着用户几乎是在比较错误的两棵树，这是经典的驱动器错误，当发生这种情况，可以使用恢复（<command>svn revert --recursive</command>）迭代合并所作的修改，删除恢复后所有未版本化的文件和目录，并且使用不同的参数运行<command>svn merge</command>。</para>
 
-        <para>Also notice that the previous example shows a conflict
-          happening on <filename>glorb.h</filename>.  We already
-          stated that the working copy has no local edits: how can a
-          conflict possibly happen?  Again, because the user can use
-          <command>svn merge</command> to define and apply any old
-          delta to the working copy, that delta may contain textual
-          changes that don't cleanly apply to a working file, even if
-          the file has no local modifications.</para>
+        <para>也应当注意前一个例子显示<filename>glorb.h</filename>发生了冲突，我们已经规定本地拷贝没有修改：冲突怎么会发生呢？再次，因为用户可以使用<command>svn merge</command>过去的任何变化应用到当前工作拷贝，变化可能包含的文本修改也许并不能干净的应用到工作拷贝文件，即使这些文件没有本地修改。</para>
 
-        <para>Another small difference between <command>svn
-          update</command> and <command>svn merge</command> are the
-          names of the full-text files created when a conflict
-          happens.  In <xref linkend="svn-ch-3-sect-5.4"/>, we saw
-          that an update produces files named
-          <filename>filename.mine</filename>,
-          <filename>filename.rOLDREV</filename>, and
-          <filename>filename.rNEWREV</filename>.  When <command>svn
-          merge</command> produces a conflict, though, it creates
-          three files named <filename>filename.working</filename>,
-          <filename>filename.left</filename>, and
-          <filename>filename.right</filename>.  In this case, the
-          terms <quote>left</quote> and <quote>right</quote> are
-          describing which side of the double-tree comparison the file
-          came from.  In any case, these differing names will help you
-          distinguish between conflicts that happened as a result of an
-          update versus ones that happened as a result of a
-          merge.</para>
+        <para>另一个<command>svn update</command>和<command>svn merge</command>的小区别是因为冲突产生的全文本文件的名字不同，在<xref linkend="svn-ch-3-sect-5.4"/>，我们看到过更新产生的文件名字为<filename>filename.mine</filename>、<filename>filename.rOLDREV</filename>和<filename>filename.rNEWREV</filename>，当<command>svn merge</command>产生冲突，它会产生三个文件分别为 <filename>filename.working</filename>、<filename>filename.left</filename>和<filename>filename.right</filename>。在这种情况下，术语<quote>left</quote>和<quote>right</quote>表示了两棵树比较时的两边，在任何情况下，不同的名字会帮助你区分冲突是因为更新造成的还是合并造成的。</para>
 
       </sect3>
       
       <sect3 id="svn-ch-4-sect-3.3.4">
-        <title>Noticing or Ignoring Ancestry</title>
+        <title>关注还是忽视祖先</title>
 
-        <para>When conversing with a Subversion developer, you might
-          very likely hear reference to the term
-          <firstterm>ancestry</firstterm>.  This word is used to
-          describe the relationship between two objects in a
-          repository: if they're related to each other, then one
-          object is said to be an ancestor of the other.</para>
+        <para>当与Subversion开发者交谈时你一定会听到提及术语<firstterm>祖先</firstterm>，这个词是用来描述两个对象的关系：如果他们互相关联，一个对象就是另一个的祖先或者相反。</para>
 
-        <para>For example, suppose you commit revision 100, which
-          includes a change to a file <filename>foo.c</filename>.
-          Then <filename>foo.c@99</filename> is an
-          <quote>ancestor</quote> of <filename>foo.c@100</filename>.
-          On the other hand, suppose you commit the deletion of
-          <filename>foo.c</filename> in revision 101, and then add a
-          new file by the same name in revision 102.  In this case,
-          <filename>foo.c@99</filename> and
-          <filename>foo.c@102</filename> may appear to be related
-          (they have the same path), but in fact are completely
-          different objects in the repository.  They share no history
-          or <quote>ancestry</quote>.</para>
+        <para>举个例子，假设你提交版本100，包括对<filename>foo.c</filename>的修改，则foo.c@99是foo.c@100的一个<quote>祖先</quote>，另一方面，假设你在版本101删除这个文件，而在102版本提交一个同名的文件，在这个情况下，<filename>foo.c@99</filename>与<filename>foo.c@102</filename>看起来是关联的（有同样的路径），但是事实上他们是完全不同的对象，它们并不共享同一个历史或者说<quote>祖先</quote>。</para>
 
-        <para>The reason for bringing this up is to point out an
-          important difference between <command>svn diff</command> and
-          <command>svn merge</command>.  The former command ignores
-          ancestry, while the latter command is quite sensitive to it.
-          For example, if you asked <command>svn diff</command> to
-          compare revisions 99 and 102 of <filename>foo.c</filename>,
-          you would see line-based diffs; the diff command is blindly
-          comparing two paths.  But if you asked <command>svn
-          merge</command> to compare the same two objects, it would
-          notice that they're unrelated and first attempt to delete
-          the old file, then add the new file;  you would see a
-          <literal>D  foo.c</literal> followed by a <literal>A
-          foo.c</literal>.</para>
+        <para>指出<command>svn diff</command>和<command>svn merge</command>的区别的重要性在于，前一个命令忽略祖先，如果你询问<command>svn diff</command>来比较文件<filename>foo.c</filename>的版本99和102，你会看到行为基础的区别，区别命令只是盲目的比较两条路径，但是如果你使用<command>svn merge</command>是比较同样的两个对象，它会注意到他们是不关联的，而且首先尝试删除旧文件，然后添加新文件，你会看到<literal>A foo.c</literal>后面紧跟<literal>D  foo.c</literal>。</para>
 
-        <para>Most merges involve comparing trees that are ancestrally
-          related to one another, and therefore <command>svn
-          merge</command> defaults to this behavior.  Occasionally,
-          however, you may want the merge command to compare two
-          unrelated trees.  For example, you may have imported two
-          source-code trees representing different vendor releases of
-          a software project (see <xref linkend="svn-ch-7-sect-4"/>).
-          If you asked <command>svn merge</command> to compare the two
-          trees, you'd see the entire first tree being deleted,
-          followed by an add of the entire second tree!</para>
+        <para>大多数合并包括比较包括祖先关联的两条树，因此<command>svn merge</command>这样运作，然而，你也许会希望合并命令能够比较两个不相关的目录树，举个例子，你有两个目录树分别代表了不同的卖主的软件项目（见<xref linkend="svn-ch-7-sect-4"/>），如果你使用<command>svn merge</command>进行比较，你会看到第一个目录树被删除，而第二个树添加上！</para>
 
-        <para>In these situations, you'll want <command>svn
-          merge</command> to do a path-based comparison only, ignoring
-          any relations between files and directories.  Add the
-          <option>--ignore-ancestry</option> option to your merge
-          command, and it will behave just like <command>svn
-          diff</command>.  (And conversely, the
-          <option>--notice-ancestry</option> option will cause
-          <command>svn diff</command> to behave like the merge
-          command.)</para>
+        <para>在这个情况下，你只是希望<command>svn merge</command>能够做一个以路径为基础的比较，忽略所有文件和目录的关系，增加<option>--ignore-ancestry</option>选项会导致命令象<command>svn
+          diff</command>一样。（相应的，<option>--notice-ancestry</option>选项会使<command>svn diff</command>象合并命令一样行事。）</para>
 
       </sect3>
 
@@ -1044,66 +543,26 @@ $
   <!-- ======================== SECTION 4 ============================== -->
   <!-- ================================================================= -->
   <sect1 id="svn-ch-4-sect-4">
-    <title>Common Use-Cases</title>
+    <title>不同用例</title>
 
-    <para>There are many different uses for branching and <command>svn
-      merge</command>, and this section describes the most common ones
-      you're likely to run into.</para>
+    <para>分支和<command>svn
+      merge</command>有很多不同的用处，这个小节描述了你会喜欢用到的一部分。</para>
 
     <sect2 id="svn-ch-4-sect-4.1">
-      <title>Merging a Whole Branch to Another</title>
+      <title>合并一条分支到另一支</title>
 
-      <para>To complete our running example, we'll move forward in
-        time.  Suppose several days have passed, and many changes have
-        happened on both the trunk and your private branch.  Suppose
-        that you've finished working on your private branch; the
-        feature or bug fix is finally complete, and now you want to
-        merge all of your branch changes back into the trunk for
-        others to enjoy.</para>
+      <para>为了完成这个例子，我们将时间往前推进，假定已经过了几天，在主干和你的分支上都有许多更改，假定你完成了分支上的工作，已经完成了特性或bug修正，你想合并所有分支的合并到主干上，让别人得益。</para>
 
-      <para>So how do we use <command>svn merge</command> in this
-        scenario?  Remember that this command compares two trees, and
-        applies the differences to a working copy.  So to receive the
-        changes, you need to have a working copy of the trunk.  We'll
-        assume that either you still have your original one lying
-        around (fully updated), or that you recently checked out a
-        fresh working copy of <filename>/calc/trunk</filename>.</para>
+      <para>这种情况下如何使用<command>svn merge</command>？记住这个命令比较两个目录树，然后应用比较结果到工作拷贝，所以要接受这种变化，你需要主干的工作拷贝，我们假设你有一个最初的版本（完全更新），或者是你最近取出了<filename>/calc/trunk</filename>的一个干净的版本。</para>
 
-      <para>But which two trees should be compared?  At first glance,
-        the answer may seem obvious: just compare the latest trunk
-        tree with your latest branch tree.  But beware&mdash;this
-        assumption is <emphasis>wrong</emphasis>, and has burned many
-        a new user!  Since <command>svn merge</command> operates like
-        <command>svn diff</command>, comparing the latest trunk and 
-        branch trees will <emphasis>not</emphasis> merely describe
-        the set of changes you made to your branch.  Such a comparison
-        shows too many changes: it would not only show the addition of
-        your branch changes, but also the <emphasis>removal</emphasis>
-        of trunk changes that never happened on your branch.</para>
+      <para>但是那两个属进行比较？第一眼看来，回答很明确，只要比较最新的主干与分支。但是你要意识到&mdash;这个假设是<emphasis>错误的</emphasis>，毁掉了许多新用户！因为<command>svn merge</command>操作起来很像<command>svn diff</command>，比较最新的主干和分支树不仅仅描述你在分支上作的修改，这样的比较会展示太多不同，不仅包括分支上增加，也包括分支上删除的变化，而在你的主干上这是从来没有发生过的。</para>
 
-      <para>To express only the changes that happened on your branch,
-        you need to compare the initial state of your branch to its
-        final state.  Using <command>svn log</command> on your branch,
-        you can see that your branch was created in revision 341.  And
-        the final state of your branch is simply a matter of using the
-        <literal>HEAD</literal> revision.  That means you want to
-        compare revisions 341 and <literal>HEAD</literal> of your
-        branch directory, and apply those differences to a working
-        copy of the trunk.</para>
+      <para>为了表示你的分支上的修改，你只需要比较分支的初始状态与最终状态，在你的分支上使用<command>svn log</command>命令，你可以看到你的分支在341版本建立，你的分支最终的状态用<literal>HEAD</literal>版本表示，这意味着你希望能够比较版本341和<literal>HEAD</literal>的分支目录，然后应用这些分支的修改到主干目录的工作拷贝。</para>
 
       <tip>
-        <para>A nice way of finding the revision in which a branch was
-          created (the <quote>base</quote> of the branch) is to use the
-          <option>--stop-on-copy</option> option to <command>svn
-          log</command>.  The log subcommand will normally show every
-          change ever made to the branch, including tracing back
-          through the copy which created the branch.  So normally,
-          you'll see history from the trunk as well.  The
-          <option>--stop-on-copy</option> will halt log output as soon
-          as <command>svn log</command> detects that its target was
-          copied or renamed.</para>
+        <para>一个最好的方法来查找分支产生的版本（分支的<quote>基准</quote>）的方法是在<command>svn log</command>中使用<option>--stop-on-copy</option>选项，这个子命令通常会显示所有关于分支的变化，包括  创建分支的过程，就像你在主干上看到的一样，<option>--stop-on-copy</option>会在<command>svn log</command>检测到目标拷贝或者改名时中止日志。</para>
 
-        <para>So in our continuing example,</para>
+        <para>所以，在我们的例子里，</para>
 
 <screen>
 $ svn log --verbose --stop-on-copy \
@@ -1117,13 +576,12 @@ Changed paths:
 $
 </screen>
         
-        <para>As expected, the final revision printed by this command
-          is the revision in which <filename>my-calc-branch</filename>
-          was created by copying.</para>
+        <para>正如所料，最后的打印出的版本正是<filename>my-calc-branch</filename>生成的版本。
+        </para>
       </tip>
 
 
-      <para>Here's the final merging procedure, then:</para>
+      <para>如下是最终的合并过程，然后：</para>
 
 <screen>
 $ cd calc/trunk
@@ -1150,25 +608,11 @@ Transmitting file data ...
 Committed revision 406.
 </screen>
 
-      <para>Again, notice that the commit log message very
-        specifically mentions the range of changes that was merged
-        into the trunk.  Always remember to do this, because it's
-        critical information you'll need later on.</para>
+      <para>再次说明，日志信息中详细描述了进行合并的修改的范围，记住一定要这么做，这是你以后需要的重要信息。</para>
 
-      <para>For example, suppose you decide to keep working on your
-        branch for another week, in order to complete an enhancement
-        to your original feature or bug fix.  The repository's
-        <literal>HEAD</literal> revision is now 480, and you're ready
-        to do another merge from your private branch to the trunk.
-        But as discussed in <xref linkend="svn-ch-4-sect-3.3"/>, you
-        don't want to merge the changes you've already merged before;
-        you only want to merge everything <quote>new</quote> on your
-        branch since the last time you merged.  The trick is to figure
-        out what's new.</para>
+      <para>举个例子，你希望在分支上继续工作一周，来进一步加强你的修正，这时版本库的<literal>HEAD</literal>版本是480，你准备好了另一次合并，但是我们在<xref linkend="svn-ch-4-sect-3.3"/>提到过，你不想合并已经合并的内容，你只想合并新的东西，技巧就是指出什么是<quote>新</quote>的。</para>
 
-      <para>The first step is to run <command>svn log</command> on the
-        trunk, and look for a log message about the last time you
-        merged from the branch:</para>
+      <para>第一步是在主干上运行<command>svn log</command>察看最后一次与分支合并的日志信息：</para>
 
       <screen>
 $ cd calc/trunk
@@ -1182,11 +626,7 @@ Merged my-calc-branch changes r341:405 into the trunk.
 &hellip;
 </screen>
       
-      <para>Aha!  Since all branch-changes that happened between
-        revisions 341 and 405 were previously merged to the trunk as
-        revision 406, you now know that you want to merge only the
-        branch changes after that&mdash;by comparing revisions 406 and
-        <literal>HEAD</literal>.</para>
+      <para>阿，所有分支341到405之间的修改已经在版本406合并了&mdash;你只需要使用406到<literal>HEAD</literal>的比较来合并。</para>
 
 <screen>
 $ cd calc/trunk
@@ -1208,28 +648,15 @@ Transmitting file data ...
 Committed revision 481.
 </screen>
 
-      <para>Now the trunk contains the complete second wave of changes
-        made to the branch.  At this point, you can either delete your
-        branch (we'll discuss this later on), or continue working on
-        your branch and repeat this procedure for subsequent
-        merges.</para>
+      <para>现在主干有完全的分支上第二次修改的结果，此刻，你可以删除你的分支（我们会在以后讨论），或是继续在你分支上工作，重复这个步骤。</para>
 
     </sect2>
 
     <sect2 id="svn-ch-4-sect-4.2">
-      <title>Undoing Changes</title>
+      <title>取消修改</title>
 
-      <para>Another common use for <command>svn merge</command> is to
-        roll back a change that has already been committed.  Suppose
-        you're working away happily on a working copy of
-        <filename>/calc/trunk</filename>, and you discover that the
-        change made way back in revision 303, which changed
-        <filename>integer.c</filename>, is completely wrong.  It never
-        should have been committed.  You can use <command>svn
-        merge</command> to <quote>undo</quote> the change in your
-        working copy, and then commit the local modification to the
-        repository.  All you need to do is to specify a
-        <emphasis>reverse</emphasis> difference:</para>
+      <para><command>svn merge</command>另一个常用的做法是取消已经做得提交，假设你愉快的在<filename>/calc/trunk</filename>工作，你发现303版本对<filename>integer.c</filename>的修改完全错了，它不应该被提交，你可以使用<command>svn
+        merge</command>来<quote>取消</quote>这个工作拷贝上所作的操作，然后提交本地修改到版本库，你要做得只是制定一个相反的不同：</para>
 
 
 <screen>
@@ -1250,94 +677,36 @@ Transmitting file data .
 Committed revision 350.
 </screen>
 
-      <para>One way to think about a repository revision is as a
-        specific group of changes (some version control systems call
-        these <firstterm>changesets</firstterm>).  By using the
-        <option>-r</option> switch, you can ask <command>svn
-        merge</command> to apply a changeset, or whole range of
-        changesets, to your working copy.  In our case of undoing a
-        change, we're asking <command>svn merge</command> to apply
-        changeset #303 to our working copy
-        <emphasis>backwards</emphasis>.</para>
+      <para>一个考虑版本库版本的方法是想象成一组修改（一些版本控制系统叫做<firstterm>修改集</firstterm>），是用<option>-r</option>选项，你可以告诉<command>svn
+        merge</command>来应用修改集，或是一个范围，在我们的情况，我们使用<command>svn merge</command>合并修改集#303到工作备份。</para>
     
-      <para>Keep in mind that rolling back a change like this is just
-        like any other <command>svn merge</command> operation, so you
-        should use <command>svn status</command> and <command>svn
-        diff</command> to confirm that your work is in the state you
-        want it to be in, and then use <command>svn commit</command>
-        to send the final version to the repository.  After
-        committing, this particular changeset is no longer reflected
-        in the <literal>HEAD</literal> revision.</para>
+      <para>记住这个操作象任何一个<command>svn merge</command>命令，所以你应该使用<command>svn status</command>或是<command>svn
+        diff</command>来确定你的工作是在正确的状态，然后使用<command>svn commit</command>来提交，提交之后，这个特定修改集不在是<literal>HEAD</literal>版本了。</para>
 
-      <para>Again, you may be thinking: well, that really didn't undo
-        the commit, did it?  The change still exists in revision 303.
-        If somebody checks out a version of the
-        <filename>calc</filename> project between revisions 303 and
-        349, they'll still see the bad change, right?</para>
+      <para>再一次，你也许会想：好吧，这不是取消这提交，不是吗？版本303依然存在修改，如果任何人取出<filename>calc</filename>的303-349版本，他还会得到错误的修改，对吧？</para>
 
-      <para>Yes, that's true.  When we talk about
-        <quote>removing</quote> a change, we're really talking about
-        removing it from <literal>HEAD</literal>.  The original change
-        still exists in the repository's history.  For most
-        situations, this is good enough.  Most people are only
-        interested in tracking the <literal>HEAD</literal> of a
-        project anyway.  There are special cases, however, where you
-        really might want to destroy all evidence of the commit.
-        (Perhaps somebody accidentally committed a confidential
-        document.)  This isn't so easy, it turns out, because
-        Subversion was deliberately designed to never lose
-        information.  Revisions are immutable trees which build upon
-        one another.  Removing a revision from history would cause a
-        domino effect, creating chaos in all subsequent revisions and
-        possibly invalidating all working copies.
+      <para>是的，这是对的。当我们说<quote>删除</quote>一个修改时，我们只是说从<literal>HEAD</literal>删除，原始的修改还保存在版本库历史中，在多数情况下，这是足够好的。大多数人只是对追踪<literal>HEAD</literal>版本感兴趣，一次额特定情况下，你希望毁掉任何提交的证据（或许某个人提交了一个秘密文件），这不是很容易的，因为Subversion设计用来不丢失任何信息，版本是不可变的目录树 ，从历史删除一个版本会导致多米诺效应，会导致混乱甚至会影响所有的工作拷贝。
         <footnote>
-          <para>The Subversion project has plans, however, to someday
-            implement an <command>svnadmin obliterate</command>
-            command that would accomplish the task of permanently
-            deleting information.  In the meantime, see <xref
-            linkend="svn-ch-5-sect-3.1.3"/> for a possible
-            workaround.</para>
+          <para>Subversion项目有计划，不管用什么方式，有一天要实现<command>svnadmin obliterate</command>命令来永久删除，此时可以看<xref linkend="svn-ch-5-sect-3.1.3"/>。</para>
         </footnote>
       </para>
 
     </sect2>
 
     <sect2 id="svn-ch-4-sect-4.3">
-      <title>Resurrecting Deleted Items</title>
+      <title>找回删除的项目</title>
 
-      <para>The great thing about version control systems is that
-        information is never lost.  Even when you delete a file or
-        directory, it may be gone from the <literal>HEAD</literal>
-        revision, but the object still exists in earlier revisions.
-        One of the most common questions new users ask is, <quote>How
-        do I get my old file or directory back?</quote></para>
+      <para>版本控制系统组重要的一件事是它的信息从不丢失，甚至你删除了文件或目录，它也许从HEAD版本小时 ，但这个对象依然存在于历史的早期版本 ，一个新手经常问到的问题是<quote>怎样找回我的文件和目录？</quote>。</para>
 
-      <para>The first step is to define exactly <emphasis
-        role="bold">which</emphasis> item you're trying to resurrect.
-        Here's a useful metaphor: you can think of every object in the
-        repository as existing in a sort of two-dimensional coordinate
-        system.  The first coordinate is a particular revision tree,
-        and the second coordinate is a path within that tree.  So
-        every version of your file or directory can be defined by a
-        specific coordinate pair.</para>
+      <para>第一步首先要知道需要拯救的项目是<emphasis role="bold">什么</emphasis>，这里有个很有用的比喻：你可以认为任何存在于版本库的对象生活在一个二位的坐标系统里，第一维是一个特定的版本树，第二维是树种的路径，所以你的文件或目录的任何版本可以有这样一对坐标定义。</para>
 
-      <para>Subversion has no <filename>Attic</filename> directory
-        like CVS does,
+      <para>Subversion没有向CVS一样的<filename>古典</filename>目录，
         <footnote>
           <para>Because CVS doesn't version trees, it creates an
             <filename>Attic</filename> area within each repository
             directory as a way of remembering deleted files.</para>
         </footnote>
-        so you need to use <command>svn
-        log</command> to discover the exact coordinate pair you wish
-        to resurrect.  A good strategy is to run <command>svn log
-        --verbose</command> in a directory which used to contain your
-        deleted item.  The <option>--verbose</option> option shows a
-        list of all changed items in each revision; all you need to do
-        is find the revision in which you deleted the file or
-        directory.  You can do this visually, or by using another tool
-        to examine the log output (via <command>grep</command>, or
-        perhaps via an incremental search in an editor).</para>
+        所以你需要<command>svn log</command>来察看你需要找回的坐标对，一个好的策略是使用<command>svn log --verbose</command>来察看你删除的项目，--verbose选项显示所有改变的项目的每一个版本 ，你只需要你删除文件或目录的那一个版本，你可以使用另一种工具来检查日志的输出 （通过<command>grep</command>或是在编辑器里增量查找）。</para>
 
       <screen>
 $ cd parent-dir
@@ -1354,43 +723,16 @@ Removed real.c because code now in double.c.
 &hellip;
 </screen>
 
-      <para>In the example, we're assuming that you're looking for a
-        deleted file <filename>real.c</filename>.  By looking through
-        the logs of a parent directory, you've spotted that this file
-        was deleted in revision 808.  Therefore, the last version of
-        the file to exist was in the revision right before that.
-        Conclusion: you want to resurrect the path
-        <filename>/calc/trunk/real.c</filename> from revision
-        807.</para>
+      <para>在这个例子里，你可以假定你正在找已经删除了的文件<filename>real.c</filename>，通过查找父目录的历史 ，你知道这个文件删除在808版本，所以存在这个对象的版本在此之前 ，结论：你想从版本807找回<filename>/calc/trunk/real.c</filename>。</para>
 
-      <para>That was the hard part&mdash;the research.  Now that you
-        know what you want to restore, you have two different
-        choices.</para>
+      <para>以上是最重要的部分&mdash;重新找到你需要恢复的对象。现在你已经知道该恢复的文件，而你有两种选择。</para>
       
-      <para>One option is to use <command>svn merge</command> to apply
-        revision 808 <quote>in reverse</quote>.  (We've already
-        discussed how to undo changes, see <xref
-        linkend="svn-ch-4-sect-4.2"/>.)  This would have the effect of
-        re-adding <filename>real.c</filename> as a local modification.
-        The file would be scheduled for addition, and after a commit,
-        the file would again exist in <literal>HEAD</literal>.</para>
+      <para>一种是对版本反向使用<command>svn merge</command>到808（我们已经学会了如何取消修改，见<xref
+        linkend="svn-ch-4-sect-4.2"/>），这样会重新添加<filename>real.c</filename>，这个文件会列入增加的计划，经过一次提交，这个文件重新回到<literal>HEAD</literal>。</para>
 
-      <para>In this particular example, however, this is probably not
-        the best strategy.  Reverse-applying revision 808 would not
-        only schedule <filename>real.c</filename> for addition, but
-        the log message indicates that it would also undo certain
-        changes to <filename>integer.c</filename>, which you don't
-        want.  Certainly, you could reverse-merge revision 808 and
-        then <command>svn revert</command> the local modifications to
-        <filename>integer.c</filename>, but this technique doesn't
-        scale well.  What if there were 90 files changed in revision
-        808?</para>
+      <para>在这个例子里，这不是一个好的策略，这样做不仅把<filename>real.c</filename>加入添加到计划，也取消了对<filename>integer.c</filename>的修改，而这不是你期望的。确实，你可以恢复到版本808，然后对<filename>integer.c</filename>执行取消<command>svn revert</command>操作，但这样操作无法扩大使用，因为如果从版本808修改了90个文件怎么办？</para>
 
-      <para>A second, more targeted strategy is not to use
-        <command>svn merge</command> at all, but rather the
-        <command>svn copy</command> command.  Simply copy the exact
-        revision and path <quote>coordinate pair</quote> from the
-        repository to your working copy:</para>
+      <para>所以第二个方法是不使用<command>svn merge</command>而是使用<command>svn copy</command>命令，精确的拷贝版本和路径<quote>坐标对</quote>到你的工作拷贝：</para>
 
       <screen>
 $ svn copy --revision 807 \
@@ -1405,193 +747,70 @@ Transmitting file data .
 Committed revision 1390.
 </screen>
 
-      <para>The plus sign in the status output indicates that the item
-        isn't merely scheduled for addition, but scheduled for
-        addition <quote>with history</quote>. Subversion remembers
-        where it was copied from.  In the future, running <command>svn
-        log</command> on this file will traverse back through the
-        file's resurrection and through all the history it had prior
-        to revision 807.  In other words, this new
-        <filename>real.c</filename> isn't really new; it's a direct
-        descendant of the original, deleted file.</para>
+      <para>加号标志表明这个项目不仅仅是计划增加中，而且还包含了历史的增加，Subversion记住了他是从那里拷贝过来的。在将来，对这个文件运行<command>svn log</command>会看到这个文件在版本807之前的历史，换句话说，<filename>real.c</filename>不是新的，而是原先删除的那一个的后代。</para>
 
-      <para>Although our example shows us resurrecting a file, note
-        that these same techniques work just as well for resurrecting
-        deleted directories.</para>
+      <para>尽管我们的例子告诉我们如何找回文件，对于恢复删除目录是一样的。</para>
 
     </sect2>
 
     <sect2 id="svn-ch-4-sect-4.4">
-      <title>Common Branching Patterns</title>
+      <title>通用分支模式</title>
 
-      <para>Version control is most often used for software
-        development, so here's a quick peek at two of the most common
-        branching/merging patterns used by teams of programmers.  If
-        you're not using Subversion for software development, feel
-        free to skip this section.  If you're a software developer
-        using version control for the first time, pay close attention,
-        as these patterns are often considered best practices by
-        experienced folk.  These processes aren't specific to
-        Subversion; they're applicable to any version control system.
-        Still, it may help to see them described in Subversion
-        terms.</para>
+      <para>版本控制在软件开发中广泛使用，下面是团队和程序员两种最常用的分支/合并模式，如果你不是使用Subversion软件开发，可随意跳过本小节，如果你是使用版本控制的软件开发者，请更加注意，以下模式被许多老兵认为使最佳实践，这个过程并只是针对Subversion，在任何版本控制系统中都一样，这里可以帮助大家来学习Subversion中的术语。</para>
       
       <sect3 id="svn-ch-4-sect-4.4.1">
-        <title>Release Branches</title>
+        <title>释放分支</title>
       
-        <para>Most software has a typical lifecycle: code, test,
-          release, repeat.  There are two problems with this process.
-          First, developers need to keep writing new features while
-          quality-assurance teams take time to test supposedly-stable
-          versions of the software.  New work cannot halt while the
-          software is tested.  Second, the team almost always needs to
-          support older, released versions of software; if a bug is
-          discovered in the latest code, it most likely exists in
-          released versions as well, and customers will want to get
-          that bugfix without having to wait for a major new
-          release.</para>
+        <para>大多数软件存在这样一个生命周期：编码、测试、发布，继续。这样有两个问题，第一，开发者需要在质量保证小组测试时继续开发新特性，新工作在软件测试时不可以中断，第二，小组必须一直支持老的发布版本和软件；如果一个bug在最新的代码中发现，它一定也存在已发布的版本中，客户希望立刻得到错误修正而不必等到新版本发布。</para>
 
-        <para>Here's where version control can help.  The typical
-          procedure looks like this:</para>
+        <para>这是版本控制可以做的帮助，典型的过程如下：</para>
 
       <itemizedlist>
 
         <listitem>
-          <para><emphasis>Developers commit all new work to the
-                trunk.</emphasis>
+          <para><emphasis>开发者提交所有的新特性到主干。</emphasis>
 
-              Day-to-day changes are committed to
-              <filename>/trunk</filename>: new features, bugfixes, and
-              so on.</para>
+              每日的修改提交到<filename>/trunk</filename>：新特性，错误修正和其他。</para>
         </listitem>
 
         <listitem>
-          <para><emphasis>The trunk is copied to a
-                <quote>release</quote> branch.</emphasis>
+          <para><emphasis>这个主干拷贝到<quote>发布</quote>分支。</emphasis>
 
-              When the team thinks the software is ready for release
-              (say, a 1.0 release), then <filename>/trunk</filename>
-              might be copied to
-              <filename>/branches/1.0</filename>.</para>
+              当小组认为软件已经做好发布的准备（如，版本1.0）然后<filename>/trunk</filename>拷贝到<filename>/branches/1.0</filename>。</para>
         </listitem>
 
         <listitem>
-          <para><emphasis>Teams continue to work in parallel.</emphasis>
-
-              One team begins rigorous testing of the release branch,
-              while another team continues new work (say, for version
-              2.0) on <filename>/trunk</filename>.  If bugs are
-              discovered in either location, fixes are ported back and
-              forth as necessary.  At some point, however, even that
-              process stops.  The branch is <quote>frozen</quote> for
-              final testing right before a release.</para>
+          <para><emphasis>项目组继续并行工作，</emphasis>一个小组开始严酷的测试，同时另一个小组在<filename>/trunk</filename>继续新的工作（如，准备2.0），如果一个bug在任何一个位置被发现，错误修正需要来回运送，即使那个过程已经结束，分支会在发布前的最终测试中<quote>停滞</quote>。</para>
         </listitem>
           
         <listitem>
-          <para><emphasis>The branch is tagged and released.</emphasis>
-
-              When testing is complete,
-              <filename>/branches/1.0</filename> is copied to
-              <filename>/tags/1.0.0</filename> as a reference
-              snapshot.  The tag is packaged and released to
-              customers.</para>
+          <para><emphasis>分支已经作了标记并且发布，</emphasis>当测试结束，<filename>/branches/1.0</filename>作为引用快照已经拷贝到<filename>/tags/1.0.0</filename>，这个标记打包发布给客户。</para>
         </listitem>
 
         <listitem>
-          <para><emphasis>The branch is maintained over time.</emphasis>
-
-              While work continues on <filename>/trunk</filename> for
-              version 2.0, bugfixes continue to be ported from
-              <filename>/trunk</filename> to
-              <filename>/branches/1.0</filename>.  When enough
-              bugfixes have accumulated, management may decide to do a
-              1.0.1 release: <filename>/branches/1.0</filename> is
-              copied to <filename>/tags/1.0.1</filename>, and the tag
-              is packaged and released.</para>
+          <para><emphasis>分支多次维护。</emphasis>当继续在<filename>/trunk</filename>上为版本2.0工作，bug修正继续从<filename>/trunk</filename>运送到<filename>/branches/1.0</filename>，如果积累了足够的bug修正，管理部门决定发布1.0.1版本：拷贝<filename>/branches/1.0</filename>到<filename>/tags/1.0.1</filename>，标签被打包发布。</para>
         </listitem>
 
         </itemizedlist>
 
-        <para>This entire process repeats as the software matures:
-          when the 2.0 work is complete, a new 2.0 release branch is
-          created, tested, tagged, and eventually released.  After
-          some years, the repository ends up with a number of release
-          branches in <quote>maintenance</quote> mode, and a number
-          of tags representing final shipped versions.</para>
+        <para>整个过程重复道软件成熟：当2.0完成，一个新的2.0分支被创建，测试、打标签和最终发布，经过许多年，版本库结束了许多版本发布，进入了<quote>维护</quote>模式，许多标签代表了最终的发布版本。</para>
 
       </sect3>
 
       <sect3 id="svn-ch-4-sect-4.4.2">
-        <title>Feature Branches</title>
+        <title>典型分支</title>
       
-        <para>A <firstterm>feature branch</firstterm> is the sort of
-          branch that's been the dominant example in this chapter, the
-          one you've been working on while Sally continues to work on
-          <filename>/trunk</filename>.  It's a temporary branch
-          created to work on a complex change without interfering with
-          the stability of <filename>/trunk</filename>.  Unlike
-          release branches (which may need to be supported forever),
-          feature branches are born, used for a while, merged back to
-          the trunk, then ultimately deleted.  They have a finite span
-          of usefulness.</para>
+        <para>一个<firstterm>典型分支</firstterm>是本章一些显著的例子，你与Sally还在<filename>/trunk</filename>继续工作，这是一个临时分支<filename>/trunk</filename>用来作复杂的修改而不会干扰<filename>/trunk</filename>的稳定性，不象分支发布（也许在将来的支持中需要），典型分支已经出生，使用了一段时间，合并到主干，然后最终删除掉，他们有有限的用处。</para>
 
-        <para>Again, project policies vary widely concerning exactly
-          when it's appropriate to create a feature branch.  Some
-          projects never use feature branches at all: commits to
-          <filename>/trunk</filename> are a free-for-all.  The
-          advantage to this system is that it's simple&mdash;nobody
-          needs to learn about branching or merging.  The disadvantage
-          is that the trunk code is often unstable or unusable.  Other
-          projects use branches to an extreme: no change is
-          <emphasis>ever</emphasis> committed to the trunk directly.
-          Even the most trivial changes are created on a short-lived
-          branch, carefully reviewed and merged to the trunk.  Then
-          the branch is deleted.  This system guarantees an
-          exceptionally stable and usable trunk at all times, but at
-          the cost of tremendous process overhead.</para>
+        <para>再次，项目政策按照是否适合创建特性分支广泛变化，一些项目永远不使用特性分支：提交到<filename>/trunk</filename>对大家都很容易，好处是系统的简单&mdash;没有人需要知道分支和合并，坏处是主干会经常不稳定或者不可用，另外一些项目使用分支达到极限：没有修改<emphasis>曾经</emphasis>直接提交到主干，即使最细小的修改都要创建短暂的分支，然后小心的审核合并到主干，然后删除分支，这样系统保持主干一直稳定和可用，但是但造成了巨大的负担。</para>
 
-        <para>Most projects take a middle-of-the-road approach.  They
-          commonly insist that <filename>/trunk</filename> compile and
-          pass regression tests at all times.  A feature branch is
-          only required when a change requires a large number of
-          destabilizing commits.  A good rule of thumb is to ask this
-          question: if the developer worked for days in isolation and
-          then committed the large change all at once (so that
-          <filename>/trunk</filename> were never destabilized), would
-          it be too large a change to review?  If the answer to that
-          question is <quote>yes</quote>, then the change should be
-          developed on a feature branch.  As the developer commits
-          incremental changes to the branch, they can be easily
-          reviewed by peers.</para>
+        <para>许多项目项目采用折中的方式，坚持编译<filename>/trunk</filename>并进行回归测试，只有多次不稳定提交时才需要一个特性分支，一个规则是这样一个问题：如果开发者在好几天里独立工作，一次提交大量修改（这样<filename>/trunk</filename>就不会不稳定。），会有太多的变化要来回顾？如果答案是<quote>是</quote>，这些修改应该在特性分支上进行，因为开发者增量的提交修改，你可以容易的回头检查。</para>
 
-        <para>Finally, there's the issue of how to best keep a feature
-          branch in <quote>sync</quote> with the trunk as work
-          progresses.  As we mentioned earlier, there's a great risk
-          to working on a branch for weeks or months; trunk changes
-          may continue to pour in, to the point where the two lines of
-          development differ so greatly that it may become a nightmare
-          trying to merge the branch back to the trunk.</para>
+        <para>最终，有一个问题就是怎样保持一个特性分支<quote>同步</quote>于工作中的主干，在前面提到过，在一个分枝上工作数周或几个月是很有风险的，主干的修改也许会持续涌入，因为这一点，两条线的开发会区别巨大，合并分支回到主干会成为一个噩梦。</para>
 
-        <para>This situation is best avoided by regularly merging
-          trunk changes to the branch.  Make up a policy: once a week,
-          merge the last week's worth of trunk changes to the branch.
-          Take care when doing this; the merging needs to be
-          hand-tracked to avoid the problem of repeated merges (as
-          described in <xref linkend="svn-ch-4-sect-3.3.1"/>).  You'll
-          need to write careful log messages detailing exactly which
-          revision ranges have been been merged already (as
-          demonstrated in <xref linkend="svn-ch-4-sect-4.1"/>).  It
-          may sound intimidating, but it's actually pretty easy to
-          do.</para>
+        <para>这种情况最好在规律的主干和分支合并时避免，制定这样一个政策：每周将上周值得合并的修改合并到分支，注意这样做时需要小心，需要手工记录合并的过程，以避免重复的合并（在<xref linkend="svn-ch-4-sect-3.3.1"/>描述过），你需要小心的撰写合并的日志信息，精确的描述合并包括的范围（在<xref linkend="svn-ch-4-sect-4.1"/>中描述过），这看起来像是胁迫，可是实际上是容易做到的。</para>
 
-        <para>At some point, you'll be ready to merge the
-          <quote>synchronized</quote> feature branch back to the
-          trunk.  To do this, begin by doing a final merge of the
-          latest trunk changes to the branch.  When that's done, the
-          latest versions of branch and trunk will be absolutely
-          identical except for your branch changes.  So in this
-          special case, you would merge by comparing the branch with
-          the trunk:</para>
+        <para>在一些时候，你已经准备好了将<quote>同步的</quote>特性分支合并回到主干，为此，开始做一次将主干最新修改合并到分支的最终合并，这样后，最新的分支和主干将会绝对一致，除了你的分支修改，所以在这个特别的例子里，你会通过比较分支和主干来进行合并：</para>
 
         <screen>
 $ cd trunk-working-copy
@@ -1608,20 +827,10 @@ A  newdirectory/newfile
 &hellip;
 </screen>
 
-        <para>By comparing the <literal>HEAD</literal> revision of the
-          trunk with the <literal>HEAD</literal> revision of the
-          branch, you're defining a delta that describes only the
-          changes you made to the branch; both lines of development
-          already have all of the trunk changes.</para>
+        <para>通过比较<literal>HEAD</literal>修订版本的主干和<literal>HEAD</literal>修订版本的分支，你确定了只在分支上的增量信息，两条开发线都有了分枝的修改。</para>
 
-        <para>Another way of thinking about this pattern is that your
-          weekly sync of trunk to branch is analogous to running
-          <command>svn update</command> in a working copy, while the
-          final merge step is analogous to running <command>svn
-          commit</command> from a working copy.  After all, what else
-          <emphasis>is</emphasis> a working copy but a very shallow
-          private branch?  It's a branch that's only capable of
-          storing one change at a time.</para>
+        <para>另一种考虑这种模式的方式是你每周按时对你的工作拷贝使用类似于<command>svn update</command>的命令同步你的分枝和主干，最终使用<command>svn
+          commit</command>完成合并操作，毕竟那是一个非常浅的分支？它只是一个一次可以保存一个修改的分支。***</para>
 
       </sect3>
 
@@ -1633,17 +842,9 @@ A  newdirectory/newfile
   <!-- ======================== SECTION 5 ============================== -->
   <!-- ================================================================= -->
   <sect1 id="svn-ch-4-sect-5">
-    <title>Switching a Working Copy</title>
+    <title>转换工作拷贝</title>
 
-    <para>The <command>svn switch</command> command transforms an
-      existing working copy into a different branch.  While this
-      command isn't strictly necessary for working with branches, it
-      provides a nice shortcut to users.  In our earlier example,
-      after creating your private branch, you checked out a fresh
-      working copy of the new repository directory.  Instead, you can
-      simply ask Subversion to change your working copy of
-      <filename>/calc/trunk</filename> to mirror the new branch
-      location:</para>
+    <para><command>svn switch</command>命令改变存在的工作拷贝到另一个分支，然而这个命令在分支上工作时不是严格必要的，它只是提供了一个快捷方式。在前面的例子里，完成了私有分支的建立，你取出了新目录的工作拷贝，相反，你可以简单的告诉Subversion改变你的<filename>/calc/trunk</filename>的工作拷贝到分支的路径：</para>
 
 <screen>
 $ cd calc
@@ -1661,112 +862,48 @@ $ svn info | grep URL
 URL: http://svn.example.com/repos/calc/branches/my-calc-branch
 </screen>
 
-    <para>After <quote>switching</quote> to the branch, your working
-      copy is no different than what you would get from doing a fresh
-      checkout of the directory.  And it's usually more efficient to
-      use this command, because often branches only differ by a small
-      degree.  The server sends only the minimal set of changes
-      necessary to make your working copy reflect the branch
-      directory.</para>
+    <para>完成了到分支的<quote>跳转</quote>，你的目录与直接取出一个干净的版本没有什么不同。这样会更有效率，因为分支只有很小的区别，服务器只是发送修改的部分来使你的工作拷贝反映分支。</para>
 
-    <para>The <command>svn switch</command> command also takes a
-      <option>--revision</option> (<option>-r</option>) option, so you
-      need not always move your working copy to the <quote>tip</quote>
-      of the branch.</para>
+    <para><command>svn switch</command>命令也可以带<option>--revision</option>（<option>-r</option>）参数，所以你不需要移动你的工作拷贝到最新版本。</para>
 
-    <para>Of course, most projects are more complicated than our
-      <filename>calc</filename> example, containing multiple
-      subdirectories.  Subversion users often follow a specific
-      algorithm when using branches:</para>
+    <para>当然，许多项目比我们的<filename>calc</filename>要复杂的多，有更多的子目录，Subversion用户通常用如下的法则使用分支：</para>
 
       <orderedlist>
         <listitem>
-          <para>Copy the project's entire <quote>trunk</quote> to a
-            new branch directory.</para>
+          <para>拷贝整个工程的<quote>trunk</quote>目录到一个新的分支目录。</para>
         </listitem>
         <listitem>
-          <para>Switch only <emphasis>part</emphasis> of the trunk
-            working copy to mirror the branch.</para>
+          <para>只是转换工作拷贝的<emphasis>部分</emphasis>目录到分支。</para>
         </listitem>
       </orderedlist>
     
-    <para>In other words, if a user knows that the branch-work only
-      needs to happen on a specific subdirectory, they use
-      <command>svn switch</command> to move only that subdirectory to
-      the branch.  (Or sometimes users will switch just a single
-      working file to the branch!)  That way, they can continue to
-      receive normal <quote>trunk</quote> updates to most of their
-      working copy, but the switched portions will remain immune
-      (unless someone commits a change to their branch).  This feature
-      adds a whole new dimension to the concept of a <quote>mixed
-      working copy</quote>&mdash;not only can working copies contain a
-      mixture of working revisions, but a mixture of repository
-      locations as well.</para>
+    <para>换句话说，如果一个用户知道分支工作只发生在部分子目录，Ö们使用<command>svn switch</command>来跳转部分目录（有时候只是单个文件），这样的话，他们依然可以继续得到普通的<quote>trunk</quote>主干的更新，但是已经跳转的部分则被免去了更新（除了分支中有更新）。这个特性给<quote>混合工作拷贝</quote>概念添加了新的内容&mdash;不仅工作拷贝可以混合版本，也可以混合在版本库中的位置。</para>
     
-    <para>If your working copy contains a number of switched subtrees
-      from different repository locations, it continues to function as
-      normal.  When you update, you'll receive patches to each subtree
-      as appropriate.  When you commit, your local changes will still
-      be applied as a single, atomic change to the repository.</para>
+    <para>如果你的工作拷贝包含许多来自不同版本库目录跳转的子树，他会工作如常。当你更新时，你会得到每一个目录适当的补丁，当你提交时，你的本地修改会一直作为一个单独的原子修改提交到版本库。</para>
 
-    <para>Note that while it's okay for your working copy to reflect a
-      mixture of repository locations, these locations must all be
-      within the <emphasis>same</emphasis> repository.  Subversion
-      repositories aren't yet able to communicate with one another;
-      that's a feature planned beyond Subversion
-      1.0.<footnote><para>You <emphasis>can</emphasis>, however, use
-      <command>svn switch</command> with the
-      <option>--relocate</option> switch if the URL of your server
-      changes and you don't want to abandon an existing working copy.
-      See the <command>svn switch</command> section in <xref
-      linkend="svn-ch-9"/> for more information and an example.</para>
+    <para>注意，因为你的工作拷贝可以在混合位置的情况下工作正常，但是所有的位置必须在同一个版本库，Subversion的版本库不能互相通信，这个特性还不在Subversion 1.0的计划里。当你的服务器位置改变，而你不想放弃存在的本地拷贝，<footnote><para>你<emphasis>可以</emphasis>使用带选项<option>--relocate</option>的<command>svn switch</command>命令转换URL，见<xref
+      linkend="svn-ch-9"/>的<command>svn switch</command>查看更多信息和例子。</para>
       </footnote></para>
     
     <sidebar>
-      <title>Switches and Updates</title>
+      <title>跳转和更新</title>
       
-      <para>Have you noticed that the output of <command>svn
-        switch</command> and <command>svn update</command> look the
-        same?  The switch command is actually a superset of the
-        update command.</para>
+      <para>你注意到<command>svn
+        switch</command>和<command>svn update</command>的输出很像？switch命令只是update命令的一个超集。</para>
 
-      <para>When you run <command>svn update</command>, you're asking
-        the repository to compare two trees.  The repository does so,
-        and then sends a description of the differences back to the
-        client. The only difference between <command>svn
-        switch</command> and <command>svn update</command> is that the
-        update command always compares two identical paths.</para>
+      <para>当你运行<command>svn update</command>时，你会告诉版本库比较两个目录树，版本库这样做，并且返回客户区别的描述， ，<command>svn
+        switch</command>和<command>svn update</command>两个命令唯一区别就是<command>svn update</command>会一直比较同一路径。</para>
       
-      <para>That is, if your working copy is a mirror of
-        <filename>/calc/trunk</filename>, then <command>svn
-        update</command> will automatically compare your working copy
-        of <filename>/calc/trunk</filename> to
-        <filename>/calc/trunk</filename> in the
-        <literal>HEAD</literal> revision.  If you're switching your
-        working copy to a branch, then <command>svn switch</command>
-        will compare your working copy of
-        <filename>/calc/trunk</filename> to some
-        <emphasis>other</emphasis> branch-directory in the
-        <literal>HEAD</literal> revision.</para>
+      <para>也就是了，如果你的工作拷贝是<filename>/calc/trunk</filename>的一个镜像，当运行<command>svn
+        update</command>时会自动地比较你的工作拷贝的<filename>/calc/trunk</filename>与HEAD版本的<filename>/calc/trunk</filename>。如果你使用<command>svn switch</command>跳转工作拷贝到分支，则会比较你的工作拷贝的<filename>/calc/trunk</filename>与HEAD版本的相应分支目录。</para>
 
-      <para>In other words, an update moves your working copy through
-        time.  A switch moves your working copy through time
-        <emphasis>and</emphasis> space.</para>
+      <para>换句话说，一个更新通过时间移动你的工作拷贝，一个转换通过时间和空间移动工作拷贝。</para>
     </sidebar>
 
-    <para>Because <command>svn switch</command> is essentially a
-      variant of <command>svn update</command>, it shares the same
-      behaviors; any local modifications in your working copy are
-      preserved when new data arrives from the repository.  This
-      allows you to perform all sorts of clever tricks.</para>
+    <para>因为<command>svn switch</command>是<command>svn update</command>的一个变种，具有相同的行为，当新的数据到达时，任何工作拷贝的已经完成的本地修改会被保存，这里允许你作各种聪明的把戏。</para>
 
-    <para>For example, suppose you have a working copy of
-      <filename>/calc/trunk</filename> and make a number of changes to
-      it.  Then you suddenly realize that you meant to make the
-      changes to a branch instead.  No problem!  When you <command>svn
-      switch</command> your working copy to the branch, the local
-      changes will remain.  You can then test and commit them to the
-      branch.</para>
+    <para>举个例子，你的工作拷贝目录是<filename>/calc/trunk</filename>，你已经做了很多修改，然后你突然发现应该在分支上修改更好，没问题！你可以使用<command>svn
+      switch</command>，而你本地修改还会保存，你可以测试并提交他们到分支。</para>
 
   </sect1>
 
@@ -1775,29 +912,16 @@ URL: http://svn.example.com/repos/calc/branches/my-calc-branch
   <!-- ======================== SECTION 6 ============================== -->
   <!-- ================================================================= -->
   <sect1 id="svn-ch-4-sect-6">
-    <title>Tags</title>
+    <title>标签</title>
 
-    <para>Another common version control concept is a
-      <firstterm>tag</firstterm>.  A tag is just a
-      <quote>snapshot</quote> of a project in time.  In Subversion,
-      this idea already seems to be everywhere.  Each repository
-      revision is exactly that&mdash;a snapshot of the filesystem
-      after each commit.</para>
+    <para>另一个常见的版本控制系统概念是标签<firstterm>tag</firstterm>，一个标签只是一个项目某一时间的<quote>快照</quote>，在Subversion这个概念无处不在&mdash;每一次提交的修订版本都是一个精确的快照。</para>
 
-    <para>However, people often want to give more human-friendly names
-      to tags, like <literal>release-1.0</literal>.  And they want to
-      make snapshots of smaller subdirectories of the filesystem.
-      After all, it's not so easy to remember that release-1.0 of a
-      piece of software is a particular subdirectory of revision
-      4822.</para>
+    <para>然而人们希望更人性化的标签名称，像<literal>release-1.0</literal>。他们也希望可以对一个子目录快照，毕竟，记住release-1.0是版本4822的某一小部分不是件很容易的事。</para>
 
     <sect2 id="svn-ch-4-sect-6.1">
-      <title>Creating a Simple Tag</title>
+      <title>建立最简单的标签</title>
 
-      <para>Once again, <command>svn copy</command> comes to the
-        rescue.  If you want to create a snapshot of
-        <filename>/calc/trunk</filename> exactly as it looks in the
-        <literal>HEAD</literal> revision, then make a copy of it:</para>
+      <para>再一次，<command>svn copy</command>是来救援的，你希望建立一个<filename>/calc/trunk</filename>的一个快照，就像<literal>HEAD</literal>修订版本，建立这样一个拷贝：</para>
 
 <screen>
 $ svn copy http://svn.example.com/repos/calc/trunk \
@@ -1807,77 +931,24 @@ $ svn copy http://svn.example.com/repos/calc/trunk \
 Committed revision 351.
 </screen>
 
-      <para>This example assumes that a
-        <filename>/calc/tags</filename> directory already exists.  (If it
-        doesn't, see <xref linkend="svn-ch-9-sect-1.2-re-mkdir"/>).
-        After the copy completes, the new
-        <filename>release-1.0</filename> directory is forever a
-        snapshot of how the project looked in the
-        <literal>HEAD</literal> revision at the time you made the
-        copy.  Of course you might want to be more precise about
-        exactly which revision you copy, in case somebody else may
-        have committed changes to the project when you weren't
-        looking.  So if you know that revision 350 of
-        <filename>/calc/trunk</filename> is exactly the snapshot you
-        want, you can specify it by passing <option>-r 350</option> to
-        the <command>svn copy</command> command.</para>
+      <para>这个例子假定<filename>/calc/tags</filename>目录已经存在（如果不是，见<xref linkend="svn-ch-9-sect-1.2-re-mkdir"/>），拷贝完成之后，一个表示当时<literal>HEAD</literal>版本的/calc/trunk目录的镜像已经永久的拷贝到<filename>release-1.0</filename>目录。当然，你会希望知道更多版本的细节，以防其他人在你不注意的时候提交修改，所以，如果你知道<filename>/calc/trunk</filename>的版本350时你想要的快照，，你可以使用<command>svn copy</command>加参数 <option>-r 350</option>。</para>
 
-      <para>But wait a moment: isn't this tag-creation procedure the
-        same procedure we used to create a branch?  Yes, in fact, it
-        is.  In Subversion, there's no difference between a tag and a
-        branch.  Both are just ordinary directories that are created
-        by copying.  Just as with branches, the only reason a copied
-        directory is a <quote>tag</quote> is because
-        <emphasis>humans</emphasis> have decided to treat it that way:
-        as long as nobody ever commits to the directory, it forever
-        remains a snapshot.  If people start committing to it, it
-        becomes a branch.</para>
+      <para>但是等一下：标签的产生过程与建立分支是一样的？是的，实际上在Subversion标签与分支没有区别，都是普通的目录，通过copy命令得到，与分支一样，一个目录之所以是标签只是<emphasis>人们</emphasis>决定这样使用它，只要没有人提交这个目录，它永远是一个快照，但人们开始提交，他变成了分支。</para>
 
-      <para>If you are administering a repository, there are two
-        approaches you can take to managing tags.  The first approach
-        is <quote>hands off</quote>: as a matter of project policy,
-        decide where your tags will live, and make sure all users know
-        how to treat the directories they copy in there.  (That is,
-        make sure they know not to commit to them.)  The second
-        approach is more paranoid: you can use one of the
-        access-control scripts provided with Subversion to prevent
-        anyone from doing anything but creating new copies in the
-        tags-area (See <xref linkend="svn-ch-6"/>.)  The paranoid
-        approach, however, isn't usually necessary.  If a user
-        accidentally commits a change to a tag-directory, you can
-        simply undo the change as discussed in the previous section.
-        This is version control, after all.</para>
+      <para>如果你管理一个版本库，你有两种方式管理标签，***手传球:作为项目的政策，我们要让所有的用户知道如果处理目录的拷贝（也就是确保他们不会提交他们），第二种方法看来很疯狂：使用访问控制脚本来阻止任何想对标签目录做的非拷贝的操作（见<xref linkend="svn-ch-6"/>）这种方法通常是不必要的，如果一个人不小心提交了到标签目录一个修改，你可以简单的取消，毕竟这是版本控制啊。</para>
 
     </sect2>
     
     <sect2 id="svn-ch-4-sect-6.2">
-      <title>Creating a Complex Tag</title>
+      <title>建立复杂的标签</title>
       
-      <para>Sometimes you may want your <quote>snapshot</quote> to be
-        more complicated than a single directory at a single
-        revision.</para>
+      <para>有时候你希望你的<quote>快照</quote>能够很复杂，而不是一个目录的一个版本。</para>
       
-      <para>For example, pretend your project is much larger than our
-        <filename>calc</filename> example: suppose it contains a
-        number of subdirectories and many more files.  In the course
-        of your work, you may decide that you need to create a working
-        copy that is designed to have specific features and bug fixes.
-        You can accomplish this by selectively backdating files or
-        directories to particular revisions (using <command>svn update
-        -r</command> liberally), or by switching files and directories
-        to particular branches (making use of <command>svn
-        switch</command>).  When you're done, your working copy is a
-        hodgepodge of repository locations from different revisions.
-        But after testing, you know it's the precise combination of
-        data you need.</para>
+      <para>举个例子，假定你的项目比我们的的例子<filename>calc</filename>大的多：假设它保存了一组子目录和许多文件，在你工作时，你或许决定创建一个包括特定特性和Bug修正的工作拷贝，你可以通过选择性的回溯文件和目录到特定修订版本（使用<command>svn update
+        -r</command>）来实现，或者转换文件和目录到特定分支（使用<command>svn
+        switch</command>），当你这样做时，你的工作拷贝版本库不同版本和分支的司令部，但是经过测试，你会知道这是一种精确的数据的组合。</para>
 
-      <para>Time to make a snapshot.  Copying one URL to another won't
-        work here. In this case, you want to make a snapshot of your
-        exact working copy arrangement and store it in the repository.
-        Luckily, <command>svn copy</command> actually has four
-        different uses (which you can read about in Chapter 9),
-        including the ability to copy a working-copy tree to the
-        repository:</para>
+      <para>进行快照的时候，拷贝URL在这里不能工作，在这个例子里，你希望把本地拷贝的布局做镜像并且保存到版本库中，幸运的是，<command>svn copy</command>包括四种不同的使用方式（在第9章可以可以详细阅读），包括拷贝工作拷贝到版本库：</para>
 
 <screen>
 $ ls
@@ -1888,21 +959,11 @@ $ svn copy my-working-copy http://svn.example.com/repos/calc/tags/mytag
 Committed revision 352.
 </screen>
 
-      <para>Now there is a new directory in the repository,
-        <filename>/calc/tags/mytag</filename>, which is an exact
-        snapshot of your working copy&mdash;mixed revisions, URLs,
-        and all.</para>
+      <para>现在在版本库有一个新的目录<filename>/calc/tags/mytag</filename>，这是你的本地拷贝的一个快照&mdash;混合了修订版本，URL等等。</para>
 
-      <para>Other users have found interesting uses for this feature.
-        Sometimes there are situations where you have a bunch of local
-        changes made to your working copy, and you'd like a
-        collaborator to see them.  Instead of running <command>svn
-        diff</command> and sending a patch file (which won't capture
-        tree changes), you can instead use <command>svn copy</command>
-        to <quote>upload</quote> your working copy to a private area
-        of the repository.  Your collaborator can then either checkout
-        a verbatim copy of your working copy, or use <command>svn
-        merge</command> to receive your exact changes.</para>
+      <para>一些人也发现这一特性一些有趣的使用方式，有些时候本地拷贝有一组本地修改，你希望你的协作者看到这些，不使用<command>svn
+        diff</command>并发送一个不定文件（不会捕捉到目录修改），而是使用<command>svn copy</command>来<quote>上传</quote>你的工作拷贝到一个版本库的私有区域，你的协作者可以选择完整的取出你的工作拷贝，或使用<command>svn
+        merge</command>来接受你的精确修改。</para>
 
     </sect2>
 
@@ -1912,26 +973,14 @@ Committed revision 352.
   <!-- ======================== SECTION 7 ============================== -->
   <!-- ================================================================= -->
   <sect1 id="svn-ch-4-sect-7">
-    <title>Branch Maintenance</title>
+    <title>分支维护</title>
 
-    <para>You may have noticed by now that Subversion is extremely
-      flexible.  Because it implements branches and tags with the same
-      underlying mechanism (directory copies), and because branches
-      and tags appear in normal filesystem space, many people find
-      Subversion intimidating.  It's almost <emphasis>too</emphasis>
-      flexible.  In this section, we'll offer some suggestions for
-      arranging and managing your data over time.</para>
+    <para>你一定注意到了Subversion极度的灵活性，因为它用相同的潜在机制（目录拷贝）实现了分支和标签，因为分支和标签是作为普通的文件系统出现，会让人们感到害怕，因为它<emphasis>太</emphasis>灵活了，在这个小节里，我们会提供安排和管理数据的一些建议。</para>
 
     <sect2 id="svn-ch-4-sect-7.1">
-      <title>Repository Layout</title>
+      <title>版本库布局</title>
       
-      <para>There are some standard, recommended ways to organize a
-        repository.  Most people create a <filename>trunk</filename>
-        directory to hold the <quote>main line</quote> of development,
-        a <filename>branches</filename> directory to contain branch
-        copies, and a <filename>tags</filename> directory to contain
-        tag copies.  If a repository holds only one project, then
-        often people create these top-level directories:</para>
+      <para>有一些标准的，推荐的组织版本库的方式，许多人创建一个<filename>trunk</filename>目录来保存开发的<quote>主线</quote>，一个<filename>branches</filename>目录存放分支拷贝，一个目录保存标签拷贝，如果一个版本库只是存放一个项目，人们会在顶级目录创建这些目录：</para>
 
 <screen>
 /trunk
@@ -1939,10 +988,8 @@ Committed revision 352.
 /tags
 </screen>
 
-      <para>If a repository contains multiple projects, admins
-        typically index their layout by project (see <xref
-        linkend="svn-ch-5-sect-6.1"/> to read more about
-        <quote>project roots</quote>):</para>
+      <para>如果一个版本库保存了多个项目，管理员会通过项目来布局（见<xref
+        linkend="svn-ch-5-sect-6.1"/>关于<quote>项目根目录</quote>）：</para>
 
 <screen>
 /paint/trunk
@@ -1953,42 +1000,18 @@ Committed revision 352.
 /calc/tags
 </screen>
 
-      <para>Of course, you're free to ignore these common layouts.
-        You can create any sort of variation, whatever works best for
-        you or your team.  Remember that whatever you choose, it's not
-        a permanent commitment.  You can reorganize your repository at
-        any time.  Because branches and tags are ordinary directories,
-        the <command>svn move</command> command can move or rename
-        them however you wish.  Switching from one layout to another
-        is just a matter of issuing a series of server-side moves; if
-        you don't like the way things are organized in the repository,
-        just juggle the directories around.</para>
+      <para>当然，你可以自由的忽略这些通常的布局方式，你可以创建任意的变化，只要是对你和你的项目有益，记住无论你选择什么，这不会是一种永久的承诺，你可以随时重新组织你的版本库。因为分支和标签都是普通的目录，<command>svn move</command>命令可以任意的改名和移动它们，从一种布局到另一种大概只是一系列服务器端的移动，如果你不喜欢版本库的组织方式，你可以任意修改目录结构。</para>
 
-      <para>Remember, though, that while moving directories may be
-        easy to do, you need to be considerate of your users as well.
-        Your juggling can be disorienting to users with existing
-        working copies.  If a user has a working copy of a particular
-        repository directory, your <command>svn move</command>
-        operation might remove the path from the latest revision.
-        When the user next runs <command>svn update</command>, they'll
-        be told that their working copy represents a path that no
-        longer exists, and the user will be forced to <command>svn
-        switch</command> to the new location.
+      <para>记住，尽管移动目录非常容易，你必须体谅你的用户，你的修改会让你的用户感到迷惑，如果一个用户的拥有一个版本库目录的工作拷贝，你的<command>svn move</command>命令也许会删除最新的版本的这个路径，当用户运行<command>svn update</command>，会被告知这个共uokaobei引用的路径已经不再存在，用户需要强制使用<command>svn
+        switch</command>转到新的位置。
         </para>
       
     </sect2>
     
     <sect2 id="svn-ch-4-sect-7.2">
-      <title>Data Lifetimes</title>
+      <title>数据的生命周期</title>
 
-      <para>Another nice feature of Subversion's model is that
-        branches and tags can have finite lifetimes, just like any
-        other versioned item.  For example, suppose you eventually
-        finish all your work on your personal branch of the
-        <filename>calc</filename> project.  After merging all of your
-        changes back into <filename>/calc/trunk</filename>, there's
-        no need for your private branch directory to stick around
-        anymore:</para>
+      <para>另一个Subversion模型的可爱特性是分支和标签可以有有限的生命周期，就像其他的版本化的项目，举个例子，假定你最终完成了<filename>calc</filename>项目你的个人分支上的所有工作，在合并了你的所有修改到<filename>/calc/trunk</filename>后，没有必要继续保留你的私有分支目录：</para>
 
 <screen>
 $ svn delete http://svn.example.com/repos/calc/branches/my-calc-branch \
@@ -1997,20 +1020,9 @@ $ svn delete http://svn.example.com/repos/calc/branches/my-calc-branch \
 Committed revision 375.
 </screen>
 
-      <para>And now your branch is gone.  Of course it's not really
-        gone: the directory is simply missing from the
-        <literal>HEAD</literal> revision, no longer distracting
-        anyone.  If you use <command>svn checkout</command>,
-        <command>svn switch</command>, or <command>svn list</command>
-        to examine an earlier revision, you'll still be able to see
-        your old branch.</para>
+      <para>你的分支已经消失了，当然不是真的消失了：这个目录只是在<literal>HEAD</literal>修订版本里消失了，如果你使用<command>svn checkout</command>、<command>svn switch</command>或者<command>svn list</command>来检查一个旧的版本，你仍会见到这个旧的分支。</para>
 
-      <para>If browsing your deleted directory isn't enough, you can
-        always bring it back.  Resurrecting data is very easy in
-        Subversion.  If there's a deleted directory (or file) that
-        you'd like to bring back into <literal>HEAD</literal>, simply
-        use <command>svn copy -r</command> to copy it from the old
-        revision:</para>
+      <para>如果浏览你删除的目录还不足够，你可以把它找回来，恢复数据对Subversion来说很简单，如果你希望恢复一个已经删除的目录（或文件）到<literal>HEAD</literal>，仅需要使用<command>svn copy -r</command>来从旧的版本拷贝出来：</para>
 
 <screen>
 $ svn copy -r 374 http://svn.example.com/repos/calc/branches/my-calc-branch \
@@ -2019,19 +1031,7 @@ $ svn copy -r 374 http://svn.example.com/repos/calc/branches/my-calc-branch \
 Committed revision 376.
 </screen>
 
-      <para>In our example, your personal branch had a relatively
-        short lifetime: you may have created it to fix a bug or
-        implement a new feature.  When your task is done, so is the
-        branch.  In software development, though, it's also common to
-        have two <quote>main</quote> branches running side-by-side for
-        very long periods.  For example, suppose it's time to release
-        a stable <filename>calc</filename> project to the public, and
-        you know it's going to take a couple of months to shake bugs
-        out of the software.  You don't want people to add new
-        features to the project, but you don't want to tell all
-        developers to stop programming either.  So instead, you create
-        a <quote>stable</quote> branch of the software that won't
-        change much:</para>
+      <para>在我们的例子里，你的个人分支只有一个相对短的生命周期：你会为修复一个Bug或实现一个小的 特性来创建它，当任务完成，分支也该结束了。在软件开发过程中，有两个<quote>主要的</quote>分支一直存在很长的时间也是很常见的情况，举个例子，假定我们是发布一个稳定的<filename>calc</filename>项目的时候了，但我们仍会需要几个月的时间来修复Bug，你不希望添加新的特性，但你不希望告诉开发者停止开发，所以作为替代，你为软件创建了一个<quote>分支</quote>，这个分支更改不会很多：</para>
 
 <screen>
 $ svn copy http://svn.example.com/repos/calc/trunk \
@@ -2041,16 +1041,7 @@ $ svn copy http://svn.example.com/repos/calc/trunk \
 Committed revision 377.
 </screen>
 
-      <para>And now developers are free to continue adding
-        cutting-edge (or experimental) features to
-        <filename>/calc/trunk</filename>, and you can declare a
-        project policy that only bug fixes are to be committed to
-        <filename>/calc/branches/stable-1.0</filename>.  That is, as
-        people continue to work on the trunk, a human selectively
-        ports bug fixes over to the stable branch.  Even after the
-        stable branch has shipped, you'll probably continue to
-        maintain the branch for a long time&mdash;that is, as long
-        as you continue to support that release for customers.</para>
+      <para>而且开发者可以自由的继续添加新的（试验的）特性到<filename>/calc/trunk</filename>，你可以宣布这样一种政策，只有bug修正提交到<filename>/calc/branches/stable-1.0</filename>，这样的话，人们继续在主干上工作，某个人会选择在稳定分支上做出一些Bug修正，甚至在稳定版本已经开始发布，你或许会在维护这个分支很长时间&mdash;也就是说，你会一直继续为客户提供这个版本的支持。</para>
 
     </sect2>
 
@@ -2061,21 +1052,11 @@ Committed revision 377.
   <!-- ======================== SECTION 8 ============================== -->
   <!-- ================================================================= -->
   <sect1 id="svn-ch-4-sect-8">
-    <title>Summary</title>
+    <title>摘要</title>
 
-    <para>We've covered a lot of ground in this chapter.  We've
-      discussed the concepts of tags and branches, and demonstrated
-      how Subversion implements these concepts by copying directories
-      with the <command>svn copy</command> command.  We've shown how
-      to use <command>svn merge</command> to copy changes from one
-      branch to another, or roll back bad changes.  We've gone over
-      the use of <command>svn switch</command> to create
-      mixed-location working copies.  And we've talked about how one
-      might manage the organization and lifetimes of branches in a
-      repository.</para>
+    <para>我们已经在本章覆盖了许多基础知识，我们讨论了标签和分支的概念，然后描述了Subversion怎样用<command>svn copy</command>命令拷贝目录实现了这些概念，我们也已经展示了怎样使用<command>svn merge</command>命令来在分支之间拷贝修改，或是撤销错误的修改。我们仔细研究了使用<command>svn switch</command>来创建混合位置的工作拷贝，然后我们也讨论了怎样管理和组织版本库中分支的生命周期。</para>
 
-    <para>Remember the Subversion mantra: branches and tags are cheap.
-      So use them liberally!</para>
+    <para>记住Subversion的曼特罗：分支和标签是廉价的，自由的使用它们吧！</para>
 
   </sect1>
 
