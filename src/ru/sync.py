@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os, string, getopt, re, glob
+import sys, os, string, getopt, re
 
 bfiles = ['appa.xml', 'appb.xml', 'appc.xml', 'book.xml', 'ch00.xml', \
           'ch01.xml', 'ch02.xml', 'ch03.xml', 'ch04.xml', 'ch05.xml', \
@@ -25,10 +25,44 @@ def get_last(fname):
 def set_last(fname, last):
   os.system('svn propset last-sync '+last+' '+fname)
 
-def get_base():
-  for line in os.popen('svn info'):
-    if re.match('Revision: ', line):
-      return int(re.sub('Revision: ', '', line))
+def get_base(fname = ''):
+  global bfiles
+  if fname != '':
+    for line in os.popen('svn info '+fname):
+      if re.match('Revision: ', line):
+        return int(re.sub('Revision: ', '', line))
+  else:
+    rmin = 0xffffffff
+    rlist = []
+    for file in bfiles:
+      for line in os.popen('svn info '+file):
+        if re.match('Revision: ', line):
+          rev = int(re.sub('Revision: ', '', line))
+      if rev < rmin:
+        rmin = rev
+      rlist.append(rev)
+    return max(rlist)
+
+def get_status(fname):
+  f = file(fname)
+  ru = 0.0
+  en = 0.001
+  in_tr = in_para = False
+  for line in f:
+    if re.search('^( *|\t*)\<\!-- @ENGLISH \{\{\{', line):
+      in_tr = True
+    if re.search('^ *\<para>', line):
+      in_para = True
+    if in_para or re.search('^ *\<para>.*\</para>$', line):
+      if in_tr:
+        ru += 1
+      else:
+        en += 1
+    if re.search('\</para>$', line):
+      in_para = False
+    if re.search('@ *ENGLISH \}\}\} -->$', line):
+      in_tr = False
+  return "(%3.2f%%)" % ((ru / en) * 100)
 
 def get_list():
   global bfiles
@@ -44,11 +78,11 @@ def get_list():
   rdelta2 = rbase - ((rbase - rmin) / 3)
   for f, r in frlist:
     if r in range(rdelta2, rbase):
-      print '\x1b[32m', f, '\t', r, '\x1b[0m'
+      print '\x1b[32m', f, '\t', r, '\t', get_status(f), '\x1b[0m'
     elif r in range(rdelta1, rdelta2):
-      print '\x1b[33m', f, '\t', r, '\x1b[0m'
+      print '\x1b[33m', f, '\t', r, '\t', get_status(f), '\x1b[0m'
     elif r in range(rmin, rdelta1):
-      print '\x1b[31m', f, '\t', r, '\x1b[0m'
+      print '\x1b[31m', f, '\t', r, '\t', get_status(f), '\x1b[0m'
 
 def main():
   global bfiles
@@ -71,7 +105,7 @@ def main():
       return get_list()
   cmd = string.Template('svn $a -r $r1:$r2 https://svn.red-bean.com/svnbook/trunk/src/en/book/$t')
   last = get_last(fname)
-  base = get_base()
+  base = get_base(fname)
   print ('########################################################################')
   print 'Sync r%(r1)s:r%(r2)s' % { 'r1' :  last, 'r2' : base }
   diff = os.popen(cmd.substitute(a='diff', r1=last, r2=base, t=fname)).read()
