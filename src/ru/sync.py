@@ -11,7 +11,7 @@ def usage(err_msg):
   stream = err_msg and sys.stderr or sys.stdout
   if err_msg:
     stream.write("ERROR: %s\n\n" % (err_msg))
-  stream.write("""Usage: %s [-f <filename>] [-lv]
+  stream.write("""Usage: %s [-f <filename>] [-l]
 
 Options:
     -f:    File which needs to be synchronized
@@ -65,6 +65,7 @@ def get_status(fname):
   return "(%3.2f%%)" % ((ru / en) * 100)
 
 def get_list():
+  import platform
   global bfiles
   frlist = ()
   rmin = 0xffffffff
@@ -77,12 +78,15 @@ def get_list():
   rdelta1 = rmin + ((rbase - rmin) / 3)
   rdelta2 = rbase - ((rbase - rmin) / 3)
   for f, r in frlist:
-    if r in range(rdelta2, rbase):
-      print '\x1b[32m', f, '\t', r, '\t', get_status(f), '\x1b[0m'
-    elif r in range(rdelta1, rdelta2):
-      print '\x1b[33m', f, '\t', r, '\t', get_status(f), '\x1b[0m'
-    elif r in range(rmin, rdelta1):
-      print '\x1b[31m', f, '\t', r, '\t', get_status(f), '\x1b[0m'
+    if platform.system() == 'Windows':
+      print f, '\t', r, '\t', get_status(f)
+    else:
+      if r in range(rdelta2, rbase):
+        print '\x1b[32m', f, '\t', r, '\t', get_status(f), '\x1b[0m'
+      elif r in range(rdelta1, rdelta2):
+        print '\x1b[33m', f, '\t', r, '\t', get_status(f), '\x1b[0m'
+      elif r in range(rmin, rdelta1):
+        print '\x1b[31m', f, '\t', r, '\t', get_status(f), '\x1b[0m'
 
 def main():
   global bfiles

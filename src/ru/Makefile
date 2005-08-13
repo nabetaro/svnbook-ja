@@ -7,4 +7,4 @@ BOOK_FO_XSLTPROC_OPTS = --stringparam paper.type A4
 L10N_REVISION = в редакции
 
 dist-html-chunk:
-	../tools/book-dist.py --html-chunk --name svnbook-html-chunk-ru
+	../tools/book-dist.py --html-chunk
