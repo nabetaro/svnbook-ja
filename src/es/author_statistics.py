@@ -21,7 +21,7 @@ import xml.parsers.expat
 
 
 # Some globals.
-LOOKING_FOR = ["gradha", "ruben", "beerfrick", "dbrouard"]
+LOOKING_FOR = []
 STATISTICS = []
 COMMIT_NUMBER = 0
 SECONDS_A_DAY = 60 * 60 * 24
@@ -141,6 +141,11 @@ def print_statistics():
     their last commited change data, and indicates how many days
     ago that was. Not found authors will assigned the earliest log
     date found.
+
+    NOTE: This method is just a "test", it shouldn't be used directly
+    unless you know what you are doing. Mainly, it is messing around
+    with the LOOKING_FOR global, which real users shouldn't touch.
+    Only look how it calls obtain_statistics() to process the data.
     """
     request = [author for author, date in STATISTICS] + LOOKING_FOR
     request.sort()
@@ -196,14 +201,21 @@ def update_working_copy():
     stdout.readlines()
 
 
-def obtain_information():
+def obtain_information(author_list):
     """Fills data into the STATISTICS and STATE global variables.
 
     Creates an expat parser, runs the external 'svn log' command
     and connects its output to the XML parsing of expat. Commit
     information about the authors and the whole progress of the
     project will be gathered.
+
+    The author list is copied into the global LOOKING_FOR, and
+    modified during parsing. After this call, LOOKING_FOR will only
+    contain the names of the authors who don't appear in the log
+    (which is useful if you call print_statistics() too).
     """
+    global LOOKING_FOR
+    LOOKING_FOR = author_list[:]
     p = xml.parsers.expat.ParserCreate()
     
     p.StartElementHandler = start_element
@@ -235,7 +247,7 @@ def main():
     end of the operation, statistics are printed.
     """
     update_working_copy()
-    obtain_information()
+    obtain_information(["gradha", "ruben", "unknown"])
     print_statistics()
     
 

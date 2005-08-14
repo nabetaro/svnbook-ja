@@ -138,12 +138,13 @@ def main():
 
     Reads the file TRABAJO, parses it, and generates a report.
     """
-    author_statistics.obtain_information()
     file_input = file("TRABAJO", "rt")
     input_lines = file_input.readlines()
     file_input.close()
 
     commiters, file_status = parse_file(input_lines)
+    # Use external module to find out commit statistics.
+    author_statistics.obtain_information(commiters.keys())
 
     date = time.strftime("día %d del mes %m del %Y", time.localtime())
     print "Estado de la traducción, a %s\n" % date
