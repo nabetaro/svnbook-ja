@@ -641,11 +641,11 @@ done
           <footnote>
             <para>In the future, the Subversion project plans to use
               (or invent) an expanded patch format that describes
-              tree-changes.</para>
+              changes in tree structure and properties.</para>
           </footnote>
           The <command>svn merge</command> command, however, can express
-          tree-changes by directly applying them to your working
-          copy.</para>
+          changes in tree structure and properties by directly applying
+          them to your working copy.</para>
 
       </sidebar>
       
@@ -885,11 +885,11 @@ $ svn status
           Somebody can then run <command>svn log -r9238</command> to
           read about the exact changeset which fixed the bug, and run
           <command>svn diff -r9237:9238</command> to see the patch
-          itself.  And Subversion's merge command also uses revision
-          numbers.  You can merge specific changesets from one branch
-          to another by naming them in the merge arguments:
-          <command>svn merge -r9237:9238</command> would merge
-          changeset #9238 into your working copy.</para>
+          itself.  And Subversion's <literal>merge</literal> command
+          also uses revision numbers.  You can merge specific changesets
+          from one branch to another by naming them in the merge
+          arguments: <command>svn merge -r9237:9238</command> would
+          merge changeset #9238 into your working copy.</para>
       </sidebar>
 
       <sect3 id="svn.branchmerge.copychanges.bestprac.merge">
@@ -1010,21 +1010,26 @@ $
           ancestry, while the latter command is quite sensitive to it.
           For example, if you asked <command>svn diff</command> to
           compare revisions 99 and 102 of <filename>foo.c</filename>,
-          you would see line-based diffs; the diff command is blindly
-          comparing two paths.  But if you asked <command>svn
-          merge</command> to compare the same two objects, it would
-          notice that they're unrelated and first attempt to delete
-          the old file, then add the new file;  you would see a
-          <literal>D  foo.c</literal> followed by a <literal>A
-          foo.c</literal>.</para>
+          you would see line-based diffs; the <literal>diff</literal>
+          command is blindly comparing two paths.  But if you asked
+          <command>svn merge</command> to compare the same two objects,
+          it would notice that they're unrelated and first attempt to
+          delete the old file, then add the new file;  the output would
+          indicate a deletion followed by an add:</para>
+
+        <screen>
+D  foo.c
+A  foo.c
+</screen>
 
         <para>Most merges involve comparing trees that are ancestrally
           related to one another, and therefore <command>svn
           merge</command> defaults to this behavior.  Occasionally,
-          however, you may want the merge command to compare two
-          unrelated trees.  For example, you may have imported two
-          source-code trees representing different vendor releases of
-          a software project (see <xref linkend="svn.advanced.vendorbr"/>).
+          however, you may want the <literal>merge</literal> command to
+          compare two unrelated trees.  For example, you may have
+          imported two source-code trees representing different vendor
+          releases of a software project (see <xref
+            linkend="svn.advanced.vendorbr"/>).
           If you asked <command>svn merge</command> to compare the two
           trees, you'd see the entire first tree being deleted,
           followed by an add of the entire second tree!</para>
@@ -1036,8 +1041,8 @@ $
           command, and it will behave just like <command>svn
           diff</command>.  (And conversely, the
           <option>--notice-ancestry</option> option will cause
-          <command>svn diff</command> to behave like the merge
-          command.)</para>
+          <command>svn diff</command> to behave like the
+          <literal>merge</literal> command.)</para>
 
       </sect3>
 
@@ -1319,7 +1324,7 @@ Committed revision 350.
         directory, it may be gone from the <literal>HEAD</literal>
         revision, but the object still exists in earlier revisions.
         One of the most common questions new users ask is, <quote>How
-        do I get my old file or directory back?</quote></para>
+        do I get my old file or directory back?</quote>.</para>
 
       <para>The first step is to define exactly <emphasis
         role="bold">which</emphasis> item you're trying to resurrect.
@@ -1737,15 +1742,16 @@ URL: http://svn.example.com/repos/calc/branches/my-calc-branch
       
       <para>Have you noticed that the output of <command>svn
         switch</command> and <command>svn update</command> look the
-        same?  The switch command is actually a superset of the
-        update command.</para>
+        same?  The <literal>switch</literal> command is actually a
+        superset of the update command.</para>
 
       <para>When you run <command>svn update</command>, you're asking
         the repository to compare two trees.  The repository does so,
         and then sends a description of the differences back to the
         client. The only difference between <command>svn
         switch</command> and <command>svn update</command> is that the
-        update command always compares two identical paths.</para>
+        <literal>update</literal> command always compares two identical
+        paths.</para>
       
       <para>That is, if your working copy is a mirror of
         <filename>/calc/trunk</filename>, then <command>svn
@@ -1910,11 +1916,12 @@ Committed revision 352.
         changes made to your working copy, and you'd like a
         collaborator to see them.  Instead of running <command>svn
         diff</command> and sending a patch file (which won't capture
-        tree changes), you can instead use <command>svn copy</command>
-        to <quote>upload</quote> your working copy to a private area
-        of the repository.  Your collaborator can then either checkout
-        a verbatim copy of your working copy, or use <command>svn
-        merge</command> to receive your exact changes.</para>
+        tree changes, symlink changes or changes in properties), you can
+        instead use <command>svn copy</command> to <quote>upload</quote>
+        your working copy to a private area of the repository.  Your
+        collaborator can then either checkout a verbatim copy of your
+        working copy, or use <command>svn merge</command> to receive
+        your exact changes.</para>
 
     </sect2>
 
@@ -1983,8 +1990,8 @@ Committed revision 352.
         working copies.  If a user has a working copy of a particular
         repository directory, your <command>svn move</command>
         operation might remove the path from the latest revision.
-        When the user next runs <command>svn update</command>, they'll
-        be told that their working copy represents a path that no
+        When the user next runs <command>svn update</command>, she will
+        be told that her working copy represents a path that no
         longer exists, and the user will be forced to <command>svn
         switch</command> to the new location.
         </para>
@@ -2039,10 +2046,10 @@ Committed revision 376.
         branch.  In software development, though, it's also common to
         have two <quote>main</quote> branches running side-by-side for
         very long periods.  For example, suppose it's time to release
-        a stable <filename>calc</filename> project to the public, and
-        you know it's going to take a couple of months to shake bugs
-        out of the software.  You don't want people to add new
-        features to the project, but you don't want to tell all
+        a stable version of the <filename>calc</filename> project to the
+        public, and you know it's going to take a couple of months to
+        shake bugs out of the software.  You don't want people to add
+        new features to the project, but you don't want to tell all
         developers to stop programming either.  So instead, you create
         a <quote>stable</quote> branch of the software that won't
         change much:</para>
