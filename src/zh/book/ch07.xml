@@ -737,7 +737,7 @@ I      calc/debug_log.3.gz
           <varlistentry>
             <term><literal>Id</literal></term>
             <listitem>
-              <para>这个关键字是其他关键字一个压缩组合，它看起来就像literal>$Id: calc.c 148 2002-07-28 21:30:43Z sally
+              <para>这个关键字是其他关键字一个压缩组合，它看起来就像<literal>$Id: calc.c 148 2002-07-28 21:30:43Z sally
                 $</literal>，可以解释为文件<filename>calc.c</filename>上一次修改的修订版本号是148，时间是2002年7月28日，作者是<literal>sally</literal>。
                </para>
             </listitem>
@@ -804,126 +804,53 @@ Cumulus clouds are appearing more frequently as summer approaches.
       <sect3 id="svn-ch-7-sect-2.3.5">
         <title><literal>svn:eol-style</literal></title>
 
-        <para>Unless otherwise noted using a versioned file's
-          <literal>svn:mime-type</literal> property, Subversion
-          assumes the file contains human-readable data.  Generally
-          speaking, Subversion only uses this knowledge to determine
-          if contextual difference reports for that file are
-          possible.  Otherwise, to Subversion, bytes are bytes.</para>
+        <para>不像我们说过的版本化文件的<literal>svn:mime-type</literal>属性，Subversion假定这个文件保存了可读的数据，一般来讲，Subversion因为这个属性来判断一个文件是否可以用上下文区别报告，否则，对Subversion来说只是字节。</para>
         
-        <para>This means that by default, Subversion doesn't pay any
-          attention to the type of <firstterm>end-of-line (EOL)
-          markers</firstterm> used in your files.  Unfortunately,
-          different operating system use different tokens to represent
-          the end of a line of text in a file.  For example, the usual
-          line ending token used by software on the Windows platform
-          is a pair of ASCII control characters&mdash;carriage return
-          (<literal>CR</literal>) and line feed
-          (<literal>LF</literal>).  Unix software, however, just uses
-          the <literal>LF</literal> character to denote the end of a
-          line.</para>
+        <para>这意味着缺省情况下，Subversion不会关注任何<firstterm>行结束标记（end-of-line，EOL）</firstterm>，不幸的是不同的操作系统在文本文件使用不同的行结束标志，举个例子，Windows平台下的A编辑工具使用一对SCII控制字符&mdash;回车（<literal>CR</literal>）和一个移行（<literal>LF</literal>）,Unix软件，只使用一个<literal>LF</literal>来表示一个行的结束。
+        </para>
 
-        <para>Not all of the various tools on these operating systems
-          are prepared to understand files that contain line endings
-          in a format that differs from the <firstterm>native line
-          ending style</firstterm> of the operating system on which
-          they are running.  Common results are that Unix programs
-          treat the <literal>CR</literal> character present in Windows
-          files as a regular character (usually rendered as
-          <literal>^M</literal>), and that Windows programs combine
-          all of the lines of a Unix file into one giant line because
-          no carriage return-linefeed (or <literal>CRLF</literal>)
-          character combination was found to denote the end of
-          line.</para>
+        <para>并不是所有操作系统的工具准备好了理解与<firstterm>本地行结束样式</firstterm>不一样的行结束格式，一个见的结果是Unix程序会把Windows文件中的<literal>CR</literal>当作一个不同的字符（通常表现为<literal>^M</literal>），而Windows程序会把Unix文件合并为一个非常大的行，因为没有发现标志行结束的回车加换行（或者是<literal>CRLF</literal>）字符。</para>
 
-        <para>This sensitivity to foreign EOL markers can become
-          frustrating for folks who share a file across different
-          operating systems.  For example, consider a source code
-          file, and developers that edit this file on both Windows and
-          Unix systems.  If all the developers always use tools which
-          preserve the line ending style of the file, no problems
-          occur.</para>
+        <para>对外来EOL标志的敏感会让在各个操作系统分享文件的人们感到沮丧，例如，考虑有一个源代码文件，开发者会在Windows和Unix系统上编辑这个文件，如果所有的用户使用的工具可以展示文件的行结束，那就没有问题。</para>
 
-        <para>But in practice, many common tools either fail to
-          properly read a file with foreign EOL markers, or they
-          convert the file's line endings to the native style when the
-          file is saved.  If the former is true for a developer, he
-          has to use an external conversion utility (such as
-          <command>dos2unix</command> or its companion,
-          <command>unix2dos</command>) to prepare the file for
-          editing.  The latter case requires no extra preparation.
-          But both cases result in a file that differs from the
-          original quite literally on every line!  Prior to committing
-          his changes, the user has two choices.  Either he can use a
-          conversion utility to restore the modified file to the same
-          line ending style that it was in before his edits were made.
-          Or, he can simply commit the file&mdash;new EOL markers and
-          all.</para>
+        <para>但实践中，许多常用的工具不会正确的读取外来的EOL标志，或者是将文件的行结束转化为本地的样式，如果是前者，他需要一个外部的转化工具（如<command>dos2unix</command>或是他的伴侣，<command>unix2dos</command>）来准备需要编辑的文件。后一种情况不需要额外的准备工作，两种方法都会造成文件会与原来的文件在每一行上都不一样！在提交之前，用户有两个选择，或者选择用一个转化工具恢复文件的行结束样式，或者是简单的提交文件&mdash;包含新的EOL标志。
+       </para>
 
-        <para>The result of scenarios like these include wasted time
-          and unnecessary modifications to committed files.  Wasted
-          time is painful enough.  But when commits change every line
-          in a file, this complicates the job of determining which of
-          those lines were changed in a non-trivial way.  Where was
-          that bug really fixed?  On what line was a syntax error
-          introduced?</para>
+        <para>这个情景的结局看起来像是要浪费时间对提交的文件作不必要的修改，浪费时间是痛苦的，但是如果提交修改了文件的每一行，判断那个文件是通过正常的方式修改的会是一件复杂的工作，bug在那一行修正的？那一行引入了语法错误？
+       </para>
 
-        <para>The solution to this problem is the
-          <literal>svn:eol-style</literal> property.  When this
-          property is set to a valid value, Subversion uses it to
-          determine what special processing to perform on the file so
-          that the file's line ending style isn't flip-flopping with
-          every commit that comes from a different operating
-          system.  The valid values are:</para>
+        <para>这个问题的解决方案是<literal>svn:eol-style</literal>属性，当这个属性设置为一个正确的值，Subversion使用它来判断针对行结束样式执行何种特殊的操作，而不会因为多种操作系统的每次提交发生震荡。正确的值有：</para>
 
         <variablelist>
           <varlistentry>
             <term><literal>native</literal></term>
             <listitem>
-              <para>This causes the file to contain the EOL markers
-                that are native to the operating system on which
-                Subversion was run.  In other words, if a user on a
-                Windows machine checks out a working copy that
-                contains a file with an
-                <literal>svn:eol-style</literal> property set to
-                <literal>native</literal>, that file will contain
-                <literal>CRLF</literal> EOL markers.  A Unix user
-                checking out a working copy which contains the same
-                file will see <literal>LF</literal> EOL markers in his
-                copy of the file.</para>
+              <para>这会导致保存EOL标志的文件使用Subversion运行的操作系统的本地编码，换句话说，如果一个Windows用户取出一个工作拷贝包含的一个文件有<literal>svn:eol-style</literal>的属性设置为<literal>native</literal>，这个文件会使用<literal>CRLF</literal>的EOL标志，一个Unix用户取出相同的文件会看到他的文件使用<literal>LF</literal>的EOL标志。
+             </para>
 
-              <para>Note that Subversion will actually store the file
-                in the repository using normalized
-                <literal>LF</literal> EOL markers regardless of the
-                operating system.  This is basically transparent to
-                the user, though.</para>
+              <para>注意Subversion实际上使用<literal>LF</literal>的EOL标志，而不会考略操作系统，尽管这对用户来说是透明的。
+             </para>
             </listitem>
           </varlistentry>
           <varlistentry>
             <term><literal>CRLF</literal></term>
             <listitem>
-              <para>This causes the file to contain
-                <literal>CRLF</literal> sequences for EOL markers,
-                regardless of the operating system in use.</para>
+              <para>这会导致这个文件使用<literal>CRLF</literal>序列作为EOL标志，不管使用何种操作系统。
+              </para>
             </listitem>
           </varlistentry>
           <varlistentry>
             <term><literal>LF</literal></term>
             <listitem>
-              <para>This causes the file to contain
-                <literal>LF</literal> characters for EOL markers,
-                regardless of the operating system in use.</para>
+              <para>这会导致文件使用<literal>LF</literal>字符作为EOL标志，不管使用何种操作系统。
+              </para>
             </listitem>
           </varlistentry>
           <varlistentry>
             <term><literal>CR</literal></term>
             <listitem>
-              <para>This causes the file to contain
-                <literal>CR</literal> characters for EOL markers,
-                regardless of the operating system in use.  This line
-                ending style is not very common.  It was used on older
-                Macintosh platforms (on which Subversion doesn't even
-                run).</para>
+              <para>这会导致文件使用<literal>CR</literal>字符作为EOL标志，不管使用何种操作系统。这种行结束样式不是很常见，它用在一些老的苹果机（Subversion不会运行的机器上）。
+             </para>
             </listitem>
           </varlistentry>
         </variablelist>
@@ -933,91 +860,32 @@ Cumulus clouds are appearing more frequently as summer approaches.
       <sect3 id="svn-ch-7-sect-2.3.6">
         <title><literal>svn:externals</literal></title>
 
-        <para>The <literal>svn:externals</literal> property contains
-          instructions for Subversion to populate a versioned
-          directory with one or more other checked-out Subversion
-          working copies.  For more information on this keyword and
-          its use, see <xref linkend="svn-ch-7-sect-3"/>.</para>
+        <para><literal>svn:externals</literal>属性保存了指导Subversion从一个或多个取出的工作拷贝移出目录的指导，关于这个关键字的工多信息，见<xref linkend="svn-ch-7-sect-3"/>。
+       </para>
 
       </sect3>
 
       <sect3 id="svn-ch-7-sect-2.3.7">
         <title><literal>svn:special</literal></title>
 
-        <para>The <literal>svn:special</literal> property is the only
-          <literal>svn:</literal> property that isn't meant to be
-          directly set or modified by users.  Subversion automatically
-          sets this property whenever a <quote>special</quote> object
-          is scheduled for addition, such as a symbolic link.  The
-          repository stores an <literal>svn:special</literal> object as
-          an ordinary file.  However, when a client sees this property
-          during checkouts or updates, it interprets the contents of
-          the file and translates the item back into the special type
-          of object.  In Subversion 1.1, only versioned symbolic links
-          have this property attached, but in future versions of
-          Subversion other special types of nodes will probably use
-          this property as well.</para>
+        <para><literal>svn:special</literal>是唯一一个不是用户直接设置和修改的<literal>svn:</literal>属性，当<quote>特别的</quote>对象如一个对象链接计划加入到版本库，Subversion会自动设置这个属性。版本库像普通文件一样保存<literal>svn:special</literal>对象，然而，当一个客户端在检出和更新操作时看到这个属性时，就会翻译这个文件的内容，并且将文件转化为特殊类型的对象，在Subversion1.1，只有版本化的符号链接有这个属性附加，但在以后的版本中其他特殊的节点也有可能使用这个属性。</para>
 
-        <para>Note: Windows clients don't have symbolic links, and
-          thus ignore any <literal>svn:special</literal> files coming
-          from a repository that claim to be symbolic links.  On
-          Windows, the user ends up with an ordinary versioned file in
-          the working copy.</para>
+        <para>注意：Windows客户端不会有符号链接，因此会忽略含有<literal>svn:special</literal>声明为符号链的文件，在Windows，用户会以一个工作拷贝中的版本化的文件作为结束。
+       </para>
       </sect3>
 
     </sect2>
 
     <!-- ***************************************************************** -->
     <sect2 id="svn-ch-7-sect-2.4">
-      <title>Automatic Property Setting</title>
+      <title>自动属性设置</title>
 
-      <para>Properties are a powerful feature of Subversion, acting as
-        key components of many Subversion features discussed elsewhere
-        in this and other chapters&mdash;textual diff and merge
-        support, keyword substitution, newline translation, etc.  But
-        to get the full benefit of properties, they must be set on the
-        right files and directories.  Unfortunately, that can be a
-        step easily forgotten in the routine of things, especially
-        since failing to set a property doesn't usually result in an
-        obvious error condition (at least compared to, say, failing to
-        add a file to version control).  To help your properties get
-        applied to the places that need them, Subversion provides a
-        couple of simple but useful features.</para>
+      <para>属性是Subversion一个强大的特性，成为本章和其它章讨论的许多Subversion特性的关键组成部分&mdash;文本区别和合并支持、关键字替换、新行的自动转换等等。但是为了从属性得到完全的利益，他们必须设置到正确的文件和目录。不幸的是，在日常工作中很容易忘记这一步工作，特别是当没有设置属性不会引起明显的错误时（至少相对与未能添加一个文件到版本控制这种操作），为了帮助你在需要添加属性的文件上添加属性，Subversion提供了一些简单但是有用的特性。</para>
 
-      <para>Whenever you introduce a file to version control using the
-        <command>svn add</command> or <command>svn import</command>
-        commands, Subversion runs a very basic heuristic to determine
-        if that file consists of human-readable or non-human-readable
-        content.  If the latter is the decision made, Subversion will
-        automatically set the <literal>svn:mime-type</literal>
-        property on that file to
-        <literal>application/octet-stream</literal> (the generic
-        <quote>this is a collection of bytes</quote> MIME type).  Of
-        course, if Subversion guesses incorrectly, or if you wish to
-        set the <literal>svn:mime-type</literal> property to something
-        more precise&mdash;perhaps <literal>image/png</literal> or
-        <literal>application/x-shockwave-flash</literal>&mdash;you can
-        always remove or edit that property.</para>
+      <para>当你使用<command>svn add</command>或是<command>svn import</command>准备加入一个版本控制的文件时，Subversion会运行一个基本探测来检查文件是包括了可读还是不可读的内容，如果Subversion猜测错误，或者是你希望使用<literal>svn:mime-type</literal>属性更精确的设置&mdash;或许是<literal>image/png</literal>或者<literal>application/x-shockwave-flash</literal>&mdash;你可以一直删除或编辑那个属性。</para>
 
-      <para>Subversion also provides the auto-props feature, which
-        allows you to create mappings of filename patterns to property
-        names and values.  These mappings are made in your runtime
-        configuration area.  They again affect adds and imports, and
-        not only can override any default MIME type decision made by
-        Subversion during those operations, they can also set
-        additional Subversion or custom properties, too.  For example,
-        you might create a mapping that says that any time you add
-        JPEG files&mdash;ones that match the pattern
-        <literal>*.jpg</literal>&mdash;Subversion should automatically
-        set the <literal>svn:mime-type</literal> property on those
-        files to <literal>image/jpeg</literal>.  Or perhaps any files
-        that match <literal>*.cpp</literal> should have
-        <literal>svn:eol-style</literal> set to
-        <literal>native</literal>, and <literal>svn:keywords</literal>
-        set to <literal>Id</literal>.  Auto-prop support is perhaps
-        the handiest property related tool in the Subversion toolbox.
-        See <xref linkend="svn-ch-7-sect-1.3.2"/> for more about
-        configuring that support.</para>
+      <para>Subversion也提供了自动属性特性，允许你创建文件名到属性名称与值影射，这个影射在你的运行配置区域设置，它们会影响添加和导入操作，而且不仅仅会覆盖Subversion所有缺省的MIME类型判断操作，也会设置额外的Subversion或者自定义的属性。举个例子，你会创建一个影射文件说在任何时候你添加了一个JPEG文件&mdash;一些符合<literal>*.jpg</literal>的文件&mdash;Subversion一定会自动设置它们的<literal>svn:mime-type</literal>属性为<literal>image/jpeg</literal>。或者是任何匹配<literal>*.cpp</literal>的文件，必须把<literal>svn:eol-style</literal>设置为<literal>native</literal>，并且<literal>svn:keywords</literal>设置为<literal>Id</literal>。自动属性支持是Subversion工具箱中属性相关最垂手可得的工具，见<xref linkend="svn-ch-7-sect-1.3.2"/>来查看更多的配置支持。
+     </para>
 
     </sect2>     
   </sect1>
@@ -1028,161 +896,45 @@ Cumulus clouds are appearing more frequently as summer approaches.
   <sect1 id="svn-ch-7-sect-2b">
     <title>Peg and Operative Revisions</title>
 
-    <para>The ability to copy, move, and rename files and directories;
-      to be able to create an object, then delete it and then add a
-      new one at the same path&mdash;those are operations which we
-      perform on files and directories on our computers all the time,
-      and operations we tend to take for granted.  And Subversion
-      would like you to think they are granted.  Subversion's file
-      management support is quite liberating, affording almost as much
-      flexibility for versioned files that you'd expect when
-      manipulating your unversioned ones.  But that flexibility means
-      that across the lifetime of your repository, a given versioned
-      resource might have many paths, and a given path might represent
-      serveral entirely different versioned resources.</para>
+    <para>文件和目录的拷贝、移动和改名能力可以让我们可以删除一个对象，然后在同样的路径添加一个新的&mdash;这是我们在电脑上对文件和目录经常作的操作，我们认为这些操作都是由赋予给我们的。Subversion很乐意你认为这些操作已经赋予给你，Subversion的文件管理操作是这样的解放，提供了几乎和普通文件一样的操作版本化文件的灵活性，但是灵活意味着在整个版本库的生命周期中，一个给定的版本化的资源可能会出现在许多不同的路径，一个给定的路径会展示给我们许多完全不同的版本化资源。</para>
 
-    <para>Subversion is pretty smart about noticing when an object's
-      version history includes such <quote>changes of address</quote>.
-      For example, if you ask for all the logs of a particular file
-      that was renamed last week, Subversion happily provides all
-      those logs&mdash;the revision in which the rename itself
-      happened, plus the logs of relevant revisions both before and
-      after that rename.  So, most of the time, you don't even have to
-      think about such things.  But occasionally, Subversion needs
-      your help to clear up ambiguities.</para>
+    <para>Subversion可以非常聪明的注意到一个对象的版本历史变化包括一个<quote>地址改变</quote>，举个例子，如果你询问一个曾经上周改过名的文件的所有的日志信息，Subversion会很高兴提供所有的日志&mdash;重命名发生的修订版本，外加相关版本之前和之后的修订版本日志，所以大多数时间里，你不需要考虑这些事情，但是偶尔，Subversion会需要你的帮助来清除混淆。</para>
 
-    <para>The simplest example of this occurs when a directory or file
-      is deleted from version control, and then a new directory or
-      file is created with the same name and added to version control.
-      Clearly the thing you deleted and the thing you later added
-      aren't the same thing, they merely happen to have had the same
-      path, which we'll call <filename>/trunk/object</filename>.
-      What, then, does it mean to ask Subversion about the history of
-      <filename>/trunk/object</filename>?  Are you asking about the
-      thing currently at that location, or the old thing you deleted
-      from that location?  Are you asking about the operations that
-      have happened to all the objects that have lived at that path?
-      Clearly, Subversion needs a hint about what you are really
-      asking.</para>
+    <para>这个最简单的例子发生在当一个目录或者文件从版本控制中删除时，然后一个新的同样名字目录或者文件添加到版本控制，清除了你删除的东西，然后你添加的不是同样的东西，它们仅仅是有同样的路径，我们会把它叫做<filename>/trunk/object</filename>。什么，这意味着询问Subversion来查看<filename>/trunk/object</filename>的历史？你是询问当前这个位置的东西还是你在这个位置删除的那个对象？你是希望询问对这个对象的所有操作还是这个路径的所有对象？很明显，Subversion需要线索知道你真实的想法。
+   </para>
 
-    <para>And thanks to moves, versioned resource history can get far
-      more twisted than that, even.  For example, you might have a
-      directory named <filename>concept</filename>, containing some
-      nascent software project you've been toying with.  Eventually,
-      though, that project matures to the point that the idea seems to
-      actually have some wings, so you do the unthinkable and decide
-      to give the project a name.
+    <para>由于移动，版本化资源历史会变得非常扭曲。举个例子，你会有一个目录叫做<filename>concept</filename>，保存了一些你用来试验的初生的软件项目，最终，这个项目变得足够成熟说明这个注意确实需要一些翅膀了，所以你决定给这个项目一个名字。
       <footnote>
-        <para><quote>You're not supposed to name it.  Once you name it,
-          you start getting attached to it.</quote> &mdash; Mike
+        <para><quote>你不是被期望去命名它，一旦你取了名字，你开始与之联系在一起。</quote> &mdash; Mike
           Wazowski</para>
       </footnote>
-      Let's say you called your software Frabnaggilywort.  At this
-      point, it makes sense to rename the directory to reflect the
-      project's new name, so <filename>concept</filename> is renamed
-      to <filename>frabnaggilywort</filename>.  Life goes on,
-      Frabnaggilywort releases a 1.0 version, and is downloaded and
-      used daily by hordes of people aiming to improve their
-      lives.</para>
+      假定你叫你的软件为Frabnaggilywort，此刻，有必要把你的目录命名为反映项目名称的名字，所以<filename>concept</filename>改名为<filename>frabnaggilywort</filename>。生活还在继续，Frabnaggilywort发布了1.0版本，并且被许多希望改进他们生活的散落用户天天使用。</para>
     
-    <para>It's a nice story, really, but it doesn't end there.
-      Entrepreneur that you are, you've already got another think in
-      the tank.  So you make a new directory,
-      <filename>concept</filename>, and the cycle begins again.  In
-      fact, the cycle begins again many times over the years, each
-      time starting with that old <filename>concept</filename>
-      directory, then sometimes seeing that directory renamed as the
-      idea cures, sometimes seeing it deleted when you scrap the idea.
-      Or, to get really sick, maybe you rename
-      <filename>concept</filename> to something else for a while, but
-      later rename the thing back to <filename>concept</filename> for
-      some reason.</para>
+    <para>这是一个美好的故事，但是他没有在这里结束，作为主办人，你一定想到了另一件事，所以你创建了一个目录叫做<filename>concept</filename>，周期重新开始。实际上，这个循环在几年里开始了多次，每一个使用旧的<filename>concept</filename>î录开始，然后有时在想法成熟之后重新命名，有时你放弃了这个注意而删除了这个目录。或者更加变态一点，或许你把<filename>concept</filename>改成其他名字之后又因为一些原因重新改回<filename>concept</filename>。
+   </para>
 
-    <para>When scenarios like these occur, attempting to instruct
-      Subversion to work with these re-used paths can be a little like
-      instructing a motorist in Chicago's West Suburbs to drive east
-      down Roosevelt Road and turn left onto Main Street.  In a mere
-      twenty minutes, you can cross <quote>Main Street</quote> in
-      Wheaton, Glen Ellyn, and Lombard.  And no, they aren't the same
-      street.  Our motorist&mdash;and our Subversion&mdash;need a
-      little more detail in order to do the right thing.</para>
+    <para>当这样的情景发生时，指导Subversion工作在重新使用的路径上的尝试就像指导一个芝加哥西郊的乘客驾车到东面的罗斯福路并且左转到主大道。仅仅20分钟，你可以穿过惠顿、格伦埃林何朗伯德的<quote>主大道</quote>，但是他们不是一样的街道，我们的乘客&mdash;和我们的Subversion&mdash;需要更加详细的细节来做正确的事情。
+   </para>
 
-    <para>In version 1.1, Subversion introduced a way for you to tell
-      it exactly which Main Street you meant.  It's called the
-      <firstterm>peg revision</firstterm>, and it is a revision
-      provided to Subversion for the sole purpose of identifying a
-      unique line of history.  Because at most one versioned resource
-      may occupy a path at any given time&mdash;or, more precisely, in
-      any one revision&mdash;the combination of a path and a peg
-      revision is all that is needed to refer to a specific line of
-      history.  Peg revisions are specified to the Subversion
-      command-line client using <firstterm>at syntax</firstterm>, so
-      called because the syntax involves appending an <quote>at
-      sign</quote> (<literal>@</literal>) and the peg revision to the
-      end of the path with which the revision is associated.</para>
+    <para>在1.1版本，Subversion提供了一种方法来说明你所指是哪一个街道，叫做<firstterm>peg revision</firstterm>，这是一个提供给Subversion的一个区别一个独立历史线路的单独目的修订版本，因为一个版本化的文件会在任何时间占用某个路径&mdash;路径和peg
+      revision的合并是可以指定一个历史的特定线路。Peg revisions可以在Subversion命令行客户端中用<firstterm>at语法</firstterm>指定，之所以叫做这个语法因为会在关联的修订版本的路径后面追加一个<quote>at符号</quote>（<literal>@</literal>）。
+      </para>
 
-    <para>But what of the <option>--revision (-r)</option> of which
-      we've spoken so much in this book?  That revision (or set of
-      revisions) is called the <firstterm>operative
-      revision</firstterm> (or <firstterm>operative revision
-      range</firstterm>).  Once a particular line of history has been
-      identified using a path and peg revision, Subversion performs
-      the requested operation using the operative revision(s).  To map
-      this to our Chicagoland streets analogy, if we are told to go to
-      606 N. Main Street in Wheaton,
+    <para>但是我们在本书多次提到的<option>--revision (-r)</option>到底是什么？修订版本（或者是修订版本集）叫做<firstterm>实施的修订版本</firstterm>（或者叫做<firstterm>实施的修订版本范围</firstterm>），一旦一个特定历史线路通过一个路径和peg revision指定，Subversion会使用实施的修订版本执行要求的操作。为了影射这个岛我们类似的芝加哥道路，如果我们被告知到惠顿主大道606号， 
       <footnote>
-        <para>606 N. Main Street, Wheaton, Illinois, is the home of
-          the Wheaton History Center.  Get it&mdash;<quote>History
-          Center</quote>?  It seemed appropriate&hellip;.</para>
+        <para>伊利诺伊州惠顿主大道606号市惠顿离市中心，让它作为&mdash;<quote>历史中心</quote>？看起来是恰当的&hellip;。
+       </para>
       </footnote>
-      we can think of <quote>Main Street</quote> as our path and
-      <quote>Wheaton</quote> as our peg revision.  These two pieces of
-      information identify a unique path which can travelled (north or
-      south on Main Street), and will keep us from travelling up and
-      down the wrong Main Street in search of our destination.  Now we
-      throw in <quote>606 N.</quote> as our operative revision, of
-      sorts, and we know <emphasis>exactly</emphasis> where to
-      go.</para>
+      我们可以把<quote>主大道</quote>看作路径，把<quote>惠顿</quote>当作我们的peg revision。这两段信息确认了我们可以旅行（主大道的北方或南方）的唯一路径，也会保持我们不会在前前后后寻找目标时走到错误的主大道。现在我们把<quote>606 N.</quote>作为我们实施的修订版本，我们<emphasis>精确的</emphasis>知道到哪里。
+      </para>
 
-    <para>Subversion performs a fairly straightforward algorithm when
-      using peg and operative revisions to find real stuff to work on.
-      First, the path associated with the peg revision is located in
-      that revision in the repository.  From there, Subversion begins
-      stepping backwards through historical predecessors of the object
-      located at that path and peg revision.  Each of these
-      predecessors represents an earlier version of the object, and
-      each stores a record of which revision it was created in, and at
-      what path.  So, while traversing the set of predecessors,
-      Subversion notices whenever one of them is the youngest version
-      of the object to exist as of one of the operative revisions, and
-      if so, maps that operative revision to the created path/created
-      revision pair of the predecessor.  The algorithm terminates
-      either when all the operative revisions have been mapped to real
-      object locations, or once there are no more predecessors to
-      traverse, in which case any unmapped operative revisions are
-      marked as invalid for the object being operated on.</para>
+    <para>当使用peg and operative revisions来查找我们需要工作文件时，Subversion会执行一个很直接的算法。首先，与peg revision相关的路径坐落于版本库的那个修订版本，Subversion开始从那里开始向后查询这个对象的历史前辈。每个前辈表示这个对象的以前的一个版本，每一个都保存了创建的修订版本和路径，所以通过前辈集，Subversion可以注意到那个版本是这个operative revisions最年轻的版本，如果是，影射perative revision到前辈的创建的路径/创建修订版本对。算法在所有的operative revisions影射到真实的对象位置完后完成，或者是没有更多的前辈时完成，就是任何未影射的operative revisions已经标记为不符合操作的对象。</para>
 
-    <para>Say that long ago we created our repository, and in revision 1
-      added our first <filename>concept</filename> directory, plus an
-      <filename>IDEA</filename> file in that directory talking about
-      the concept.  After several revisions in which real code was
-      added and tweaked, we, in revision 20, renamed this directory to
-      <filename>frabnaggilywort</filename>.  By revision 27, we had a
-      new concept, a new <filename>concept</filename> directory to
-      hold it, and a new <filename>IDEA</filename> file to describe
-      it.  And then five years and twenty thousand revisions flew by,
-      just like they would in any good romance story.</para>
+    <para>也就是说很久以前我们创建了我们的版本库，在修订版本1添加我们第一个<filename>concept</filename>目录，并且在这个目录增加一个<filename>IDEA</filename>文件与concept相关，在几个修订版本之后，真实的代码被添加和修改，我们在修订版本20，修改这个目录为<filename>frabnaggilywort</filename>。通过修订版本27，我们有了一个新的概念，所以一个新的<filename>concept</filename>目录用来保存这些东西，一个新的<filename>IDEA</filename>文件来描述这个概念，然后经过5年20000个修订版本，就像他们都有一个非常浪漫的历史。
+   </para>
 
-    <para>Now, years later, we wonder what the
-      <filename>IDEA</filename> file looked like back in revision 1.
-      But Subversion needs to know if we are asking about how the
-      <emphasis>current</emphasis> file looked back in revision 1, or
-      are we asking for the contents of whatever file lived at
-      <filename>concepts/IDEA</filename> in revision 1?  Certainly
-      those questions have different answers, and because of peg
-      revisions, you can ask either of them.  To find out how the
-      current <filename>IDEA</filename> file looked in that old
-      revision, you run:</para>
+    <para>现在，一年之后，我们想知道<filename>IDEA</filename>在修订版本1时是什么样子，但是Subversion需要知道我们是想询问<emphasis>当前</emphasis>文件在修订版本1时的样子，还是希望知道<filename>concepts/IDEA</filename>在修订版本1时的那个文件？确定这些问题有不同的答案，并且因为peg
+      revisions，你可以询问两种情况之一。为了知道当前的<filename>IDEA</filename>文件在旧版本1的样子，我们可以运行：</para>
 
     <screen>
 $ svn cat -r 1 concept/IDEA 
@@ -1190,11 +942,8 @@ subversion/libsvn_client/ra.c:775: (apr_err=20014)
 svn: Unable to find repository location for 'concept/IDEA' in revision 1
 </screen>
 
-    <para>Of course, in this example, the current
-      <filename>IDEA</filename> file didn't exist yet in revision 1,
-      so Subversion gives an error.  The command above is shorthand
-      for a longer notation which explicitly lists a peg revision.
-      The expanded notation is:</para>
+    <para>当然，在这个例子里，当前的<filename>IDEA</filename>文件在修订版本1中并不存在，所以Subversion给出一个错误，这个上面的命令是长的peg revision明确列表符号的一个缩写，扩展的符号是：
+   </para>
 
     <screen>
 $ svn cat -r 1 concept/IDEA@BASE
@@ -1202,16 +951,11 @@ subversion/libsvn_client/ra.c:775: (apr_err=20014)
 svn: Unable to find repository location for 'concept/IDEA' in revision 1
 </screen>
 
-    <para>And when executed, has the expected results.  Peg revisions
-      generally default to a value of <literal>BASE</literal> (the
-      revision currently present in the working copy) when applied to
-      working copy paths, and of <literal>HEAD</literal> when applied
-      to URLs.</para>
+    <para>当执行时会有预料中的结果，当应用到工作拷贝路径时，Peg revisions通常缺省值是<literal>BASE</literal>（在当前工作拷贝现在的修订版本），当应用到URL时，缺省值是<literal>HEAD</literal>。
+    </para>
 
-    <para>Let's ask the other question, then&mdash;in revision 1, what
-      were the contents of whatever file occupied the address
-      <filename>concepts/IDEA</filename> at the time?  We'll use an
-      explicit peg revision to help us out.</para>
+    <para>然后让我们询问其他问题&mdash;在修订版本1 ，占据<filename>concepts/IDEA</filename>路径的文件的内容到底是什么？我们会使用一个显示的peg revision来帮助我们完成。
+    </para>
 
     <screen>
 $ svn cat concept/IDEA@1
@@ -1222,17 +966,8 @@ we need to employ over-the-top input validation and data verification
 mechanisms.
 </screen>
 
-    <para>This appears to be the right output.  The text even mentions
-      frabbing naggily worts, so this is almost certainly the file
-      which describes the software now called Frabnaggilywort.  In
-      fact, we can verify this using the combination of an explicit
-      peg revision and explicit operative revision.  We know that in
-      <literal>HEAD</literal>, the Frabnaggilywort project is located
-      in the <filename>frabnaggilywort</filename> directory.  So we
-      specify that we want to see how the line of history identified
-      in <literal>HEAD</literal> as the path
-      <filename>frabnaggilywort/IDEA</filename> looked in revision
-      1.</para>
+    <para>这看起来是正确的输出，这些文本甚至提到“frabbing naggily worts”，所以这就是现在叫做Frabnaggilywort项目的那个文件，实际上，我们可以使用显示的peg revision和operative revision的组合核实这些。我们知道在<literal>HEAD</literal>，Frabnaggilywort项目坐落在<filename>frabnaggilywort</filename>目录，所以我们指定我们希望看到<literal>HEAD</literal>在<filename>frabnaggilywort/IDEA</filename>路经历史上修订版本1的内容。
+    </para>
 
     <screen>
 $ svn cat -r 1 frabnaggilywort/IDEA@HEAD
@@ -1243,15 +978,7 @@ we need to employ over-the-top input validation and data verification
 mechanisms.
 </screen>
 
-    <para>And the peg and operative revisions need not be so trivial,
-      either.  For example, say <filename>frabnaggilywort</filename>
-      had beed deleted from <literal>HEAD</literal>, but we know it
-      existed in revision 20, and we want to see the diffs for its
-      <filename>IDEA</filename> file between revisions 4 and 10.  We
-      can use the peg revision 20 in conjunction with the URL that
-      would have held Frabnaggilywort's <filename>IDEA</filename> file
-      in revision 20, and then use 4 and 10 as our operative revision
-      range.</para>
+    <para>而且peg和operative revisions也不需要这样琐碎，举个例子，我们的<filename>frabnaggilywort</filename>已经在<literal>HEAD</literal>删除，但我们知道在修订版本20它是存在的，我们希望知道<filename>IDEA</filename>从修订版本4到10的区别，我们可以使用peg revision 20组合有<filename>IDEA</filename>文件的修订版本20的URL，然后使用4到10作为我们的operative revision范围。</para>
 
     <screen>
 $ svn diff -r 4:10 http://svn.red-bean.com/projects/frabnaggilywort/IDEA@20
@@ -1272,9 +999,7 @@ Index: frabnaggilywort/IDEA
 +input validation and data verification mechanisms.
 </screen>
 
-    <para>Fortunately, most folks aren't faced with such complex
-      situations.  But when you are, remember that peg revisions are
-      that extra hint Subversion needs to clear up ambiguity.</para>
+    <para>幸运的是，几乎所有的人们不会面临如此复杂的情形，但是如果是，记住peg revisions是帮助Subversion清除混淆的额外提示。</para>
 
   </sect1>
 
@@ -1282,32 +1007,13 @@ Index: frabnaggilywort/IDEA
   <!-- *** SECTION 3:  EXTERNALS DEFINITIONS                           *** -->
   <!-- ******************************************************************* -->
   <sect1 id="svn-ch-7-sect-3">
-    <title>Externals Definitions</title>
+    <title>外部定义</title>
     
-    <para>Sometimes it is useful to construct a working copy that is
-      made out of a number of different checkouts.  For example, you
-      may want different subdirectories to come from different
-      locations in a repository, or perhaps from different
-      repositories altogether.  You could certainly setup such a
-      scenario by hand&mdash;using <command>svn checkout</command> to
-      create the sort of nested working copy structure you are trying
-      to achieve.  But if this layout is important for everyone who
-      uses your repository, every other user will need to perform the
-      same checkout operations that you did.</para>
+    <para>有时候创建一个由多个不同检出得到的工作拷贝是非常有用的，举个例子，你或许希望不同的子目录来自不同的版本库位置，或者是不同的版本库。你可以手工设置这样一个工作拷贝&mdash;使用<command>svn checkout</command>来创建这种你需要的嵌套的工作拷贝结构。但是如果这个结构对所有的用户是很重要的，每个用户需要执行同样检出操作。</para>
 
-    <para>Fortunately, Subversion provides support for
-      <firstterm>externals definitions</firstterm>.  An externals
-      definition is a mapping of a local directory to the
-      URL&mdash;and possibly a particular revision&mdash;of a
-      versioned resource.  In Subversion, you declare externals
-      definitions in groups using the <literal>svn:externals</literal>
-      property.  You can create or modify this property using
-      <command>svn propset</command> or <command>svn
-      propedit</command> (see <xref linkend="svn-ch-7-sect-2.1"/>).  
-      It can be set on any versioned directory,
-      and its value is a multi-line table of subdirectories (relative
-      to the versioned directory on which the property is set) and
-      fully qualified, absolute Subversion repository URLs.</para>
+    <para>很幸运，Subversion提供了<firstterm>外部定义</firstterm>的支持，一个外部定义是一个本地路经到URL的影射&mdash;也有可能一个特定的修订版本&mdash;一些版本化的资源。在Subversion你可以使用<literal>svn:externals</literal>属性来定义外部定义，你可以用<command>svn propset</command>或<command>svn
+      propedit</command>（见<xref linkend="svn-ch-7-sect-2.1"/>）创建和修改这个属性。它可以设置到任何版本化的路经，它的值是一个多行的子目录和完全有资格的Subversion版本库URL的列表（相对于设置属性的版本化目录）。
+      </para>
 
     <screen>
 $ svn propget svn:externals calc
@@ -1316,19 +1022,10 @@ third-party/skins              http://skins.red-bean.com/repositories/skinproj
 third-party/skins/toolkit -r21 http://svn.red-bean.com/repos/skin-maker
 </screen>
 
-    <para>The convenience of the <literal>svn:externals</literal>
-      property is that once it is set on a versioned directory,
-      everyone who checks out a working copy with that directory also
-      gets the benefit of the externals definition.  In other words,
-      once one person has made the effort to define those nested
-      working copy checkouts, no one else has to
-      bother&mdash;Subversion will, upon checkout of the original
-      working copy, also checkout the external working copies.</para>
+    <para><literal>svn:externals</literal>的方便之处是这个属性设置到版本化的路径后，任何人可以从那个目录取出一个工作拷贝，同样得到外部定义的好处。换句话说，一旦一个人努力来定义这些嵌套的工作拷贝检出，其他任何人不需要再麻烦了&mdash;Subversion会在原先的工作拷贝检出之后，也会检出外部工作拷贝。
+   </para>
 
-    <para>Note the previous externals definition example.  When
-      someone checks out a working copy of the
-      <filename>calc</filename> directory, Subversion also continues
-      to checkout the items found in its externals definition.</para>
+    <para>注意前一个外部定义实例，当有人取出了一个<filename>calc</filename>目录的工作拷贝，Subversion会继续来取出外部定义的项目。</para>
 
     <screen>
 $ svn checkout http://svn.example.com/repos/calc
@@ -1351,54 +1048,17 @@ Fetching external item into calc/third-party/skins
 &hellip;
 </screen>
 
-    <para>If you need to change the externals definition, you can do
-      so using the regular property modification subcommands.  When
-      you commit a change to the <literal>svn:externals</literal>
-      property, Subversion will synchronize the checked-out items
-      against the changed externals definition when you next run
-      <command>svn update</command>.  The same thing will happen when
-      others update their working copies and receive your changes to
-      the externals definition.</para>
+    <para>如果你希望修改外部定义，你可以使用普通的属性修改子命令，当你提交一个<literal>svn:externals</literal>属性修改后，当你运行<command>svn update</command>时，Subversion会根据修改的外部定义同步检出的项目，同样的事情也会发生在别人更新他们的工作拷贝接受你的外部定义修改时。
+   </para>
 
-    <para>The <command>svn status</command> command also recognizes
-      externals definitions, displaying a status code of
-      <literal>X</literal> for the disjoint subdirectories into which
-      externals are checked out, and then recursing into those
-      subdirectories to display the status of the external items
-      themselves.</para>
+    <para><command>svn status</command>命令也认识外部定义，会为外部定义的脱节子目录显示<literal>X</literal>状态码，然后迭代这些子目录来显示外部项目的子目录状态信息。
+    </para>
 
-    <para>The support that exists for externals definitions in
-      Subversion today can be a little misleading, though.  First, an
-      externals definition can only point to directories, not files.
-      Second, the externals definition cannot point to relative paths
-      (paths like <filename>../../skins/myskin</filename>).  Third, the
-      working copies created via the externals definition support are
-      still disconnected from the primary working copy (on whose
-      versioned directories the <literal>svn:externals</literal>
-      property was actually set).  And Subversion still only truly
-      operates on non-disjoint working copies.  So, for example, if
-      you want to commit changes that you've made in one or more of
-      those external working copies, you must run <command>svn
-      commit</command> explicitly on those working
-      copies&mdash;committing on the primary working copy will not
-      recurse into any external ones.</para>
+    <para>Subversion目前对外部定义的支持可能会引起误导，首先，一个外部定义只可以指向目录，而不是文件。第二，外部定义不可以指向相对路径（如<filename>../../skins/myskin</filename>）。第三，同过外部定义创建的工作拷贝与主工作拷贝没有连接，所以举个例子，如果你希望提交一个或多个外部定义的拷贝，你必须在这些工作拷贝显示的运行<command>svn
+      commit</command>&mdash;对主工作拷贝的提交不会迭代到外部定义的部分。</para>
 
-    <para>Also, since the definitions themselves use absolute URLs,
-      moving or copying a directory to which they are attached will
-      not affect what gets checked out as an external (though the
-      relative local target subdirectory will, of course, move with
-      renamed directory).  This can be confusing&mdash;even
-      frustrating&mdash;in certain situations.  For example, if you
-      use externals definitions on a directory in your
-      <filename>/trunk</filename> development line which point to
-      other areas of that same line, and then you use <command>svn
-      copy</command> to branch that line to some new location
-      <filename>/branches/my-branch</filename>, the externals
-      definitions on items in your new branch will still refer to
-      versioned resources in <filename>/trunk</filename>.  Also, be
-      aware that if you need to re-parent your working copy (using
-      <command>svn switch --relocate</command>), externals definitions
-      will <emphasis>not</emphasis> also be re-parented.</para>
+    <para>另外，因为定义本身使用绝对路径，移动和拷贝路径他们附着的路径不会影响他们作为外部的检出（尽管相对的本地目标子目录会这样，当然，根据重命名的目录）。这看起来有些迷惑&mdash;甚至让人沮丧&mdash;在特定情形。举个例子，如果你在<filename>/trunk</filename>开发线对一个目录使用外部定义，指向同一条线上的其他区域，然后使用<command>svn
+      copy</command>把分支开发线拷贝到<filename>/branches/my-branch</filename>这个新位置，这个项目新分支的外部定义仍然指向<filename>/trunk</filename>版本化资源。另外，需要意识到如果你需要一个重新规划你的工作拷贝的父目录（使用<command>svn switch --relocate</command>），外部定义<emphasis>不</emphasis>会重新选择父目录。</para>
 
   </sect1>
 
@@ -1406,9 +1066,10 @@ Fetching external item into calc/third-party/skins
   <!-- *** SECTION 4:  VENDOR BRANCHES                                 *** -->
   <!-- ******************************************************************* -->
   <sect1 id="svn-ch-7-sect-4">
-    <title>Vendor branches</title>
+    <title>卖主分支</title>
 
-    <para>As is especially the case when developing software, the data
+    <para>当开发软件时有这样一个情况，你版本控制的数据可能关联于或者是依赖于其他人的数据，通常来讲，你的项目的需要会要求你自己的项目对外部实体提供的数据保持尽可能最新的版本，同时不会牺牲你自己工程的稳定性，这个情景使我们一直精疲力尽&mdash;无论何处信息是被一组人生成了会对是通过另一个小组生成的有直接效用。
+    As is especially the case when developing software, the data
       that you maintain under version control is often closely related
       to, or perhaps dependent upon, someone else's data.  Generally,
       the needs of your project will dictate that you stay as
@@ -1418,97 +1079,31 @@ Fetching external item into calc/third-party/skins
       the information generated by one group of people has a direct
       effect on that which is generated by another group.</para>
  
-    <para>For example, software developers might be working on an
-      application which makes use of a third-party library.
-      Subversion has just such a relationship with the Apache Portable
-      Runtime library (see <xref linkend="svn-ch-8-sect-2.1" />).  The
-      Subversion source code depends on the APR library for all its
-      portability needs.  In earlier stages of Subversion's
-      development, the project closely tracked APR's changing API,
-      always sticking to the <quote>bleeding edge</quote> of the
-      library's code churn.  Now that both APR and Subversion have
-      matured, Subversion attempts to synchronize with APR's library
-      API only at well-tested, stable release points.</para>
+    <para>举个例子，软件开发者会工作在一个使用第三方库的应用，Subversion恰好是和Apache的Portable
+      Runtime library（见<xref linkend="svn-ch-8-sect-2.1" />）有这样一个关系。Subversion源代码依赖于APR库来实现可携带型需求。在Subversion的早期开发阶段，项目紧密地追踪APR的API修改，经常在库代码的<quote>流血的边缘</quote>粘住，现在APR和Subversion都已经成熟了，Subversion只尝试同步APR的经过良好测试的，稳定的API库。</para>
 
-    <para>Now, if your project depends on someone else's information,
-      there are several ways that you could attempt to synchronize that
-      information with your own.  Most painfully, you could issue oral
-      or written instructions to all the contributors of your project,
-      telling them to make sure that they have the specific versions
-      of that third-party information that your project needs.  If the
-      third-party information is maintained in a Subversion
-      repository, you could also use Subversion's externals
-      definitions to effectively <quote>pin down</quote> specific
-      versions of that information to some location in your own
-      working copy directory (see <xref linkend="svn-ch-7-sect-3" />).</para>
+    <para>现在，如果你的项目依赖于其他人的信息，有许多方法可以用来尝试同步你的信息，最痛苦的，你可以为项目所有的贡献者发布口头或书写的指导，告诉他们确信他们拥有你们的项目需要的特定版本的第三方信息。如果第三方信息是用Subversion版本库维护，你可以使用Subversion的外部定义来有效的<quote>强制</quote>特定的版本的信息在你的工作拷贝的的位置（见<xref linkend="svn-ch-7-sect-3" />）。
+   </para>
 
-    <para>But sometimes you want to maintain custom modifications to
-      third-party data in your own version control system.  Returning
-      to the software development example, programmers might need to
-      make modifications to that third-party library for their own
-      purposes.  These modifications might include new functionality
-      or bug fixes, maintained internally only until they become part
-      of an official release of the third-party library.  Or the
-      changes might never be relayed back to the library maintainers,
-      existing solely as custom tweaks to make the library further
-      suit the needs of the software developers.</para>
+    <para>但是有时候，你希望在你自己的版本控制系统维护一个针对第三方数据的自定义修改，回到软件开发的例子，程序员为了他们自己的目的会需要修改第三方库，这些修改会包括新的功能和bug修正，在成为第三方工具官方发布之前，只是内部维护。或者这些修改永远不会传给库的维护者，只是作为满足软件开发需要的单独的自定义修改存在。
+   </para>
 
-    <para>Now you face an interesting situation.  Your project could
-      house its custom modifications to the third-party data in some
-      disjointed fashion, such as using patch files or full-fledged
-      alternate versions of files and directories.  But these quickly
-      become maintenance headaches, requiring some mechanism by which
-      to apply your custom changes to the third-party data, and
-      necessitating regeneration of those changes with each successive
-      version of the third-party data that you track.</para>
+    <para>现在你会面对一个有趣的情形，你的项目可以用某种脱节的样式保持它关于第三方数据自己的修改，如使用补丁文件或者是完全的可选版本的文件和目录。但是这很快会成为维护的头痛的事情，需要一种机制来应用你对第三方数据的自定义修改，并且迫使在第三方数据的后续版本重建这些修改。</para>
 
-    <para>The solution to this problem is to use <firstterm>vendor
-      branches</firstterm>.  A vendor branch is a directory tree in
-      your own version control system that contains information
-      provided by a third-party entity, or vendor.  Each version of
-      the vendor's data that you decide to absorb into your project is
-      called a <firstterm>vendor drop</firstterm>.</para> 
+    <para>这个问题的解决方案是使用<firstterm>卖主分支</firstterm>，一个卖主分支是一个目录树保存了第三方实体或卖主的信息，每一个卖主数据的版本吸收到你的项目叫做<firstterm>卖主drop</firstterm>。
+   </para> 
 
-    <para>Vendor branches provide two key benefits.  First, by storing
-      the currently supported vendor drop in your own version control
-      system, the members of your project never need to question
-      whether they have the right version of the vendor's data.  They
-      simply receive that correct version as part of their regular
-      working copy updates.  Secondly, because the data lives in your
-      own Subversion repository, you can store your custom changes to
-      it in-place&mdash;you have no more need of an automated (or
-      worse, manual) method for swapping in your customizations.</para>
+    <para>卖主分支提供了两个关键的益处，第一，通过在我们的版本控制系统保存现在支持的卖主drop，你项目的成员不需要指导他们是否有了正确版本的卖主数据，他们只需要作为不同工作拷贝更新的一部份简单的接受正确的版本就可以了。第二，因为数据存在于你自己的Subversion版本库，你可以在恰当的位置保存你的自定义修改&mdash;你不需要一个自动的（或者是更坏，手工的）方法来交换你的自定义行为。</para>
 
     <!-- ***************************************************************** -->
     <sect2 id="svn-ch-7-sect-4.1">
-      <title>General Vendor Branch Management Procedure</title>
+      <title>常规的卖主分支管理过程</title>
 
-      <para>Managing vendor branches generally works like this.  You
-        create a top-level directory (such as
-        <filename>/vendor</filename>) to hold the vendor branches.
-        Then you import the third party code into a subdirectory of
-        that top-level directory.  You then copy that subdirectory
-        into your main development branch (for example,
-        <filename>/trunk</filename>) at the appropriate location.  You
-        always make your local changes in the main development branch.
-        With each new release of the code you are tracking you bring
-        it into the vendor branch and merge the changes into
-        <filename>/trunk</filename>, resolving whatever conflicts
-        occur between your local changes and the upstream
-        changes.</para>
+      <para>管理卖主分支通常会像这个样子，你创建一个顶级的目录（如<filename>/vendor</filename>）来保存卖主分支，然后你导入第三方的代码到你的子目录。然后你将拷贝这个子目录到主要的开发分支（例如<filename>/trunk</filename>）的适当位置。你一直在你的主要开发分支上做本地修改，当你的追踪的代码有了新版本，你会把带到卖主分支并且把它合并到你的<filename>/trunk</filename>，解决任何你的本地修改和他们的修改的冲突。
+     </para>
 
-      <para>Perhaps an example will help to clarify this algorithm.
-        We'll use a scenario where your development team is creating a
-        calculator program that links against a third-party complex
-        number arithmetic library, libcomplex.  We'll begin with the
-        initial creation of the vendor branch, and the import of the
-        first vendor drop.  We'll call our vendor branch directory
-        <filename>libcomplex</filename>, and our code drops will go
-        into a subdirectory of our vendor branch called
-        <filename>current</filename>.  And since <command>svn
-        import</command> creates all the intermediate parent
-        directories it needs, we can actually accomplish both of these
-        steps with a single command.</para>
+      <para>也许一个例子有助于我们阐述这个算法，我们会使用这样一个场景，我们的开发团队正在开发一个计算器程序，与一个第三方的复杂数字运算库libcomplex关联。我们从卖主分支的初始创建开始，并且导入卖主drop，我们会把每株分支目录叫做<filename>libcomplex</filename>，我们的代码drop会进入到卖主分支的子目录<filename>current</filename>，并且因为<command>svn
+        import</command>创建所有的需要的中间父目录，我们可以使用一个命令完成这一步。</para>
 
       <screen>
 $ svn import /path/to/libcomplex-1.0 \
@@ -1517,15 +1112,7 @@ $ svn import /path/to/libcomplex-1.0 \
 &hellip;
 </screen>
     
-      <para>We now have the current version of the libcomplex source
-        code in <filename>/vendor/libcomplex/current</filename>.  Now,
-        we tag that version (see <xref linkend="svn-ch-4-sect-6" />)
-        and then copy it into the main development branch.  Our copy
-        will create a new directory called
-        <filename>libcomplex</filename> in our existing
-        <filename>calc</filename> project directory.  It is in this
-        copied version of the vendor data that we will make our
-        customizations.</para>
+      <para>我们现在在<filename>/vendor/libcomplex/current</filename>有了libcomplex当前版本的代码，现在我们为那个版本作标签（见<xref linkend="svn-ch-4-sect-6" />），然后拷贝它到主要开发分支，我们的拷贝会在<filename>calc</filename>项目目录创建一个新的目录<filename>libcomplex</filename>，它是这个我们将要进行自定义的卖主数据的拷贝版本。</para>
     
       <screen>
 $ svn copy http://svn.example.com/repos/vendor/libcomplex/current  \
@@ -1538,60 +1125,24 @@ $ svn copy http://svn.example.com/repos/vendor/libcomplex/1.0  \
 &hellip;
 </screen>
 
-      <para>We check out our project's main branch&mdash;which now
-        includes a copy of the first vendor drop&mdash;and we get to
-        work customizing the libcomplex code.  Before we know it, our
-        modified version of libcomplex is now completely integrated
-        into our calculator program.
+      <para>我们取出我们项目的主分支&mdash;现在包括了第一个卖主drop的拷贝&mdash;我们开始自定义libcomplex的代码，我们知道，我们的libcomplex修改版本是已经与我们的计算器程序完全集成。
+     
         <footnote>
-          <para>And entirely bug-free, of course!</para>
+          <para>而且完全没有bug，当然！***</para>
         </footnote>
       </para>
 
-      <para>A few weeks later, the developers of libcomplex release a
-        new version of their library&mdash;version 1.1&mdash;which
-        contains some features and functionality that we really want.
-        We'd like to upgrade to this new version, but without losing
-        the customizations we made to the existing version.  What we
-        essentially would like to do is to replace our current
-        baseline version of libcomplex 1.0 with a copy of libcomplex
-        1.1, and then re-apply the custom modifications we previously
-        made to that library to the new version.  But we actually
-        approach the problem from the other direction, applying the
-        changes made to libcomplex between versions 1.0 and 1.1 to our
-        modified copy of it.</para>
+      <para>几周之后，libcomplex得开发者发布了一个新的版本&mdash;版本1.1&mdash;包括了我们很需要的一些特性和功能。我们很希望升级到这个版本，但不希望失去在当前版本所作的修改。我们本质上会希望把我们当前基线版本是的libcomplex1.0的拷贝替换为libcomplex
+        1.1，然后把前面自定义的修改应用到新的版本。但是实际上我们通过一个相反的方向解决这个问题，应用libcomplex从版本1.0到1.1的修改到我们修改的拷贝。
+       </para>
       
-      <para>To perform this upgrade, we checkout a copy of our vendor
-        branch, and replace the code in the
-        <filename>current</filename> directory with the new libcomplex
-        1.1 source code.  We quite literally copy new files on top of
-        existing files, perhaps exploding the libcomplex 1.1 release
-        tarball atop our existing files and directories.  The goal
-        here is to make our <filename>current</filename> directory
-        contain only the libcomplex 1.1 code, and to ensure that all
-        that code is under version control.  Oh, and we want to do
-        this with as little version control history disturbance as
-        possible.</para>
+      <para>为了执行这个升级，我们取出一个我们卖主分支的拷贝，替换<filename>current</filename>目录为新的libcomplex 1.1的代码，我们只是拷贝新文件到存在的文件上，或者是解压缩libcomplex 1.1的打包文件到我们存在的文件和目录。此时的目标是让我们的<filename>current</filename>目录只保留libcomplex 1.1的代码，并且保证所有的代码在版本控制之下，哦，我们希望在最小的版本控制历史扰动下完成这件事。</para>
 
-      <para>After replacing the 1.0 code with 1.1 code, <command>svn
-        status</command> will show files with local modifications as
-        well as, perhaps, some unversioned or missing files.  If we
-        did what we were supposed to do, the unversioned files are
-        only those new files introduced in the 1.1 release of
-        libcomplex&mdash;we run <command>svn add</command> on those to
-        get them under version control.  The missing files are files
-        that were in 1.0 but not in 1.1, and on those paths we run
-        <command>svn delete</command>.  Finally, once our
-        <filename>current</filename> working copy contains only the
-        libcomplex 1.1 code, we commit the changes we made to get it
-        looking that way.</para>
+      <para>完成了这个从1.0到1.1的代码替换，<command>svn
+        status</command>会显示文件的本地修改，或许也包括了一些未版本化或者丢失的文件，如果我们做了无我们应该做的事情，未版本化的文件应该都是libcomplex在1.1新引入的文件&mdash;我们运行<command>svn add</command>来将它们加入到版本控制。丢失的文件是存在于1.1但是不是在1.1，在这些路径我们运行<command>svn delete</command>。最终一旦我们的<filename>current</filename>工作拷贝只是包括了libcomplex1.1的代码，我们可以提交这些改变目录和文件的修改。
+       </para>
 
-      <para>Our <filename>current</filename> branch now contains the
-        new vendor drop.  We tag the new version (in the same way we
-        previously tagged the version 1.0 vendor drop), and then merge
-        the differences between the tag of the previous version and
-        the new current version into our main development
-        branch.</para>
+      <para>我们的<filename>current</filename>分支现在保存了新的卖主drop，我们为这个新的版本创建一个新的标签（就像我们为1.0版本drop所作的），然后合并这从个标签前一个版本的区别到主要开发分支。</para>
 
       <screen>
 $ cd working-copies/calc
@@ -1603,28 +1154,9 @@ $ svn commit -m 'merging libcomplex-1.1 into the main branch'
 &hellip;
 </screen>
 
-      <para>In the trivial use case, the new version of our
-        third-party tool would look, from a files-and-directories
-        point of view, just like the previous version.  None of the
-        libcomplex source files would have been deleted, renamed or
-        moved to different locations&mdash;the new version would
-        contain only textual modifications against the previous one.
-        In a perfect world, our modifications would apply cleanly to
-        the new version of the library, with absolutely no
-        complications or conflicts.</para>
+      <para>在这个琐碎的用例里，第三方工具的新版本会从一个文件和目录的角度来看，就像前一个版本。没有任何libcomplex源文件会被删除、被改名或是移动到别的位置&mdash;新的版本只会保存针对上一个版本的文本修改。在完美世界，我们对呢修改会干净得应用到库的新版本，不会产生任何并发和冲突。</para>
 
-      <para>But things aren't always that simple, and in fact it is
-        quite common for source files to get moved around between
-        releases of software.  This complicates the process of
-        ensuring that our modifications are still valid for the new
-        version of code, and can quickly degrade into a situation
-        where we have to manually recreate our customizations in the
-        new version.  Once Subversion knows about the history of a
-        given source file&mdash;including all its previous
-        locations&mdash;the process of merging in the new version of
-        the library is pretty simple.  But we are responsible for
-        telling Subversion how the source file layout changed from
-        vendor drop to vendor drop.</para>
+      <para>但是事情总不是这样简单，实际上源文件在不同的版本间的移动是很常见的，这种过程复杂性可以确保我们的修改会一直对新的版本代码有效，可以很快使形势退化到我们需要在新版本手工的重新创建我们的自定义修改。一旦Subversion知道了给定文件的历史&mdash;包括了所有以前的位置&mdash;合并到新版本的进程就会很简单，但是我们需要负责告诉Subversion卖主drop之间源文件布局的改变。</para>
 
     </sect2>
 
@@ -1637,52 +1169,31 @@ $ svn commit -m 'merging libcomplex-1.1 into the main branch'
     <sect2 id="svn-ch-7-sect-4.2">
       <title><command>svn_load_dirs.pl</command></title>
 
-      <para>Vendor drops that contain more than a few deletes,
-        additions and moves complicate the process of upgrading to
-        each successive version of the third-party data.  So
-        Subversion supplies the <command>svn_load_dirs.pl</command>
-        script to assist with this process.  This script automates the
-        importing steps we mentioned in the general vendor branch
-        management procedure to make sure that mistakes are minimized.
-        You will still be responsible for using the merge commands to
-        merge the new versions of the third-party data into your main
-        development branch, but <command>svn_load_dirs.pl</command>
-        can help you more quickly and easily arrive at that
-        stage.</para>
+      <para>不仅仅包含一些删除、添加和移动的卖主drops使得升级第三方数据后续版本的过程变得复杂，所以Subversion提供了一个<command>svn_load_dirs.pl</command>脚本来辅助这个过程，这个脚本自动进行我们前面提到的常规卖主分支管理过程的导入步骤，从而使得错误最小化。你仍要负责使用合并命令合并第三方的新
+版本数据合并到主要开发分支，但是<command>svn_load_dirs.pl</command>帮助你快速到达这一步骤。
+</para>
 
-      <para>In short, <command>svn_load_dirs.pl</command> is an
-        enhancement to <command>svn import</command> that has several
-        important characteristics:</para>
+      <para>一句话，<command>svn_load_dirs.pl</command>是一个增强的<command>svn import</command>，具备了许多重要的特性：</para>
 
       <itemizedlist>
         <listitem>
-          <para>It can be run at any point in time to bring an existing
-            directory in the repository to exactly match an external
-            directory, performing all the necessary adds and deletes,
-            and optionally performing moves, too.</para>
+          <para>它可以在任何有一个存在的版本库目录与一个外部的目录匹配时执行，会执行所有必要的添加和删除并且可以选则执行移动。
+         </para>
         </listitem>
         <listitem>
-          <para>It takes care of complicated series of operations between
-            which Subversion requires an intermediate commit&mdash;such
-            as before renaming a file or directory twice.</para>
+          <para>它可以用来操作一系列复杂的操作，如那些需要一个中间媒介的提交&mdash;如在操作之前重命名一个文件或者目录两次。
+         </para>
         </listitem>
         <listitem>
-          <para>It will optionally tag the newly imported directory.</para>
+          <para>它可以随意的为新导入目录打上标签。</para>
         </listitem>
         <listitem>
-          <para>It will optionally add arbitrary properties to files and
-            directories that match a regular expression.</para>
+          <para>它可以随意为符合正则表达式的文件和目录添加任意的属性。
+          </para>
         </listitem>
       </itemizedlist>
 
-      <para><command>svn_load_dirs.pl</command> takes three mandatory
-        arguments.  The first argument is the URL to the base
-        Subversion directory to work in.  This argument is followed by
-        the URL&mdash;relative to the first argument&mdash;into which the
-        current vendor drop will be imported.  Finally, the third
-        argument is the local directory to import.  Using our previous
-        example, a typical run of <command>svn_load_dirs.pl</command>
-        might look like:</para>
+      <para><command>svn_load_dirs.pl</command>利用三个强制的参数，第一个参数是Subversion工作的基本目录URL，第二个参数在URL之后&mdash;相对于第一个参数&mdash;指向当前的卖主分支将会导入的目录，最后，第三个参数是一个需要导入的本地目录，使用前面的例子，一个典型的<command>svn_load_dirs.pl</command>调用看起来如下：</para>
 
       <screen>
 $ svn_load_dirs.pl http://svn.example.com/repos/vendor/libcomplex \
@@ -1691,11 +1202,8 @@ $ svn_load_dirs.pl http://svn.example.com/repos/vendor/libcomplex \
 &hellip;
 </screen>
 
-      <para>You can indicate that you'd like
-        <command>svn_load_dirs.pl</command> to tag the new vendor drop
-        by passing the <option>-t</option> command-line option and
-        specifying a tag name.  This tag is another URL relative to
-        the first program argument.</para>
+      <para>你可以说明你会希望<command>svn_load_dirs.pl</command>同时打上标签，这使用<option>-t</option>命令行选项，需要制定一个标签名。这个标签是第一个参数的一个相对URL。
+      </para>
 
       <screen>
 $ svn_load_dirs.pl -t libcomplex-1.1                              \
@@ -1705,32 +1213,10 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
 &hellip;
 </screen>
 
-      <para>When you run <command>svn_load_dirs.pl</command>, it
-        examines the contents of your existing <quote>current</quote>
-        vendor drop, and compares them with the proposed new vendor
-        drop.  In the trivial case, there will be no files that are in
-        one version and not the other, and the script will perform the
-        new import without incident.  If, however, there are
-        discrepancies in the file layouts between versions,
-        <command>svn_load_dirs.pl</command> will prompt you for how
-        you would like to resolve those differences.  For example, you
-        will have the opportunity to tell the script that you know
-        that the file <filename>math.c</filename> in version 1.0 of
-        libcomplex was renamed to <filename>arithmetic.c</filename> in
-        libcomplex 1.1.  Any discrepancies not explained by moves
-        are treated as regular additions and deletions.</para>
+      <para>当你运行<command>svn_load_dirs.pl</command>，它会检验你的存在的<quote>current</quote>卖主drop，并且与提议的新卖主drop比较，在这个琐碎的例子里，没有文件只出现在一个版本里，脚本执行新的导入而不会发生意外。然而如果版本之间有了文件布局的区别，<command>svn_load_dirs.pl</command>会询问你如何解决这个区别，例如你会有机会告诉脚本libcomplex版本1.0的<filename>math.c</filename>文件在1.1已经重命名为<filename>arithmetic.c</filename>，任何没有解释为移动的差异都会被看作是常规的添加和删除。
+     </para>
 
-      <para>The script also accepts a separate configuration file for
-        setting properties on files and directories matching a regular
-        expression that are <emphasis>added</emphasis> to the
-        repository.  This configuration file is specified to
-        <command>svn_load_dirs.pl</command> using the
-        <option>-p</option> command-line option.  Each line of the
-        configuration file is a whitespace-delimited set of two or
-        four values: a Perl-style regular expression to match the
-        added path against, a control keyword (either
-        <literal>break</literal> or <literal>cont</literal>), and then
-        optionally a property name and value.</para>
+      <para>这个脚本也接受单独配置文件用来为<emphasis>添加到</emphasis>版本库的文件和目录设置匹配正则表达式的属性。配置文件通过<command>svn_load_dirs.pl</command>的<option>-p</option>命令行选项指定，这个配置文件的每一行都是一个空白分割的两列或者四列值：一个Perl样式的正则表达式来匹配添加的路径、一个控制关键字（<literal>break</literal>或者是<literal>cont</literal>）和可选的属性名和值。</para>
 
       <screen>
 \.png$              break   svn:mime-type   image/png
@@ -1740,23 +1226,10 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
 .*                  break   svn:eol-style   native
 </screen>
 
-      <para>For each added path, the configured property changes whose
-        regular expression matches the path are applied in order,
-        unless the control specification is <literal>break</literal>
-        (which means that no more property changes should be applied
-        to that path).  If the control specification is
-        <literal>cont</literal>&mdash;an abbreviation for
-        <literal>continue</literal>&mdash;then matching will continue
-        with the next line of the configuration file.</para>
+      <para>对每一个添加的路径，会按照顺序为匹配正则表达式的文件配置属性，除非控制标志是<literal>break</literal>（意味着不需要更多的路径匹配应用到这个路径）。如果控制说明是<literal>cont</literal>&mdash;<literal>continue</literal>的缩写&mdash;然后匹配工作会继续到配置文件的下一行。
+     </para>
 
-      <para>Any whitespace in the regular expression, property name,
-        or property value must be surrounded by either single or
-        double quote characters.  You can escape quote characters that
-        are not used for wrapping whitespace by preceding them with a
-        backslash (<literal>\</literal>) character.  The backslash
-        escapes only quotes when parsing the configuration file, so do
-        not protect any other characters beyond what is necessary for
-        the regular expression.</para>
+      <para>任何正则表达式，属性名或者属性值的空格必须使用单引号或者双银行环绕，你可以使用反斜杠（<literal>\</literal>）换码符来回避引号，反斜杠只会在解析配置文件时回避引号，所以不要保护对正则表达式不需要的其它字符。</para>
 
     </sect2>
   </sect1>
@@ -1765,30 +1238,18 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
   <!-- *** SECTION 5:  LOCALIZATION                                    *** -->
   <!-- ******************************************************************* -->
   <sect1 id="svn-ch-7-sect-5">
-    <title>Localization</title>
+    <title>本地化</title>
 
-    <para><firstterm>Localization</firstterm> is the act of making
-      programs behave in a region-specific way.  When a program
-      formats numbers or dates in a way specific to your part of the
-      world, or prints messages (or accepts input) in your native
-      language, the program is said to
-      be <firstterm>localized</firstterm>.  This section describes
-      steps Subversion has made towards localization.</para>
+    <para><firstterm>本地化</firstterm>是让程序按照地区特定方式运行的行为，如果一个程序的格式、数字或者是日期是你的方式，或者是打印的信息（或者是接受的输入）是你本地的语言，这个程序被叫做已经<firstterm>本地化了</firstterm>，这部分描述了针对本地化的Subversion的步骤。</para>
 
     <sect2 id="svn-ch7-sect-5.1">
-      <title>Understanding locales</title>
+      <title>理解位置</title>
 
-      <para>Most modern operating systems have a notion of the
-        <quote>current locale</quote>&mdash;that is, the region or
-        country whose localization conventions are honored.  These
-        conventions&mdash;typically chosen by some runtime
-        configuration mechanism on the computer&mdash;affect the way
-        in which programs present data to the user, as well as the way
-        in which they accept user input.</para>
+      <para>许多现代操作系统都有一个<quote>当前位置</quote>的概念&mdash;也就是本地化习惯服务的国家和地区。这些习惯&mdash;通常是被一些运行配置机制选择&mdash;影响程序展现数据的方式，也有接受用户输入的方式。
+     </para>
 
-      <para>On Unix-like systems, you can check the values of the
-        locale-related runtime configuration options by running the
-        <command>locale</command> command:</para>
+      <para>在类Unix的系统，你可以运行<command>locale</command>命令来检查本地关联的运行配置的选项值：
+      </para>
 
       <screen>
 $ locale
@@ -1802,42 +1263,19 @@ LC_TIME="C"
 LC_ALL="C"
 </screen>
 
-      <para>The output is a list of locale-related environment
-        variables and their current values.  In this example, the
-        variables are all set to the default <literal>C</literal>
-        locale, but users can set these variables to specific
-        country/language code combinations.  For example, if one were
-        to set the <literal>LC_TIME</literal> variable to
-        <literal>fr_CA</literal>, then programs would know to present
-        time and date information formatted according a
-        French-speaking Canadian's expectations.  And if one were to
-        set the <literal>LC_MESSAGES</literal> variable to
-        <literal>zh_TW</literal>, then programs would know to present
-        human-readable messages in Traditional Chinese.  Setting the
-        <literal>LC_ALL</literal> variable has the effect of changing
-        every locale variable to the same value.  The value of
-        <literal>LANG</literal> is used as a default value for any
-        locale variable that is unset.  To see the list of available
-        locales on a Unix system, run the command <command>locale
-        -a</command>.</para>
+      <para>输出是一个本地相关的环境变量和它们的值，在这个例子里，所有的变量设置为缺省的<literal>C</literal>位置，但是用户可以设置这些变量为特定的国家/语言代码组合。举个例子，如果有人设置<literal>LC_TIME</literal>变量为<literal>fr_CA</literal>，然后程序会知道使用讲法语的加拿大期望的格式来显示时间和日期信息。如果一个人会设置<literal>LC_MESSAGES</literal>变量为<literal>zh_TW</literal>，程序会知道使用繁体中文显示可读信息。如果设置<literal>LC_ALL</literal>的效果同分别设置所有的位置变量为同一个值有相同的效果。<literal>LANG</literal>用来作为没有设置位置变量的缺省值，为了查看Unix系统所有的位置列表，运行<command>locale
+        -a</command>命令。</para>
 
-      <para>On Windows, locale configuration is done via the
-        <quote>Regional and Language Options</quote> control panel
-        item.  There you can view and select the values of individual
-        settings from the available locales, and even customize (at a
-        sickening level of detail) several of the display formatting
-        conventions.</para>
+      <para>在Windows，位置配置是通过<quote>地区和语言选项</quote>控制面板管理的，可以从已存在的位置查看选择，甚至可以自定义（会是个很讨厌的复杂事情）许多显示格式习惯。
+     </para>
 
     </sect2>
 
     <sect2 id="svn-ch7-sect-5.2">
-      <title>Subversion's use of locales</title>
+      <title>Subversion对位置的使用</title>
 
-      <para>The Subversion client, <command>svn</command>, honors the
-        current locale configuration in two ways.  First, it notices
-        the value of the <literal>LC_MESSAGES</literal> variable and
-        attempts to print all messages in the specified language.  For
-        example:</para>
+      <para>Subversion客户端，<command>svn</command>通过两种方式配备当前的位置配置。首先，它会注意<literal>LC_MESSAGES</literal>的值，然后尝试使用特定的语言打印所有的信息，例如：
+     </para>
 
       <screen>
 $ export LC_MESSAGES=de_DE
@@ -1847,83 +1285,31 @@ Aufruf: cat ZIEL...
 &hellip;
 </screen>
 
-      <para>This behavior works identically on both Unix and Windows
-        systems.  Note, though, that while your operating system might
-        have support for a certain locale, the Subversion client still
-        may not be able to speak the particular language.  In order to
-        produce localized messages, human volunteers must provide
-        translations for each language.  The translations are written
-        using the GNU gettext package, which results in translation
-        modules that end with the <filename>.mo</filename> filename
-        extension.  For example, the German translation file is named
-        <filename>de.mo</filename>.  These translation files are
-        installed somewhere on your system.  On Unix, they typically
-        live in <filename>/usr/share/locale/</filename>, while
-        on Windows they're often found in the
-        <filename>\share\locale\</filename> folder in Subversion's
-        installation area.  Once installed, a module is named after
-        the program it provides translations for.  For example, the
-        <filename>de.mo</filename> file may ultimately end up
-        installed as
-        <filename>/usr/share/locale/de/LC_MESSAGES/subversion.mo</filename>.
-        By browsing the installed <filename>.mo</filename> files, you
-        can see which languages the Subversion client is able to
-        speak.</para>
+      <para>这个行为在Unix和Windows上同样工作，注意，尽管有时你的操作系统支持某个位置，Subversion客户端可能不能讲特定的语言。为了制作本地化信息，志愿者可以提供各种语言的翻译。翻译使用GNU gettext包编写，导致翻译模块使用<filename>.mo</filename>作为后缀名。举个例子，德国翻译文件为<filename>de.mo</filename>。翻译文件安装到你的系统的某个位置，在Unix它们会在<filename>/usr/share/locale/</filename>，而在Windows它们通常会在Subversion安装的<filename>\share\locale\</filename>目录。一旦安装，一个命名在程序后面的模块会为此提供翻译。举个例子，<filename>de.mo</filename>会最终安装到<filename>/usr/share/locale/de/LC_MESSAGES/subversion.mo</filename>，通过查看安装的<filename>.mo</filename>文件，我们可以看到Subversion可以说的语言。
+     </para>
 
-      <para>The second way in which the locale is honored involves how
-        <command>svn</command> interprets your input.  The repository
-        stores all paths, filenames, and log messages in Unicode,
-        encoded as UTF-8.  In that sense, the repository is
-        <firstterm>internationalized</firstterm>&mdash; that is, the
-        repository is ready to accept input in any human language.
-        This means, however, that the Subversion client is responsible
-        for sending only UTF-8 filenames and log messages into the
-        repository.  In order to do this, it must convert the data
-        from the native locale into UTF-8.</para>
+      <para>第二种配备位置的方式包括<command>svn</command>怎样解释你的输入，版本库使用UTF-8保存了所有的路径，文件名和日志信息。在这种情况下，版本库是<firstterm>国际化的</firstterm>&mdash;也就是版本库准备接受任何人类的语言。这意味着，无论如何Subversion客户端要负责发送UTF-8的文件名和日志信息到版本库，为此，必须将数据从本地位置转化为UTF-8。
+      </para>
 
-      <para>For example, suppose you create a file
-        named<filename>caff猫.txt</filename>, and then when committing
-        the file, you write the log message as <quote>Adesso il caff猫
-        猫 pi霉 forte</quote>.  Both the filename and log message
-        contain non-ASCII characters, but because your locale is set
-        to <literal>it_IT</literal>, the Subversion client knows to
-        interpret them as Italian.  It uses an Italian character set
-        to convert the data to UTF-8 before sending them off to the
-        repository.</para>
+      <para>举个例子，你创建了一个文件叫做<filename>caffè.txt</filename>，然后提交了这个文件，你写的日志信息是<quote>Adesso il caffè è più forte</quote>，文件名和日志信息都包含非ASCII字符，但是因为你的位置设置为<literal>it_IT</literal>，Subversion知道把它们作为意大利语解释，在发送到版本库之前，它用一个意大利字符集转化数据为UTF-8。
+     </para>
 
-      <para>Note that while the repository demands UTF-8 filenames and
-        log messages, it <emphasis>does not</emphasis> pay attention
-        to file contents.  Subversion treats file contents as opaque
-        strings of bytes, and neither client nor server makes an
-        attempt to understand the character set or encoding of the
-        contents.</para>
+      <para>注意当版本库要求UTF-8文件名和日志信息时，它<emphasis>不会</emphasis>注意到文件的内容，Subversion会把文件内容看作波umingde字节串，没有任何客户端和服务器会尝试理解或是编码这些内容。</para>
 
       <sidebar>
-        <title>Character set conversion errors</title>
+        <title>字符集转换错误</title>
 
-        <para>While using Subversion, you might get hit with an error
-          related to character set conversions:</para>
+        <para>当使用Subversion，你或许会碰到一个字符集转化关联的错误：
+        </para>
 
         <screen>
 svn: Can't recode string.
 </screen>
     
-        <para>The message is cryptic, but generally occurs when the
-          Subversion client has received a UTF-8 string from the
-          repository, but the characters can't be converted to the
-          current locale.  For example, if your locale is
-          <literal>en_US</literal> but a collaborator has committed a
-          Japanese filename, you're likely to see this error when you
-          receive the file during an <command>svn
-          update</command>.</para>
+        <para>这个信息是神秘的，但是通常会发生在Subversion客户端从版本库接收到一个UTF-8串，但是字符不能转化为当前的位置，举个例子，如果你的位置是<literal>en_US</literal>，但是一个写作者使用日本文件名提交，你会在<command>svn
+          update</command>接受文件时会看到这个错误。</para>
 
-        <para>The solution is either to set your locale to something
-          which <emphasis>can</emphasis> represent the incoming UTF-8
-          data, or to change the filename or log message in the
-          repository.  (And don't forget to slap your collaborator's
-          hand&mdash;projects should decide on common languages ahead of
-          time, so that all participants are using the same
-          locale.)</para>
+        <para>解决方案或者是设置你的位置为<emphasis>可以</emphasis>表示即将到来的UTF-8数据，或者是修改版本库的文件名或信息。（不要忘记和你的合作者拍拍手&mdash;项目必须首先决定通用的语言，这样所有的参与者会使用相同的位置。）</para>
       </sidebar>
 
     </sect2>
@@ -1934,25 +1320,18 @@ svn: Can't recode string.
   <!-- *** SECTION 6:  SUBVERSION REPOSITORY URLS                      *** -->
   <!-- ******************************************************************* -->
   <sect1 id="svn-ch-7-sect-6">
-    <title>Subversion Repository URLs</title>
+    <title>Subversion版本库URL</title>
 
-    <para>As illustrated throughout this book, Subversion uses URLs to
-      identify versioned resources in Subversion repositories.  For
-      the most part, these URLs use the standard syntax, allowing for
-      server names and port numbers to be specified as part of the
-      URL:</para>
+    <para>正如我们在整个书里描述的，Subversion使用URL来识别Subversion版本库中的版本化的资源，在大多数情况，这些URL使用标准的语法，允许服务器名称和端口作为URL的一部分：
+   </para>
 
     <screen>
 $ svn checkout http://svn.example.com:9834/repos
 &hellip;
 </screen>
 
-    <para>But there are some nuances in Subversion's handling of URLs
-      that are notable.  For example, URLs containing the
-      <literal>file:</literal> access method (used for local
-      repositories) must, in accordance with convention, have either a
-      server name of <literal>localhost</literal> or no server name at
-      all:</para>
+    <para>但是Subversion处理URL还是有一些细微的差别需要注意，例如，使用<literal>file:</literal>访问方法的URL（用来访问本地版本库）必须与习惯一直，可以包括一个<literal>localhost</literal>服务器名或者没有服务器名：
+   </para>
  
     <screen>
 $ svn checkout file:///path/to/repos
@@ -1961,14 +1340,8 @@ $ svn checkout file://localhost/path/to/repos
 &hellip;
 </screen>
 
-    <para>Also, users of the <literal>file:</literal> scheme on
-      Windows platforms will need to use an unofficially
-      <quote>standard</quote> syntax for accessing repositories
-      that are on the same machine, but on a different drive than
-      the client's current working drive.  Either of the two
-      following URL path syntaxes will work where
-      <literal>X</literal> is the drive on which the repository
-      resides:</para>
+    <para>同样在Windows平台下使用<literal>file:</literal>模式时需要使用一个非正式的<quote>标准</quote>语法来访问本机但不在同一个磁盘的版本库。下b的任意一个URL路径语法都可以工作，其中的<literal>X</literal>表示版本库所在的磁盘：
+   </para>
 
     <screen>
 C:\&gt; svn checkout file:///X:/path/to/repos
@@ -1977,30 +1350,27 @@ C:\&gt; svn checkout "file:///X|/path/to/repos"
 &hellip;
 </screen>
  
-    <para>In the second syntax, you need to quote the URL so that the
-      vertical bar character is not interpreted as a pipe.  Also, note
-      that a URL uses ordinary slashes even though the native
-      (non-URL) form of a path on Windows uses backslashes.</para>
+    <para>在第二个语法，你需要引号整个URL，这样竖线字符才不会被解释为管道。当然，注意URL使用普通的斜线而不是Windows本地（不是URL）的反斜线。
+   </para>
     
-    <para>Finally, it should be noted that the Subversion client will
+    <para>最后，必须注意Subversion的客户端会根据需要自动编码URL，就像web浏览器作的，举个例子，如果一个URL包括了空格或是一个高ASCII的字符：
+    Finally, it should be noted that the Subversion client will
       automatically encode URLs as necessary, just like a web browser
       does.  For example, if a URL contains a space or upper-ASCII
       character:</para>
 
     <screen>
-$ svn checkout "http://host/path with space/project/espa帽a"
+$ svn checkout "http://host/path with space/project/españa"
 </screen>
     
-    <para>&hellip;then Subversion will escape the unsafe characters
-      and behave as if you had typed:</para>
+    <para>&hellip;然后Subversion会回避这些不安全字符，并且会像你输入了这些字符一样工作：</para>
 
     <screen>
 $ svn checkout http://host/path%20with%20space/project/espa%C3%B1a
 </screen>
 
-    <para>If the URL contains spaces, be sure to place it within quote
-      marks, so that your shell treats the whole thing as a single
-      argument to the <command>svn</command> program.</para>
+    <para>如果URL包含空格，一定使用引号标记，这样你的脚本才会把它做一个单独的<command>svn</command>参数。
+    </para>
 
   </sect1>
   
