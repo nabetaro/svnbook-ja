@@ -1,100 +1,56 @@
-  <appendix id="svn-ap-b">
-    <title>Troubleshooting</title>
+﻿  <appendix id="svn-ap-b">
+    <title>故障解决</title>
 
   <!-- ================================================================= -->
   <!-- ======================== SECTION 1 ============================== -->
   <!-- ================================================================= -->
   <sect1 id="svn-ap-b-sect-1">
-    <title>Common Problems</title>
+    <title>共同问题</title>
     
-    <para>There are a number of problems you may run into in the
-      course of installing and using Subversion.  Some of these will
-      be resolved once you get a better idea of how Subversion does
-      things, while others are caused because you're used to the way
-      that other version control systems work.  Still other problems
-      might be unsolvable due to bugs in some of the operating systems
-      that Subversion runs on (considering the wide array of OS'es
-      that Subversion runs on, it's amazing that we don't encounter
-      many more of these).</para>
+    <para>在安装和使用Subversion的过程中会有许多问题，有一些在你更加理解Subversion之后会立刻解决，而有一些会引起麻烦，因为你已经习惯于其它版本控制系统的工作方式。也有一些其它的问题不能解决是因为Subversion在一些操作系统上有bug（考虑到Subversion运行系统的广泛性，没有遇到更多已经是一件让人吃请的事情了）。
+    </para>
 
-    <para>The following list has been compiled over the course of
-      years of Subversion usage.  If you can't find the problem you're
-      having here, look at the most up-to-date version of the FAQ on
-      Subversion's main website.  If you're still stuck, then send
-      mail to <email>users@subversion.tigris.org</email> with a
-      detailed description of the problem you're having.
-      <footnote><para>Remember that the amount of detail you provide
-      about your setup and your problem is directly proportional to
-      the likelihood of getting an answer from the mailing list.
-      You're encouraged to include everything short of what you had
-      for breakfast and your mother's maiden name.</para>
+    <para>下面的列表是从Subversion多年使用过程中编辑出来的，如果你没有在这里发现问题，可以在Subversion网站上察看最新版本的FAQ。如果你还是有问题，可以发送包含你遇到问题详细描述的邮件到<email>users@subversion.tigris.org</email>。
+      <footnote><para>记住你所能提供的设置细节和问题的数量与从邮件列表得到答案的可能性成正比，鼓励你包括所有的事情，除了早饭吃了什么和你妈妈的娘家姓。
+      </para>
       </footnote></para>
       
   
     <sect2 id="svn-ap-b-sect-1.2">
-      <title>Problems Using Subversion</title>
+      <title>使用Subversion的问题</title>
       
-      <para>Here are some of the most popular questions from
-        Subversion's FAQ.</para>
+      <para>这里是Subversion的FAQ最流行的问题。</para>
 
       <sect3 id="svn-ap-b-sect-1.2.1">
-        <title>Every time I try to access my repository, my Subversion
-          client just hangs.</title>
+        <title>每当我尝试访问版本库，我的Subversion客户端挂起。</title>
         
-        <para>Your repository is not corrupt, nor is your data
-          lost. If your process accesses the repository directly
-          (mod_dav_svn, svnlook, svnadmin, or if you access a
-          <literal>file://</literal> URL), then it's using Berkeley DB to
-          access your data.  Berkeley DB is a journaling system, meaning
-          that it logs everything it is about to do before it does so.  If
-          your process is interrupted (e.g. by a kill signal or segfault),
-          then a lock file is left behind, along with a log file describing
-          unfinished business.  Any other process that attempts to
-          access the database will just hang, waiting for the lock file
-          to disappear.  To awaken your repository, you need to ask
-          Berkeley DB to either finish the work, or rewind the
-          database to a previous state that is known to be
-          consistent.</para>
+        <para>你的版本库和数据都没有损坏，如果你的进程直接访问版本库（mod_dav_svn、svnlook、svnadmin或者你通过<literal>file://</literal>的URL访问），然后它会使用Berkeley DB来访问你的数据。Berkeley DB是一个日志系统，意味着在做一件事之前会纪录下来所有的事情，如果你的进程被中断（例如一个终止信号或段错误），这样就会留下一个锁文件，还有一个描述未完成业务的日志文件。任何其它尝试访问数据库的进程会挂起，等待锁文件消失。为了唤醒你的版本库，你需要询问Berkeley DB是否结束工作，或者是恢复数据库到前一个已知的稳定状态。
+        </para>
 
-        <para>Make sure you run this command as the user that owns and
-          manages the database, not as root, or else it will leave
-          root-owned files in the db directory.  These files cannot be opened
-          by the non-root user that manages the database, which is
-          typically either you or your Apache process.  Also be sure
-          to have the correct umask set when you run recover, since
-          failing to do so will lock out users that are in the group
-          allowed to access the repository.</para>
+        <para>确定你使用数据库的拥有者和管理者用户来运行这个命令，而不是root或是其他会在db目录产生root拥有文件的用户，这些文件不可以由管理数据库的非root用户打开，通常是你或你的Apache进程。也要确定在恢复时有正确的umask设置，因为如果失败会把允许访问版本库的用户组锁在外面。
+        </para>
 
-        <para>Simply run:</para>
+        <para>简单的运行：</para>
 
 <screen>
 $ svnadmin recover /path/to/repos
 </screen>
 
-        <para>Once the command has completed, check the permissions in the
-          <filename>db/</filename> directory of the repository.</para>
+        <para>一旦这个命令完成，检查版本库<filename>db/</filename>目录的访问限制。
+        </para>
         
       </sect3>
       
       
       <sect3 id="svn-ap-b-sect-1.2.2">
-        <title>Every time I try to run <command>svn</command>, it
-          says my working copy is locked.</title>
+        <title>每当我尝试运行<command>svn</command>，它告诉我工作拷贝已经锁定。
+        </title>
         
-        <para>Subversion's working copy, just like Berkeley DB, uses a
-          journaling mechanism to perform all actions. That is, it
-          logs everything it is about to do before it does so. If
-          <command>svn</command> is interrupted while performing an
-          action, then one or more lock files are left behind, along
-          with log files describing the unfinished
-          actions. (<command>svn status</command> will show an
-          <literal>L</literal> next to locked directories.)</para>
+        <para>Subversion的工作拷贝，就像Berkeley DB使用日志机制来执行所有的操作，也就是它会在事情发生前纪录所有的操作。如果<command>svn</command>在一个动作中被中断，就会留下一个或多个锁文件以及相关的描述未完成动作的日志文件。（<command>svn status</command>会在锁定的目录前面显示一个<literal>L</literal>。）
+        </para>
         
-        <para>Any other process that attempts to access the working
-          copy will fail when it sees the locks. To awaken your
-          working copy, you need to tell the client to finish the
-          work.  To fix this, run this command from the top of your
-          working copy:</para>
+        <para>任何其它尝试访问工作拷贝的进程会在看到锁定后失败，为了唤醒工作拷贝，你需要告诉客户端完成工作，做为修正，在你的工作拷贝顶级目录运行这个命令：
+        </para>
         
         <screen>
 $ svn cleanup
@@ -104,28 +60,28 @@ $ svn cleanup
 
       
       <sect3 id="svn-ap-b-sect-1.2.3">
-        <title>I'm getting errors finding or opening a repository,
-          but I know my repository URL is correct.</title>
+        <title>我在查找和打开版本库时得到错误，而我知道我的版本库URL是正确的。
+        </title>
 
-        <para>See <xref linkend="svn-ap-b-sect-1.2.1"/>.</para>
+        <para>见<xref linkend="svn-ap-b-sect-1.2.1"/>。</para>
 
-        <para>You might also have a permissions problem opening the
-          repository.  See <xref linkend="svn-ch-6-sect-5"/>.</para>
+        <para>你也许也遇到了一个版本库访问权限问题，见<xref linkend="svn-ch-6-sect-5"/>。
+        </para>
       </sect3>
 
       
       <sect3 id="svn-ap-b-sect-1.2.4">
-        <title>How can I specify a Windows drive letter in a
-          <literal>file://</literal> URL?</title>
+        <title>我怎样在<literal>file://</literal>的URL中指定一个Windows驱动器盘符？
+        </title>
         
-        <para>See <xref linkend="svn-ch-2-sidebar-1"/>.</para>
+        <para>见<xref linkend="svn-ch-2-sidebar-1"/>。</para>
       </sect3>
       
       <sect3 id="svn-ap-b-sect-1.2.5">
-        <title>I'm having trouble doing write operations to a
-          Subversion repository over a network.</title>
+        <title>通过网络对Subversion版本库进行写操作发生问题。
+        </title>
         
-        <para>If import works fine over local access:</para>
+        <para>如果本地访问的导入工作正常：</para>
         
         <screen>
 $ mkdir test
@@ -136,7 +92,7 @@ Transmitting file data .
 Committed revision 1.
 </screen>
 
-        <para>But not from a remote host:</para>
+        <para>但不是从一个远程主机：</para>
         
         <screen>
 $ svn import test http://svn.red-bean.com/test -m "Initial import"
@@ -145,181 +101,121 @@ harry's password: xxxxxxx
 svn_error: &hellip; The specified activity does not exist.
 </screen>
         
-        <para>We've seen this when the <filename>REPOS/dav/</filename>
-          directory is not writable by the httpd process. Check the
-          permissions to ensure that Apache httpd can write to the
-          <filename>dav/</filename> directory (and to the
-          corresponding <filename>db/</filename> directory, of
-          course).</para>
+        <para>如果<filename>REPOS/dav/</filename>目录对httpd进程不是可写的我们会看这些，检查全乡来确定Apache的httpd进程可以写访问<filename>dav/</filename>目录（当然也同样对于<filename>db/</filename>目录）。
+        </para>
         
       </sect3>
 
 
       <sect3 id="svn-ap-b-sect-1.2.6">
-        <title>Under Windows XP, the Subversion server sometimes
-          seems to send out corrupted data.</title>
+        <title>在Windows XP下，Subversion服务器有时候看起来发送损坏的数据。
+        </title>
         
-        <para>You need to install Windows XP Service Pack 1 to fix a
-          TCP/IP stack bug in the operating system.  You can get all
-          sorts of information about that Service Pack at <systemitem
-          class="url">http://support.microsoft.com/default.aspx?scid=kb;EN-US;q317949</systemitem>.</para>
+        <para>你需要安装Windows XP Service Pack 1来修正操作系统的TCP/IP堆栈bug，你可以查看<systemitem
+          class="url">http://support.microsoft.com/default.aspx?scid=kb;EN-US;q317949</systemitem>来得到这个Service Pack的所有信息。
+        </para>
       </sect3>
       
       
       <sect3 id="svn-ap-b-sect-1.2.7">
-        <title>What is the best method of doing a network trace of
-          the conversation between a Subversion client and
-          Apache server?</title>
+        <title>跟踪Subversion客户端和Apache服务器通话最好的方法是什么？
+        </title>
         
-        <para>Use Ethereal to eavesdrop on the conversation:</para>
+        <para>使用Ethereal来偷听对话：</para>
 
         <note>
-          <para>The following instructions are specific to the
-            graphical version of Ethereal, and may not apply to the
-            command line version (whose binary is usually named
-            <command>tethereal</command>).</para>
+          <para>如下的指导针对Ethereal的图形化版本，不是应用在命令行版本（二进制文件通常叫做<command>tethereal</command>）。
+          </para>
         </note>
         
         <itemizedlist>
           <listitem>
-            <para>Pull down the Capture menu, and choose
-              Start.</para>
+            <para>打开Capture菜单，选择Start。</para>
           </listitem>
           
           <listitem>
-            <para>Type port 80 for Filter, and turn off promiscuous
-              mode.</para>
+            <para>Filter的port输入80，关闭promiscuous模式。</para>
           </listitem>
           
           <listitem>
-            <para>Run your Subversion client.</para>
+            <para>运行Subversion客户端。</para>
           </listitem>
           
           <listitem>
-            <para>Hit Stop. Now you have a capture. It looks like a
-              huge list of lines.</para>
+            <para>点击Stop，你现在已经捕捉了，它看起来像是巨大的行列表。</para>
           </listitem>
           
           <listitem>
-            <para>Click on the Protocol column to sort.</para>
+            <para>点击Protocol列来排序。</para>
           </listitem>
           
           <listitem>
-            <para>Then, click on the first relevant TCP line to
-              select it.</para>
+            <para>然后，点击第一个相关的TCP行来选择它。</para>
           </listitem>
           
           <listitem>
-            <para>Right click, and choose Follow TCP Stream. You'll
-              be presented with the request/response pairs of the
-              Subversion client's HTTP conversion.</para>
+            <para>右键，选择Follow TCP Stream，你会看到Subversion客户端的HTTP对话的请求/响应对。
+            </para>
           </listitem>
         </itemizedlist>
         
-        <para>Alternatively, you may set a parameter in your client's
-          <filename>servers</filename> run-time configuration file to
-          cause Neon's debugging output to appear.  The numeric value
-          of neon-debug is a combination of the
-          <literal>NE_DBG_*</literal> values in the header file
-          <filename>ne_utils.h</filename>. Setting the
-          <literal>neon-debug-mask</literal> variable to 130
-          (i.e. <literal>NE_DBG_HTTP + NE_DBG_HTTPBODY</literal>) will
-          cause the HTTP data to be shown.</para>
+        <para>另一种选择，你可以在客户端的<filename>servers</filename>运行配置文件中设置一个参数，来允许neon调试信息的出现，neon-debug得数字值是头文件<filename>ne_utils.h</filename>中<literal>NE_DBG_*</literal>值的组合，设置<literal>neon-debug-mask</literal>变量为130（例如<literal>NE_DBG_HTTP + NE_DBG_HTTPBODY</literal>）会导致显示HTTP数据。
+        </para>
 
-        <para>You may well want to disable compression when doing a
-          network trace by tweaking the
-          <literal>http-compression</literal> parameter in the same
-          file.</para>
+        <para>你或许也会希望在网络跟踪时关掉压缩，可以通过设置同一个文件的<literal>http-compression</literal>参数。
+        </para>
       </sect3>
 
       <sect3 id="svn-ap-b-sect-1.2.8">
-        <title>I just built the distribution binary, and when I try to
-          check out Subversion, I get an error about an <quote>Unrecognized
-          URL scheme.</quote></title>
+        <title>我刚刚编译了二进制分发版本，当我尝试检出Subversion，我得到一个<quote>Unrecognized
+          URL scheme</quote>错误。</title>
         
-        <para>Subversion uses a plugin system to allow access to
-          repositories.  Currently there are three of these plugins:
-          ra_local allows access to a local repository, ra_dav
-          allows access to a repository via WebDAV, and ra_svn allows
-          local or remote access via the svnserve server.  When you
-          attempt to perform an operation in Subversion, the program
-          tries to dynamically load a plugin based on the URL scheme.
-          A <literal>file://</literal> URL will try to load ra_local,
-          and an <literal>http://</literal> URL will try to load ra_dav.</para>
+        <para>Subversion使用一个插件系统来允许访问版本库，当前有三种这样的插件：ra_local允许访问本地版本库，ra_dav允许通过WebDAV访问，而ra_svn允许通过svnserve服务器本地或远程访问。当你尝试执行一个Subversion操作，程序会根据URL模式动态的加载一个插件，<literal>file://</literal>的URL会加载ra_local，而<literal>http://</literal>的URL会尝试ra_dav。
+        </para>
 
-        <para>The error you are seeing means that the dynamic
-          linker/loader can't find the plugins to load.  This normally
-          happens when you build Subversion with shared libraries,
-          then attempt to run it without first running <command>make
-          install</command>.  Another possible cause is that you ran
-          make install, but the libraries were installed in a location
-          that the dynamic linker/loader doesn't recognize.  Under
-          Linux, you can allow the linker/loader to find the libraries
-          by adding the library directory to
-          <filename>/etc/ld.so.conf</filename> and running ldconfig.
-          If you don't wish to do this, or you don't have root access,
-          you can also specify the library directory in the
-          LD_LIBRARY_PATH environment variable.</para>
+        <para>你看到的错误意味着动态链接器/加载器不能发现需要加载的插件，这通常是因为你使用共享库编译Subversion，然后尝试在没有首先运行<command>make
+          install</command>时运行它。另一个可能的原因是你运行了make install，但是库安装的位置动态链接器/加载器不能识别，。在Linux，你可以通过在库目录添加<filename>/etc/ld.so.conf</filename>并运行ldconfig来允许链接器/加载器找到这些库。如果你不希望这样做，或者是你没有root权限，你可以直接在LD_LIBRARY_PATH环境变量中指定库目录。
+        </para>
         </sect3>
 
 
       <sect3 id="svn-ap-b-sect-1.2.9">
-        <title>Why does the <command>svn revert</command> command
-          require an explicit target? Why is it not recursive by
-          default? This behavior differs from almost all the other
-          subcommands.</title>
+        <title>为什么<command>svn revert</command>命令要有一个明确的目标？为什么缺省不是递归的？它的行为方式与大多数其它子命令不同。
+        </title>
 
-        <para>The short answer: it's for your own good.</para>
+        <para>一句话：它有自己的好处。</para>
 
-        <para>Subversion places a very high priority on protecting
-          your data, and not just your versioned data.  Modifications
-          that you make to already-versioned files, and new files
-          scheduled for addition to the version control system, must
-          be treated with care.</para>
+        <para>Subversion把保护你的数据作为非常高的优先级，对于已经版本化的文件的修改，和预定要添加到版本控制的文件，必须小心对待。
+        </para>
         
-        <para>Making the <command>svn revert</command> command require
-          an explicit target&mdash;even if that target is just
-          <quote>.</quote>&mdash;is one way of accomplishing that.
-          This requirement (as well as requiring you to supply the
-          <option>--recursive</option> flag if you want that behavior)
-          is intended to make you really think about what you're
-          doing, because once your files are reverted, your local
-          modifications are gone forever.</para>        
+        <para>让<command>svn revert</command>命令需要一个明确的目标&mdash;即使目标只是<quote>.</quote>&mdash;是实现这个目的的一个方法。这个要求（同样的还有要求使用<option>--recursive</option>来实现递归的行为）是为了让你清楚自己所做的事情，因为一旦你的文件被恢复，你的本地修改就会永远消失。
+        </para>        
       </sect3>
 
 
       <sect3 id="svn-ap-b-sect-1.2.10">
-        <title>When I start Apache, mod_dav_svn complains about a
-          <quote>bad database version</quote>, that it found db-3.X,
-          rather than db-4.X.</title>
+        <title>当我启动Apache，mod_dav_svn抱怨说发现一个<quote>bad database version</quote>，它发现了db-3.X而不是db-4.X。
+        </title>
 
-        <para>Your apr-util linked against DB-3, and svn linked
-          against DB-4.  Unfortunately, the DB symbols aren't
-          different.  When mod_dav_svn is loaded into Apache's
-          process-space, it ends up resolving the symbol names against
-          apr-util's DB-3 library.</para>
+        <para>你的apr-util链接了DB-3，而svn链接了DB-4，很不幸，DB对象并没有区别。当mod_dav_svn加载到Apache的处理空间，它无法解析针对apr-util的DB-3的对象名称。
+        </para>
 
-        <para>The solution is to make sure apr-util compiles against
-          DB-4.  You can do this by passing specific switches to
-          either apr-util's or Apache's configure: "--with-dbm=db4
-          --with-berkeley-db=/the/db/prefix".</para>
+        <para>解决方案是确定apr-util针对DB-4编译，你可以通过指定apr-util或Apache的选项来完成这一点："--with-dbm=db4
+          --with-berkeley-db=/the/db/prefix"。
+        </para>
       </sect3>
 
 
       <sect3 id="svn-ap-b-sect-1.2.11">
-        <title>I'm getting <quote>Function not implemented</quote>
-          errors on RedHat 9, and nothing works. How do I fix
-          this?</title>
+        <title>我在RedHat 9得到<quote>Function not implemented</quote>错误，无法工作，我如何修正这个问题？
+        </title>
 
-        <para>This is not really a problem with Subversion, but it often
-          affects Subversion users.</para>
+        <para>这不是Subversion的问题，但是经常影响Subversion用户。
+        </para>
 
-        <para>RedHat 9 and Fedora ship with a Berkeley DB library that
-          relies on the kernel support for NPTL (the Native Posix
-          Threads Library).  The kernels that RedHat provides have
-          this support built in, but if you compile your own kernel,
-          then you may well not have the NPTL support.  If that is the
-          case, then you will see errors like this:</para>
+        <para>RedHat 9和Fedora分发版本中包括了Berkeley DB库，依赖于为NPTL（the Native Posix
+          Threads Library）内核支持，RedHat得内核提供了内置的支持，但是如果你编译了你的内核，你或许不再有NPTL的支持，所以这种情况下你会看到这样的错误：
+        </para>
 
 <screen>
 svn: Berkeley DB error
@@ -327,38 +223,30 @@ svn: Berkeley DB error while creating environment for filesystem tester/db:
 Function not implemented
 </screen>
 
-        <para>This can be fixed in one of several ways:</para>
+        <para>可以用以下的任意一种方法修正这个问题：</para>
 
         <itemizedlist>
-          <listitem><para>Rebuild db4 for the kernel you're
-          using.</para></listitem>
+          <listitem><para>重新为你使用的内核编译db4。</para></listitem>
 
-          <listitem><para>Use a RedHat 9 kernel.</para></listitem>
+          <listitem><para>使用RedHat 9的内核。</para></listitem>
 
-          <listitem><para>Apply the NPTL patches to the kernel you're
-              using.</para></listitem>
+          <listitem><para>为你使的内核应用NPTL补丁。</para></listitem>
 
-          <listitem><para>Use a recent (2.5.x) kernel with the NPTL support
-              included.</para></listitem>
+          <listitem><para>使用最近的（2.5.x）包括NPTL支持的内核。
+          </para></listitem>
 
-          <listitem><para>Check if environment variable
-              <literal>LD_ASSUME_KERNEL</literal> is set to 2.2.5, and
-              if so, unset it before starting Subversion
-              (Apache). (You usually would set this variable to run
-              Wine or Winex on RedHat 9)</para></listitem>
+          <listitem><para>检查环境变量<literal>LD_ASSUME_KERNEL</literal>是否设置为2.2.5，如果是，在运行Subversion（Apache）之前取消设置。（在RedHat 9运行Wine或Winex时你通常会设置这个变量）
+          </para></listitem>
         </itemizedlist>          
       </sect3>
 
 
       <sect3 id="svn-ap-b-sect-1.2.12">
-        <title>Why does log say <quote>(no author)</quote> for files
-          committed or imported via Apache (ra_dav)?</title>
+        <title>为什么日志说通过Apache（ra_dav）提交或导入的文件<quote>(no author)</quote>？
+        </title>
 
-        <para>If you allow anonymous write access to the repository
-          via Apache, the Apache server never challenges the client
-          for a username, and instead permits the write operation
-          without authentication.  Since Subversion has no idea who
-          did the operation, this results in a log like this:</para>
+        <para>如果你允许通过Apache的匿名写访问版本库，Apache从不会要求客户端的用户名，而且在写操作中没有人证，因此Subversion对于谁做的操作一无所知，这导致了这样的日志：
+        </para>
 
 <screen>
 $ svn log
@@ -367,91 +255,53 @@ rev 24:&nbsp; (no author) | 2003-07-29 19:28:35 +0200 (Tue, 29 Jul 2003)
 &hellip;
 </screen>
 
-        <para>Read about adding authentication in <xref
-          linkend="svn-ch-6"/>.</para>
+        <para>阅读如何添加认证在<xref
+          linkend="svn-ch-6"/>。</para>
       </sect3>
 
 
       <sect3 id="svn-ap-b-sect-1.2.13">
-        <title>I'm getting occasional <quote>Access Denied</quote>
-          errors on Windows.  They seem to happen at random.</title>
+        <title>我偶然在Windows得到<quote>Access Denied</quote>错误，它们看起来随即出现。
+        </title>
 
-        <para>These appear to be due to the various Windows services
-          that monitor the filesystem for changes (anti-virus
-          software, indexing services, the COM+ Event Notification
-          Service).  This is not really a bug in Subversion, which
-          makes it difficult for to fix.  A summary of the current
-          state of the investigation is available at <systemitem
-          class="url">http://www.contactor.se/~dast/svn/archive-2003-10/0136.shtml</systemitem>.
-          A workaround that should reduce the incidence rate for most
-          people was implemented in revision 7598.</para>
+        <para>这看起来是因为不同的监控文件系统变化（杀毒软件、目录服务和COM+事件通知服务）的Windows服务。这不是Subversion的bug，让修正变得很困难。当前状态的研究总结在<systemitem
+          class="url">http://www.contactor.se/~dast/svn/archive-2003-10/0136.shtml</systemitem>，一个用来减少大多数人发生概率的工作区在修订版本7598已经实现。
+        </para>
       </sect3>
 
 
       <sect3 id="svn-ap-b-sect-1.2.14">
-        <title>On FreeBSD, certain operations (especially svnadmin
-          create) sometimes hang.</title>
+        <title>在FreeBSD，某些操作（特别是svnadmin
+          create）有时会挂起。
+        </title>
 
-        <para>This is usually due to a lack of available entropy on
-          the system.  Subversion asks APR to generate random numbers
-          to create UUIDs from time to time, and certain operating
-          systems will block for high-quality randomness.  You
-          probably need to configure the system to gather entropy from
-          sources such as hard-disk and network interrupts.  Consult
-          your system manpages, specifically
-          <command>random(4)</command> and
-          <command>rndcontrol(8)</command> on how to effect this
-          change.  Another workaround is to compile APR against
-          <filename>/dev/urandom</filename> instead of
-          <filename>/dev/random</filename>.</para>
+        <para>这通常是因为系统缺乏可用的信息量，Subversion一次次询问APR产生随机数来创建UUID，特定操作系统会阻止高质量的随机性，你可能需要配置系统从硬盘和网络中断等资源中收集信息，咨询你的系统管理员，明确<command>random(4)</command>和<command>rndcontrol(8)</command>怎样影响这些变化。另一个工作区让APR根据<filename>/dev/urandom</filename>而不是<filename>/dev/random</filename>编译。
+        </para>
       </sect3>
 
 
       <sect3 id="svn-ap-b-sect-1.2.15">
-        <title>I can see my repository in a web browser, but
-          <command>svn checkout</command> gives me an error about
-          <literal>301 Moved Permanently</literal>.</title>
+        <title>我可以在web浏览器看到我的版本库，但是<command>svn checkout</command>给我一个<literal>301 Moved Permanently</literal>错误。
+        </title>
 
-        <para>It means your httpd.conf is misconfigured.  Usually this
-          error happens when you've defined the Subversion virtual
-          <quote>location</quote> to exist within two different scopes
-          at the same time.</para>
+        <para>这意味着你的httpd.conf错误的配置，通常这个错误发生在你定义Subversion虚拟<quote>location</quote>时使之同时存在于两个不同的范围。
+        </para>
 
-        <para>For example, if you've exported a repository as
-          <literal>&lt;Location /www/foo&gt;</literal>, but you've
-          also set your <literal>DocumentRoot</literal> to be
-          <filename>/www</filename>, then you're in trouble.  When the
-          request comes in for <filename>/www/foo/bar</filename>,
-          Apache doesn't know whether to find a
-          <emphasis>real</emphasis> file named
-          <filename>/foo/bar</filename> within your
-          <literal>DocumentRoot</literal>, or whether to ask
-          mod_dav_svn to fetch a file <filename>/bar</filename> from
-          the <filename>/www/foo</filename> repository.  Usually the
-          former case wins, and hence the "Moved Permanently"
-          error.</para>
+        <para>例如，如果你已经以<literal>&lt;Location /www/foo&gt;</literal>导出了一个版本库，但是你也已经设置了<literal>DocumentRoot</literal>为<filename>/www</filename>，然后你会陷入麻烦，当请求要得到<filename>/www/foo/bar</filename>，Apache不知道是去找一个<literal>DocumentRoot</literal>下的<emphasis>真实</emphasis>文件<filename>/foo/bar</filename>还是询问mod_dav_svn从<filename>/www/foo</filename>版本库得到一个文件<filename>/bar</filename>，通常是前一种情况发生作用，因此得到"Moved Permanently"错误。
+        </para>
 
-        <para>The solution is to make sure your repository
-          <literal>&lt;Location&gt;</literal> does not overlap or live
-          within any areas already exported as normal web
-          shares.</para>
+        <para>解决方案是确定你的版本库的<literal>&lt;Location&gt;</literal>没有重叠，或者是没有存在于已经作为普通web共享暴露的目录。
+        </para>
       </sect3>
 
       
       <sect3 id="svn-ap-b-sect-1.2.16">
-        <title>I'm trying to look at an old version of my file, but
-          svn says something about <quote>path not
-          found</quote>.</title>
+        <title>我尝试察看我的文件的一个老版本，但是svn告诉我<quote>path not
+          found</quote>。
+        </title>
 
-        <para>A nice feature of Subversion is that the repository
-          understands copies and renames, and preserves the historical
-          connections.  For example, if you copy
-          <filename>/trunk</filename> to
-          <filename>/branches/mybranch</filename>, then the repository
-          understands that every file in the branch has a
-          <quote>predecessor</quote> in the trunk.  Running
-          <command>svn log --verbose</command> will show you the
-          historical copy, so you can see the rename:</para>
+        <para>Subversion的一个好的特性是版本库理解拷贝和重命名，并且保留历史联系。举个例子，如果你拷贝<filename>/trunk</filename>到<filename>/branches/mybranch</filename>，然后版本库理解为在分支的每个文件都在trunk有个<quote>前辈</quote>。运行<command>svn log --verbose</command>会显示历史拷贝，所以你可以看到重命名：
+        </para>
 
 <screen>
 r7932 | joe | 2003-12-03 17:54:02 -0600 (Wed, 03 Dec 2003) | 1 line
@@ -459,27 +309,12 @@ Changed paths:
    A /branches/mybranch (from /trunk:7931)
 </screen>
 
-        <para>Unfortunately, while the repository is aware of copies
-          and renames, almost all the svn client subcommands in
-          version 1.0 are <emphasis>not</emphasis> aware.  Commands
-          like <command>svn diff</command>, <command>svn
-          merge</command>, and <command>svn cat</command> ought to
-          understand and follow renames, but don't yet do this.  It's
-          scheduled as a post-1.0 feature.  For example, if you ask
-          <command>svn diff</command> to compare two earlier versions
-          of <filename>/branches/mybranch/foo.c</filename>, the
-          command will not automatically understand that the task
-          actually requires comparing two versions of
-          <filename>/trunk/foo.c</filename>, due to the rename.
-          Instead, you'll see an error about how the branch-path
-          doesn't exist in the earlier revisions.</para>
+        <para>很不幸，当版本库意识到拷贝和重命名，版本1.0的几乎所有的svn客户端子命令还<emphasis>没有</emphasis>意识到。command>svn diff</command>、<command>svn
+          merge</command>和<command>svn cat</command>应该理解这些重命名，但是它们没有。它们是1.0之后的特性，举个例子，如果你询问<command>svn diff</command>比较两个早期版本的<filename>/branches/mybranch/foo.c</filename>，这个命令不会自动理解为实际上我们是要比较两个版本的<filename>/trunk/foo.c</filename>，因为这个重命名。相反，你会看到一个错误说这个分支路径在早期的修订版本并不存在。
+          </para>
 
-        <para>The workaround for all problems of this sort is to do
-          the legwork yourself.  That is: <emphasis>you</emphasis>
-          need to be aware of any renamed paths, discover them
-          yourself using <command>svn log -v</command>, and then
-          provide them explicitly to the svn client.  For example,
-          instead of running</para>
+        <para>解决所有此类问题的方法是你自己的调查，也就是：<emphasis>你</emphasis>需要知道所有的重命名路径，自己使用<command>svn log -v</command>去发现，然后明确地告诉svn客户端，例如，我们不应该运行
+        </para>
 
 <screen>
 $ svn diff -r 1000:2000 http://host/repos/branches/mybranch/foo.c
@@ -487,7 +322,7 @@ svn: Filesystem has no item
 svn: '/branches/mybranch/foo.c' not found in the repository at revision 1000
 </screen>
 
-        <para>...you would instead run</para>
+        <para>...而会运行</para>
 
 <screen>
 $ svn diff -r1000:2000 http://host/repos/trunk/foo.c
