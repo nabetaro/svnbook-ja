@@ -115,8 +115,9 @@ def main():
   diff = os.popen(cmd.substitute(a='diff', r1=last, r2=base, t=fname)).read()
   if len(diff) != 0:
     os.system(cmd.substitute(a='log', r1=last, r2=base, t=fname))
-    raw_input('Above is log message, to see diff press ENTER')
-    print diff
+#    raw_input('Above is log message, to see diff press ENTER')
+#    print diff
+    f = file('../'+fname+'.diff', 'w'); f.write(diff); f.close()
     os.system(cmd.substitute(a='merge', r1=last, r2=base, t=fname))
   set_last(fname, str(base))
 
