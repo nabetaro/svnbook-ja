@@ -472,25 +472,29 @@
         
       </para>
 
-      <para>In Apache httpd-2.0, mod_dav supports the
-        <literal>LOCK</literal> method by tracking locks in a private
-        database, assuming that the provider is willing to accept
-        them.  In Apache httpd-2.1 or later, however, this locking
-        support has been broken into an independent module,
-        mod_dav_lock.  It allows any mod_dav provider to take
-        advantage of the lock database, including mod_dav_svn, even
-        though mod_dav_svn doesn't actually understand locking.</para>
+      <para>
+        En Apache httpd-2.0, mod_dav soporta el método <literal>LOCK</literal>
+        llevando la cuenta de los bloqueos en una base de datos privada,
+        asumiendo que el proveedor quiera aceptar esto. En Apache httpd-2.1 o
+        posterior, sin embargo, el soporte de bloqueo se ha puesto en un módulo
+        independiente, mod_dav_lock. Esto le permite a cualquier proveedor de
+        mod_dav hacer uso de la base de datos de bloqueos, incluyendo a
+        mod_dav_svn, aún cuando mod_dav_svn no sabe nada de bloqueo actualmente.
+      </para>
 
-      <para>Confused yet?</para>
+      <para>¿Confundido aún?</para>
 
-      <para>In a nutshell, you can use mod_dav_lock in Apache
-        httpd-2.1 (or later) to create the
-        <emphasis>illusion</emphasis> that mod_dav_svn is honoring
-        <literal>LOCK</literal> requests.  Make sure mod_dav_lock is
-        either compiled into httpd, or being loaded in your
-        <filename>httpd.conf</filename>.  Then simply add the
-        <literal>DAVGenericLockDB</literal> directive to your
-        <literal>Location</literal> like so:</para>
+      <para>
+        Resumiendo, mod_dav_lock puede usarse en Apache httpd-2.1
+        <!--TODO:cómo carajos se traduce "in a nutshell"?-->
+        (o posterior) para crear la <emphasis>ilusión</emphasis> de que
+        mod_dav_svn está cumpliendo las peticiones <literal>LOCK</literal>.
+        <!--TODO:mod_dav_svn is honoring--> 
+        Asegúrese de que mod_dav_lock esté compilado en httpd, o de que está
+        siendo cargado en su <filename>httpd.conf</filename>. Luego simplemente
+        añada la directiva <literal>DAVGenericLockDB</literal> a su archivo 
+        de manera similar a ésta:
+      </para>
 
       <screen>
         &lt;Location /repos&gt;
@@ -501,7 +505,13 @@
         &lt;/Location&gt;
       </screen>
 
-      <para>This technique is a risky business; in some sense, the
+      <para>
+        Esta técnica es un negocio peligroso; de cierta manera, mod_dav_svn le
+        está mintiendo ahora al cliente WebDAV. El módulo dice aceptar las
+        solicitudes <literal>LOCK</literal>, pero en realidad el bloqueo 
+
+        
+        This technique is a risky business; in some sense, the
         mod_dav_svn is now lying to the WebDAV client.  It claims to
         accept the <literal>LOCK</literal> request, but in reality the
         lock isn't being enforced at all levels.  If a second WebDAV
