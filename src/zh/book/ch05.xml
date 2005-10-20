@@ -1,42 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <chapter id="svn-ch-5">
-  <title>资料库管理</title>
+  <title>版本库管理</title>
 
   <simplesect>
-    <para>Subversion的资料库是任意数量项目受版本控制数据的中央仓库。正因如此，它成为管理员关注的焦点。资料库一般并不需要太多的照顾，但为了避免一些潜在的问题和解决一些实际问题，理解怎样适当的配置和维护还是很必要。</para>
+    <para>Subversion的版本库是任意数量项目受版本控制数据的中央仓库。正因如此，它成为管理员关注的焦点。版本库一般并不需要太多的照顾，但为了避免一些潜在的问题和解决一些实际问题，理解怎样适当的配置和维护还是很必要。</para>
 
-    <para>在这一章里，我们将讨论如何建立和配置一个Subversion资料库，还会讨论资料库的维护，包括<command>svnlook</command>和<command>svnadmin</command>工具的使用（它们都包含在Subversion中）。我们将说明一些通常的问题和错误，并提供一些安排资料库数据的建议。</para>
+    <para>在这一章里，我们将讨论如何建立和配置一个Subversion版本库，还会讨论版本库的维护，包括<command>svnlook</command>和<command>svnadmin</command>工具的使用（它们都包含在Subversion中）。我们将说明一些通常的问题和错误，并提供一些安排版本库数据的建议。</para>
 
-    <para>如果您只是以普通用户的身份访问资料库对数据进行版本控制（就是说通过Subversion客户端），您完全可以跳过本章。但是如果您已经是或打算成为Subversion资料库的管理员，您一定要关注一下本章的内容。<footnote>
+    <para>如果您只是以普通用户的身份访问版本库对数据进行版本控制（就是说通过Subversion客户端），您完全可以跳过本章。但是如果您已经是或打算成为Subversion版本库的管理员，您一定要关注一下本章的内容。<footnote>
         <para>这些可能听起来很高深， 但我们所说的只是针对管理别人工作数据这块神秘领域感兴趣的人。</para>
       </footnote></para>
   </simplesect>
 
   <!-- ******************************************************************* -->
 
-  <!-- *** 第一部分:  资料库基本知识                                   *** -->
+  <!-- *** 第一部分:  版本库基本知识                                   *** -->
 
   <!-- ******************************************************************* -->
 
   <sect1 id="svn-ch-5-sect-1">
-    <title>资料库基本知识</title>
+    <title>版本库基本知识</title>
 
-    <para>在进入资料库管理这块宽广的领域之前，让我们进一步确定一下资料库的定义。它看起来什么样？让人有什么感觉？它喜欢喝热茶还是冰的？加糖吗？加柠檬吗？作为一名管理员，你应该既从逻辑表现－数据在资料库中如何展示，又从物理具体细节－资料库如何响应一个非Subversion的工具，来理解资料库的组成。下面部分从一个比较高的层面覆盖了这些基本概念。</para>
+    <para>在进入版本库管理这块宽广的领域之前，让我们进一步确定一下版本库的定义。它看起来什么样？让人有什么感觉？它喜欢喝热茶还是冰的？加糖吗？加柠檬吗？作为一名管理员，你应该既从逻辑表现－数据在版本库中如何展示，又从物理具体细节－版本库如何响应一个非Subversion的工具，来理解版本库的组成。下面部分从一个比较高的层面覆盖了这些基本概念。</para>
 
     <!-- ***************************************************************** -->
 
     <sect2 id="svn-ch-5-sect-1.1">
       <title>了解事务和修订版</title>
 
-      <para>从概念上来说，Subversion的资料库就是一串目录树。每一个目录树，就是资料库的文件和目录在某一时间点的快照。这些快照是客户端使用者操作的结果，被成为修订版。</para>
+      <para>从概念上来说，Subversion的版本库就是一串目录树。每一个目录树，就是版本库的文件和目录在某一时间点的快照。这些快照是客户端使用者操作的结果，被成为修订版。</para>
 
-      <para>每一个修订版都是以事务树开始其生命周期。做提交操作时，客户端建立一个一个Subversion事务，映射本地的变更（加上客户端提交操作后任何对资料库的更改），然后通知资料库将该树存储为下一个快照。如果提交成功，这个事务就会成为新的修订版树，并被赋予新的修订版号。如果因为某些原因提交失败，事务会被销毁，客户端将被通知这个事务失败。</para>
+      <para>每一个修订版都是以事务树开始其生命周期。做提交操作时，客户端建立一个一个Subversion事务，映射本地的变更（加上客户端提交操作后任何对版本库的更改），然后通知版本库将该树存储为下一个快照。如果提交成功，这个事务就会成为新的修订版树，并被赋予新的修订版号。如果因为某些原因提交失败，事务会被销毁，客户端将被通知这个事务失败。</para>
 
-      <para>更新的动作也类似这样。客户端建立一个临时的事务树，映射工作文件的状态。然后资料库比较事务树和被请求的修订版树（通常是最新的，也就是最“年轻”的修订版树），然后发回消息通知客户端哪些变更需要将拷贝发送到修订版树。更新完成后，临时事务将被删除。</para>
+      <para>更新的动作也类似这样。客户端建立一个临时的事务树，映射工作文件的状态。然后版本库比较事务树和被请求的修订版树（通常是最新的，也就是最“年轻”的修订版树），然后发回消息通知客户端哪些变更需要将拷贝发送到修订版树。更新完成后，临时事务将被删除。</para>
 
-      <para>事务树的使用，是对资料库中版本控制文件系统产生永久变更的唯一方法。一个事务的生命周期非常灵活，了解这一点很重要。在更新的情况下，事务只是马上会被销毁的临时树。在提交的情况下，事务会变成固定的修订版（如果失败的情况下，则会被删除）。在出现错误或臭虫的情况下，事务可能会被留在资料库中（不会影响任何东西，但是会占据空间）。</para>
+      <para>事务树的使用，是对版本库中版本控制文件系统产生永久变更的唯一方法。一个事务的生命周期非常灵活，了解这一点很重要。在更新的情况下，事务只是马上会被销毁的临时树。在提交的情况下，事务会变成固定的修订版（如果失败的情况下，则会被删除）。在出现错误或臭虫的情况下，事务可能会被留在版本库中（不会影响任何东西，但是会占据空间）。</para>
 
-      <para>理论上，某天整个流程能够发展到对事务的流程控制更加细密。可以想象一个系统，在客户端完成操作，将要保存到资料库中时，每个加到它的事务都变成一个修订版。这将会使每一个新的提交都可以被别人查看到，也许是主管，也许是质量保证小组，他们可以决定是要接收这个事务成为修订版，还是放弃它。</para>
+      <para>理论上，某天整个流程能够发展到对事务的流程控制更加细密。可以想象一个系统，在客户端完成操作，将要保存到版本库中时，每个加到它的事务都变成一个修订版。这将会使每一个新的提交都可以被别人查看到，也许是主管，也许是质量保证小组，他们可以决定是要接收这个事务成为修订版，还是放弃它。</para>
     </sect2>
 
     <!-- ***************************************************************** -->
@@ -44,9 +44,9 @@
     <sect2 id="svn-ch-5-sect-1.2">
       <title>未受版本控制的属性</title>
 
-      <para>事务和修订版在Subversion资料库中可以附加属性。这些属性通常是属性名和属性值的映射，被用来存储与对应档案树有关的信息。这些属性名和属性值跟你的其他数据一样，被存储在资料库文件系统中。</para>
+      <para>事务和修订版在Subversion版本库中可以附加属性。这些属性通常是属性名和属性值的映射，被用来存储与对应档案树有关的信息。这些属性名和属性值跟你的其他数据一样，被存储在版本库文件系统中。</para>
 
-      <para>修订版和事务的属性对于跟一个资料树相关，但不是完全与这些目录和文件相关的性质很有用－即并不被客户端工作拷贝所管理的属性。举例来说，当一个新的提交事务在资料库中被创建时，Subversion给这个事务添加一个叫做<literal>svn:date</literal>的属性—一个表示事务何时被创建的时间戳。当提交进程结束，该事务成为一个固定的版本，这个档案树被赋予一个用来存储这个版本作者的用户名属性（<literal>svn:author</literal>）和一个用来存储与这个修订版关联的日志信息的属性（<literal>svn:log</literal>）。</para>
+      <para>修订版和事务的属性对于跟一个资料树相关，但不是完全与这些目录和文件相关的性质很有用－即并不被客户端工作拷贝所管理的属性。举例来说，当一个新的提交事务在版本库中被创建时，Subversion给这个事务添加一个叫做<literal>svn:date</literal>的属性—一个表示事务何时被创建的时间戳。当提交进程结束，该事务成为一个固定的版本，这个档案树被赋予一个用来存储这个版本作者的用户名属性（<literal>svn:author</literal>）和一个用来存储与这个修订版关联的日志信息的属性（<literal>svn:log</literal>）。</para>
 
       <para>修订版和事务的属性都是未受版本控制的－因为当它们被修改时，先前的值就被完全舍弃了。修订版树自身是不能变更的，与之关联的属性可以修改。你可在日后添加、删除、修改修订版的属性。如果你提交一个新的修订版之后意识到遗漏了一些信息或在日志中有拼写错误，你可以直接以正确的信息覆盖<literal>svn:log</literal>的值。</para>
     </sect2>
@@ -54,16 +54,16 @@
     <!-- ***************************************************************** -->
 
     <sect2 id="svn-ch-5-sect-1.3">
-      <title>资料库数据存储</title>
+      <title>版本库数据存储</title>
 
-      <para>在Subversion1.1中，有两种方式在资料库中存储数据。一种是在BerkeleyDB数据库中存储数据；另一种是使用通常的格式，在文件中存储。因为Subversion的开发者称资料库为“版本化的文件系统”，他们接受了称后一种存储方式为FSFS，即使用本地操作系统文件系统来存储数据的版本化文件系统的习惯。</para>
+      <para>在Subversion1.1中，有两种方式在版本库中存储数据。一种是在BerkeleyDB数据库中存储数据；另一种是使用通常的格式，在文件中存储。因为Subversion的开发者称版本库为“版本化的文件系统”，他们接受了称后一种存储方式为FSFS，即使用本地操作系统文件系统来存储数据的版本化文件系统的习惯。</para>
 
-      <para>建立一个资料库时，管理员必须决定使用BerkeleyDB还是FSFS。他们各有优缺点，我们将描述一下。它们任何一个都不比另一个更正式，访问资料库的程序与采用哪一种实现方式无关。访问程序并不知道资料库如何存储数据，它们只是从资料库的API读取到修订版和事务树。</para>
+      <para>建立一个版本库时，管理员必须决定使用BerkeleyDB还是FSFS。他们各有优缺点，我们将描述一下。它们任何一个都不比另一个更正式，访问版本库的程序与采用哪一种实现方式无关。访问程序并不知道版本库如何存储数据，它们只是从版本库的API读取到修订版和事务树。</para>
 
-      <para>下面的表从总体上比较了 Berkeley DB 和 FSFS 资料库。 下一部分将会详细讲述细节。</para>
+      <para>下面的表从总体上比较了 Berkeley DB 和 FSFS 版本库。 下一部分将会详细讲述细节。</para>
 
       <table id="svn-ch-5-table-1">
-        <title>资料库数据存储对照表</title>
+        <title>版本库数据存储对照表</title>
 
         <tgroup cols="3">
           <thead>
@@ -112,7 +112,7 @@
             </row>
 
             <row>
-              <entry>资料库大小</entry>
+              <entry>版本库大小</entry>
 
               <entry>稍大</entry>
 
@@ -181,18 +181,18 @@
         <para>在Subversion的初始设计阶段，开发者因为多种原因而决定采用Berkeley
         DB，比如它的开源协议、事务支持、可靠性、性能、简单的API、线程安全、支持游标等。</para>
 
-        <para>BerkeleyDB提供了真正的事务支持－这或许是它最强大的特性。访问你的Subversion资料库的多个进程不必担心偶尔会破坏其他进程的数据。事务系统提供的隔离对于任何给定的操作，Subversion资料库代码看到的只是数据库的静态剪影－而不是一个受其他进程影响不断变化的情况－并能够根据该静态剪影作出操作决定。如果该操作决定正好同其他进程所做操作冲突，整个操作会会滚，就像什么都没有发生一样。然后Subversion优雅的使用一个更新的静态剪影重新开始操作。</para>
+        <para>BerkeleyDB提供了真正的事务支持－这或许是它最强大的特性。访问你的Subversion版本库的多个进程不必担心偶尔会破坏其他进程的数据。事务系统提供的隔离对于任何给定的操作，Subversion版本库代码看到的只是数据库的静态剪影－而不是一个受其他进程影响不断变化的情况－并能够根据该静态剪影作出操作决定。如果该操作决定正好同其他进程所做操作冲突，整个操作会会滚，就像什么都没有发生一样。然后Subversion优雅的使用一个更新的静态剪影重新开始操作。</para>
 
         <para>BerkeleyDB另一个强大的特性是热备份－不必“下线”就可以备份数据库环境的能力。我们将会在<xref
-        linkend="svn-ch-5-sect-3.6" />讨论如何备份你的资料库，能够不停止系统对资料库做全面备份的好处是显而易见的。</para>
+        linkend="svn-ch-5-sect-3.6" />讨论如何备份你的版本库，能够不停止系统对版本库做全面备份的好处是显而易见的。</para>
 
         <para>BerkeleyDB同时是一个可信赖的数据库系统。Subversion使用BerkeleyDB的日志工具，这意味着数据库先在磁盘上写一个日志文件，描述它将要做的修改，然后再做这些修改。这是为了确保如果哪里除了差错，数据库系统能回复到先前的检出点－一个在日志文件中已知的不会冲突的位置，重新开始事务直到数据存储成为一个可用的状态。更多关于BerkeleyDB日志文件的信息请查看<xref
         linkend="svn-ch-5-sect-3.3" />。</para>
 
-        <para>每朵玫瑰都有刺，我们也必须记录一些BerkeleyDB已知的缺陷。首先，BerkeleyDB环境不是跨平台的。你不能简单的拷贝一个创建在Unix上的Subversion资料库到一个Windows系统，也无法期望创建在Unix系统上的资料库能顺利移植到Windows系统正常运行。尽管BerkeleyDB数据库格式架构设计独立，有一些其他环境方面没有独立出来。其次，Subversion使用BerkeleyDB不能在95/98系统上运行－如果你需要将资料库建在一个Windows机器上，请装到Windows2000或WindowsXP上。另外，不要在网络上共享BerkeleyDB资料库。尽管BerkeleyDB承诺如果按照一套特定规范的话，可以在网络共享上正常运行，但实际上已知的共享类型几乎都不满足这套规范。</para>
+        <para>每朵玫瑰都有刺，我们也必须记录一些BerkeleyDB已知的缺陷。首先，BerkeleyDB环境不是跨平台的。你不能简单的拷贝一个创建在Unix上的Subversion版本库到一个Windows系统，也无法期望创建在Unix系统上的版本库能顺利移植到Windows系统正常运行。尽管BerkeleyDB数据库格式架构设计独立，有一些其他环境方面没有独立出来。其次，Subversion使用BerkeleyDB不能在95/98系统上运行－如果你需要将版本库建在一个Windows机器上，请装到Windows2000或WindowsXP上。另外，不要在网络上共享BerkeleyDB版本库。尽管BerkeleyDB承诺如果按照一套特定规范的话，可以在网络共享上正常运行，但实际上已知的共享类型几乎都不满足这套规范。</para>
 
-        <para>最后，因为BerkeleyDB是以连接库的形式被Subversion使用，它对于中断比典型的关系型数据库系统更为敏感。大多数SQL系统，举例来说，有一个主服务进程来协调对数据库表的访问。如果一个访问数据库的程序因为某种原因出现问题，数据库守护进程察觉到连接中断会做一些清理。因为数据库守护进程是唯一访问数据库表的进程，应用程序不需要担心访问许可的冲突。但是，这些情况与BerkeleyDB不同。Subversion（和使用Subversion库的程序）直接访问数据库的表，这意味着如果有一个程序崩溃，就会使数据库处于一个暂时的不一致、不可访问的状态。当这种情况发生时，管理员需要让BerkeleyDB回复到一个检查点，这的确有点讨厌。除了崩溃的进程，还有一些情况能让资料库出现异常，比如程序在所有权上发生冲突或者数据库文件的访问权限。BerkeleyDB资料库非常快，还可以升级，不过最好使用一个单独的服务进程，通过一个用户来访问－比如Apache的<command>httpd</command>或<command>svnserve</command>（参见<xref
-        linkend="svn-ch-6" />）—而不是多用户通过<literal>file:///</literal>或<literal>svn+ssh://</literal>URL的方式多用户访问。如果将BerkeleyDB资料库直接用作多用户访问，请先阅读<xref
+        <para>最后，因为BerkeleyDB是以连接库的形式被Subversion使用，它对于中断比典型的关系型数据库系统更为敏感。大多数SQL系统，举例来说，有一个主服务进程来协调对数据库表的访问。如果一个访问数据库的程序因为某种原因出现问题，数据库守护进程察觉到连接中断会做一些清理。因为数据库守护进程是唯一访问数据库表的进程，应用程序不需要担心访问许可的冲突。但是，这些情况与BerkeleyDB不同。Subversion（和使用Subversion库的程序）直接访问数据库的表，这意味着如果有一个程序崩溃，就会使数据库处于一个暂时的不一致、不可访问的状态。当这种情况发生时，管理员需要让BerkeleyDB回复到一个检查点，这的确有点讨厌。除了崩溃的进程，还有一些情况能让版本库出现异常，比如程序在所有权上发生冲突或者数据库文件的访问权限。BerkeleyDB版本库非常快，还可以升级，不过最好使用一个单独的服务进程，通过一个用户来访问－比如Apache的<command>httpd</command>或<command>svnserve</command>（参见<xref
+        linkend="svn-ch-6" />）—而不是多用户通过<literal>file:///</literal>或<literal>svn+ssh://</literal>URL的方式多用户访问。如果将BerkeleyDB版本库直接用作多用户访问，请先阅读<xref
         linkend="svn-ch-6-sect-5" />。</para>
       </sect3>
 
@@ -201,12 +201,12 @@
       <sect3 id="svn-ch-5-sect-1.3.2">
         <title>FSFS</title>
 
-        <para>在2004年中期，另一种资料库存储系统慢慢形成了：一种不需要数据库的存储系统。FSFS资料库在一个文件中存储修订版树，所以资料库中所有的修订版都在一个子文件夹中有限的几个文件里。事务在单独的子目录中被创建，创建完成后，一个单独的事务文件被创建并移动到修订版目录，这保证提交是原子性的。因为一个修订版文件是持久不可改变的，资料库也可以做到热备份，就象BerkeleyDB资料库一样。</para>
+        <para>在2004年中期，另一种版本库存储系统慢慢形成了：一种不需要数据库的存储系统。FSFS版本库在一个文件中存储修订版树，所以版本库中所有的修订版都在一个子文件夹中有限的几个文件里。事务在单独的子目录中被创建，创建完成后，一个单独的事务文件被创建并移动到修订版目录，这保证提交是原子性的。因为一个修订版文件是持久不可改变的，版本库也可以做到热备份，就象BerkeleyDB版本库一样。</para>
 
         <para>修订版文件格式代表了一个修订版的目录结构，文件内容，和其他修订版树中相关信息。
         不像BerkeleyDB数据库，这种存储格式可跨平台并且与CPU架构无关。因为没有日志或用到共享内存的文件，数据库能被网络文件系统安全的</para>
 
-        <para>访问和检查只读环境。缺少数据库花消同时也意味着资料库的总体体积可以稍小一点。</para>
+        <para>访问和检查只读环境。缺少数据库花消同时也意味着版本库的总体体积可以稍小一点。</para>
 
         <para>FSFS也有一种不同的表现属性。当确定大量文件的存贮目录是，FSFS用O(N) 算法来填加入口，而
         Berkeley数据库则用(N^2)算法来重写整个目录。另一方面，与较早版本相比FSFS将最近版本的文件当作delta写入，这也意味着与在头版本的</para>
@@ -221,7 +221,7 @@
 
         <para>最重要的区别是当出现错误时FSFS停滞不前。假如应用Berkeley处理时发生许可错误或突然崩溃系统，数据库会无法使用直到管理员</para>
 
-        <para>恢复。假如在应用FSFS资料库发生同样的情况，资料库不会受到任何干扰。在最坏情况下也仅仅是一些处理信息被丢弃。</para>
+        <para>恢复。假如在应用FSFS版本库发生同样的情况，版本库不会受到任何干扰。在最坏情况下也仅仅是一些处理信息被丢弃。</para>
 
         <para>唯一真正对FSFS不利的是它与Berkeley数据库相比相对不可靠。它没有接受用户的足够多的检验。仅在理论来说，它减少了新管理者的负担，</para>
 
@@ -234,25 +234,25 @@
 
   <!-- ******************************************************************* -->
 
-  <!-- *** 第二部分:  资料库创建和配置                                 *** -->
+  <!-- *** 第二部分:  版本库创建和配置                                 *** -->
 
   <!-- ******************************************************************* -->
 
   <sect1 id="svn-ch-5-sect-2">
-    <title>资料库的创建和配置</title>
+    <title>版本库的创建和配置</title>
 
-    <para>创建一个 Subversion 资料库出乎寻常的简单。 Subversion
-    提供的<command>svnadmin</command> 工具，有一个执行这个功能的子命令。要建立一个新的资料库，只需要运行：</para>
+    <para>创建一个 Subversion 版本库出乎寻常的简单。 Subversion
+    提供的<command>svnadmin</command> 工具，有一个执行这个功能的子命令。要建立一个新的版本库，只需要运行：</para>
 
     <screen>
 $ svnadmin create /path/to/repos
 </screen>
 
-    <para>这个命令在目录<filename>/path/to/repos</filename>创建了一个新的资料库。这个新的资料库会以修订版版本0开始其生命周期，里面除了最上层的根目录(<filename>/</filename>)，什么都没有。刚开始，修订版0有一个修订版</para>
+    <para>这个命令在目录<filename>/path/to/repos</filename>创建了一个新的版本库。这个新的版本库会以修订版版本0开始其生命周期，里面除了最上层的根目录(<filename>/</filename>)，什么都没有。刚开始，修订版0有一个修订版</para>
 
-    <para>属性<literal>svn:date</literal>，被设置为资料库创建的时间。</para>
+    <para>属性<literal>svn:date</literal>，被设置为版本库创建的时间。</para>
 
-    <para>在 Subversion 1.1中，资料库默认使用Berkeley
+    <para>在 Subversion 1.1中，版本库默认使用Berkeley
     DB后端存储方式来创建。在以后的发行版中这个行为会被改变。不管怎样，存储类型可以使用<option>--fs-type</option>
     参数显视的选择。:</para>
 
@@ -262,25 +262,25 @@ $ svnadmin create --fs-type bdb /path/to/other/repos
 </screen>
 
     <warning>
-      <para>不要在网络共享上创建Berkeley DB资料库—它不能存在于诸如NFS， AFS， 或 Windows
+      <para>不要在网络共享上创建Berkeley DB版本库—它不能存在于诸如NFS， AFS， 或 Windows
       SMB的远程文件系统中。Berkeley 数据要求底层文件系统实现严格的</para>
 
-      <para>POSIX语义锁定。几乎没有网络文件系统提供这些特征，假如你网络共享Berkeley数据库，结果是不可预知的——你当前发现的错误也许是几个月前的，你的资料库</para>
+      <para>POSIX语义锁定。几乎没有网络文件系统提供这些特征，假如你网络共享Berkeley数据库，结果是不可预知的——你当前发现的错误也许是几个月前的，你的版本库</para>
 
       <para>也会相当脆弱。</para>
 
-      <para>假如你需要多台计算机来访问，你需要创造网络共享的FSFS资料库，而不是Berkeley数据库的资料库。或者更好的办法，你建立一个真正的服务方式（诸如Apache
+      <para>假如你需要多台计算机来访问，你需要创造网络共享的FSFS版本库，而不是Berkeley数据库的版本库。或者更好的办法，你建立一个真正的服务方式（诸如Apache
       或
-      <command>svnserve），把资料库放在</command>服务器能访问到的本地文件系统中，以便能通过网络访问。详情请参看<xref
+      <command>svnserve），把版本库放在</command>服务器能访问到的本地文件系统中，以便能通过网络访问。详情请参看<xref
       linkend="svn-ch-6" /></para>
     </warning>
 
-    <para>你可能已经注意到了，<command>svnadmin</command>命令的路径参数只是一个规则的文件系统路径，而不是一个<command>svn</command>客户端程序访问资料库时使用的URL。<command>svnadmin</command>和<command>svnlook</command>都被认为是服务器端工具－</para>
+    <para>你可能已经注意到了，<command>svnadmin</command>命令的路径参数只是一个规则的文件系统路径，而不是一个<command>svn</command>客户端程序访问版本库时使用的URL。<command>svnadmin</command>和<command>svnlook</command>都被认为是服务器端工具－</para>
 
-    <para>它们使用在资料库所在的机器上，被用来检查或修改资料库，不能通过网络来执行任务。一个Subversion的新手通常会犯的错误，就是试图将URL（甚至<quote>本地</quote><literal>file:</literal>路径）传给这两个程序。</para>
+    <para>它们使用在版本库所在的机器上，被用来检查或修改版本库，不能通过网络来执行任务。一个Subversion的新手通常会犯的错误，就是试图将URL（甚至<quote>本地</quote><literal>file:</literal>路径）传给这两个程序。</para>
 
     <para>所以，当你运行<command>svnadmin create</command>
-    命令后，就在创建目录中有了一个全新的Subversion资料库。 让我们看一下在目录中实际都创建了什么东西。</para>
+    命令后，就在创建目录中有了一个全新的Subversion版本库。 让我们看一下在目录中实际都创建了什么东西。</para>
 
     <screen>
 $ ls repos
@@ -288,15 +288,15 @@ conf/  dav/  db/  format  hooks/  locks/  README。txt
 </screen>
 
     <para>除了<filename>README.txt</filename> 和 <filename>format</filename>
-    文件，资料库目录由一群子目录组成。就像Subversion其他部分的设计一样，
-    模块化是一个很重要的原则，而且层次化的组织要比杂乱无章好。下面是对新的资料库目录中，各个项目的简要介绍：</para>
+    文件，版本库目录由一群子目录组成。就像Subversion其他部分的设计一样，
+    模块化是一个很重要的原则，而且层次化的组织要比杂乱无章好。下面是对新的版本库目录中，各个项目的简要介绍：</para>
 
     <variablelist>
       <varlistentry>
         <term>conf</term>
 
         <listitem>
-          <para>一个存储资料库配置文件的目录。</para>
+          <para>一个存储版本库配置文件的目录。</para>
         </listitem>
       </varlistentry>
 
@@ -321,7 +321,7 @@ conf/  dav/  db/  format  hooks/  locks/  README。txt
         <term>format</term>
 
         <listitem>
-          <para>一个包含一个整数的文件，用来表示资料库配置的版本号码。</para>
+          <para>一个包含一个整数的文件，用来表示版本库配置的版本号码。</para>
         </listitem>
       </varlistentry>
 
@@ -337,7 +337,7 @@ conf/  dav/  db/  format  hooks/  locks/  README。txt
         <term>locks</term>
 
         <listitem>
-          <para>一个存储Subversion资料库锁定资料的目录，被用来追踪对资料库的访问。</para>
+          <para>一个存储Subversion版本库锁定资料的目录，被用来追踪对版本库的访问。</para>
         </listitem>
       </varlistentry>
 
@@ -345,23 +345,23 @@ conf/  dav/  db/  format  hooks/  locks/  README。txt
         <term>README.txt</term>
 
         <listitem>
-          <para>这个文件只是用来告诉它的阅读者，他现在看的是 Subversion 的资料库。</para>
+          <para>这个文件只是用来告诉它的阅读者，他现在看的是 Subversion 的版本库。</para>
         </listitem>
       </varlistentry>
     </variablelist>
 
-    <para>一般来说，你不需要手动干预资料库。<command>svnadmin</command>工具应该足以用来处理对资料库的任何修改，或者你也可以使用第三方工具（比如BerkeleyDB的工具包）来调整部分资料库。不过还是会有些例外情况，我们会在这里提到。</para>
+    <para>一般来说，你不需要手动干预版本库。<command>svnadmin</command>工具应该足以用来处理对版本库的任何修改，或者你也可以使用第三方工具（比如BerkeleyDB的工具包）来调整部分版本库。不过还是会有些例外情况，我们会在这里提到。</para>
 
     <!-- ***************************************************************** -->
 
     <sect2 id="svn-ch-5-sect-2.1">
       <title>Hook 脚本</title>
 
-      <para>所谓hook的<firstterm>就是与一些资料库事件相关的程序，它有新 revision
+      <para>所谓hook的<firstterm>就是与一些版本库事件相关的程序，它有新 revision
       所创，或是无形式属性的变更。每个hook都携带有足够多的信息，说明那是什么事件，操作的对象，和触发事件的用户名。通过hook的输出或返回状态，hook程序能继续运行，停止或以某种方式挂起。</firstterm></para>
 
       <para>
-        <firstterm>默认情况下，hook的子目录中包含各种资料库hook模板。</firstterm>
+        <firstterm>默认情况下，hook的子目录中包含各种版本库hook模板。</firstterm>
       </para>
 
       <screen>
@@ -402,7 +402,7 @@ pre-commit。tmpl
 
           <listitem>
             <para>它在commit
-            transaction产生前已运行。它通常用来决定用户进行了特权操作。资料库传给该程序两个变量：到资料库的路径，和要进行操作的用户名。假如程序返回一个非零</para>
+            transaction产生前已运行。它通常用来决定用户进行了特权操作。版本库传给该程序两个变量：到版本库的路径，和要进行操作的用户名。假如程序返回一个非零</para>
 
             <para>的exit value，在 transaction产生前停止该commit。假如hook
             程序要在stderr中写入数据，它将排队送至客户端。</para>
@@ -419,7 +419,7 @@ pre-commit。tmpl
 
           <listitem>
             <para>的commits要包含从bug tracker中得到的icket number，或者ncoming
-            log是非空的）资料库传给程序两个变量：到资料库的路径和要进行操作的用户名。假如程序返回一个非零的exitvalue，commit应当取消，transaction应被删除。</para>
+            log是非空的）版本库传给程序两个变量：到版本库的路径和要进行操作的用户名。假如程序返回一个非零的exitvalue，commit应当取消，transaction应被删除。</para>
 
             <para>假如hook 程序要在stderr中写入数据，它将排队送至客户端。</para>
 
@@ -438,7 +438,7 @@ pre-commit。tmpl
 
           <listitem>
             <para>它在ransaction完成后
-            transaction后运行，创建一个新的revision。大多数人用这个hook来发送关于运行的描述性emails，或者作为资源库的惫份。资源库资料库传给程序两个变量：到资料库</para>
+            transaction后运行，创建一个新的revision。大多数人用这个hook来发送关于运行的描述性emails，或者作为资源库的惫份。资源库版本库传给程序两个变量：到版本库</para>
 
             <para>的路径和被创建的new revision
             number。退出程序会被忽略。分布式Subversion包括<command>mailer，<command>py</command>
@@ -448,8 +448,8 @@ pre-commit。tmpl
 
             <para>Subversion提供的另一个有用的工具是hot-backup。<command>py</command>
             脚本（在Subversion source
-            tree中的tools/backup/目录中）。这种脚本做为Subversion资料库的hot
-            backups使用，可被用来作为资料库的per-commit snapshot。</para>
+            tree中的tools/backup/目录中）。这种脚本做为Subversion版本库的hot
+            backups使用，可被用来作为版本库的per-commit snapshot。</para>
           </listitem>
         </varlistentry>
 
@@ -481,9 +481,9 @@ pre-commit。tmpl
           <listitem>
             <para>它是一个早期版本的方法，这个 hook是<filename>pre-revprop-change</filename>
             hook的类似物。事实上，出于某种偏执这个脚本并不运行，除非存在<filename>pre-revprop-change</filename>
-            hook。当这两个hook都存在时，<filename>post-revprop-changehook只在revision资料库被改变时才运行，它通常被用来发送包含变化了的新参数的email。资料库传递</filename></para>
+            hook。当这两个hook都存在时，<filename>post-revprop-changehook只在revision版本库被改变时才运行，它通常被用来发送包含变化了的新参数的email。版本库传递</filename></para>
 
-            <para>四个参数给该hook：到资料库的路径，属性存在的
+            <para>四个参数给该hook：到版本库的路径，属性存在的
             revision，经过校验的产生变化的用户名，和属性自身的名字。</para>
 
             <para>分布式Subversion包含<command>propchange-email。<command>py</command>
@@ -534,13 +534,13 @@ pre-commit。tmpl
 
       <para>Berkeley DB 环境是一个或多个数据库、日志文件、 域文件和配置文件的封装。Berkeley DB
       环境有它自己预设的设定值，像是任何时间可使用的锁定数目、 日志文件的大小等。 Subversion程序会为Berkeley DB
-      配置选项设定默认的值。 不过，有时你的特定资料库需要特定的数据集合和访问类型，可能需要不同的配置选项。</para>
+      配置选项设定默认的值。 不过，有时你的特定版本库需要特定的数据集合和访问类型，可能需要不同的配置选项。</para>
 
-      <para>Sleepycat（BerkeleyDB的制造厂商）的人员清楚不同的资料库有不同的需求，所以他们提供了运行时为BerkeleyDB环境重载配置值的功能。Berkeley在每一个环境目录中检查是否存在一个名叫<filename>DB_CONFIG</filename>的文件，然后解析其中的为某个Berkeley环境所用的选项。</para>
+      <para>Sleepycat（BerkeleyDB的制造厂商）的人员清楚不同的版本库有不同的需求，所以他们提供了运行时为BerkeleyDB环境重载配置值的功能。Berkeley在每一个环境目录中检查是否存在一个名叫<filename>DB_CONFIG</filename>的文件，然后解析其中的为某个Berkeley环境所用的选项。</para>
 
-      <para>你的资料库的Berkeley配置文件位于<filename>db</filename>目录，
+      <para>你的版本库的Berkeley配置文件位于<filename>db</filename>目录，
       <filename>repos/db/DB_CONFIG</filename>。 Subversion
-      在创建资料库时自己创建了这个文件。这个文件初始化包含一些默认选项，也包含了Berkeley
+      在创建版本库时自己创建了这个文件。这个文件初始化包含一些默认选项，也包含了Berkeley
       DB在线文档的参照，使你能够了解这些选项是做什么的。当然，你也可以为你的DB_CONFIG文件添加任何Berkeley DB
       支持的选项。应当注意，当Subversion不能访问文件或设置没有生效时，不应更改任何配置，因为那会引起Berkeley数据库以一种预料不到的方式执行剩下的程序。更改</para>
 
@@ -553,26 +553,26 @@ pre-commit。tmpl
 
   <!-- ******************************************************************* -->
 
-  <!-- *** SECTION 3:  资料库维护                                      *** -->
+  <!-- *** SECTION 3:  版本库维护                                      *** -->
 
   <!-- ******************************************************************* -->
 
   <sect1 id="svn-ch-5-sect-3">
-    <title>资料库维护</title>
+    <title>版本库维护</title>
 
-    <para>维护一个Subversion资料库是一项令人沮丧的工作，主要因为有数据库后端与生俱来的复杂性。做好这项工作需要知道一些工具－它们是什么，什么时候用以及如何使用。这一节将会向你介绍Subversion带的资料库管理工具，以及如何使用它们来完成诸如资料库移植、升级、备份和整理。</para>
+    <para>维护一个Subversion版本库是一项令人沮丧的工作，主要因为有数据库后端与生俱来的复杂性。做好这项工作需要知道一些工具－它们是什么，什么时候用以及如何使用。这一节将会向你介绍Subversion带的版本库管理工具，以及如何使用它们来完成诸如版本库移植、升级、备份和整理。</para>
 
     <!-- ***************************************************************** -->
 
     <sect2 id="svn-ch-5-sect-3.1">
       <title>管理员的工具箱</title>
 
-      <para>Subversion提供了一些对创建、查看、修改和修复资料库有用的工具。让我们详细了解一下这些工具。然后，我们再看一下在仅在BerkeleyDB发行版中提供的针对资料数据库的工具。</para>
+      <para>Subversion提供了一些对创建、查看、修改和修复版本库有用的工具。让我们详细了解一下这些工具。然后，我们再看一下在仅在BerkeleyDB发行版中提供的针对资料数据库的工具。</para>
 
       <sect3 id="svn-ch-5-sect-3.1.1">
         <title>svnlook</title>
 
-        <para><command>svnlook</command>是Subversion提供的用来查看资料库中不同的修订版和事务。这个程序不会修改资料库内容－这是个“只读”的工具。<command>svnlook</command>通常用在资料库挂钩程序中，用来记录资料库即将提交的变更（<command>用在pre-commit挂钩时）</command>或者已经提交的（用在<command>post-commit</command>挂钩时）。资料库管理员可以将这个工具用于诊断。</para>
+        <para><command>svnlook</command>是Subversion提供的用来查看版本库中不同的修订版和事务。这个程序不会修改版本库内容－这是个“只读”的工具。<command>svnlook</command>通常用在版本库挂钩程序中，用来记录版本库即将提交的变更（<command>用在pre-commit挂钩时）</command>或者已经提交的（用在<command>post-commit</command>挂钩时）。版本库管理员可以将这个工具用于诊断。</para>
 
         <para><command>svnlook</command> 的语法很直接：</para>
 
@@ -586,11 +586,11 @@ Type "svnlook help &lt;subcommand&gt;" for help on a specific subcommand。
 …
 </screen>
 
-        <para>几乎<command>svnlook</command>的每一个子命令都能操作修订版或事务树，显示资料树的信息，或是它与资料库中上一个修订版的不同。你可以用
+        <para>几乎<command>svnlook</command>的每一个子命令都能操作修订版或事务树，显示资料树的信息，或是它与版本库中上一个修订版的不同。你可以用
         <option>--revision</option> 和 <option>--transaction</option>
-        选项指定要查看的修订版或事务。注意，虽然修订版号看起来像自然数，但是事务名称是包含英文字母与数字的字符串。请记住文件系统只允许浏览未提交的事务（还没有形成一个新的修订版的事务）。多数资料库没有这种事务，因为事务通常或者被提交了（这样便不能被查看），或者被中止然后删除。</para>
+        选项指定要查看的修订版或事务。注意，虽然修订版号看起来像自然数，但是事务名称是包含英文字母与数字的字符串。请记住文件系统只允许浏览未提交的事务（还没有形成一个新的修订版的事务）。多数版本库没有这种事务，因为事务通常或者被提交了（这样便不能被查看），或者被中止然后删除。</para>
 
-        <para>如果没有<option>--revision</option>和<option>--transaction</option>选项，<command>svnlook</command>会查看资料库中最年轻的修订版（或“HEAD”）。所以下边的两个命令执行结果完全相同，当位于<filename>/path/to/repos</filename>的资料库中，19是最年轻的修订版的时候：</para>
+        <para>如果没有<option>--revision</option>和<option>--transaction</option>选项，<command>svnlook</command>会查看版本库中最年轻的修订版（或“HEAD”）。所以下边的两个命令执行结果完全相同，当位于<filename>/path/to/repos</filename>的版本库中，19是最年轻的修订版的时候：</para>
 
         <screen>
 $ svnlook info /path/to/repos
@@ -803,7 +803,7 @@ $ svnlook tree /path/to/repos --show-ids
             </term>
 
             <listitem>
-              <para>显示资料库的UUID--统一资源标志。</para>
+              <para>显示版本库的UUID--统一资源标志。</para>
             </listitem>
           </varlistentry>
 
@@ -822,8 +822,8 @@ $ svnlook tree /path/to/repos --show-ids
       <sect3 id="svn-ch-5-sect-3.1.2">
         <title>svnadmin</title>
 
-        <para><command>svnadmin</command> 程序是资料库管理员最好的朋友。
-        除了提供创建Subversion资料库的功能，这个程序使你可以维护这些资料库。<command>svnadmin</command>
+        <para><command>svnadmin</command> 程序是版本库管理员最好的朋友。
+        除了提供创建Subversion版本库的功能，这个程序使你可以维护这些版本库。<command>svnadmin</command>
         的语法跟 <command>svnlook</command>类似：</para>
 
         <screen>
@@ -850,7 +850,7 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>创建一个新的Subversion资料库。</para>
+              <para>创建一个新的Subversion版本库。</para>
             </listitem>
           </varlistentry>
 
@@ -870,7 +870,7 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>dump由给定的revisions集限定的资料库的轻便格式化内容。</para>
+              <para>dump由给定的revisions集限定的版本库的轻便格式化内容。</para>
             </listitem>
           </varlistentry>
 
@@ -880,7 +880,7 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>对资料库做hot copy。用这个方法你能任何时候安全的备份资料库而不许考虑是否资料库正在使用。</para>
+              <para>对版本库做hot copy。用这个方法你能任何时候安全的备份版本库而不许考虑是否版本库正在使用。</para>
             </listitem>
           </varlistentry>
 
@@ -890,8 +890,8 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>(Berkeley 数据库的资料库专有)
-              列出Berkeley数据库中与资料库有关的日志文件清单。这个清单包括所有的日志文件--现在仍然被资料库使用的和不在使用的。</para>
+              <para>(Berkeley 数据库的版本库专有)
+              列出Berkeley数据库中与版本库有关的日志文件清单。这个清单包括所有的日志文件--现在仍然被版本库使用的和不在使用的。</para>
             </listitem>
           </varlistentry>
 
@@ -901,8 +901,8 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>(Berkeley 数据库的资料库专有)列出Berkeley
-              数据库资料库有关的不在使用日志文件路径清单。你能安全的从资料库中删除那些日志文件，也可能将它们存档以用来灾难事件后资料库的恢复。</para>
+              <para>(Berkeley 数据库的版本库专有)列出Berkeley
+              数据库版本库有关的不在使用日志文件路径清单。你能安全的从版本库中删除那些日志文件，也可能将它们存档以用来灾难事件后版本库的恢复。</para>
             </listitem>
           </varlistentry>
 
@@ -912,7 +912,7 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>从dump子命令中产生的轻快格式化的数据流中下载一系列revisions装入资料库。</para>
+              <para>从dump子命令中产生的轻快格式化的数据流中下载一系列revisions装入版本库。</para>
             </listitem>
           </varlistentry>
 
@@ -922,7 +922,7 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>列出刚刚退出资料库的没有执行的Subversion transactions清单。</para>
+              <para>列出刚刚退出版本库的没有执行的Subversion transactions清单。</para>
             </listitem>
           </varlistentry>
 
@@ -932,7 +932,7 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>恢复资料库，通常载资料库发生致命错误时实行，以预防对Subversion transactions的cleanly
+              <para>恢复版本库，通常载版本库发生致命错误时实行，以预防对Subversion transactions的cleanly
               shutting down。</para>
             </listitem>
           </varlistentry>
@@ -943,7 +943,7 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>从资料库中清除Subversion
+              <para>从版本库中清除Subversion
               transactions（<literal>在lstxns子命令后执行</literal>）。</para>
             </listitem>
           </varlistentry>
@@ -964,7 +964,7 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>确认资料库的内容。包括校验和比较。</para>
+              <para>确认版本库的内容。包括校验和比较。</para>
             </listitem>
           </varlistentry>
         </variablelist>
@@ -1400,7 +1400,7 @@ $
     <!-- ***************************************************************** -->
 
     <sect2 id="svn-ch-5-sect-3.2">
-      <title>资料库清理</title>
+      <title>版本库清理</title>
 
       <para>Your Subversion repository will generally require very little
       attention once it is configured to your liking。 However， there are times
@@ -1676,7 +1676,7 @@ $ svnadmin list-unused-dblogs /path/to/repos | xargs rm
     <!-- ***************************************************************** -->
 
     <sect2 id="svn-ch-5-sect-3.4">
-      <title>资料库的恢复</title>
+      <title>版本库的恢复</title>
 
       <para>As mentioned in <xref linkend="svn-ch-5-sect-1.3.1" />， a Berkeley
       DB repository can sometimes be left in frozen state if not closed
@@ -1773,7 +1773,7 @@ The latest repos revision is 19。
     <!-- ***************************************************************** -->
 
     <sect2 id="svn-ch-5-sect-3.5">
-      <title>资料库的移植</title>
+      <title>版本库的移植</title>
 
       <para>A Subversion filesystem has its data spread throughout various
       database tables in a fashion generally understood by (and of interest
@@ -2293,9 +2293,9 @@ $
   <sect1 id="svn-ch-5-sect-7">
     <title>总结</title>
 
-    <para>现在，你应该已经对如何创建、配置以及维护Subversion资料库有了个基本的认识。我们向您介绍了几个可以帮助您工作的工具。通过这一章，我们说明了一些通常的管理的误区，并提出了避免陷入误区的建议。</para>
+    <para>现在，你应该已经对如何创建、配置以及维护Subversion版本库有了个基本的认识。我们向您介绍了几个可以帮助您工作的工具。通过这一章，我们说明了一些通常的管理的误区，并提出了避免陷入误区的建议。</para>
 
-    <para>剩下的，就是由你决定在你的资料库中存放一些什么有趣的资料，并最终通过网络获得这些资料。下一章是关于网络的内容。</para>
+    <para>剩下的，就是由你决定在你的版本库中存放一些什么有趣的资料，并最终通过网络获得这些资料。下一章是关于网络的内容。</para>
   </sect1>
 </chapter>
 <!--
