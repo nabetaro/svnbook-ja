@@ -11,11 +11,14 @@ def usage(err_msg):
   stream = err_msg and sys.stderr or sys.stdout
   if err_msg:
     stream.write("ERROR: %s\n\n" % (err_msg))
-  stream.write("""Usage: %s [-f <filename>] [-l]
+  stream.write("""Usage: %s [-a] [-l] [-f <filename(s)>] [--dry-run]
 
 Options:
-    -f:    File which needs to be synchronized
-    -l:    List all files and revisions with which they are sinchronized
+    -a:  Synchronizing all files
+    -f:  File which needs to be synchronized
+    -l:  List all files and revisions with which they are sinchronized
+    
+    --dry-run:  Execute a command, but don't make actual changes
 """ % (os.path.basename(sys.argv[0])))
   sys.exit(err_msg and 1 or 0)
 
@@ -92,34 +95,49 @@ def main():
   global bfiles
   if len(sys.argv) < 2:
     usage(None)
-  os.chdir('book')
   try:
-    opts, args = getopt.getopt(sys.argv[1:], "f:l")
+    os.chdir('book')
+  except:
+    pass
+  try:
+    opts, args = getopt.getopt(sys.argv[1:], 'af:l', ['dry-run'])
   except:
     usage('Invalid syntax')
-  fname = ''
+  sync_list = []
+  dry_run = False
   for o, a in opts:
-    if o == '-f':
-      a = os.path.basename(a)
-      if a in bfiles:
-        fname = a
-      else:
-        usage('Invalid syntax')
+    if o == '-a':
+      sync_list = bfiles
+    elif o == '-f':
+      for f in a.split(','):
+        f = os.path.basename(f)
+        if f in bfiles:
+          sync_list.append(f)
+        else:
+          usage('Invalid syntax')
     elif o == '-l':
       return get_list()
+    elif o == '--dry-run':
+      dry_run = True
   cmd = string.Template('svn $a -r $r1:$r2 https://svn.red-bean.com/svnbook/trunk/src/en/book/$t')
-  last = get_last(fname)
-  base = get_base(fname)
-  print ('########################################################################')
-  print 'Sync r%(r1)s:r%(r2)s' % { 'r1' :  last, 'r2' : base }
-  diff = os.popen(cmd.substitute(a='diff', r1=last, r2=base, t=fname)).read()
-  if len(diff) != 0:
-    os.system(cmd.substitute(a='log', r1=last, r2=base, t=fname))
-#    raw_input('Above is log message, to see diff press ENTER')
-#    print diff
-    f = file('../'+fname+'.diff', 'w'); f.write(diff); f.close()
-    os.system(cmd.substitute(a='merge', r1=last, r2=base, t=fname))
-  set_last(fname, str(base))
+  for fname in sync_list:
+    last = get_last(fname)
+    base = get_base(fname)
+    print ('########################################################################')
+    print 'Sync r%s:r%s of %s' % (last, base, fname)
+    diff = os.popen(cmd.substitute(a='diff', r1=last, r2=base, t=fname)).read()
+    if len(diff) != 0:
+      os.system(cmd.substitute(a='log', r1=last, r2=base, t=fname))
+      f = file('../'+fname+'.diff', 'w'); f.write(diff); f.close()
+      if not dry_run:
+        os.system(cmd.substitute(a='merge', r1=last, r2=base, t=fname))
+    if not dry_run:
+      set_last(fname, str(base))
 
 if __name__ == "__main__":
   main()
+
+"""
+ vim: tabstop=2 shiftwidth=2 expandtab smarttab
+"""
+
