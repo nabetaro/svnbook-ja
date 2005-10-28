@@ -514,17 +514,7 @@ pre-commit。tmpl
         <para>Subversion会执行hooks</para>
       </warning>
 
-      <para>Subversion will attempt to execute hooks as the same user who owns
-      the process which is accessing the Subversion repository。 In most cases，
-      the repository is being accessed via Apache HTTP server and mod_dav_svn，
-      so this user is the same user that Apache runs as。 The hooks themselves
-      will need to be configured with OS-level permissions that allow that
-      user to execute them。 Also， this means that any file or programs
-      (including the Subversion repository itself) accessed directly or
-      indirectly by the hook will be accessed as the same user。 In other
-      words， be alert to potential permission-related problems that could
-      prevent the hook from performing the tasks you've written it to
-      perform。</para>
+      <para>Subversion会试图以当前访问版本库的用户身份执行hook。通常，对版本库的访问总是通过Apache HTTP服务器和mod_dav_svn进行，因此，运行Apache的用户就是执行hook的用户。要运行hook，需要具有操作系统级权限的用户对其进行配置。不仅是hook，其它被hook使用和调用的文件或程序（包括Subversion版本库本身）也一样以同一个用户的身份访问，不管访问是直接的还是间接的。因此，要注意潜在的用户权限问题，它可能会让你的hook无法顺利执行。</para>
     </sect2>
 
     <!-- ***************************************************************** -->
@@ -742,8 +732,7 @@ $ svnlook tree /path/to/repos --show-ids
             </term>
 
             <listitem>
-              <para>显示Display interesting points in the history of a versioned
-              path (places where modifications or copies occurred)。</para>
+              <para>显示受到版本控制的路径（更改和复制发生过的地方）中需要的历史信息。</para>
             </listitem>
           </varlistentry>
 
@@ -973,47 +962,16 @@ Available subcommands:
       <sect3 id="svn-ch-5-sect-3.1.3">
         <title>svndumpfilter</title>
 
-        <para>Since Subversion stores everything in an opaque database system，
-        attempting manual tweaks is unwise， if not quite difficult。 And once
-        data has been stored in your repository， Subversion generally doesn't
-        provide an easy way to remove that data。 <footnote>
-            <para>That， by the way， is a <emphasis>feature</emphasis>， not a
-            bug。</para>
-          </footnote> But inevitably， there will be times when you would like
-        to manipulate the history of your repository。 You might need to strip
-        out all instances of a file that was accidentally added to the
-        repository (and shouldn't be there for whatever reason)。 Or， perhaps
-        you have multiple projects sharing a single repository， and you decide
-        to split them up into their own repositories。 To accomplish tasks like
-        this， administrators need a more manageable and malleable
-        representation of the data in their repositories—the Subversion
-        repository dump format。</para>
+        <para>Subversion使用底层的数据库储存各类数据，手工调整是不明智的，即使这样做并不困难。何况，一旦你的数据存进了版本库，通常很难再将它们从版本库中删除。<footnote>
+            <para>顺便说一句，这是Subversion的<emphasis>特性</emphasis>，而不是bug。</para>
+          </footnote>不幸的是，总会有些时候你需要处理版本库的历史数据。你也许想把一个不应该出现的文件从版本库中彻底清除。或者，你曾经用一个版本库管理多个工程，现在又想把它们分开。要完成这样的工作，管理员们需要更易于管理和扩展的方法表示版本库中的数据，Subversion版本库转储文件格式就是一个很好的选择。</para>
 
-        <para>The Subversion repository dump format is a human-readable
-        representation of the changes that you've made to your versioned data
-        over time。 You use the <command>svnadmin dump</command> command to
-        generate the dump data， and <command>svnadmin load</command> to
-        populate a new repository with it (see <xref
-        linkend="svn-ch-5-sect-3.5" />)。 The great thing about the
-        human-readability aspect of the dump format is that， if you aren't
-        careless about it， you can manually inspect and modify it。 Of course，
-        the downside is that if you have two years' worth of repository
-        activity encapsulated in what is likely to be a very large dump file，
-        it could take you a long， long time to manually inspect and modify
-        it。</para>
+        <para>Subversion版本库转储文件记录了所有版本数据的变更信息，而且以易于阅读的格式保存。可以使用<command>svnadmin dump</command>命令生成转储文件，然后用<command>svnadmin load</command>命令生成一个新的版本库。（参见 <xref
+        linkend="svn-ch-5-sect-3.5" />）。转储文件易于阅读意味着你可以小心翼翼的查看和修改它。当然，问题是如果你有一个运行了两年的版本库，那么生成的转储文件会很庞大，阅读和手工修改起来都会花费很多时间。</para>
 
-        <para>While it won't be the most commonly used tool at the
-        administrator's disposal， <command>svndumpfilter</command> provides a
-        very particular brand of useful functionality—the ability to quickly
-        and easily modify that dump data by acting as a path-based filter。
-        Simply give it either a list of paths you wish to keep， or a list of
-        paths you wish to not keep， then pipe your repository dump data
-        through this filter。 The result will be a modified stream of dump data
-        that contains only the versioned paths you (explicitly or implicitly)
-        requested。</para>
+        <para>虽然在管理员的日常工作中并不会经常使用，不过<command>svndumpfilter</command>可以对特定的路径进行过滤。这是有一个独特而很有意义的用法，可以帮助你快速方便的修改转储的数据。使用时，只需提供一个你想要保留的（或者不想保留的）路径列表，然后把你的版本库转储文件送进这个过滤器。最后你就可以得到一个仅包含你想保留的路径的转储数据流。</para>
 
-        <para>The syntax of <command>svndumpfilter</command> is as
-        follows:</para>
+        <para><command>svndumpfilter</command>的语法如下：</para>
 
         <screen>
 $ svndumpfilter help
@@ -1026,9 +984,7 @@ Available subcommands:
    help (?， h)
 </screen>
 
-        <para>There are only two interesting subcommands。 They allow you to
-        make the choice between explicit or implicit inclusion of paths in the
-        stream:</para>
+        <para>有意义的子命令只有两个。你可以使用这两个子命令说明你希望保留和不希望保留的路径：</para>
 
         <variablelist>
           <varlistentry>
@@ -1037,8 +993,7 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>Filter out a set of paths from the dump data
-              stream。</para>
+              <para>将指定路径的数据从转储数据流中排除。</para>
             </listitem>
           </varlistentry>
 
@@ -1048,26 +1003,17 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>Allow only the requested set of paths to pass through the
-              dump data stream。</para>
+              <para>将指定路径的数据添加到转储数据流中。</para>
             </listitem>
           </varlistentry>
         </variablelist>
 
-        <para>Let's look a realistic example of how you might use this
-        program。 We discuss elsewhere (see <xref
-        linkend="svn-ch-5-sect-6.1" />) the process of deciding how to choose
-        a layout for the data in your repositories—using one repository per
-        project or combining them， arranging stuff within your repository， and
-        so on。 But sometimes after new revisions start flying in， you rethink
-        your layout and would like to make some changes。 A common change is
-        the decision to move multiple projects which are sharing a single
-        repository into separate repositories for each project。</para>
+        <para>现在我来演示如何使用这个命令。我们会在其它章节（参见 <xref
+        linkend="svn-ch-5-sect-6.1" />）讨论关于如何选择设定版本库布局的问题，比如应该使用一个版本库管理多个项目还是使用一个版本库管理一个项目，或者如何在版本库中安排数据等等。不过，有些时候，即使在项目已经展开以后，你还是希望对版本库的布局做一些调整。最常见的情况是，把原来存放在同一个版本库中的几个项目分开，各自成家。</para>
 
-        <para>Our imaginary repository contains three projects:
-        <literal>calc</literal>， <literal>calendar</literal>， and
-        <literal>spreadsheet</literal>。 They have been living side-by-side in
-        a layout like this:</para>
+        <para>假设有一个包含三个项目的版本库：
+        <literal>calc</literal>，<literal>calendar</literal>，和
+        <literal>spreadsheet</literal>。它们在版本库中的布局如下：</para>
 
         <screen>
 /
@@ -1085,8 +1031,7 @@ Available subcommands:
       tags/
 </screen>
 
-        <para>To get these three projects into their own repositories， we
-        first dump the whole repository:</para>
+        <para>现在要把这三个项目转移到三个独立的版本库中。首先，转储整个版本库：</para>
 
         <screen>
 $ svnadmin dump /path/to/repos &gt; repos-dumpfile
@@ -1098,9 +1043,7 @@ $ svnadmin dump /path/to/repos &gt; repos-dumpfile
 $
 </screen>
 
-        <para>Next， run that dump file through the filter， each time including
-        only one of our top-level directories， and resulting in three new dump
-        files:</para>
+        <para>然后，将转储文件三次送入过滤器，每次仅保留一个顶级目录，就可以得到三个转储文件：</para>
 
         <screen>
 $ cat repos-dumpfile | svndumpfilter include calc &gt; calc-dumpfile
@@ -1112,20 +1055,7 @@ $ cat repos-dumpfile | svndumpfilter include spreadsheet &gt; ss-dumpfile
 $
 </screen>
 
-        <para>At this point， you have to make a decision。 Each of your dump
-        files will create a valid repository， but will preserve the paths
-        exactly as they were in the original repository。 This means that even
-        though you would have a repository solely for your
-        <literal>calc</literal> project， that repository would still have a
-        top-level directory named <filename>calc</filename>。 If you want your
-        <filename>trunk</filename>， <filename>tags</filename>， and
-        <filename>branches</filename> directories to live in the root of your
-        repository， you might wish to edit your dump files， tweaking the
-        <literal>Node-path</literal> and <literal>Copyfrom-path</literal>
-        headers to no longer have that first <filename>calc/</filename> path
-        component。 Also， you'll want to remove the section of dump data that
-        creates the <filename>calc</filename> directory。 It will look
-        something like:</para>
+        <para>现在你必须要作出一个决定了。这三个转储文件中，每个都可以用来创建一个可用的版本库，不过它们保留了原版本库的精确路径结构。也就是说，虽然项目<literal>calc</literal>现在独占了一个版本库，但版本库中还保留着名为<filename>calc</filename>的顶级目录。如果希望<filename>trunk</filename>、<filename>tags</filename>和<filename>branches</filename>这三个目录直接位于版本库的根路径下，你可能需要编辑转储文件，调整<literal>Node-path</literal>和<literal>Copyfrom-path</literal>头参数，将路径<filename>calc/</filename>删除。同时，你还要删除转储数据中创建<filename>calc</filename>目录的部分。一般来说，就是如下的一些内容：</para>
 
         <screen>
 Node-path: calc
@@ -1136,15 +1066,10 @@ Content-length: 0
 </screen>
 
         <warning>
-          <para>If you do plan on manually editing the dump file to remove a
-          top-level directory， make sure that your editor is not set to
-          automatically convert end-lines to the native format (e。g。 \r\n to
-          \n) as the content will then not agree with the metadata and this
-          will render the dump file useless。</para>
+          <para>如果你打算通过手工编辑转储文件来移除一个顶级目录，注意不要让你的编辑器将换行符转换为本地格式（比如将\r\n转换为\n）。否则文件的内容就与所需的格式不相符，这个转储文件也就失效了。</para>
         </warning>
 
-        <para>All that remains now is to create your three new repositories，
-        and load each dump file into the right repository:</para>
+        <para>剩下的工作就是创建三个新的版本库，然后将三个转储文件分别导入：</para>
 
         <screen>
 $ svnadmin create calc; svnadmin load calc &lt; calc-dumpfile
@@ -1165,13 +1090,7 @@ $ svnadmin create spreadsheet; svnadmin load spreadsheet &lt; ss-dumpfile
 $
 </screen>
 
-        <para>Both of <command>svndumpfilter</command>'s subcommands accept
-        options for deciding how to deal with <quote>empty</quote> revisions。
-        If a given revision contained only changes to paths that were filtered
-        out， that now-empty revision could be considered uninteresting or even
-        unwanted。 So to give the user control over what to do with those
-        revisions， <command>svndumpfilter</command> provides the following
-        command-line options:</para>
+        <para><command>svndumpfilter</command>的两个子命令都可以通过选项设定如何处理<quote>空</quote>修订版本。如果某个指定的修订版本仅包含路径的更改，过滤器就会将它删除，因为当前为空的修订版本通常是无用的甚至是让人讨厌的。为了让用户有选择的处理这些修订版本，<command>svndumpfilter</command>提供了以下命令行选项：</para>
 
         <variablelist>
           <varlistentry>
@@ -1180,8 +1099,7 @@ $
             </term>
 
             <listitem>
-              <para>Do not generate empty revisions at all—just omit
-              them。</para>
+              <para>不生成任何空修订版本，忽略它们。</para>
             </listitem>
           </varlistentry>
 
@@ -1191,10 +1109,7 @@ $
             </term>
 
             <listitem>
-              <para>If empty revisions are dropped (using the
-              <option>--drop-empty-revs</option> option)， change the revision
-              numbers of the remaining revisions so that there are no gaps in
-              the numeric sequence。</para>
+              <para>如果空修订版本被剔除（通过使用<option>--drop-empty-revs</option>选项），依次修改其它修订版本的编号，确保编号序列是连续的。</para>
             </listitem>
           </varlistentry>
 
@@ -1204,22 +1119,12 @@ $
             </term>
 
             <listitem>
-              <para>If empty revisions are not dropped， preserve the revision
-              properties (log message， author， date， custom properties， etc。)
-              for those empty revisions。 Otherwise， empty revisions will only
-              contain the original datestamp， and a generated log message that
-              indicates that this revision was emptied by
-              <command>svndumpfilter</command>。</para>
+              <para>如果空修订版本被保留，保持这些空修订版本的属性（日志信息，作者，日期，自定义属性，等等）。如果不设定这个选项，空修订版本将仅保留初始时间戳，以及一个自动生成的日志信息，表明此修订版本由<command>svndumpfilter</command>处理过。</para>
             </listitem>
           </varlistentry>
         </variablelist>
 
-        <para>While <command>svndumpfilter</command> can be very useful， and a
-        huge timesaver， there are unfortunately a couple of gotchas。 First，
-        this utility is overly sensitive to path semantics。 Pay attention to
-        whether paths in your dump file are specified with or without leading
-        slashes。 You'll want to look at the <literal>Node-path</literal> and
-        <literal>Copyfrom-path</literal> headers。</para>
+        <para>尽管<command>svndumpfilter</command>十分有用，能节省大量的时间，但它却不折不扣是把双刃剑。首先，这个工具对路径语义极为敏感。仔细检查转储文件中的路径是不是以斜线开头。也许<literal>Node-path</literal>和<literal>Copyfrom-path</literal>这两个头参数对你有些帮助。</para>
 
         <screen>
 …
@@ -1227,52 +1132,20 @@ Node-path: spreadsheet/Makefile
 …
 </screen>
 
-        <para>If the paths have leading slashes， you should include leading
-        slashes in the paths you pass to <command>svndumpfilter
-        include</command> and <command>svndumpfilter exclude</command> (and if
-        they don't， you shouldn't)。 Further， if your dump file has an
-        inconsistent usage of leading slashes for some reason， <footnote>
-            <para>While <command>svnadmin dump</command> has a consistent
-            leading slash policy—to not include them—other programs which
-            generate dump data might not be so consistent。</para>
-          </footnote> you should probably normalize those paths so they all
-        have， or lack， leading slashes。</para>
+        <para>如果这些路径以斜线开头，那么你传递给<command>svndumpfilter
+        include</command>和<command>svndumpfilter exclude</command>的路径也必须以斜线开头（反之亦然）。如果因为某些原因转储文件中的路径没有统一使用或不使用斜线开头，<footnote>
+            <para>尽管<command>svnadmin dump</command>对是否以斜线作为路径的开头有统一的规定——这个规定就是不以斜线作为路径的开头——其它生成转储文件的程序不一定会遵守这个规定。</para>
+          </footnote>也许需要修正这些路径，统一使用斜线开头或不使用斜线开头。</para>
 
-        <para>Also， copied paths can give you some trouble。 Subversion
-        supports copy operations in the repository， where a new path is
-        created by copying some already existing path。 It is possible that at
-        some point in the lifetime of your repository， you might have copied a
-        file or directory from some location that
-        <command>svndumpfilter</command> is excluding， to a location that it
-        is including。 In order to make the dump data self-sufficient，
-        <command>svndumpfilter</command> needs to still show the addition of
-        the new path—including the contents of any files created by the
-        copy—and not represent that addition as a copy from a source that
-        won't exist in your filtered dump data stream。 But because the
-        Subversion repository dump format only shows what was changed in each
-        revision， the contents of the copy source might not be readily
-        available。 If you suspect that you have any copies of this sort in
-        your repository， you might want to rethink your set of
-        included/excluded paths。</para>
+        <para>此外，复制操作生成的路径也会带来麻烦。Subversion支持在版本库中进行复制操作，也就是复制一个存在的路径，生成一个新的路径。问题是，<command>svndumpfilter</command>保留的某个文件或目录可能是由某个<command>svndumpfilter</command>排除的文件或目录复制而来的。也就是说，为了确保转储数据的完整性，<command>svndumpfilter</command>需要切断这些复制自被排除路径的文件与源文件的关系，还要将这些文件的内容以新建的方式添加到转储数据中。但是由于Subversion版本库转储文件格式中仅包含了修订版本的更改信息，因此源文件的内容基本上无法获得。如果你不能确定版本库中是否存在类似的情况，最好重新考虑一下到底保留/排除哪些路径。</para>
       </sect3>
 
       <sect3 id="svn-ch-5-sect-3.1.4">
-        <title>svnshell。py</title>
+        <title>svnshell.py</title>
 
-        <para>The Subversion source tree also comes with a shell-like
-        interface to the repository。 The <command>svnshell。py</command> Python
-        script (located in <filename>tools/examples/</filename> in the source
-        tree) uses Subversion's language bindings (so you must have those
-        properly compiled and installed in order for this script to work) to
-        connect to the repository and filesystem libraries。</para>
+        <para>Subversion源代码树中有一个类似于shell的版本库访问界面。Python脚本<command>svnshell.py</command>（位于源代码树的<filename>tools/examples/</filename>下）通过Subversion语言绑定接口（所以运行这个脚本须要正确的编译和安装这些程序包）连接到版本库和文件系统库。</para>
 
-        <para>Once started， the program behaves similarly to a shell program，
-        allowing you to browse the various directories in your repository。
-        Initially， you are <quote>positioned</quote> in the root directory of
-        the <literal>HEAD</literal> revision of the repository， and presented
-        with a command prompt。 You can use the <literal>help</literal> command
-        at any time to display a list of available commands and what they
-        do。</para>
+        <para>运行这个脚本，你可以浏览版本库中的目录，就像在shell下浏览文件系统一样。一开始，你<quote>位于</quote>修订版本<literal>HEAD</literal>的根目录中， 在命令提示符中可以看到相应的提示。 任何时候都可以使用<literal>help</literal>命令显示当前可用的命令帮助。</para>
 
         <screen>
 $ svnshell。py /path/to/repos
@@ -1289,21 +1162,10 @@ Available commands:
 &lt;rev: 2 /&gt;$
 </screen>
 
-        <para>Navigating the directory structure of your repository is done in
-        the same way you would navigate a regular Unix or Windows shell—using
-        the <literal>cd</literal> command。 At all times， the command prompt
-        will show you what revision (prefixed by <literal>rev:</literal>) or
-        transaction (prefixed by <literal>txn:</literal>) you are currently
-        examining， and at what path location in that revision or transaction。
-        You can change your current revision or transaction with the
-        <literal>setrev</literal> and <literal>settxn</literal> commands，
-        respectively。 As in a Unix shell， you can use the
-        <literal>ls</literal> command to display the contents of the current
-        directory， and you can use the <literal>cat</literal> command to
-        display the contents of a file。</para>
+        <para>浏览版本库的目录结构就像在Unix或Windows shell中一样——使用<literal>cd</literal>命令。任何时候，命令提示符中都会显示当前所在的修订版本（前缀为<literal>rev:</literal>）或事务（前缀为<literal>txn:</literal>，以及你所在的路径。你可以用<literal>setrev</literal>和<literal>settxn</literal>切换到其它修订版本或事务中去。。你可以想在Unix shell中那样，使用<literal>ls</literal>命令列出目录的内容，使用<literal>cat</literal>命令列出文件的内容。</para>
 
         <example id="svn-ch-8-sect-3.1.3-ex-1">
-          <title>Using svnshell to Navigate the Repository</title>
+          <title>使用svnshell浏览版本库</title>
 
           <screen>
 &lt;rev: 2 /&gt;$ ls
@@ -1339,61 +1201,21 @@ $
 </screen>
         </example>
 
-        <para>As you can see in the previous example， multiple commands may be
-        specified at a single command prompt， separated by a semicolon。 Also，
-        the shell understands the notions of relative and absolute paths， and
-        will properly handle the <literal>。</literal> and
-        <literal>。。</literal> special path components。</para>
+        <para>在上例中可以看到，可以将几条命令现在同一行中，并以分号隔开。此外，这个shell也能正确处理相对路径和绝对路径，以及特殊的路径<literal>.</literal>和<literal>..</literal></para>
 
-        <para>The <literal>youngest</literal> command displays the youngest
-        revision。 This is useful for determining the range of valid revisions
-        you can use as arguments to the <literal>setrev</literal> command—you
-        are allowed to browse all the revisions (recalling that they are named
-        with integers) between 0 and the youngest， inclusively。 Determining
-        the valid browsable transactions isn't quite as pretty。 Use the
-        <command>lstxns</command> command to list the transactions that you
-        are able to browse。 The list of browsable transactions is the same
-        list that <command>svnadmin lstxns</command> returns， and the same
-        list that is valid for use with <command>svnlook</command>'s
-        <option>--transaction</option> option。</para>
+        <para><literal>youngest</literal>命令将列出最年轻的修订版本。这可以用来确定<literal>setrev</literal>命令参数的范围——你可以浏览所有0到最年轻修订版本中的任何一个（它们都以整数为标识）。确定可以浏览的事务就不这么简单了。你需要使用<command>lstxns</command>命令列出哪些事务可以浏览。<command>lstxns</command>命令的输出与<command>svnadmin lstxns</command>的输出相同，设置了<option>--transaction</option>选项的<command>svnlook</command>命令也可以得到相同的结果。</para>
 
-        <para>Once you've finished using the shell， you can exit cleanly by
-        using the <command>exit</command> command。 Alternatively， you can
-        supply an end-of-file character—Control-D (though some Win32 Python
-        distributions use the Windows Control-Z convention instead)。</para>
+        <para>使用<command>exit</command>命令可以退出这个shell。也可以使用文件结束符——Control-D（在某些Win32的Python版本中用Control-Z代替）。</para>
       </sect3>
 
       <sect3 id="svn-ch-5-sect-3.1.5">
-        <title>Berkeley DB Utilities</title>
+        <title>Berkeley DB工具</title>
 
-        <para>If you're using a Berkeley DB repository， then all of your
-        versioned filesystem's structure and data live in a set of database
-        tables within the <filename>db</filename> subdirectory of your
-        repository。 This subdirectory is a regular Berkeley DB environment
-        directory， and can therefore be used in conjunction with any of the
-        Berkeley database tools (you can see the documentation for these tools
-        at SleepyCat's website， <systemitem
-        class="url">http://www。sleepycat。com/</systemitem>)。</para>
+        <para>如果你使用Berkeley DB版本库，那么所有纳入版本控制的文件系统结构和数据都储存在一系列数据库的表中，而这个位于版本库的<filename>db</filename>子目录下。这个子目录是一个标准的Berkeley DB环境目录，可以应用任何Berkeley数据库工具进行操作（参考SleepyCat网站<systemitem class="url">http://www.sleepycat.com/</systemitem>上关于这些工具的介绍）。</para>
 
-        <para>For day-to-day Subversion use， these tools are unnecessary。 Most
-        of the functionality typically needed for Subversion repositories has
-        been duplicated in the <command>svnadmin</command> tool。 For example，
-        <command>svnadmin list-unused-dblogs</command> and <command>svnadmin
-        list-dblogs</command> perform a subset of what is provided by the
-        Berkeley <command>db_archive</command> command， and <command>svnadmin
-        recover</command> reflects the common use cases of the
-        <command>db_recover</command> utility。</para>
+        <para>对于Subversion的日常使用来说，这些工具并没有什么用处。大多数Subversion版本库必须的数据库操作都集成到<command>svnadmin</command>工具中。比如，<command>svnadmin list-unused-dblogs</command>和<command>svnadmin list-dblogs</command>实现了Berkeley <command>db_archive</command>命令功能的一个子集，而<command>svnadmin recover</command>则起到了 <command>db_recover</command>工具的作用。</para>
 
-        <para>There are still a few Berkeley DB utilities that you might find
-        useful。 The <command>db_dump</command> and <command>db_load</command>
-        programs write and read， respectively， a custom file format which
-        describes the keys and values in a Berkeley DB database。 Since
-        Berkeley databases are not portable across machine architectures， this
-        format is a useful way to transfer those databases from machine to
-        machine， irrespective of architecture or operating system。 Also， the
-        <command>db_stat</command> utility can provide useful information
-        about the status of your Berkeley DB environment， including detailed
-        statistics about the locking and storage subsystems。</para>
+        <para>当然，还有一些Berkeley DB工具有时是有用的。<command>db_dump</command>将Berkeley DB数据库中的键值对以特定的格式写入文件中，而<command>db_load</command>则可以将这些键值对注入到数据库中。Berkeley数据库本身不支持跨平台转移，这两个工具在这样的情况下就可以实现在平台间转移数据库的功能，而无需关心操作系统或机器架构。此外，<command>db_stat</command>工具能够提供关于Berkeley DB环境的许多有用信息，包括详细的锁定和存储子系统的统计信息。</para>
       </sect3>
     </sect2>
 
@@ -1402,96 +1224,49 @@ $
     <sect2 id="svn-ch-5-sect-3.2">
       <title>版本库清理</title>
 
-      <para>Your Subversion repository will generally require very little
-      attention once it is configured to your liking。 However， there are times
-      when some manual assistance from an administrator might be in order。 The
-      <command>svnadmin</command> utility provides some helpful functionality
-      to assist you in performing such tasks as</para>
+      <para>Subversion版本库一旦按照需要配置完成，一般情况下不需要特别的关照。不过有些时候还是需要管理员手工干预一下。<command>svnadmin</command>工具就能够帮你完成以下这类工作：</para>
 
       <itemizedlist>
         <listitem>
-          <para>modifying commit log messages，</para>
+          <para>修改提交日志信息，</para>
         </listitem>
 
         <listitem>
-          <para>removing dead transactions，</para>
+          <para>移除中止的事务，</para>
         </listitem>
 
         <listitem>
-          <para>recovering <quote>wedged</quote> repositories， and</para>
+          <para>恢复<quote>塞住</quote>的版本库，以及</para>
         </listitem>
 
         <listitem>
-          <para>migrating repository contents to a different
-          repository。</para>
+          <para>将一个版本库中的内容搬移到另一个版本库中。</para>
         </listitem>
       </itemizedlist>
 
-      <para>Perhaps the most commonly used of <command>svnadmin</command>'s
-      subcommands is <literal>setlog</literal>。 When a transaction is
-      committed to the repository and promoted to a revision， the descriptive
-      log message associated with that new revision (and provided by the user)
-      is stored as an unversioned property attached to the revision itself。 In
-      other words， the repository remembers only the latest value of the
-      property， and discards previous ones。</para>
+      <para><command>svnadmin</command>的子命令中最经常用到的恐怕就是<literal>setlog</literal>。用户在提交时输入的日志信息随着相关事务提交到版本库并升级成为修订版本后，便作为新修订版本的非版本化（即没有进行版本管理）属性保存下来。换句话说，版本库只记得最新的属性值，而忽略以前的。</para>
 
-      <para>Sometimes a user will have an error in her log message (a
-      misspelling or some misinformation， perhaps)。 If the repository is
-      configured (using the <literal>pre-revprop-change</literal> and
-      <literal>post-revprop-change</literal> hooks; see <xref
-      linkend="svn-ch-5-sect-2.1" />) to accept changes to this log message
-      after the commit is finished， then the user can <quote>fix</quote> her
-      log message remotely using the <command>svn</command> program's
-      <literal>propset</literal> command (see <xref linkend="svn-ch-9" />)。
-      However， because of the potential to lose information forever，
-      Subversion repositories are not， by default， configured to allow changes
-      to unversioned properties—except by an administrator。</para>
+      <para>有时用户输入的日志信息有错误（比如拼写错误或者内容错误）。如果配置版本库时设置了（使用<literal>pre-revprop-change</literal>和      <literal>post-revprop-change</literal>钩子；参见<xref
+      linkend="svn-ch-5-sect-2.1" />）允许用户在提交后修改日志信息的选项，那么用户可以使用<command>svn</command>程序的<literal>propset</literal>命令（参见<xref linkend="svn-ch-9" />）<quote>修正</quote>日志信息中的错误。不过为了避免永远丢失信息，Subversion版本库通常设置为仅能由管理员修改非版本化属性（这也是默认的选项）。</para>
 
-      <para>If a log message needs to be changed by an administrator， this can
-      be done using <command>svnadmin setlog</command>。 This command changes
-      the log message (the <literal>svn:log</literal> property) on a given
-      revision of a repository， reading the new value from a provided
-      file。</para>
+      <para>如果管理员想要修改日志信息，那么可以使用<command>svnadmin setlog</command>命令。这个命令从指定的文件中读取信息，取代版本库中某个修订版本的日志信息（<literal>svn:log</literal>属性）。</para>
 
       <screen>
-$ echo "Here is the new， correct log message" &gt; newlog。txt
-$ svnadmin setlog myrepos newlog。txt -r 388
+$ echo "Here is the new， correct log message" &gt; newlog.txt
+$ svnadmin setlog myrepos newlog.txt -r 388
 </screen>
 
-      <para>The <command>svnadmin setlog</command> command alone is still
-      bound by the same protections against modifying unversioned properties
-      as a remote client is—the <literal>pre-</literal> and
-      <literal>post-revprop-change</literal> hooks are still triggered， and
-      therefore must be setup to accept changes of this nature。 But an
-      administrator can get around these protections by passing the
-      <option>--bypass-hooks</option> option to the <command>svnadmin
-      setlog</command> command。</para>
+      <para>即使是<command>svnadmin setlog</command>命令也受到限制。<literal>pre-</literal>和
+      <literal>post-revprop-change</literal>钩子同样会被触发，因此必须进行相应的设置才能允许修改非版本化属性。不过管理员可以使用<command>svnadmin
+      setlog</command>命令的<option>--bypass-hooks</option>选项跳过钩子。</para>
 
       <warning>
-        <para>Remember， though， that by bypassing the hooks， you are likely
-        avoiding such things as email notifications of property changes，
-        backup systems which track unversioned property changes， and so on。 In
-        other words， be very careful about what you are changing， and how you
-        change it。</para>
+        <para>不过需要注意的是，一旦跳过钩子也就跳过了钩子所提供的所有功能，比如邮件通知（通知属性有改动）、系统备份（可以用来跟踪非版本化的属性变更）等等。换句话说，要留心你所作出的修改，以及你作出修改的方式。</para>
       </warning>
 
-      <para>Another common use of <command>svnadmin</command> is to query the
-      repository for outstanding—possibly dead—Subversion transactions。 In the
-      event that a commit should fail， the transaction is usually cleaned up。
-      That is， the transaction itself is removed from the repository， and any
-      data associated with (and only with) that transaction is removed as
-      well。 Occasionally， though， a failure occurs in such a way that the
-      cleanup of the transaction never happens。 This could happen for several
-      reasons: perhaps the client operation was inelegantly terminated by the
-      user， or a network failure might have occurred in the middle of an
-      operation， etc。 Regardless of the reason， dead transactions can happen。
-      They don't do any real harm， other than consuming a small bit of disk
-      space。 A fastidious administrator may nonetheless want to remove
-      them。</para>
+      <para><command>svnadmin</command>的另一个常见用途是查询异常的——可能是已经死亡的——Subversion事务。通常提交操作失败时，与之相关的事务就会被清除。也就是说，事务本身及所有与该事务相关（且仅与该事务相关）的数据会从版本库中删除。不过偶尔也会出现操作失败而事务没有被清除的情况。出现这种情况可能有以下原因：客户端的用户粗暴的结束了操作，操作过程中出现网络故障，等等。不管是什么原因，死亡的事务总是有可能会出现。这类事务不会产生什么负面影响，仅仅是消耗了一点点磁盘空间。不过，严厉的管理员总是希望能够将它们清除出去。</para>
 
-      <para>You can use <command>svnadmin</command>'s
-      <literal>lstxns</literal> command to list the names of the currently
-      outstanding transactions。</para>
+      <para>可以使用<command>svnadmin</command>的<literal>lstxns</literal> 命令列出当前的异常事务名。</para>
 
       <screen>
 $ svnadmin lstxns myrepos
@@ -1501,36 +1276,23 @@ a45
 $
 </screen>
 
-      <para>Each item in the resultant output can then be used with
-      <command>svnlook</command> (and its <option>--transaction</option>
-      option) to determine who created the transaction， when it was created，
-      what types of changes were made in the transaction—in other words，
-      whether or not the transaction is a safe candidate for removal! If so，
-      the transaction's name can be passed to <command>svnadmin
-      rmtxns</command>， which will perform the cleanup of the transaction。 In
-      fact， the <literal>rmtxns</literal> subcommand can take its input
-      directly from the output of <literal>lstxns</literal>!</para>
+      <para>将输出的结果条目作为<command>svnlook</command>（设置<option>--transaction</option>选项）的参数，就可以获得事务的详细信息，如事务的创建者、创建时间，事务已作出的更改类型，由这些信息可以判断出是否可以将这个事务安全的删除。如果可以安全删除，那么只需将事务名作为参数输入到<command>svnadmin rmtxns</command>，就可以将事务清除掉了。其实<literal>rmtxns</literal>子命令可以直接以<literal>lstxns</literal>的输出作为输入进行清理。</para>
 
       <screen>
 $ svnadmin rmtxns myrepos `svnadmin lstxns myrepos`
 $
 </screen>
 
-      <para>If you use these two subcommands like this， you should consider
-      making your repository temporarily inaccessible to clients。 That way， no
-      one can begin a legitimate transaction before you start your cleanup。
-      The following is a little bit of shell-scripting that can quickly
-      generate information about each outstanding transaction in your
-      repository:</para>
+      <para>在按照上面例子中的方法清理版本库之前，你或许应该暂时关闭版本库和客户端的连接。这样在你开始清理之前，不会有正常的事务进入版本库。下面例子中的shell脚本可以用来迅速获得版本库中异常事务的信息：</para>
 
       <example id="svn-ch-5-sect-3.2-ex-1">
-        <title>txn-info。sh (Reporting Outstanding Transactions)</title>
+        <title>txn-info.sh（异常事务报告）</title>
 
         <programlisting>
 #!/bin/sh
 
 ### Generate informational output for all outstanding transactions in
-### a Subversion repository。
+### a Subversion repository.
 
 REPOS="${1}"
 if [ "x$REPOS" = x ] ; then
@@ -1545,14 +1307,11 @@ done
 </programlisting>
       </example>
 
-      <para>You can run the previous script using
-      <command>/path/to/txn-info。sh /path/to/repos</command>。 The output is
-      basically a concatenation of several chunks of <command>svnlook
-      info</command> output (see <xref linkend="svn-ch-5-sect-3.1.1" />)， and
-      will look something like:</para>
+      <para>可以用下面的命令使用上例中脚本：
+      <command>/path/to/txn-info.sh /path/to/repos</command>。该命令的输出主要有多个<command>svnlook info</command>参见<xref linkend="svn-ch-5-sect-3.1.1" />）的输出组成，类似于下面的例子：</para>
 
       <screen>
-$ txn-info。sh myrepos
+$ txn-info.sh myrepos
 ---[ Transaction 19 ]-------------------------------------------
 sally
 2001-09-04 11:57:19 -0500 (Tue， 04 Sep 2001)
@@ -1569,18 +1328,9 @@ sally
 $
 </screen>
 
-      <para>An long-abandoned transaction usually represents some sort of
-      failed or interrupted commit。 A transaction's datestamp can provide
-      interesting information—for example， how likely is it that an operation
-      begun nine months ago is still active?</para>
+      <para>一个废弃了很长时间的事务通常是提交错误或异常中断的结果。事务的时间戳可以提供给我们一些有趣的信息，比如一个进行了9个月的操作居然还是活动的等等。</para>
 
-      <para>In short， transaction cleanup decisions need not be made unwisely。
-      Various sources of information—including Apache's error and access logs，
-      the logs of successful Subversion commits， and so on—can be employed in
-      the decision-making process。 Finally， an administrator can often simply
-      communicate with a seemingly dead transaction's owner (via email， for
-      example) to verify that the transaction is， in fact， in a zombie
-      state。</para>
+      <para>简言之，作出事务清理的决定前应该仔细考虑一下。许多信息源——比如Apache的错误和访问日志，已成功完成的Subversion提交日志等等——都可以作为决策的参考。管理员还可以直接和那些似乎已经死亡事务的提交者直接交流（比如通过邮件），来确认该事务确实已经死亡了。</para>
     </sect2>
 
     <!-- ***************************************************************** -->
@@ -1588,88 +1338,29 @@ $
     <sect2 id="svn-ch-5-sect-3.3">
       <title>管理磁盘空间</title>
 
-      <para>While the cost of storage has dropped incredibly in the past few
-      years， disk usage is still a valid concern for administrators seeking to
-      version large amounts of data。 Every additional byte consumed by the
-      live repository is a byte that needs to be backed up offsite， perhaps
-      multiple times as part of rotating backup schedules。 If using a Berkeley
-      DB repository， the primary storage mechanism is a complex database
-      system， it is useful to know what pieces of data need to remain on the
-      live site， which need to be backed up， and which can be safely removed。
-      This section is specific to Berkeley DB; FSFS repositories have no extra
-      data that be cleaned up or reclaimed。</para>
+      <para>虽然存储器的价格在过去的几年里以让人难以致信的速度滑落，但是对于那些需要对大量数据进行版本管理的管理员们来说，磁盘空间的消耗依然是一个重要的因素。版本库每增加一个字节都意味着需要多一个字节的磁盘空间进行备份，对于多重备份来说，就需要消耗更多的磁盘空间。Berkeley DB版本库的主要存储机制是基于一个复杂的数据库系统建立的，因此了解一些数据性质是有意义的，比如哪些数据必须保留。哪些数据需要备份、哪些数据可以安全的删除等等。本节的内容专注于Berkeley DB类型的版本库。FSFS类型的版本库不需要进行数据清理和回收。</para>
 
-      <para>Until recently， the largest offender of disk space usage with
-      respect to Subversion repositories was the log files to which Berkeley
-      DB performs its pre-writes before modifying the actual database files。
-      These files capture all the actions taken along the route of changing
-      the database from one state to another—while the database files reflect
-      at any given time some state， the log files contain all the many changes
-      along the way between states。 As such， they can start to accumulate
-      quite rapidly。</para>
+      <para>目前为止，Subversion版本库中耗费磁盘空间的最大凶手是日志文件，每次Berkeley DB在修改真正的数据文件之前都会进行预写入（pre-writes）操作。这些文件记录了数据库从一个状态变化到另一个状态的所有动作——数据库文件反应了特定时刻数据库的状态，而日志文件则记录了所有状态变化的信息。因此，日志文件会以很快的速度膨胀起来。</para>
 
-      <para>Fortunately， beginning with the 4。2 release of Berkeley DB， the
-      database environment has the ability to remove its own unused log files
-      without any external procedures。 Any repositories created using an
-      <command>svnadmin</command> which is compiled against Berkeley DB
-      version 4。2 or greater will be configured for this automatic log file
-      removal。 If you don't want this feature enabled， simply pass the
-      <option>--bdb-log-keep</option> option to the <command>svnadmin
-      create</command> command。 If you forget to do this， or change your mind
-      at a later time， simple edit the <filename>DB_CONFIG</filename> file
-      found in your repository's <filename>db</filename> directory， comment
-      out the line which contains the <literal>set_flags
-      DB_LOG_AUTOREMOVE</literal> directive， and then run <command>svnadmin
-      recover</command> on your repository to force the configuration changes
-      to take effect。 See <xref linkend="svn-ch-5-sect-2.2" /> for more
-      information about database configuration。</para>
+      <para>幸运的是，从版本4.2开始，Berkeley DB的数据库环境无需额外的操作即可删除无用的日志文件。如果编译<command>svnadmin</command>时使用了高于4.2版本的Berkeley DB，那么由此<command>svnadmin</command>程序创建的版本库就具备了自动清除日志文件的功能。如果想屏蔽这个功能，只需设置<command>svnadmin create</command>命令的<option>--bdb-log-keep</option>选项即可。如果创建版本库以后想要修改关于此功能的设置，只需编辑版本库中<filename>db</filename>目录下的<filename>DB_CONFIG</filename>文件，注释掉包含<literal>set_flags DB_LOG_AUTOREMOVE</literal>内容的这一行，然后运行<command>svnadmin
+      recover</command>强制设置生效就行了。查阅<xref linkend="svn-ch-5-sect-2.2" />获得更多关于数据库配置的帮助信息。</para>
 
-      <para>Without some sort of automatic log file removal in place， log
-      files will accumulate as you use your repository。 This is actually
-      somewhat of a feature of the database system—you should be able to
-      recreate your entire database using nothing but the log files， so these
-      files can be useful for catastrophic database recovery。 But typically，
-      you'll want to archive the log files that are no longer in use by
-      Berkeley DB， and then remove them from disk to conserve space。 Use the
-      <command>svnadmin list-unused-dblogs</command> command to list the
-      unused log files:</para>
+      <para>如果不自动删除日志文件，那么日志文件会随着版本库的使用逐渐增加。这多少应该算是数据库系统的特性，通过这些日志文件可以在数据库严重损坏时恢复整个数据库的内容。但是一般情况下，最好是能够将无用的日志文件收集起来并删除，这样就可以节省磁盘空间。使用<command>svnadmin list-unused-dblogs</command>命令可以列出无用的日志文件：</para>
 
       <screen>
 $ svnadmin list-unused-dblogs /path/to/repos
-/path/to/repos/log。0000000031
-/path/to/repos/log。0000000032
-/path/to/repos/log。0000000033
+/path/to/repos/log.0000000031
+/path/to/repos/log.0000000032
+/path/to/repos/log.0000000033
 
 $ svnadmin list-unused-dblogs /path/to/repos | xargs rm
 ## disk space reclaimed!
 </screen>
 
-      <para>To keep the size of the repository as small as possible，
-      Subversion uses <firstterm>deltification</firstterm> (or，
-      <quote>deltified storage</quote>) within the repository itself。
-      Deltification involves encoding the representation of a chunk of data as
-      a collection of differences against some other chunk of data。 If the two
-      pieces of data are very similar， this deltification results in storage
-      savings for the deltified chunk—rather than taking up space equal to the
-      size of the original data， it only takes up enough space to say，
-      <quote>I look just like this other piece of data over here， except for
-      the following couple of changes。</quote> Specifically， each time a new
-      version of a file is committed to the repository， Subversion encodes the
-      previous version (actually， several previous versions) as a delta
-      against the new version。 The result is that most of the repository data
-      that tends to be sizable—namely， the contents of versioned files—is
-      stored at a much smaller size than the original <quote>fulltext</quote>
-      representation of that data。</para>
+      <para>为了尽可能减小版本库的体积，Subversion在版本库中采用了<firstterm>增量化技术</firstterm>（或称为<quote>增量存储技术</quote>）。增量化技术可以将一组数据表示为相对于另一组数据的不同。如果这两组数据十分相似，增量化技术就可以仅保存其中一组数据以及两组数据的差别，而不需要同时保存两组数据，从而节省了磁盘空间。每次一个文件的新版本提交到版本库，版本库就会将之前的版本（之前的多个版本）相对于新版本做增量化处理。采用了这项技术，版本库的数据量大小基本上是可以估算出来的——主要是版本化的文件的大小——并且远小于<quote>全文</quote>保存所需的数据量。</para>
 
       <note>
-        <para>Because all of the Subversion repository data that is subject to
-        deltification is stored in a single Berkeley DB database file，
-        reducing the size of the stored values will not necessarily reduce the
-        size of the database file itself。 Berkeley DB will， however， keep
-        internal records of unused areas of the database file， and use those
-        areas first before growing the size of the database file。 So while
-        deltification doesn't produce immediate space savings， it can
-        drastically slow future growth of the database。</para>
+        <para>由于Subversion版本库的增量化数据保存在单一Berkeley DB数据库文件中，减少数据的体积并不一定能够减小数据库文件的大小。但是，Berkeley DB会在内部记录未使用的数据库文件区域，并且在增加数据库文件大小之前会首先使用这些未使用的区域。因此，即使增量化技术不能立杆见影的节省磁盘空间，也可以极大的减慢数据库的膨胀速度。</para>
       </note>
     </sect2>
 
@@ -1678,96 +1369,49 @@ $ svnadmin list-unused-dblogs /path/to/repos | xargs rm
     <sect2 id="svn-ch-5-sect-3.4">
       <title>版本库的恢复</title>
 
-      <para>As mentioned in <xref linkend="svn-ch-5-sect-1.3.1" />， a Berkeley
-      DB repository can sometimes be left in frozen state if not closed
-      properly。 When this happens， an administrator needs to rewind the
-      database back into a consistent state。</para>
+      <para><xref linkend="svn-ch-5-sect-1.3.1" />中曾提到，Berkeley DB版本库如果没有正常关闭可能会进入冻结状态。这时，就需要管理员将数据库恢复到正常状态。</para>
 
-      <para>In order to protect the data in your repository， Berkeley DB uses
-      a locking mechanism。 This mechanism ensures that portions of the
-      database are not simultaneously modified by multiple database accessors，
-      and that each process sees the data in the correct state when that data
-      is being read from the database。 When a process needs to change
-      something in the database， it first checks for the existence of a lock
-      on the target data。 If the data is not locked， the process locks the
-      data， makes the change it wants to make， and then unlocks the data。
-      Other processes are forced to wait until that lock is removed before
-      they are permitted to continue accessing that section of the
-      database。</para>
+      <para>Berkeley DB使用一种锁机制保护版本库中的数据。锁机制确保数据库不会同时被多个访问进程修改，也就保证了从数据库中读取到的数据始终是稳定而且正确的。当一个进程需要修改数据库中的数据时，首先必须检查目标数据是否已经上锁。如果目标数据没有上锁，进程就将它锁上，然后作出修改，最后再将锁解除。而其它进程则必须等待锁解除后才能继续访问数据库中的相关内容。</para>
 
-      <para>In the course of using your Subversion repository， fatal errors
-      (such as running out of disk space or available memory) or interruptions
-      can prevent a process from having the chance to remove the locks it has
-      placed in the database。 The result is that the back-end database system
-      gets <quote>wedged</quote>。 When this happens， any attempts to access
-      the repository hang indefinitely (since each new accessor is waiting for
-      a lock to go away—which isn't going to happen)。</para>
+      <para>在操作Subversion版本库的过程中，致命错误（如内存或硬盘空间不足）或异常中断可能会导致某个进程没能及时将锁解除。结果就是后端的数据库系统被<quote>塞住</quote>了。一旦发生这种情况，任何访问版本库的进程都会挂起（每个访问进程都在等待锁被解除，但是锁已经无法解除了）。</para>
 
-      <para>First， if this happens to your repository， don't panic。 The
-      Berkeley DB filesystem takes advantage of database transactions and
-      checkpoints and pre-write journaling to ensure that only the most
-      catastrophic of events <footnote>
-          <para>E。g。: hard drive + huge electromagnet = disaster。</para>
-        </footnote> can permanently destroy a database environment。 A
-      sufficiently paranoid repository administrator will be making off-site
-      backups of the repository data in some fashion， but don't call your
-      system administrator to restore a backup tape just yet。</para>
+      <para>首先，如果你的版本库出现这种情况，没什么好惊慌的。Berkeley DB的文件系统采用了数据库事务、检查点以及预写入日志等技术来取保只有灾难性的事件<footnote>
+          <para>比如：硬盘 + 大号电磁铁 = 毁灭。</para>
+        </footnote>才能永久性的破坏数据库环境。所以虽然一个过于稳重的版本库管理员通常都会按照某种方案进行大量的版本库离线备份，不过不要急着通知你的管理员进行恢复。</para>
 
-      <para>Secondly， use the following recipe to attempt to
-      <quote>unwedge</quote> your repository:</para>
+      <para>然后，使用下面的方法试着<quote>恢复</quote>你的版本库：</para>
 
       <orderedlist>
         <listitem>
-          <para>Make sure that there are no processes accessing (or attempting
-          to access) the repository。 For networked repositories， this means
-          shutting down the Apache HTTP Server， too。</para>
+          <para>确保没有其它进程访问（或者试图访问）版本库。对于网络版本库，关闭Apache HTTP服务器是个好办法。</para>
         </listitem>
 
         <listitem>
-          <para>Become the user who owns and manages the repository。 This is
-          important， as recovering a repository while running as the wrong
-          user can tweak the permissions of the repository's files in such a
-          way that your repository will still be inaccessible even after it is
-          <quote>unwedged</quote>。</para>
+          <para>成为版本库的拥有者和管理员。这一点很重要，如果以其它用户的身份恢复版本库，可能会改变版本库文件的访问权限，导致在版本库<quote>恢复</quote>后依旧无法访问。</para>
         </listitem>
 
         <listitem>
-          <para>Run the command <command>svnadmin recover
-          /path/to/repos</command>。 You should see output like this:</para>
+          <para>运行命令<command>svnadmin recover /path/to/repos</command>。 输出如下：</para>
 
           <screen>
 Repository lock acquired。
-Please wait; recovering the repository may take some time。。。
+Please wait; recovering the repository may take some time...
 
-Recovery completed。
-The latest repos revision is 19。
+Recovery completed.
+The latest repos revision is 19.
 </screen>
 
-          <para>This command may take many minutes to complete。</para>
+          <para>此命令可能需要数分钟才能完成。</para>
         </listitem>
 
         <listitem>
-          <para>Restart the Subversion server。</para>
+          <para>重新启动Subversion服务器。</para>
         </listitem>
       </orderedlist>
 
-      <para>This procedure fixes almost every case of repository lock-up。 Make
-      sure that you run this command as the user that owns and manages the
-      database， not just as <literal>root</literal>。 Part of the recovery
-      process might involve recreating from scratch various database files
-      (shared memory regions， for example)。 Recovering as
-      <literal>root</literal> will create those files such that they are owned
-      by <literal>root</literal>， which means that even after you restore
-      connectivity to your repository， regular users will be unable to access
-      it。</para>
+      <para>这个方法能修复几乎所有版本库锁住的问题。记住，要以数据库的拥有者和管理员的身份运行这个命令，而不一定是<literal>root</literal>用户。恢复过程中可能会使用其它数据存储区（例如共享内存区）重建一些数据库文件。如果以<literal>root</literal>用户身份恢复版本库，这些重建的文件拥有者将变成<literal>root</literal>用户，也就是说，即使恢复了到版本库的连接，一般的用户也无权访问这些文件。</para>
 
-      <para>If the previous procedure， for some reason， does not successfully
-      unwedge your repository， you should do two things。 First， move your
-      broken repository out of the way and restore your latest backup of it。
-      Then， send an email to the Subversion user list (at
-      <email>users@subversion。tigris。org</email>) describing your problem in
-      detail。 Data integrity is an extremely high priority to the Subversion
-      developers。</para>
+      <para>如果因为某些原因，上面的方法没能成功的恢复版本库，那么你可以做两件事。首先，将破损的版本库保存到其它地方，然后从最新的备份中恢复版本库。然后，发送一封邮件到Subversion用户列表（地址是：<email>users@subversion.tigris.org</email>），写清你所遇到的问题。对于Subversion的开发者来说，数据安全是最重要的问题。</para>
     </sect2>
 
     <!-- ***************************************************************** -->
@@ -1775,186 +1419,105 @@ The latest repos revision is 19。
     <sect2 id="svn-ch-5-sect-3.5">
       <title>版本库的移植</title>
 
-      <para>A Subversion filesystem has its data spread throughout various
-      database tables in a fashion generally understood by (and of interest
-      to) only the Subversion developers themselves。 However， circumstances
-      may arise that call for all， or some subset， of that data to be
-      collected into a single， portable， flat file format。 Subversion provides
-      such a mechanism， implemented in a pair of <command>svnadmin</command>
-      subcommands: <literal>dump</literal> and <literal>load</literal>。</para>
+      <para>Subversion文件系统将数据保存在许多数据库表中，而这些表的结构只有Subversion开发者们才了解（也只有他们才感兴趣）不过，有些时候我们会想到把所有的数据（或者一部分数据）保存在一个独立的、可移植的、普通格式的文件中。Subversion通过<command>svnadmin</command>的两个子命令<literal>dump</literal>和<literal>load</literal>提供了类似的功能。</para>
 
-      <para>The most common reason to dump and load a Subversion repository is
-      due to changes in Subversion itself。 As Subversion matures， there are
-      times when certain changes made to the back-end database schema cause
-      Subversion to be incompatible with previous versions of the repository。
-      Other reasons for dumping and loading might be to migrate a Berkeley DB
-      repository to a new OS or CPU architecture， or to switch between
-      Berkeley DB and FSFS back-ends。 The recommended course of action is
-      relatively simple:</para>
+      <para>对版本库的转储和装载的需求主要还是由于Subversion自身处于变化之中。在Subversion的成长期，后端数据库的设计多次发生变化，这些变化导致之前的版本库出现兼容性问题。当然，将Berkeley DB版本库移植到不同的操作系统或者CPU架构上，或者在Berkeley DB和FSFS后端之间进行转化也需要转储和装载功能。按照下面的介绍，只需简单几步就可以完成数据库的移植：</para>
 
       <orderedlist>
         <listitem>
-          <para>Using your <emphasis>current</emphasis> version of
-          <command>svnadmin</command>， dump your repositories to dump
-          files。</para>
+          <para>使用<emphasis>当前</emphasis>版本的<command>svnadmin</command>将版本库转储到文件中。</para>
         </listitem>
 
         <listitem>
-          <para>Upgrade to the new version of Subversion。</para>
+          <para>升级Subversion。</para>
         </listitem>
 
         <listitem>
-          <para>Move your old repositories out of the way， and create new
-          empty ones in their place using your <emphasis>new</emphasis>
-          <command>svnadmin</command>。</para>
+          <para>移除以前的版本库，并使用<emphasis>新版本</emphasis>的<command>svnadmin</command>在原来版本库的位置建立空的版本库。</para>
         </listitem>
 
         <listitem>
-          <para>Again using your <emphasis>new</emphasis>
-          <command>svnadmin</command>， load your dump files into their
-          respective， just-created repositories。</para>
+          <para>还是使用<emphasis>新版本</emphasis>的<command>svnadmin</command>从转储文件中将数据装载到新建的空版本库中。</para>
         </listitem>
 
         <listitem>
-          <para>Be sure to copy any customizations from your old repositories
-          to the new ones， including <filename>DB_CONFIG</filename> files and
-          hook scripts。 You'll want to pay attention to the release notes for
-          the new release of Subversion to see if any changes since your last
-          upgrade affect those hooks or configuration options。</para>
+          <para>记住从以前的版本库中复制所有的定制文件到新版本库中，包括<filename>DB_CONFIG</filename>文件和钩子脚本。最好阅读一下新版本的release notes，看看此次升级是否会影响钩子和配置选项。</para>
         </listitem>
 
         <listitem>
-          <para>If the migration process made your repository accessible at a
-          different URL (e。g。 moved to a different computer， or is being
-          accessed via a different schema)， then you'll probably want to tell
-          your users to run <command>svn switch --relocate</command> on their
-          existing working copies。 See <xref
+          <para>如果移植的同时改变的版本库的访问地址（比如移植到另一台计算机或者改变了访问策略），那么可以通知用户运行<command>svn switch --relocate</command>来切换他们的工作副本。参见<xref
           linkend="svn-ch-9-sect-1.2-re-switch" />。</para>
         </listitem>
       </orderedlist>
 
-      <para><command>svnadmin dump</command> will output a range of repository
-      revisions that are formatted using Subversion's custom filesystem dump
-      format。 The dump format is printed to the standard output stream， while
-      informative messages are printed to the standard error stream。 This
-      allows you to redirect the output stream to a file while watching the
-      status output in your terminal window。 For example:</para>
+      <para><command>svnadmin dump</command>命令会将版本库中的修订版本数据按照特定的格式输出到转储流中。转储数据会输出到标准输出流，而提示信息会输出到标准错误流。这就是说，可以将转储数据存储到文件中，而同时在终端窗口中监视运行状态。例如：</para>
 
       <screen>
 $ svnlook youngest myrepos
 26
 $ svnadmin dump myrepos &gt; dumpfile
-* Dumped revision 0。
-* Dumped revision 1。
-* Dumped revision 2。
+* Dumped revision 0.
+* Dumped revision 1.
+* Dumped revision 2.
 …
-* Dumped revision 25。
-* Dumped revision 26。
+* Dumped revision 25.
+* Dumped revision 26.
 </screen>
 
-      <para>At the end of the process， you will have a single file
-      (<filename>dumpfile</filename> in the previous example) that contains
-      all the data stored in your repository in the requested range of
-      revisions。 Note that <command>svnadmin dump</command> is reading
-      revision trees from the repository just like any other
-      <quote>reader</quote> process would (<command>svn checkout</command>，
-      for example。) So it's safe to run this command at any time。</para>
+      <para>最后，版本库中的指定的修订版本数据被转储到一个独立的文件中（在上面的例子中是<filename>dumpfile</filename>）。注意，<command>svnadmin dump</command>从版本库中读取修订版本树与其它<quote>读者</quote>（比如<command>svn checkout</command>）的过程相同，所以可以在任何时候安全的运行这个命令。</para>
 
-      <para>The other subcommand in the pair， <command>svnadmin
-      load</command>， parses the standard input stream as a Subversion
-      repository dump file， and effectively replays those dumped revisions
-      into the target repository for that operation。 It also gives informative
-      feedback， this time using the standard output stream:</para>
+      <para>另一个命令，<command>svnadmin load</command>，从标准输入流中读取Subversion转储数据，并且高效的将数据转载到目标版本库中。这个命令的提示信息输出到标准输出流中：</para>
 
       <screen>
 $ svnadmin load newrepos &lt; dumpfile
-&lt;&lt;&lt; Started new txn， based on original revision 1
-     * adding path : A 。。。 done。
-     * adding path : A/B 。。。 done。
+&lt;&lt;&lt; Started new txn, based on original revision 1
+     * adding path : A ... done.
+     * adding path : A/B ... done.
      …
 ------- Committed new rev 1 (loaded from original rev 1) &gt;&gt;&gt;
 
-&lt;&lt;&lt; Started new txn， based on original revision 2
-     * editing path : A/mu 。。。 done。
-     * editing path : A/D/G/rho 。。。 done。
+&lt;&lt;&lt; Started new txn, based on original revision 2
+     * editing path : A/mu ... done.
+     * editing path : A/D/G/rho ... done.
 
 ------- Committed new rev 2 (loaded from original rev 2) &gt;&gt;&gt;
 
 …
 
-&lt;&lt;&lt; Started new txn， based on original revision 25
-     * editing path : A/D/gamma 。。。 done。
+&lt;&lt;&lt; Started new txn, based on original revision 25
+     * editing path : A/D/gamma ... done.
 
 ------- Committed new rev 25 (loaded from original rev 25) &gt;&gt;&gt;
 
-&lt;&lt;&lt; Started new txn， based on original revision 26
-     * adding path : A/Z/zeta 。。。 done。
-     * editing path : A/mu 。。。 done。
+&lt;&lt;&lt; Started new txn, based on original revision 26
+     * adding path : A/Z/zeta ... done.
+     * editing path : A/mu ... done.
 
 ------- Committed new rev 26 (loaded from original rev 26) &gt;&gt;&gt;
 
 </screen>
 
-      <para>Note that because <command>svnadmin</command> uses standard input
-      and output streams for the repository dump and load process， people who
-      are feeling especially saucy can try things like this (perhaps even
-      using different versions of <command>svnadmin</command> on each side of
-      the pipe):</para>
+      <para>既然<command>svnadmin</command>使用标准输入流和标准输出流作为转储和装载的输入和输出，那么更漂亮的用法是（管道两端可以是不同版本的<command>svnadmin</command>：</para>
 
       <screen>
 $ svnadmin create newrepos
 $ svnadmin dump myrepos | svnadmin load newrepos
 </screen>
 
-      <para>By default， the dump file will be quite large—much larger than the
-      repository itself。 That's because every version of every file is
-      expressed as a full text in the dump file。 This is the fastest and
-      simplest behavior， and nice if you're piping the dump data directly into
-      some other process (such as a compression program， filtering program， or
-      into a loading process)。 But if you're creating a dump file for
-      longer-term storage， you'll likely want to save disk space by using the
-      <option>--deltas</option> switch。 With this option， successive revisions
-      of files will be output as compressed， binary differences—just as file
-      revisions are stored in a repository。 This option is slower， but results
-      in a dump file much closer in size to the original repository。</para>
+      <para>默认情况下，转储文件的体积可能会相当庞大——比版本库自身大很多。这是因为在转储文件中，每个文件的每个版本都以完整的文本形式保存下来。这种方法速度很快，而且很简单，尤其是直接将转储数据通过管道输入到其它进程中时（比如一个压缩程序，过滤程序，或者一个装载进程）。不过如果要长期保存转储文件，那么可以使用<option>--deltas</option>选项来节省磁盘空间。设置这个选项，同一个文件的数个连续修订版本会以增量式的方式保存——就像储存在版本库中一样。这个方法较慢，但是转储文件的体积则基本上与版本库的体积相当。</para>
 
-      <para>We mentioned previously that <command>svnadmin dump</command>
-      outputs a range of revisions。 Use the <option>--revision</option> option
-      to specify a single revision to dump， or a range of revisions。 If you
-      omit this option， all the existing repository revisions will be
-      dumped。</para>
+      <para>之前我们提到<command>svnadmin dump</command>输出指定的修订版本。使用<option>--revision</option>选项可以指定一个单独的修订版本，或者一个修订版本的范围。如果忽略这个选项，所有版本库中的修订版本都会被转储。</para>
 
       <screen>
-$ svnadmin dump myrepos --revision 23 &gt; rev-23。dumpfile
-$ svnadmin dump myrepos --revision 100:200 &gt; revs-100-200。dumpfile
+$ svnadmin dump myrepos --revision 23 &gt; rev-23.dumpfile
+$ svnadmin dump myrepos --revision 100:200 &gt; revs-100-200.dumpfile
 </screen>
 
-      <para>As Subversion dumps each new revision， it outputs only enough
-      information to allow a future loader to re-create that revision based on
-      the previous one。 In other words， for any given revision in the dump
-      file， only the items that were changed in that revision will appear in
-      the dump。 The only exception to this rule is the first revision that is
-      dumped with the current <command>svnadmin dump</command> command。</para>
+      <para>Subversion在转储修订版本时，仅会输出与前一个修订版本之间的差异，通过这些差异足以从前一个修订版本中重建当前的修订版本。换句话说，在转储文件中的每一个修订版本仅包含这个修订版本作出的修改。这个规则的唯一一个例外是当前<command>svnadmin dump</command>转储的第一个修订版本。</para>
 
-      <para>By default， Subversion will not express the first dumped revision
-      as merely differences to be applied to the previous revision。 For one
-      thing， there is no previous revision in the dump file! And secondly，
-      Subversion cannot know the state of the repository into which the dump
-      data will be loaded (if it ever， in fact， occurs)。 To ensure that the
-      output of each execution of <command>svnadmin dump</command> is
-      self-sufficient， the first dumped revision is by default a full
-      representation of every directory， file， and property in that revision
-      of the repository。</para>
+      <para>默认情况下，Subversion不会把转储的第一个修订版本看作对前一个修订版本的更改。 首先，转储文件中没有比第一个修订版本更靠前的修订版本了！其次，Subversion不知道装载转储数据时（如果真的需要装载的话）的版本库是什么样的情况。为了保证每次运行<command>svnadmin dump</command>都能得到一个独立的结果，第一个转储的修订版本默认情况下会完整的保存目录、文件以及属性等数据。</para>
 
-      <para>However， you can change this default behavior。 If you add the
-      <option>--incremental</option> option when you dump your repository，
-      <command>svnadmin</command> will compare the first dumped revision
-      against the previous revision in the repository， the same way it treats
-      every other revision that gets dumped。 It will then output the first
-      revision exactly as it does the rest of the revisions in the dump
-      range—mentioning only the changes that occurred in that revision。 The
-      benefit of this is that you can create several small dump files that can
-      be loaded in succession， instead of one large one， like so:</para>
+      <para>不过，这些都是可以改变的。如果转储时设置了<option>--incremental</option>选项，<command>svnadmin</command>会比较第一个转储的修订版本和版本库中前一个修订版本，就像对待其它转储的修订版本一样。转储时也是一样，转储文件中将仅包含第一个转储的修订版本的增量信息。这样的好处是，可以创建几个连续的小体积的转储文件代替一个大文件，比如：</para>
 
       <screen>
 $ svnadmin dump myrepos --revision 0:1000 &gt; dumpfile1
@@ -1962,8 +1525,7 @@ $ svnadmin dump myrepos --revision 1001:2000 --incremental &gt; dumpfile2
 $ svnadmin dump myrepos --revision 2001:3000 --incremental &gt; dumpfile3
 </screen>
 
-      <para>These dump files could be loaded into a new repository with the
-      following command sequence:</para>
+      <para>这些转储文件可以使用下列命令装载到一个新的版本库中：</para>
 
       <screen>
 $ svnadmin load newrepos &lt; dumpfile1
@@ -1971,47 +1533,27 @@ $ svnadmin load newrepos &lt; dumpfile2
 $ svnadmin load newrepos &lt; dumpfile3
 </screen>
 
-      <para>Another neat trick you can perform with this
-      <option>--incremental</option> option involves appending to an existing
-      dump file a new range of dumped revisions。 For example， you might have a
-      <literal>post-commit</literal> hook that simply appends the repository
-      dump of the single revision that triggered the hook。 Or you might have a
-      script that runs nightly to append dump file data for all the revisions
-      that were added to the repository since the last time the script ran。
-      Used like this， <command>svnadmin</command>'s <literal>dump</literal>
-      and <literal>load</literal> commands can be a valuable means by which to
-      backup changes to your repository over time in case of a system crash or
-      some other catastrophic event。</para>
+      <para>另一个有关的技巧是，可以使用<option>--incremental</option>选项在一个转储文件中增加新的转储修订版本。举个例子，可以使用<literal>post-commit</literal>钩子在每次新的修订版本提交后将其转储到文件中。或者，可以编写一个脚本，在每天夜里将所有新增的修订版本转储到文件中。这样，<command>svnadmin</command>的<literal>dump</literal>和<literal>load</literal>命令就变成了很好的版本库备份工具，万一出现系统崩溃或其它灾难性事件，它的价值就体现出来了。</para>
 
-      <para>The dump format can also be used to merge the contents of several
-      different repositories into a single repository。 By using the
-      <option>--parent-dir</option> option of <command>svnadmin
-      load</command>， you can specify a new virtual root directory for the
-      load process。 That means if you have dump files for three repositories，
-      say <filename>calc-dumpfile</filename>，
-      <filename>cal-dumpfile</filename>， and <filename>ss-dumpfile</filename>，
-      you can first create a new repository to hold them all:</para>
+      <para>转储还可以用来将几个独立的版本库合并为一个版本库。使用<command>svnadmin load</command>的<option>--parent-dir</option>选项，可以在装载的时候指定根目录。也就是说，如果有三个不同版本库的转储文件，比如<filename>calc-dumpfile</filename>，<filename>cal-dumpfile</filename>，和<filename>ss-dumpfile</filename>，可以在一个新的版本库中保存所有三个转储文件中的数据：</para>
 
       <screen>
 $ svnadmin create /path/to/projects
 $
 </screen>
 
-      <para>Then， make new directories in the repository which will
-      encapsulate the contents of each of the three previous
-      repositories:</para>
+      <para>然后在版本库中创建三个目录分别保存来自三个不同版本库的数据：</para>
 
       <screen>
 $ svn mkdir -m "Initial project roots" \
       file:///path/to/projects/calc \
       file:///path/to/projects/calendar \
       file:///path/to/projects/spreadsheet
-Committed revision 1。
+Committed revision 1.
 $ 
 </screen>
 
-      <para>Lastly， load the individual dump files into their respective
-      locations in the new repository:</para>
+      <para>最后，将转储文件分别装载到各自的目录中：</para>
 
       <screen>
 $ svnadmin load /path/to/projects --parent-dir calc &lt; calc-dumpfile
@@ -2023,18 +1565,10 @@ $ svnadmin load /path/to/projects --parent-dir spreadsheet &lt; ss-dumpfile
 $
 </screen>
 
-      <para>We'll mention one final way to use the Subversion repository dump
-      format—conversion from a different storage mechanism or version control
-      system altogether。 Because the dump file format is， for the most part，
-      human-readable， <footnote>
-          <para>The Subversion repository dump format resembles an RFC-822
-          format， the same type of format used for most email。</para>
-        </footnote> it should be relatively easy to describe generic sets of
-      changes—each of which should be treated as a new revision—using this
-      file format。 In fact， the <command>cvs2svn。py</command> utility (see
-      <xref linkend="svn-ap-a-sect-11" />) uses the dump format to represent
-      the contents of a CVS repository so that those contents can be moved in
-      a Subversion repository。</para>
+      <para>我们再介绍一下Subversion版本库转储数据的最后一种用途——在不同的存储机制或版本控制系统之间转换。因为转储数据的格式的大部分是可以阅读的，<footnote>
+          <para>Subversion版本库的转储文件格式类似于RFC-822格式，后者广泛的应用于电子邮件系统中。</para>
+        </footnote>所以使用这种格式描述变更集（每个变更集对应一个新的修订版本）会相对容易一些。事实上，<command>cvs2svn.py</command>工具（参见
+      <xref linkend="svn-ap-a-sect-11" />）正是将CVS版本库的内容转换为转储数据格式，如此才能将CVS版本库的数据导入Subversion版本库之中。</para>
     </sect2>
 
     <!-- ***************************************************************** -->
@@ -2090,78 +1624,27 @@ $
   <sect1 id="svn-ch-5-sect-6">
     <title>添加项目</title>
 
-    <para>一旦你的版本库已经建立并且配置好了，剩下的就是使用了。 Once your repository is created and
-    configured， all that remains is to begin using it。 If you have a
-    collection of existing data that is ready to be placed under version
-    control， you will more than likely want to use the <command>svn</command>
-    client program's <literal>import</literal> subcommand to accomplish that。
-    Before doing this， though， you should carefully consider your long-term
-    plans for the repository。 In this section， we will offer some advice on
-    how to plan the layout of your repository， and how to get your data
-    arranged in that layout。</para>
+    <para>一旦你的版本库已经建立并且配置好了，剩下的就是使用了。如果你已经准备好了需要版本控制的数据，那么可以使用客户端软件<command>svn</command>的<literal>import</literal>子命令来实现你的期望。不过在这样做之前，你最好对版本库仔细的作一个长远的规划。本节，我们会给你一些好的建议，这些建议可以帮助你设计版本库的文件布局，以及如何在特定的布局中安排你的数据。</para>
 
     <!-- ***************************************************************** -->
 
     <sect2 id="svn-ch-5-sect-6.1">
-      <title>Choosing a Repository Layout</title>
+      <title>选择一种版本库布局</title>
 
-      <para>While Subversion allows you to move around versioned files and
-      directories without any loss of information， doing so can still disrupt
-      the workflow of those who access the repository often and come to expect
-      things to be at certain locations。 Try to peer into the future a bit;
-      plan ahead before placing your data under version control。 By
-      <quote>laying out</quote> the contents of your repositories in an
-      effective manner the first time， you can prevent a load of future
-      headaches。</para>
+      <para>在Subversion版本库中，移动版本化的文件和目录不会损失任何信息，但是这样一来那些经常访问版本库并且以为文件总是在同一个路径的用户可能会受到干扰。为将来着想，最好预先对你的版本库布局进行规划。以一种高效的<quote>布局</quote>开始项目，可以减少将来很多不必要的麻烦。</para>
 
-      <para>There are a few things to consider when setting up Subversion
-      repositories。 Let's assume that as repository administrator， you will be
-      responsible for supporting the version control system for several
-      projects。 The first decision is whether to use a single repository for
-      multiple projects， or to give each project its own repository， or some
-      compromise of these two。</para>
+      <para>在建立Subversion版本库之前，有很多事情需要考虑。假如你是一个版本库管理员，需要向多个项目提供版本控制支持。那么，你首先要决定的是，用一个版本库支持多个项目，还是为每个项目建立一个版本库，还是为其中的某些项目提供独立的版本库支持，而将另外一些项目分布在几个版本库中。</para>
 
-      <para>There are benefits to using a single repository for multiple
-      projects， most obviously the lack of duplicated maintenance。 A single
-      repository means that there is one set of hook scripts， one thing to
-      routinely backup， one thing to dump and load if Subversion releases an
-      incompatible new version， and so on。 Also， you can move data between
-      projects easily， and without losing any historical versioning
-      information。</para>
+      <para>使用一个版本库支持多个项目有很多好处，最明显的无过于不需要维护好几个版本库。单一版本库就意味着只有一个钩子集，只需要备份一个数据库，当Subversion进行不兼容升级时，只需要一次转储和装载操作，等等。还有，你可以轻易的在项目之间移动数据，还不会损失任何历史版本信息。</para>
 
-      <para>The downside of using a single repository is that different
-      projects may have different commit mailing lists or different
-      authentication and authorization requirements。 Also， remember that
-      Subversion uses repository-global revision numbers。 Some folks don't
-      like the fact that even though no changes have been made to their
-      project lately， the youngest revision number for the repository keeps
-      climbing because other projects are actively adding new
-      revisions。</para>
+      <para>单一版本库的缺点是，不同的项目通常都有不同的提交邮件列表或者不同的权限认证和权限要求。还有，别忘了Subversion的修订版本号是针对整个版本库的。即使最近没有对某个项目作出修改，版本库的修订版本号还是会因为其它项目的修改而不停的提升，许多人并不喜欢这样的事实。</para>
 
-      <para>A middle-ground approach can be taken， too。 For example， projects
-      can be grouped by how well they relate to each other。 You might have a
-      few repositories with a handful of projects in each repository。 That
-      way， projects that are likely to want to share data can do so easily，
-      and as new revisions are added to the repository， at least the
-      developers know that those new revisions are at least remotely related
-      to everyone who uses that repository。</para>
+      <para>可以采用折中的办法。比如，可以把许多项目按照彼此之间的关联程度划分为几个组合，然后为每一个项目组合建立一个版本库。这样，在相关项目之间共享数据依旧很简单，而如果修订版本号有了变化，至少开发人员知道，改变的东西多少和他们有些关系。</para>
 
-      <para>After deciding how to organize your projects with respect to
-      repositories， you'll probably want to think about directory hierarchies
-      in the repositories themselves。 Because Subversion uses regular
-      directory copies for branching and tagging (see <xref
-      linkend="svn-ch-4" />)， the Subversion community recommends that you
-      choose a repository location for each <firstterm>project
-      root</firstterm>—the <quote>top-most</quote> directory which contains
-      data related to that project—and then create three subdirectories
-      beneath that root: <filename>trunk</filename>， meaning the directory
-      under which the main project development occurs;
-      <filename>branches</filename>， which is a directory in which to create
-      various named branches of the main development line;
-      <filename>tags</filename>， which is a directory of branches that are
-      created， and perhaps destroyed， but never changed。</para>
+      <para>在决定了如何用版本库组织项目以后，就该决定如何设置版本库的目录层次了。由于Subversion按普通的目录复制方式完成分支和标签操作（参见<xref
+      linkend="svn-ch-4" />），Subversion社区建议为每一个项目建立一个<firstterm>项目根目录</firstterm>——项目的<quote>顶级</quote>目录——然后在根目录下建立三个子目录：<filename>trunk</filename>，保存项目的开发主线；<filename>branches</filename>，保存项目的各种开发分支；<filename>tags</filename>，保存项目的标签，也就是创建后永远不会修改的分支（可能会删除）。</para>
 
-      <para>For example， your repository might look like:</para>
+      <para>举个例子，一个版本库可能会有如下的布局：</para>
 
       <screen>
 /
@@ -2180,14 +1663,7 @@ $
    …
 </screen>
 
-      <para>Note that it doesn't matter where in your repository each project
-      root is。 If you have only one project per repository， the logical place
-      to put each project root is at the root of that project's respective
-      repository。 If you have multiple projects， you might want to arrange
-      them in groups inside the repository， perhaps putting projects with
-      similar goals or shared code in the same subdirectory， or maybe just
-      grouping them alphabetically。 Such an arrangement might look
-      like:</para>
+      <para>项目在版本库中的根目录地址并不重要。如果每个版本库中只有一个项目，那么就可以认为项目的根目录就是版本库的根目录。如果版本库中包含多个项目，那么可以将这些项目划分成不同的组合（按照项目的目标或者是否需要共享代码甚至是字母顺序）保存在不同子目录中，下面的例子给出了一个类似的布局：</para>
 
       <screen>
 /
@@ -2209,28 +1685,15 @@ $
       …
 </screen>
 
-      <para>Lay out your repository in whatever way you see fit。 Subversion
-      does not expect or enforce a layout schema—in its eyes， a directory is a
-      directory is a directory。 Ultimately， you should choose the repository
-      arrangement that meets the needs of the people who work on the projects
-      that live there。</para>
+      <para>按照你因为合适方式安排版本库的布局。Subversion自身并不强制或者偏好某一种布局形式，对于Subversion来说，目录就是目录。最后，在设计版本库布局的时候，不要忘了考虑一下项目参与者们的意见。</para>
     </sect2>
 
     <!-- ***************************************************************** -->
 
     <sect2 id="svn-ch-5-sect-6.2">
-      <title>Creating the Layout， and Importing Initial Data</title>
+      <title>创建布局，导入初始数据</title>
 
-      <para>After deciding how to arrange the projects in your repository，
-      you'll probably want to actually populate the repository with that
-      layout and with initial project data。 There are a couple of ways to do
-      this in Subversion。 You could use the <command>svn mkdir</command>
-      command (see <xref linkend="svn-ch-9" />) to create each directory in
-      your skeletal repository layout， one-by-one。 A quicker way to accomplish
-      the same task is to use the <command>svn import</command> command (see
-      <xref linkend="svn-ch-3-sect-7.3" />)。 By first creating the layout in a
-      temporary location on your drive， you can import the whole layout tree
-      into the repository in a single commit:</para>
+      <para>设计好版本库的布局后，就该在版本库中实现布局和导入初始数据了。在Subversion中，有很多种方法完成这项工作。可以使用<command>svn mkdir</command>命令（参见<xref linkend="svn-ch-9" />）在版本库中逐个创建需要的目录。更快捷的方法是使用<command>svn import</command>命令（参见<xref linkend="svn-ch-3-sect-7.3" />）。首先，在硬盘上创建一个临时目录，并按照设计好的布局在其中创建子目录，然后通过导入命令一次性的提交整个布局到版本库中：</para>
 
       <screen>
 $ mkdir tmpdir
@@ -2260,8 +1723,7 @@ $ rm -rf tmpdir
 $
 </screen>
 
-      <para>You can verify the results of the import by running the
-      <command>svn list</command> command:</para>
+      <para>然后可以使用<command>svn list</command>命令确认导入的结果是否正确：：</para>
 
       <screen>
 $ svn list --verbose file:///path/to/repos
@@ -2271,16 +1733,7 @@ $ svn list --verbose file:///path/to/repos
 $
 </screen>
 
-      <para>Once you have your skeletal layout in place， you can begin
-      importing actual project data into your repository， if any such data
-      exists yet。 Once again， there are several ways to do this。 You could use
-      the <command>svn import</command> command。 You could checkout a working
-      copy from your new repository， move and arrange project data inside the
-      working copy， and use the <command>svn add</command> and <command>svn
-      commit</command> commands。 But once we start talking about such things，
-      we're no longer discussing repository administration。 If you aren't
-      already familiar with the <command>svn</command> client program， see
-      <xref linkend="svn-ch-3" />。</para>
+      <para>创建了版本库布局以后，如果有项目的初始数据，那么可以将这些数据导入到版本库中。同样有很多中方法完成这项工作。首先，可以使用<command>svn import</command>命令。也可以先从版本库中取出工作副本，将已有的项目数据复制到工作副本中，再使用<command>svn add</command>和<command>svn commit</command>命令提交修改。不过这些工作就不属于版本库管理方面的内容了。如果对<command>svn</command> 客户端程序还不熟悉，阅读<xref linkend="svn-ch-3" />。</para>
     </sect2>
   </sect1>
 
