@@ -3,7 +3,7 @@
   <title>版本库管理</title>
 
   <simplesect>
-    <para>Subversion的版本库是任意数量项目受版本控制数据的中央仓库。正因如此，它成为管理员关注的焦点。版本库一般并不需要太多的照顾，但为了避免一些潜在的问题和解决一些实际问题，理解怎样适当的配置和维护还是很必要。</para>
+    <para>Subversion版本库是保存软件项目版本化数据的中央仓库。因此，版本库是管理员倾注关怀和爱护的地方。版本库的维护一般并不需要太多的关注，但为了避免一些潜在的问题和解决一些实际问题，理解怎样适当的配置和维护还是很必要。</para>
 
     <para>在这一章里，我们将讨论如何建立和配置一个Subversion版本库，还会讨论版本库的维护，包括<command>svnlook</command>和<command>svnadmin</command>工具的使用（它们都包含在Subversion中）。我们将说明一些通常的问题和错误，并提供一些安排版本库数据的建议。</para>
 
@@ -60,7 +60,7 @@
 
       <para>建立一个版本库时，管理员必须决定使用BerkeleyDB还是FSFS。他们各有优缺点，我们将描述一下。它们任何一个都不比另一个更正式，访问版本库的程序与采用哪一种实现方式无关。访问程序并不知道版本库如何存储数据，它们只是从版本库的API读取到修订版和事务树。</para>
 
-      <para>下面的表从总体上比较了 Berkeley DB 和 FSFS 版本库。 下一部分将会详细讲述细节。</para>
+      <para>下面的表从总体上比较了 Berkeley DB 和 FSFS 版本库。下一部分将会详细讲述细节。</para>
 
       <table id="svn-ch-5-table-1">
         <title>版本库数据存储对照表</title>
@@ -186,9 +186,7 @@
 
         <para>每朵玫瑰都有刺，我们也必须记录一些BerkeleyDB已知的缺陷。首先，BerkeleyDB环境不是跨平台的。你不能简单的拷贝一个创建在Unix上的Subversion版本库到一个Windows系统，也无法期望创建在Unix系统上的版本库能顺利移植到Windows系统正常运行。尽管BerkeleyDB数据库格式架构设计独立，有一些其他环境方面没有独立出来。其次，Subversion使用BerkeleyDB不能在95/98系统上运行－如果你需要将版本库建在一个Windows机器上，请装到Windows2000或WindowsXP上。另外，不要在网络上共享BerkeleyDB版本库。尽管BerkeleyDB承诺如果按照一套特定规范的话，可以在网络共享上正常运行，但实际上已知的共享类型几乎都不满足这套规范。</para>
 
-        <para>最后，因为BerkeleyDB是以连接库的形式被Subversion使用，它对于中断比典型的关系型数据库系统更为敏感。大多数SQL系统，举例来说，有一个主服务进程来协调对数据库表的访问。如果一个访问数据库的程序因为某种原因出现问题，数据库守护进程察觉到连接中断会做一些清理。因为数据库守护进程是唯一访问数据库表的进程，应用程序不需要担心访问许可的冲突。但是，这些情况与BerkeleyDB不同。Subversion（和使用Subversion库的程序）直接访问数据库的表，这意味着如果有一个程序崩溃，就会使数据库处于一个暂时的不一致、不可访问的状态。当这种情况发生时，管理员需要让BerkeleyDB回复到一个检查点，这的确有点讨厌。除了崩溃的进程，还有一些情况能让版本库出现异常，比如程序在所有权上发生冲突或者数据库文件的访问权限。BerkeleyDB版本库非常快，还可以升级，不过最好使用一个单独的服务进程，通过一个用户来访问－比如Apache的<command>httpd</command>或<command>svnserve</command>（参见<xref
-        linkend="svn-ch-6" />）—而不是多用户通过<literal>file:///</literal>或<literal>svn+ssh://</literal>URL的方式多用户访问。如果将BerkeleyDB版本库直接用作多用户访问，请先阅读<xref
-        linkend="svn-ch-6-sect-5" />。</para>
+        <para>最后，因为BerkeleyDB是以连接库的形式被Subversion使用，它对于中断比典型的关系型数据库系统更为敏感。大多数SQL系统，举例来说，有一个主服务进程来协调对数据库表的访问。如果一个访问数据库的程序因为某种原因出现问题，数据库守护进程察觉到连接中断会做一些清理。因为数据库守护进程是唯一访问数据库表的进程，应用程序不需要担心访问许可的冲突。但是，这些情况与BerkeleyDB不同。Subversion（和使用Subversion库的程序）直接访问数据库的表，这意味着如果有一个程序崩溃，就会使数据库处于一个暂时的不一致、不可访问的状态。当这种情况发生时，管理员需要让BerkeleyDB回复到一个检查点，这的确有点讨厌。除了崩溃的进程，还有一些情况能让版本库出现异常，比如程序在所有权上发生冲突或者数据库文件的访问权限。BerkeleyDB版本库非常快，还可以升级，不过最好使用一个单独的服务进程，通过一个用户来访问－比如Apache的<command>httpd</command>或<command>svnserve</command>（参见<xref linkend="svn-ch-6" />）—而不是多用户通过<literal>file:///</literal>或<literal>svn+ssh://</literal>URL的方式多用户访问。如果将BerkeleyDB版本库直接用作多用户访问，请先阅读<xref linkend="svn-ch-6-sect-5" />。</para>
       </sect3>
 
       <!-- ***************************************************************** -->
@@ -198,8 +196,7 @@
 
         <para>在2004年中期，另一种版本库存储系统慢慢形成了：一种不需要数据库的存储系统。FSFS版本库在一个文件中存储修订版树，所以版本库中所有的修订版都在一个子文件夹中有限的几个文件里。事务在单独的子目录中被创建，创建完成后，一个单独的事务文件被创建并移动到修订版目录，这保证提交是原子性的。因为一个修订版文件是持久不可改变的，版本库也可以做到热备份，就象BerkeleyDB版本库一样。</para>
 
-        <para>修订版文件格式代表了一个修订版的目录结构，文件内容，和其他修订版树中相关信息。
-        不像BerkeleyDB数据库，这种存储格式可跨平台并且与CPU架构无关。因为没有日志或用到共享内存的文件，数据库能被网络文件系统安全的</para>
+        <para>修订版文件格式代表了一个修订版的目录结构，文件内容，和其他修订版树中相关信息。不像BerkeleyDB数据库，这种存储格式可跨平台并且与CPU架构无关。因为没有日志或用到共享内存的文件，数据库能被网络文件系统安全的</para>
 
         <para>访问和检查只读环境。缺少数据库花消同时也意味着版本库的总体体积可以稍小一点。</para>
 
@@ -257,34 +254,27 @@ $ svnadmin create --fs-type bdb /path/to/other/repos
 </screen>
 
     <warning>
-      <para>不要在网络共享上创建Berkeley DB版本库—它不能存在于诸如NFS， AFS， 或 Windows
-      SMB的远程文件系统中。Berkeley 数据要求底层文件系统实现严格的</para>
+      <para>不要在网络共享上创建Berkeley DB版本库—它不能存在于诸如NFS， AFS， 或 Windows SMB的远程文件系统中。Berkeley 数据要求底层文件系统实现严格的</para>
 
       <para>POSIX语义锁定。几乎没有网络文件系统提供这些特征，假如你网络共享Berkeley数据库，结果是不可预知的——你当前发现的错误也许是几个月前的，你的版本库</para>
 
       <para>也会相当脆弱。</para>
 
-      <para>假如你需要多台计算机来访问，你需要创造网络共享的FSFS版本库，而不是Berkeley数据库的版本库。或者更好的办法，你建立一个真正的服务方式（诸如Apache
-      或
-      <command>svnserve），把版本库放在</command>服务器能访问到的本地文件系统中，以便能通过网络访问。详情请参看<xref
-      linkend="svn-ch-6" /></para>
+      <para>假如你需要多台计算机来访问，你需要创造网络共享的FSFS版本库，而不是Berkeley数据库的版本库。或者更好的办法，你建立一个真正的服务方式（诸如Apache或<command>svnserve），把版本库放在</command>服务器能访问到的本地文件系统中，以便能通过网络访问。详情请参看<xref linkend="svn-ch-6" /></para>
     </warning>
 
     <para>你可能已经注意到了，<command>svnadmin</command>命令的路径参数只是一个规则的文件系统路径，而不是一个<command>svn</command>客户端程序访问版本库时使用的URL。<command>svnadmin</command>和<command>svnlook</command>都被认为是服务器端工具－</para>
 
     <para>它们使用在版本库所在的机器上，被用来检查或修改版本库，不能通过网络来执行任务。一个Subversion的新手通常会犯的错误，就是试图将URL（甚至<quote>本地</quote><literal>file:</literal>路径）传给这两个程序。</para>
 
-    <para>所以，当你运行<command>svnadmin create</command>
-    命令后，就在创建目录中有了一个全新的Subversion版本库。 让我们看一下在目录中实际都创建了什么东西。</para>
+    <para>所以，当你运行<command>svnadmin create</command>命令后，就在创建目录中有了一个全新的Subversion版本库。 让我们看一下在目录中实际都创建了什么东西。</para>
 
     <screen>
 $ ls repos
-conf/  dav/  db/  format  hooks/  locks/  README。txt
+conf/  dav/  db/  format  hooks/  locks/  README.txt
 </screen>
 
-    <para>除了<filename>README.txt</filename> 和 <filename>format</filename>
-    文件，版本库目录由一群子目录组成。就像Subversion其他部分的设计一样，
-    模块化是一个很重要的原则，而且层次化的组织要比杂乱无章好。下面是对新的版本库目录中，各个项目的简要介绍：</para>
+    <para>除了<filename>README.txt</filename>和<filename>format</filename>文件，版本库目录由一群子目录组成。就像Subversion其他部分的设计一样，模块化是一个很重要的原则，而且层次化的组织要比杂乱无章好。下面是对新的版本库目录中，各个项目的简要介绍：</para>
 
     <variablelist>
       <varlistentry>
@@ -307,8 +297,7 @@ conf/  dav/  db/  format  hooks/  locks/  README。txt
         <term>db</term>
 
         <listitem>
-          <para>你所有的受版本控制数据的所在之处。这个目录或者是个Berkeley DB
-          环境（满是数据表和其他东西）或者是一个包含修订版文件的FSFS环境。</para>
+          <para>你所有的受版本控制数据的所在之处。这个目录或者是个Berkeley DB环境（满是数据表和其他东西）或者是一个包含修订版文件的FSFS环境。</para>
         </listitem>
       </varlistentry>
 
@@ -324,7 +313,7 @@ conf/  dav/  db/  format  hooks/  locks/  README。txt
         <term>hooks</term>
 
         <listitem>
-          <para>一个存储hook脚本模版的目录（还有 hook 脚本本身， 如果你安装了的话）。</para>
+          <para>一个存储钩子脚本模版的目录（还有钩子脚本本身， 如果你安装了的话）。</para>
         </listitem>
       </varlistentry>
 
@@ -350,44 +339,38 @@ conf/  dav/  db/  format  hooks/  locks/  README。txt
     <!-- ***************************************************************** -->
 
     <sect2 id="svn-ch-5-sect-2.1">
-      <title>Hook 脚本</title>
+      <title>钩子脚本</title>
 
-      <para>所谓hook的<firstterm>就是与一些版本库事件相关的程序，它有新 revision
-      所创，或是无形式属性的变更。每个hook都携带有足够多的信息，说明那是什么事件，操作的对象，和触发事件的用户名。通过hook的输出或返回状态，hook程序能继续运行，停止或以某种方式挂起。</firstterm></para>
+      <para>所谓钩子<firstterm>就是与一些版本库事件相关的程序，它由新修订版本所创，或是无形式属性的变更。每个钩子都携带有足够多的信息，说明那是什么事件，操作的对象，和触发事件的用户名。通过钩子的输出或返回状态，钩子程序能继续运行，停止或以某种方式挂起。</firstterm></para>
 
       <para>
-        <firstterm>默认情况下，hook的子目录中包含各种版本库hook模板。</firstterm>
+        <firstterm>默认情况下，钩子的子目录中包含各种版本库钩子模板。</firstterm>
       </para>
 
       <screen>
 $ ls repos/hooks/
-post-commit。tmpl          pre-revprop-change。tmpl
-post-revprop-change。tmpl  start-commit。tmpl
-pre-commit。tmpl           
+post-commit.tmpl          pre-revprop-change.tmpl
+post-revprop-change.tmpl  start-commit.tmpl
+pre-commit.tmpl           
 </screen>
 
       <para />
 
-      <para>对于每个hook的都有一个模板,该模版由Subversion资源库实现，由模版的脚本检查其内容，这样，你能看到脚本运行时所触发的事件及</para>
+      <para>对于每个钩子的都有一个模板,该模版由Subversion资源库实现，由模版的脚本检查其内容，这样，你能看到脚本运行时所触发的事件及</para>
 
-      <para>传给脚本的数据。同时，一些模版当于Subversion所提供的程序合用，来完成有用的任务，也提供了模版如何使用脚本的例子。要实际安装一个可用的hook你需要在<filename>repos/hooks</filename></para>
+      <para>传给脚本的数据。同时，一些模版当于Subversion所提供的程序合用，来完成有用的任务，也提供了模版如何使用脚本的例子。要实际安装一个可用的钩子你需要在<filename>repos/hooks</filename></para>
 
-      <para>目录下安装一些与hook同名(如 <command>start-commit</command> or
-      <command>post-commit</command>)的能运行的程序或脚本。</para>
+      <para>目录下安装一些与钩子同名(如 <command>start-commit</command>或者<command>post-commit</command>)的能运行的程序或脚本。</para>
 
-      <para>在Unix平台上，着是指提供一个与hook同名的脚本或程序(或者是个shell 脚本，Python 程序，
-      编译过的c语言二进制文件， 或其东西) 。当然，脚本文件提供的信息不仅仅用来在Unix
-      平台上简单的安装hook，或是把合适模版复制到正好缺少的该模版文件的模版文件中。tmpl的扩充，hook的客户化，都要确定脚本是可运行的。
-      Windows用文件的扩展名来决定一个程序是否可运行，所以你要使程序的基本名与hook同名，同时，它的扩展名是Windows系统所能辨认的，诸如<filename>exe</filename>
+      <para>在Unix平台上，着是指提供一个与钩子同名的脚本或程序(或者是个shell 脚本，Python 程序，编译过的c语言二进制文件， 或其东西) 。当然，脚本文件提供的信息不仅仅用来在Unix平台上简单的安装钩子，或是把合适模版复制到正好缺少的该模版文件的模版文件中。tmpl的扩充，钩子的客户化，都要确定脚本是可运行的。Windows用文件的扩展名来决定一个程序是否可运行，所以你要使程序的基本名与钩子同名，同时，它的扩展名是Windows系统所能辨认的，诸如<filename>exe</filename>
       或<filename>com</filename> 或<filename>批处理的bat。</filename></para>
 
-      <para>Tip 由于安全原因，Subversion资源库在一个“空”环境中执行hook脚本，这里所说的”空“是指没有任何环境变量，甚至
-      <literal>$PATH</literal> or <literal>%PATH%。</literal></para>
+      <para>Tip 由于安全原因，Subversion资源库在一个“空”环境中执行钩子脚本，这里所说的”空“是指没有任何环境变量，甚至
+      <literal>$PATH</literal> or <literal>%PATH%</literal>。</para>
 
-      <para>由于这个原因，令很多管理者很困惑的是，他们的
-      hook脚本手工运行是很好，客在Subversion中却不能运行。要注意，必须在你的hook设置环境变量或为你的程序指定好绝对路径。</para>
+      <para>由于这个原因，令很多管理者很困惑的是，他们的钩子脚本手工运行是很好，客在Subversion中却不能运行。要注意，必须在你的钩子设置环境变量或为你的程序指定好绝对路径。</para>
 
-      <para>目前Subversion有五种已实现了的hook</para>
+      <para>目前Subversion有五种已实现了的钩子</para>
 
       <variablelist>
         <varlistentry>
@@ -396,11 +379,7 @@ pre-commit。tmpl
           </term>
 
           <listitem>
-            <para>它在commit
-            transaction产生前已运行。它通常用来决定用户进行了特权操作。版本库传给该程序两个变量：到版本库的路径，和要进行操作的用户名。假如程序返回一个非零</para>
-
-            <para>的exit value，在 transaction产生前停止该commit。假如hook
-            程序要在stderr中写入数据，它将排队送至客户端。</para>
+            <para>它在提交事务产生前已运行。它通常用来决定用户进行了特权操作。版本库传给该程序两个变量：到版本库的路径，和要进行操作的用户名。假如程序返回一个非零的返回值，在事务产生前停止该提交操作。假如钩子程序要在stderr中写入数据，它将排队送至客户端。</para>
 
             <para />
           </listitem>
@@ -408,21 +387,15 @@ pre-commit。tmpl
 
         <varlistentry>
           <term>
-            <filename>pre-commit
-            它在transaction完成但在commite前运行。通常，该hook用来保护那些由于内容或是地址不允许访问的commits（例如，你的site也许要求对一个确定的分支</filename>
+            <filename>pre-commit它在事务完成但在提交操作前运行。通常，该钩子用来保护那些由于内容或是地址不允许访问的commits（例如，你的site也许要求对一个确定的分支</filename>
           </term>
 
           <listitem>
-            <para>的commits要包含从bug tracker中得到的icket number，或者ncoming
-            log是非空的）版本库传给程序两个变量：到版本库的路径和要进行操作的用户名。假如程序返回一个非零的exitvalue，commit应当取消，transaction应被删除。</para>
+            <para>的commits要包含从bug tracker中得到的icket number，或者ncoming log是非空的）版本库传给程序两个变量：到版本库的路径和要进行操作的用户名。假如程序返回一个非零的返回值，提交应当取消，事务应被删除。</para>
 
-            <para>假如hook 程序要在stderr中写入数据，它将排队送至客户端。</para>
+            <para>假如钩子 程序要在stderr中写入数据，它将排队送至客户端。</para>
 
-            <para>分布式Subversion有一些控制脚本（在Subversion的source
-            tree的tools/hook-scripts目录中）来在pre-commit中实现pre-commit。另外还有<command>mod_authz_svn</command>
-            Apache httpd可选模式，这可用来对个人目录进行读或写的控制。（详见<xref
-            linkend="svn-ch-6-sect-4.4.2" />）。在以后的Subversion中，我们可以实现在文件系统中直接的access
-            control。</para>
+            <para>分布式Subversion有一些控制脚本（在Subversion的源代码树的tools/hook-scripts目录中）来在pre-commit中实现pre-commit。另外还有<command>mod_authz_svn</command>Apache httpd可选模式，这可用来对个人目录进行读或写的控制。（详见<xref linkend="svn-ch-6-sect-4.4.2" />）。在以后的Subversion中，我们可以实现在文件系统中直接的访问控制。</para>
           </listitem>
         </varlistentry>
 
@@ -432,19 +405,9 @@ pre-commit。tmpl
           </term>
 
           <listitem>
-            <para>它在ransaction完成后
-            transaction后运行，创建一个新的revision。大多数人用这个hook来发送关于运行的描述性emails，或者作为资源库的惫份。资源库版本库传给程序两个变量：到版本库</para>
+            <para>它在事务完成后运行，创建一个新的修订版本。大多数人用这个钩子来发送关于运行的描述性电子邮件，或者作为资源库的备份。资源库版本库传给程序两个变量：到版本库的路径和被创建的新的修订版本号。退出程序会被忽略。分布式Subversion包括<command>mailer，<command>py</command>和<command>commit-email。<command>pl</command> 脚本（存于Subversion源代码树中的tools/hook-scripts/目录中）可被用于发送给定操作的描述性email。这种mail包含</command></command>变化的路径清单，有关操作的信息日志，操作的日期和作者。</para>
 
-            <para>的路径和被创建的new revision
-            number。退出程序会被忽略。分布式Subversion包括<command>mailer，<command>py</command>
-            和 <command>commit-email。<command>pl</command> 脚本（存于Subversion
-            source
-            tree中的tools/hook-scripts/目录中）可被用于发送给定操作的描述性email。这种mail包含</command></command>变化的路径清单，有关操作的信息日志，操作的日期和作者。</para>
-
-            <para>Subversion提供的另一个有用的工具是hot-backup。<command>py</command>
-            脚本（在Subversion source
-            tree中的tools/backup/目录中）。这种脚本做为Subversion版本库的hot
-            backups使用，可被用来作为版本库的per-commit snapshot。</para>
+            <para>Subversion提供的另一个有用的工具是hot-backup。<command>py</command>脚本（在Subversion源代码树中的tools/backup/目录中）。这种脚本做为Subversion版本库的热备份使用，可被用来作为版本库的per-commit snapshot。</para>
           </listitem>
         </varlistentry>
 
@@ -458,11 +421,9 @@ pre-commit。tmpl
 
             <para>因为Subversion的revision不是versioned，这一属性的修改（例如，<literal>svn“执行信息日志属性）将会重写以前的属性值。因为数据在此可能丢失，Subversion提供了</literal></para>
 
-            <para><literal>这种hook（及它的类似物，post-revprop-change），资源库管理者可用一些外部方法保持变化记录。</literal>作为一种丢失unversioned属性数据的预先警告，Subversion</para>
+            <para><literal>这种钩子（及它的类似物，post-revprop-change），资源库管理者可用一些外部方法保持变化记录。</literal>作为一种丢失unversioned属性数据的预先警告，Subversion客户端不能远程修改revision属性，除非为你的资源库实现这个钩子。</para>
 
-            <para>客户端不能远程修改revision属性，除非为你的资源库实现这个hook。</para>
-
-            <para>这个hook只在对资源库修改时才运行。资源库给hook传递四个参数：到资源库的路径，要修改的属性存在的revision，经过校验的生成变化的用户名，和属性自身的名字。</para>
+            <para>这个钩子只在对资源库修改时才运行。资源库给钩子传递四个参数：到资源库的路径，要修改的属性存在的revision，经过校验的生成变化的用户名，和属性自身的名字。</para>
 
             <para />
           </listitem>
@@ -474,16 +435,12 @@ pre-commit。tmpl
           </term>
 
           <listitem>
-            <para>它是一个早期版本的方法，这个 hook是<filename>pre-revprop-change</filename>
-            hook的类似物。事实上，出于某种偏执这个脚本并不运行，除非存在<filename>pre-revprop-change</filename>
-            hook。当这两个hook都存在时，<filename>post-revprop-changehook只在revision版本库被改变时才运行，它通常被用来发送包含变化了的新参数的email。版本库传递</filename></para>
+            <para>它是一个早期版本的方法，这个钩子是<filename>pre-revprop-change</filename>钩子的类似物。事实上，出于某种偏执这个脚本并不运行，除非存在<filename>pre-revprop-change</filename>钩子。当这两个钩子都存在时，<filename>post-revprop-changehook只在revision版本库被改变时才运行，它通常被用来发送包含变化了的新参数的email。版本库传递</filename></para>
 
-            <para>四个参数给该hook：到版本库的路径，属性存在的
-            revision，经过校验的产生变化的用户名，和属性自身的名字。</para>
+            <para>四个参数给该钩子：到版本库的路径，属性存在的revision，经过校验的产生变化的用户名，和属性自身的名字。</para>
 
             <para>分布式Subversion包含<command>propchange-email。<command>py</command>
-            脚本（在Subversion
-            sourcetree中的tools/backup/目录中）被用来发送于revision的属性变</command></para>
+            脚本（在Subversion源代码树中的tools/backup/目录中）被用来发送于revision的属性变</command></para>
 
             <para>
               <command>化细节有关的email。这种email包含revision和发生变化的属性名，产生变化的用户名，新属性值。</command>
@@ -497,19 +454,19 @@ pre-commit。tmpl
       <warning>
         <para />
 
-        <para>不要尝试用hook脚本修改transaction。一个通常的例子就是这可能会在运行式自动设置诸如<literal>svn:eol-style</literal>
+        <para>不要尝试用钩子脚本修改事务。一个通常的例子就是这可能会在运行式自动设置诸如<literal>svn:eol-style</literal>
         或
-        <literal>svn:mime-type</literal>属性。这看起来是个好主意，但它会引起问题。主要的问题是客户并不知道由hook脚本改变的变化，同时没有没有办法通告客户它的数据是过时的。</para>
+        <literal>svn:mime-type</literal>属性。这看起来是个好主意，但它会引起问题。主要的问题是客户并不知道由钩子脚本改变的变化，同时没有没有办法通告客户它的数据是过时的。</para>
 
         <para>这种不连续会导致出人意料和不能预测的行为。</para>
 
         <para>检查<filename>pre-commit</filename>
-        hook的transaction及假如它不满足要求，通告它，是一种取代修改transaction更好的办法。</para>
+        钩子的事务及假如它不满足要求，通告它，是一种取代修改事务更好的办法。</para>
 
         <para>Subversion会执行hooks</para>
       </warning>
 
-      <para>Subversion会试图以当前访问版本库的用户身份执行hook。通常，对版本库的访问总是通过Apache HTTP服务器和mod_dav_svn进行，因此，运行Apache的用户就是执行hook的用户。要运行hook，需要具有操作系统级权限的用户对其进行配置。不仅是hook，其它被hook使用和调用的文件或程序（包括Subversion版本库本身）也一样以同一个用户的身份访问，不管访问是直接的还是间接的。因此，要注意潜在的用户权限问题，它可能会让你的hook无法顺利执行。</para>
+      <para>Subversion会试图以当前访问版本库的用户身份执行钩子。通常，对版本库的访问总是通过Apache HTTP服务器和mod_dav_svn进行，因此，运行Apache的用户就是执行钩子的用户。要运行钩子，需要具有操作系统级权限的用户对其进行配置。不仅是钩子，其它被钩子使用和调用的文件或程序（包括Subversion版本库本身）也一样以同一个用户的身份访问，不管访问是直接的还是间接的。因此，要注意潜在的用户权限问题，它可能会让你的钩子无法顺利执行。</para>
     </sect2>
 
     <!-- ***************************************************************** -->
@@ -517,17 +474,11 @@ pre-commit。tmpl
     <sect2 id="svn-ch-5-sect-2.2">
       <title>Berkeley DB 设置</title>
 
-      <para>Berkeley DB 环境是一个或多个数据库、日志文件、 域文件和配置文件的封装。Berkeley DB
-      环境有它自己预设的设定值，像是任何时间可使用的锁定数目、 日志文件的大小等。 Subversion程序会为Berkeley DB
-      配置选项设定默认的值。 不过，有时你的特定版本库需要特定的数据集合和访问类型，可能需要不同的配置选项。</para>
+      <para>Berkeley DB 环境是一个或多个数据库、日志文件、 域文件和配置文件的封装。Berkeley DB环境有它自己预设的设定值，像是任何时间可使用的锁定数目、 日志文件的大小等。 Subversion程序会为Berkeley DB配置选项设定默认的值。 不过，有时你的特定版本库需要特定的数据集合和访问类型，可能需要不同的配置选项。</para>
 
       <para>Sleepycat（BerkeleyDB的制造厂商）的人员清楚不同的版本库有不同的需求，所以他们提供了运行时为BerkeleyDB环境重载配置值的功能。Berkeley在每一个环境目录中检查是否存在一个名叫<filename>DB_CONFIG</filename>的文件，然后解析其中的为某个Berkeley环境所用的选项。</para>
 
-      <para>你的版本库的Berkeley配置文件位于<filename>db</filename>目录，
-      <filename>repos/db/DB_CONFIG</filename>。 Subversion
-      在创建版本库时自己创建了这个文件。这个文件初始化包含一些默认选项，也包含了Berkeley
-      DB在线文档的参照，使你能够了解这些选项是做什么的。当然，你也可以为你的DB_CONFIG文件添加任何Berkeley DB
-      支持的选项。应当注意，当Subversion不能访问文件或设置没有生效时，不应更改任何配置，因为那会引起Berkeley数据库以一种预料不到的方式执行剩下的程序。更改</para>
+      <para>你的版本库的Berkeley配置文件位于<filename>db</filename>目录，<filename>repos/db/DB_CONFIG</filename>。 Subversion在创建版本库时自己创建了这个文件。这个文件初始化包含一些默认选项，也包含了BerkeleyDB在线文档的参照，使你能够了解这些选项是做什么的。当然，你也可以为你的DB_CONFIG文件添加任何Berkeley DB支持的选项。应当注意，当Subversion不能访问文件或设置没有生效时，不应更改任何配置，因为那会引起Berkeley数据库以一种预料不到的方式执行剩下的程序。更改</para>
 
       <para><filename>DB_CONFIG</filename>并不会产生任何作用，除非你恢复数据库环境(用
       <command>svnadmin recover</command>)。</para>
@@ -545,7 +496,7 @@ pre-commit。tmpl
   <sect1 id="svn-ch-5-sect-3">
     <title>版本库维护</title>
 
-    <para>维护一个Subversion版本库是一项令人沮丧的工作，主要因为有数据库后端与生俱来的复杂性。做好这项工作需要知道一些工具－它们是什么，什么时候用以及如何使用。这一节将会向你介绍Subversion带的版本库管理工具，以及如何使用它们来完成诸如版本库移植、升级、备份和整理。</para>
+    <para>维护一个Subversion版本库是一项令人沮丧的工作，主要因为有数据库后端与生俱来的复杂性。做好这项工作需要知道一些工具——它们是什么，什么时候用以及如何使用。这一节将会向你介绍Subversion带的版本库管理工具，以及如何使用它们来完成诸如版本库移植、升级、备份和整理。</para>
 
     <!-- ***************************************************************** -->
 
@@ -563,17 +514,15 @@ pre-commit。tmpl
 
         <screen>
 $ svnlook help
-general usage: svnlook SUBCOMMAND REPOS_PATH [ARGS &amp; OPTIONS 。。。]
+general usage: svnlook SUBCOMMAND REPOS_PATH [ARGS &amp; OPTIONS ...]
 Note: any subcommand which takes the '--revision' and '--transaction'
       options will， if invoked without one of those options， act on
-      the repository's youngest revision。
-Type "svnlook help &lt;subcommand&gt;" for help on a specific subcommand。
+      the repository's youngest revision.
+Type "svnlook help &lt;subcommand&gt;" for help on a specific subcommand.
 …
 </screen>
 
-        <para>几乎<command>svnlook</command>的每一个子命令都能操作修订版或事务树，显示资料树的信息，或是它与版本库中上一个修订版的不同。你可以用
-        <option>--revision</option> 和 <option>--transaction</option>
-        选项指定要查看的修订版或事务。注意，虽然修订版号看起来像自然数，但是事务名称是包含英文字母与数字的字符串。请记住文件系统只允许浏览未提交的事务（还没有形成一个新的修订版的事务）。多数版本库没有这种事务，因为事务通常或者被提交了（这样便不能被查看），或者被中止然后删除。</para>
+        <para>几乎<command>svnlook</command>的每一个子命令都能操作修订版或事务树，显示资料树的信息，或是它与版本库中上一个修订版的不同。你可以用<option>--revision</option> 和 <option>--transaction</option>选项指定要查看的修订版或事务。注意，虽然修订版号看起来像自然数，但是事务名称是包含英文字母与数字的字符串。请记住文件系统只允许浏览未提交的事务（还没有形成一个新的修订版的事务）。多数版本库没有这种事务，因为事务通常或者被提交了（这样便不能被查看），或者被中止然后删除。</para>
 
         <para>如果没有<option>--revision</option>和<option>--transaction</option>选项，<command>svnlook</command>会查看版本库中最年轻的修订版（或“HEAD”）。所以下边的两个命令执行结果完全相同，当位于<filename>/path/to/repos</filename>的版本库中，19是最年轻的修订版的时候：</para>
 
@@ -582,8 +531,7 @@ $ svnlook info /path/to/repos
 $ svnlook info /path/to/repos --revision 19
 </screen>
 
-        <para>这些子命令的唯一例外，是<command>svnlook
-        youngest</command>命令，它不需要选项，只会显示出<literal>HEAD</literal>修订版号。</para>
+        <para>这些子命令的唯一例外，是<command>svnlook youngest</command>命令，它不需要选项，只会显示出<literal>HEAD</literal>修订版号。</para>
 
         <screen>
 $ svnlook youngest /path/to/repos
@@ -598,7 +546,7 @@ sally
 2002-11-04 09:29:13 -0600 (Mon， 04 Nov 2002)
 27
 Added the usual
-Greek tree。
+Greek tree.
 </screen>
 
         <para>info子命令的输出定义如下：</para>
@@ -625,37 +573,34 @@ Greek tree。
 
         <para>另一个<command>svnlook</command>常见的用法是查看修订版树或事务树的内容。
         <command>svnlook tree</command> 命令显示在请求的树中的目录和文件。如果你提供了
-        <option>--show-ids</option> 选项，
-        它还会显示每个路径的文件系统节点修订版ID（这一点对开发者往往很有用）。</para>
+        <option>--show-ids</option> 选项，它还会显示每个路径的文件系统节点修订版ID（这一点对开发者往往很有用）。</para>
 
         <screen>
 $ svnlook tree /path/to/repos --show-ids
-/ &lt;0。0。1&gt;
- A/ &lt;2。0。1&gt;
-  B/ &lt;4。0。1&gt;
-   lambda &lt;5。0。1&gt;
-   E/ &lt;6。0。1&gt;
-    alpha &lt;7。0。1&gt;
-    beta &lt;8。0。1&gt;
-   F/ &lt;9。0。1&gt;
-  mu &lt;3。0。1&gt;
-  C/ &lt;a。0。1&gt;
-  D/ &lt;b。0。1&gt;
-   gamma &lt;c。0。1&gt;
-   G/ &lt;d。0。1&gt;
-    pi &lt;e。0。1&gt;
-    rho &lt;f。0。1&gt;
-    tau &lt;g。0。1&gt;
-   H/ &lt;h。0。1&gt;
-    chi &lt;i。0。1&gt;
-    omega &lt;k。0。1&gt;
-    psi &lt;j。0。1&gt;
- iota &lt;1。0。1&gt;
+/ &lt;0.0.1&gt;
+ A/ &lt;2.0.1&gt;
+  B/ &lt;4.0.1&gt;
+   lambda &lt;5.0.1&gt;
+   E/ &lt;6.0.1&gt;
+    alpha &lt;7.0.1&gt;
+    beta &lt;8.0.1&gt;
+   F/ &lt;9.0.1&gt;
+  mu &lt;3.0.1&gt;
+  C/ &lt;a.0.1&gt;
+  D/ &lt;b.0.1&gt;
+   gamma &lt;c.0.1&gt;
+   G/ &lt;d.0.1&gt;
+    pi &lt;e.0.1&gt;
+    rho &lt;f.0.1&gt;
+    tau &lt;g.0.1&gt;
+   H/ &lt;h.0.1&gt;
+    chi &lt;i.0.1&gt;
+    omega &lt;k.0.1&gt;
+    psi &lt;j.0.1&gt;
+ iota &lt;1.0.1&gt;
 </screen>
 
-        <para>如果你看过树中目录和文件的布局，你可以使用<command>svnlook cat</command>，
-        <command>svnlook propget</command>， 和 <command>svnlook
-        proplist</command> 命令来查看这些目录和文件的细节。</para>
+        <para>如果你看过树中目录和文件的布局，你可以使用<command>svnlook cat</command>，<command>svnlook propget</command>， 和 <command>svnlook  proplist</command> 命令来查看这些目录和文件的细节。</para>
 
         <para><command>svnlook</command>
         还可以做很多别的查询，显示我们先前提到的信息的一些子集，报告指定的修订版或事务中哪些路径曾经被修改过，显示对文件和目录做过的文本和属性的修改，等等。下面是<command>svnlook</command>命令能接受的子命令的介绍，以及这些子命令的输出：</para>
@@ -806,14 +751,12 @@ $ svnlook tree /path/to/repos --show-ids
       <sect3 id="svn-ch-5-sect-3.1.2">
         <title>svnadmin</title>
 
-        <para><command>svnadmin</command> 程序是版本库管理员最好的朋友。
-        除了提供创建Subversion版本库的功能，这个程序使你可以维护这些版本库。<command>svnadmin</command>
-        的语法跟 <command>svnlook</command>类似：</para>
+        <para><command>svnadmin</command> 程序是版本库管理员最好的朋友。除了提供创建Subversion版本库的功能，这个程序使你可以维护这些版本库。<command>svnadmin</command>的语法跟 <command>svnlook</command>类似：</para>
 
         <screen>
 $ svnadmin help
-general usage: svnadmin SUBCOMMAND REPOS_PATH  [ARGS &amp; OPTIONS 。。。]
-Type "svnadmin help &lt;subcommand&gt;" for help on a specific subcommand。
+general usage: svnadmin SUBCOMMAND REPOS_PATH  [ARGS &amp; OPTIONS ...]
+Type "svnadmin help &lt;subcommand&gt;" for help on a specific subcommand.
 
 Available subcommands:
    create
@@ -823,9 +766,7 @@ Available subcommands:
 …
 </screen>
 
-        <para>我们已经提过 <command>svnadmin</command> 的<literal>create</literal>
-        子命令 （参照 <xref linkend="svn-ch-5-sect-2" />）。
-        本章中我们会详细讲解大多数其他的命令。现在，我们来简单的看一下每个可用的子命令提供了什么功能。</para>
+        <para>我们已经提过 <command>svnadmin</command> 的<literal>create</literal>子命令（参照 <xref linkend="svn-ch-5-sect-2" />）。本章中我们会详细讲解大多数其他的命令。现在，我们来简单的看一下每个可用的子命令提供了什么功能。</para>
 
         <variablelist>
           <varlistentry>
@@ -864,7 +805,7 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>对版本库做hot copy。用这个方法你能任何时候安全的备份版本库而不许考虑是否版本库正在使用。</para>
+              <para>对版本库做热拷贝。用这个方法你能任何时候安全的备份版本库而不许考虑是否版本库正在使用。</para>
             </listitem>
           </varlistentry>
 
@@ -874,8 +815,7 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>(Berkeley 数据库的版本库专有)
-              列出Berkeley数据库中与版本库有关的日志文件清单。这个清单包括所有的日志文件--现在仍然被版本库使用的和不在使用的。</para>
+              <para>（Berkeley 数据库的版本库专有）列出Berkeley数据库中与版本库有关的日志文件清单。这个清单包括所有的日志文件--现在仍然被版本库使用的和不在使用的。</para>
             </listitem>
           </varlistentry>
 
@@ -885,8 +825,7 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>(Berkeley 数据库的版本库专有)列出Berkeley
-              数据库版本库有关的不在使用日志文件路径清单。你能安全的从版本库中删除那些日志文件，也可能将它们存档以用来灾难事件后版本库的恢复。</para>
+              <para>(Berkeley 数据库的版本库专有)列出Berkeley数据库版本库有关的不在使用日志文件路径清单。你能安全的从版本库中删除那些日志文件，也可能将它们存档以用来灾难事件后版本库的恢复。</para>
             </listitem>
           </varlistentry>
 
@@ -916,8 +855,7 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>恢复版本库，通常载版本库发生致命错误时实行，以预防对Subversion transactions的cleanly
-              shutting down。</para>
+              <para>恢复版本库，通常在版本库发生致命错误时实行，以预防对Subversion事务的完全关闭。</para>
             </listitem>
           </varlistentry>
 
@@ -927,8 +865,7 @@ Available subcommands:
             </term>
 
             <listitem>
-              <para>从版本库中清除Subversion
-              transactions（<literal>在lstxns子命令后执行</literal>）。</para>
+              <para>从版本库中清除Subversion事务（<literal>在lstxns子命令后执行</literal>）。</para>
             </listitem>
           </varlistentry>
 
@@ -970,8 +907,8 @@ Available subcommands:
 
         <screen>
 $ svndumpfilter help
-general usage: svndumpfilter SUBCOMMAND [ARGS &amp; OPTIONS 。。。]
-Type "svndumpfilter help &lt;subcommand&gt;" for help on a specific subcommand。
+general usage: svndumpfilter SUBCOMMAND [ARGS &amp; OPTIONS ...]
+Type "svndumpfilter help &lt;subcommand&gt;" for help on a specific subcommand.
 
 Available subcommands:
    exclude
@@ -1030,10 +967,10 @@ Available subcommands:
 
         <screen>
 $ svnadmin dump /path/to/repos &gt; repos-dumpfile
-* Dumped revision 0。
-* Dumped revision 1。
-* Dumped revision 2。
-* Dumped revision 3。
+* Dumped revision 0.
+* Dumped revision 1.
+* Dumped revision 2.
+* Dumped revision 3.
 …
 $
 </screen>
@@ -1069,18 +1006,18 @@ Content-length: 0
         <screen>
 $ svnadmin create calc; svnadmin load calc &lt; calc-dumpfile
 &lt;&lt;&lt; Started new transaction， based on original revision 1
-     * adding path : Makefile 。。。 done。
-     * adding path : button。c 。。。 done。
+     * adding path : Makefile ... done.
+     * adding path : button.c ... done.
 …
 $ svnadmin create calendar; svnadmin load calendar &lt; cal-dumpfile
 &lt;&lt;&lt; Started new transaction， based on original revision 1
-     * adding path : Makefile 。。。 done。
-     * adding path : cal。c 。。。 done。
+     * adding path : Makefile ... done.
+     * adding path : cal.c ... done.
 …
 $ svnadmin create spreadsheet; svnadmin load spreadsheet &lt; ss-dumpfile
 &lt;&lt;&lt; Started new transaction， based on original revision 1
-     * adding path : Makefile 。。。 done。
-     * adding path : ss。c 。。。 done。
+     * adding path : Makefile ... done.
+     * adding path : ss.c ... done.
 …
 $
 </screen>
@@ -1143,7 +1080,7 @@ Node-path: spreadsheet/Makefile
         <para>运行这个脚本，你可以浏览版本库中的目录，就像在shell下浏览文件系统一样。一开始，你<quote>位于</quote>修订版本<literal>HEAD</literal>的根目录中， 在命令提示符中可以看到相应的提示。 任何时候都可以使用<literal>help</literal>命令显示当前可用的命令帮助。</para>
 
         <screen>
-$ svnshell。py /path/to/repos
+$ svnshell.py /path/to/repos
 &lt;rev: 2 /&gt;$  help
 Available commands:
   cat FILE     : dump the contents of FILE
@@ -1157,7 +1094,7 @@ Available commands:
 &lt;rev: 2 /&gt;$
 </screen>
 
-        <para>浏览版本库的目录结构就像在Unix或Windows shell中一样——使用<literal>cd</literal>命令。任何时候，命令提示符中都会显示当前所在的修订版本（前缀为<literal>rev:</literal>）或事务（前缀为<literal>txn:</literal>，以及你所在的路径。你可以用<literal>setrev</literal>和<literal>settxn</literal>切换到其它修订版本或事务中去。。你可以想在Unix shell中那样，使用<literal>ls</literal>命令列出目录的内容，使用<literal>cat</literal>命令列出文件的内容。</para>
+        <para>浏览版本库的目录结构就像在Unix或Windows shell中一样——使用<literal>cd</literal>命令。任何时候，命令提示符中都会显示当前所在的修订版本（前缀为<literal>rev:</literal>）或事务（前缀为<literal>txn:</literal>，以及你所在的路径。你可以用<literal>setrev</literal>和<literal>settxn</literal>切换到其它修订版本或事务中去。你可以想在Unix shell中那样，使用<literal>ls</literal>命令列出目录的内容，使用<literal>cat</literal>命令列出文件的内容。</para>
 
         <example id="svn-ch-8-sect-3.1.3-ex-1">
           <title>使用svnshell浏览版本库</title>
@@ -1166,30 +1103,30 @@ Available commands:
 &lt;rev: 2 /&gt;$ ls
    REV   AUTHOR  NODE-REV-ID     SIZE         DATE NAME
 ----------------------------------------------------------------------------
-     1    sally &lt;     2。0。1&gt;          Nov 15 11:50 A/
-     2    harry &lt;     1。0。2&gt;       56 Nov 19 08:19 iota
+     1    sally &lt;     2.0.1&gt;          Nov 15 11:50 A/
+     2    harry &lt;     1.0.2&gt;       56 Nov 19 08:19 iota
 &lt;rev: 2 /&gt;$ cd A
 &lt;rev: 2 /A&gt;$ ls
    REV   AUTHOR  NODE-REV-ID     SIZE         DATE NAME
 ----------------------------------------------------------------------------
-     1    sally &lt;     4。0。1&gt;          Nov 15 11:50 B/
-     1    sally &lt;     a。0。1&gt;          Nov 15 11:50 C/
-     1    sally &lt;     b。0。1&gt;          Nov 15 11:50 D/
-     1    sally &lt;     3。0。1&gt;       23 Nov 15 11:50 mu
+     1    sally &lt;     4.0.1&gt;          Nov 15 11:50 B/
+     1    sally &lt;     a.0.1&gt;          Nov 15 11:50 C/
+     1    sally &lt;     b.0.1&gt;          Nov 15 11:50 D/
+     1    sally &lt;     3.0.1&gt;       23 Nov 15 11:50 mu
 &lt;rev: 2 /A&gt;$ cd D/G 
 &lt;rev: 2 /A/D/G&gt;$ ls
    REV   AUTHOR  NODE-REV-ID     SIZE         DATE NAME
 ----------------------------------------------------------------------------
-     1    sally &lt;     e。0。1&gt;       23 Nov 15 11:50 pi
-     1    sally &lt;     f。0。1&gt;       24 Nov 15 11:50 rho
-     1    sally &lt;     g。0。1&gt;       24 Nov 15 11:50 tau
-&lt;rev: 2 /A&gt;$ cd 。。/。。
+     1    sally &lt;     e.0.1&gt;       23 Nov 15 11:50 pi
+     1    sally &lt;     f.0.1&gt;       24 Nov 15 11:50 rho
+     1    sally &lt;     g.0.1&gt;       24 Nov 15 11:50 tau
+&lt;rev: 2 /A&gt;$ cd ../..
 &lt;rev: 2 /&gt;$ cat iota
-This is the file 'iota'。
-Added this text in revision 2。
+This is the file 'iota'.
+Added this text in revision 2.
 
 &lt;rev: 2 /&gt;$ setrev 1; cat iota
-This is the file 'iota'。
+This is the file 'iota'.
 
 &lt;rev: 1 /&gt;$ exit
 $
@@ -1315,7 +1252,7 @@ sally
 harry
 2001-09-10 16:50:30 -0500 (Mon， 10 Sep 2001)
 39
-Trying to commit over a faulty network。
+Trying to commit over a faulty network.
 ---[ Transaction a45 ]-------------------------------------------
 sally
 2001-09-12 11:09:28 -0500 (Wed， 12 Sep 2001)
@@ -1579,15 +1516,14 @@ $
 
       <para>一个完全的版本库备份照字面上讲就是对整个版本库目录的复制（包括伯克利数据库或者文件FSFS环境），现在，除非你临时关闭了其他对版本库的访问，否则仅仅做一次迭代的拷贝会有产生错误备份的风险，因为有人可能会在并行的写数据库。</para>
 
-      <para>如果是伯克利数据库，恼人的文档描述了保证安全拷贝的步骤，对于FSFS的数据，也有类似的顺序。我们有更好的选择，我们不需要自己去实现这个算法，因为Subversion开发小组已经为你实现了这些算法。Subversion源文件分发版本的<filename>tools/backup/</filename>目录有一个<command>hot-backup。py</command>文件，给定版本库路径和备份路径，<command>hot-backup。py</command>—是一个包裹了<command>svnadmin
-      hotcopy</command>但更加智能的命令—将会执行必要的步骤来备份你的活动的版本库—不需要你首先禁止公共的版本库访问—而且之后会从你的版本库清理死掉的伯克利日志文件。</para>
+      <para>如果是伯克利数据库，恼人的文档描述了保证安全拷贝的步骤，对于FSFS的数据，也有类似的顺序。我们有更好的选择，我们不需要自己去实现这个算法，因为Subversion开发小组已经为你实现了这些算法。Subversion源文件分发版本的<filename>tools/backup/</filename>目录有一个<command>hot-backup.py</command>文件，给定版本库路径和备份路径，<command>hot-backup.py</command>—是一个包裹了<command>svnadmin hotcopy</command>但更加智能的命令—将会执行必要的步骤来备份你的活动的版本库—不需要你首先禁止公共的版本库访问——而且之后会从你的版本库清理死掉的伯克利日志文件。</para>
 
       <para>甚至当你用了一个增量备份时，你也会希望有计划的运行这个程序。举个例子，你考虑在你的程序调度程序（如Unix下的<command>cron</command>）里加入<command>hot-backup。py</command>，或者你喜欢更加细致的备份解决方案，你可以让你的post-commit的钩子脚本执行<command>hot-backup。py</command>（见see
       <xref
       linkend="svn-ch-5-sect-2.1" />），这样会导致你的版本库的每次提交执行一次备份，只要在你的<filename>hooks/post-commit</filename>脚本里添加如下代码：</para>
 
       <programlisting>
-(cd /path/to/hook/scripts; 。/hot-backup。py ${REPOS} /path/to/backups &amp;)
+(cd /path/to/hook/scripts; ./hot-backup.py ${REPOS} /path/to/backups &amp;)
 </programlisting>
 
       <para>作为结果的备份是一个完全功能的版本库，当发生严重错误时可以作为你的活动版本库的替换。</para>
@@ -1702,7 +1638,7 @@ $ mkdir projectB/trunk
 $ mkdir projectB/branches
 $ mkdir projectB/tags
 …
-$ svn import 。 file:///path/to/repos --message 'Initial repository layout'
+$ svn import . file:///path/to/repos --message 'Initial repository layout'
 Adding         projectA
 Adding         projectA/trunk
 Adding         projectA/branches
@@ -1712,8 +1648,8 @@ Adding         projectB/trunk
 Adding         projectB/branches
 Adding         projectB/tags
 …
-Committed revision 1。
-$ cd 。。
+Committed revision 1.
+$ cd ..
 $ rm -rf tmpdir
 $
 </screen>
