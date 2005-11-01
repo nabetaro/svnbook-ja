@@ -1,4 +1,4 @@
-default: book-html-chunk
+default: html-chunk
 
 include ../tools/Makefile.base
 

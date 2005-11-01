@@ -55,9 +55,9 @@ def main():
     if os.path.basename(name) != name:
         usage('Name "%s" is not a single path component' % (name))
         
-    if html: targets.append('install-book-html')
-    if html_chunk: targets.append('install-book-html-chunk')
-    if pdf: targets.append('install-book-pdf')
+    if html: targets.append('install-html')
+    if html_chunk: targets.append('install-html-chunk')
+    if pdf: targets.append('install-pdf')
 
     if len(targets) < 1:
         usage('No targets specified.')
@@ -73,7 +73,7 @@ def main():
     try:
         _cleanup_tmp_dirs()
         os.mkdir('__SVNBOOK_TMP__')
-        os.system('DESTDIR=__SVNBOOK_TMP__ make book-clean %s' \
+        os.system('DESTDIR=__SVNBOOK_TMP__ make clean %s' \
                   % (' '.join(targets)))
         if os.path.isdir('__SVNBOOK_TMP__/usr/share/doc/subversion/book'):
             os.rename('__SVNBOOK_TMP__/usr/share/doc/subversion/book', name)
