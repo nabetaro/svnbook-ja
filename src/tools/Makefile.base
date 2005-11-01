@@ -13,32 +13,36 @@ SVNVERSION = svnversion
 # You should not normally need to edit anything below here.
 SHELL = /bin/sh
 
+NAME = book
+DIR = book
 TOOLS_DIR = ../tools
-BOOK_DIR = book
-BOOK_HTML_CHUNK_DIR = $(BOOK_DIR)/html-chunk
-BOOK_HTML_TARGET = $(BOOK_DIR)/svn-book.html
+OUTNAME = svn-$(NAME)
+
+HTML_CHUNK_DIR = $(DIR)/html-chunk
+HTML_TARGET = $(DIR)/$(OUTNAME).html
 # In the HTML chunk build, index.html is created last, so serves as an 
 # acceptable timestamp file for the entire multi-file output.
-BOOK_HTML_CHUNK_TARGET = $(BOOK_HTML_CHUNK_DIR)/index.html
-BOOK_PDF_TARGET = $(BOOK_DIR)/svn-book.pdf
-BOOK_PS_TARGET = $(BOOK_DIR)/svn-book.ps
-BOOK_FO_TARGET = $(BOOK_DIR)/svn-book.fo
-BOOK_XML_SOURCE = $(BOOK_DIR)/book.xml
-BOOK_VERSION_SOURCE = $(BOOK_DIR)/version.xml
-BOOK_ALL_SOURCE = $(BOOK_DIR)/*.xml
-BOOK_IMAGES = $(BOOK_DIR)/images/*.png
-BOOK_INSTALL_DIR = $(INSTALL_DIR)/book
+HTML_CHUNK_TARGET = $(HTML_CHUNK_DIR)/index.html
+PDF_TARGET = $(DIR)/$(OUTNAME).pdf
+PS_TARGET = $(DIR)/$(OUTNAME).ps
+FO_TARGET = $(DIR)/$(OUTNAME).fo
+XML_SOURCE = $(DIR)/$(NAME).xml
+VERSION_SOURCE = $(DIR)/version.xml
+ALL_SOURCE = $(DIR)/*.xml
+IMAGES = $(DIR)/images/*.png
+STYLESHEET = $(DIR)/styles.css
+INSTALL_SUBDIR = $(INSTALL_DIR)/$(NAME)
 
 ENSURE_XSL = if ! test -e "$(TOOLS_DIR)/xsl"; \
 	     then $(TOOLS_DIR)/bin/find-xsl.py; fi
 
 # Customization hooks for xsltproc options
-BOOK_HTML_XSLTPROC_OPTS = 
-BOOK_FO_XSLTPROC_OPTS =
+HTML_XSLTPROC_OPTS = 
+FO_XSLTPROC_OPTS =
 # FO example: --stringparam page.height 9in --stringparam page.width 6.4in
 
 # Uncomment the following line if you'd like to print on A4 paper
-# BOOK_FO_XSLTPROC_OPTS = --stringparam paper.type A4
+# FO_XSLTPROC_OPTS = --stringparam paper.type A4
 
 # Override in locale-specific Makefile to localize the word in the 
 # auto-generated version file.
@@ -58,87 +62,85 @@ install-book: install-book-html install-book-html-chunk \
 clean: book-clean
 
 # Build targets
-$(BOOK_VERSION_SOURCE): book-version
+$(VERSION_SOURCE): book-version
 
 book-version:
 	@if $(SVNVERSION) . > /dev/null; then \
 	  echo '<!ENTITY svn.version "$(L10N_REVISION) '`$(SVNVERSION) .`'">' \
-	    > $(BOOK_VERSION_SOURCE).tmp; \
+	    > $(VERSION_SOURCE).tmp; \
 	else \
-	  echo '<!ENTITY svn.version "">' > $(BOOK_VERSION_SOURCE).tmp; \
+	  echo '<!ENTITY svn.version "">' > $(VERSION_SOURCE).tmp; \
 	fi
-	@if cmp -s $(BOOK_VERSION_SOURCE) $(BOOK_VERSION_SOURCE).tmp; then \
-	  rm $(BOOK_VERSION_SOURCE).tmp; \
+	@if cmp -s $(VERSION_SOURCE) $(VERSION_SOURCE).tmp; then \
+	  rm $(VERSION_SOURCE).tmp; \
 	else \
-	  mv $(BOOK_VERSION_SOURCE).tmp $(BOOK_VERSION_SOURCE); \
+	  mv $(VERSION_SOURCE).tmp $(VERSION_SOURCE); \
 	fi
 
-book-html: $(BOOK_HTML_TARGET)
-$(BOOK_HTML_TARGET): $(BOOK_ALL_SOURCE) $(BOOK_VERSION_SOURCE) \
-                     $(BOOK_DIR)/styles.css $(BOOK_IMAGES)
+book-html: $(HTML_TARGET)
+$(HTML_TARGET): $(ALL_SOURCE) $(VERSION_SOURCE) $(STYLESHEET) $(IMAGES)
 	$(ENSURE_XSL)
-	$(XSLTPROC) $(BOOK_HTML_XSLTPROC_OPTS) --output $(BOOK_HTML_TARGET) \
-	  $(TOOLS_DIR)/html-stylesheet.xsl $(BOOK_XML_SOURCE)
+	$(XSLTPROC) $(HTML_XSLTPROC_OPTS) --output $(HTML_TARGET) \
+	  $(TOOLS_DIR)/html-stylesheet.xsl $(XML_SOURCE)
 
 # The trailing slash on the xsltproc --output option is essential to
 # output pages into the directory
-book-html-chunk: $(BOOK_HTML_CHUNK_TARGET)
-$(BOOK_HTML_CHUNK_TARGET): $(BOOK_ALL_SOURCE) $(BOOK_VERSION_SOURCE) \
-                           $(BOOK_DIR)/styles.css $(BOOK_IMAGES)
-	mkdir -p $(BOOK_HTML_CHUNK_DIR)
-	mkdir -p $(BOOK_HTML_CHUNK_DIR)/images
+book-html-chunk: $(HTML_CHUNK_TARGET)
+$(HTML_CHUNK_TARGET): $(ALL_SOURCE) $(VERSION_SOURCE) $(STYLESHEET) $(IMAGES)
+	mkdir -p $(HTML_CHUNK_DIR)
+	mkdir -p $(HTML_CHUNK_DIR)/images
 	$(ENSURE_XSL)
-	$(XSLTPROC) $(BOOK_HTML_XSLTPROC_OPTS) \
-           --output $(BOOK_HTML_CHUNK_DIR)/ \
-	   $(TOOLS_DIR)/chunk-stylesheet.xsl $(BOOK_XML_SOURCE)
-	cp $(BOOK_DIR)/styles.css $(BOOK_HTML_CHUNK_DIR)
-	cp $(BOOK_IMAGES) $(BOOK_HTML_CHUNK_DIR)/images
+	$(XSLTPROC) $(HTML_XSLTPROC_OPTS) \
+           --output $(HTML_CHUNK_DIR)/ \
+	   $(TOOLS_DIR)/chunk-stylesheet.xsl $(XML_SOURCE)
+	cp $(STYLESHEET) $(HTML_CHUNK_DIR)
+	cp $(IMAGES) $(HTML_CHUNK_DIR)/images
 
-$(BOOK_FO_TARGET): $(BOOK_ALL_SOURCE) $(BOOK_VERSION_SOURCE) $(BOOK_IMAGES)
+$(FO_TARGET): $(ALL_SOURCE) $(VERSION_SOURCE) $(IMAGES)
 	$(ENSURE_XSL)
-	$(XSLTPROC) $(BOOK_FO_XSLTPROC_OPTS) --output $(BOOK_FO_TARGET) \
-	  $(TOOLS_DIR)/fo-stylesheet.xsl $(BOOK_XML_SOURCE)
+	$(XSLTPROC) $(FO_XSLTPROC_OPTS) --output $(FO_TARGET) \
+	  $(TOOLS_DIR)/fo-stylesheet.xsl $(XML_SOURCE)
 
-book-pdf: $(BOOK_PDF_TARGET)
-$(BOOK_PDF_TARGET): $(BOOK_FO_TARGET) $(BOOK_IMAGES)
-	$(TOOLS_DIR)/bin/run-fop.sh . -fo $(BOOK_FO_TARGET) \
-	  -pdf $(BOOK_PDF_TARGET)
+book-pdf: $(PDF_TARGET)
+$(PDF_TARGET): $(FO_TARGET) $(IMAGES)
+	$(TOOLS_DIR)/bin/run-fop.sh . -fo $(FO_TARGET) \
+	  -pdf $(PDF_TARGET)
 
-book-ps: $(BOOK_PS_TARGET)
-$(BOOK_PS_TARGET): $(BOOK_FO_TARGET) $(BOOK_IMAGES)
-	$(TOOLS_DIR)/bin/run-fop.sh . -fo $(BOOK_FO_TARGET) \
-	  -ps $(BOOK_PS_TARGET)
+book-ps: $(PS_TARGET)
+$(PS_TARGET): $(FO_TARGET) $(IMAGES)
+	$(TOOLS_DIR)/bin/run-fop.sh . -fo $(FO_TARGET) \
+	  -ps $(PS_TARGET)
 
 # Install targets
-$(BOOK_INSTALL_DIR):
-	$(INSTALL) -d $(BOOK_INSTALL_DIR)
+$(INSTALL_SUBDIR):
+	$(INSTALL) -d $(INSTALL_SUBDIR)
 
-install-book-html: $(BOOK_HTML_TARGET) $(BOOK_INSTALL_DIR)
-	$(INSTALL) -d $(BOOK_INSTALL_DIR)/images
-	$(INSTALL) $(BOOK_HTML_TARGET) $(BOOK_INSTALL_DIR)
-	$(INSTALL) $(BOOK_DIR)/styles.css $(BOOK_INSTALL_DIR)
-	$(INSTALL) $(BOOK_IMAGES) $(BOOK_INSTALL_DIR)/images
+install-book-html: $(HTML_TARGET) $(INSTALL_SUBDIR)
+	$(INSTALL) -d $(INSTALL_SUBDIR)/images
+	$(INSTALL) $(HTML_TARGET) $(INSTALL_SUBDIR)
+	$(INSTALL) $(STYLESHEET) $(INSTALL_SUBDIR)
+	$(INSTALL) $(IMAGES) $(INSTALL_SUBDIR)/images
 
-install-book-html-chunk: $(BOOK_HTML_CHUNK_TARGET) $(BOOK_INSTALL_DIR)
-	$(INSTALL) -d $(BOOK_INSTALL_DIR)/images
-	$(INSTALL) $(BOOK_HTML_CHUNK_DIR)/*.html $(BOOK_INSTALL_DIR)
-	$(INSTALL) $(BOOK_DIR)/styles.css $(BOOK_INSTALL_DIR)
-	$(INSTALL) $(BOOK_IMAGES) $(BOOK_INSTALL_DIR)/images
+install-book-html-chunk: $(HTML_CHUNK_TARGET) $(INSTALL_SUBDIR)
+	$(INSTALL) -d $(INSTALL_SUBDIR)/images
+	$(INSTALL) $(HTML_CHUNK_DIR)/*.html $(INSTALL_SUBDIR)
+	$(INSTALL) $(STYLESHEET) $(INSTALL_SUBDIR)
+	$(INSTALL) $(IMAGES) $(INSTALL_SUBDIR)/images
 
-install-book-pdf: $(BOOK_PDF_TARGET) $(BOOK_INSTALL_DIR)
-	$(INSTALL) $(BOOK_PDF_TARGET) $(BOOK_INSTALL_DIR)
+install-book-pdf: $(PDF_TARGET) $(INSTALL_SUBDIR)
+	$(INSTALL) $(PDF_TARGET) $(INSTALL_SUBDIR)
 
-install-book-ps: $(BOOK_PS_TARGET) $(BOOK_INSTALL_DIR)
-	$(INSTALL) $(BOOK_PS_TARGET) $(BOOK_INSTALL_DIR)
+install-book-ps: $(PS_TARGET) $(INSTALL_SUBDIR)
+	$(INSTALL) $(PS_TARGET) $(INSTALL_SUBDIR)
 
 # Clean targets
 book-clean:
-	rm -f $(BOOK_VERSION_SOURCE)
-	rm -f $(BOOK_HTML_TARGET) $(BOOK_FO_TARGET)
-	rm -rf $(BOOK_HTML_CHUNK_DIR)
-	rm -f $(BOOK_PDF_TARGET) $(BOOK_PS_TARGET) 
+	rm -f $(VERSION_SOURCE)
+	rm -f $(HTML_TARGET) $(FO_TARGET)
+	rm -rf $(HTML_CHUNK_DIR)
+	rm -f $(PDF_TARGET) $(PS_TARGET) 
 
 # Utility targets
-valid: $(BOOK_VERSION_SOURCE)
-	$(XMLLINT) --noout --nonet --valid $(BOOK_XML_SOURCE)
+valid: $(VERSION_SOURCE)
+	$(XMLLINT) --noout --nonet --valid $(XML_SOURCE)
 
