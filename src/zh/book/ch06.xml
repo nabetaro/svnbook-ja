@@ -123,11 +123,11 @@
         linkend="svn-ch-2-sidebar-1"/>），用户可以运行<command>svn
         --version</command>来查看客户端可以使用的URL模式和协议。</para>
 
-      <para>当服务器处理一个客户端请求，它通常会要求客户端确定它自己的身份，它会发出一个认证挑战给客户端，而客户端通过提供<firstterm>凭证</firstterm>给服务器，一旦认证结束，服务器会响应客户端最初请求的信息。注意这个系统与CVS之类的系统不一样，它们会在请求之前，预先提供凭证(<quote>logs
-        in</quote>)给服务器，在Subversion里，服务器通过挑战客户端适时地<quote>拖入</quote>凭证，而不是客户端<quote>推</quote>出。这使得这种操作更加的优雅，例如，如果一个服务器配置为世界上的任何人都可以读取版本库，在客户使用<command>svn
-        checkout</command>时，服务器永远不会发起一个认证挑战。</para>
+      <para>当服务器处理一个客户端请求，它通常会要求客户端确定它自己的身份，它会发出一个认证请求给客户端，而客户端通过提供<firstterm>凭证</firstterm>给服务器，一旦认证结束，服务器会响应客户端最初请求的信息。注意这个系统与CVS之类的系统不一样，它们会在请求之前，预先提供凭证（<quote>logs
+        in</quote>）给服务器，在Subversion里，服务器通过请求客户端适时地<quote>拖入</quote>凭证，而不是客户端<quote>推</quote>出。这使得这种操作更加的优雅，例如，如果一个服务器配置为世界上的任何人都可以读取版本库，在客户使用<command>svn
+        checkout</command>时，服务器永远不会发起一个认证请求。</para>
 
-      <para>如果客户端请求往版本库写入新的数据（例如<command>svn commit</command>），这会新的修订版本树辉建立起来，如果客户端的请求是经过认证的，认证过的用户的用户名就会作为<literal>svn:author</literal>属性的值保存到新的修订本里（见<xref linkend="svn-ch-5-sect-1.2"/>）。如果客户端没有经过认证（换句话说，服务器没有发起过认证挑战），这时修订本的<literal>svn:author</literal>的值是空的，<footnote><para>这个问题实际上是一个FAQ，源自错误的服务器配置。</para></footnote></para>
+      <para>如果客户端请求往版本库写入新的数据（例如<command>svn commit</command>），这会新的修订版本树辉建立起来，如果客户端的请求是经过认证的，认证过的用户的用户名就会作为<literal>svn:author</literal>属性的值保存到新的修订本里（见<xref linkend="svn-ch-5-sect-1.2"/>）。如果客户端没有经过认证（换句话说，服务器没有发起过认证请求），这时修订本的<literal>svn:author</literal>的值是空的，<footnote><para>这个问题实际上是一个FAQ，源自错误的服务器配置。</para></footnote></para>
 
     </sect2>
 
@@ -139,7 +139,7 @@
       <para>令人高兴的是，Subversion客户端对此有一个修补：存在一个在磁盘上保存认证凭证缓存的系统，缺省情况下，当一个命令行客户端成功的在服务器上得到认证，它会保存一个认证文件到用户的自由运行配置区域&mdash;类Unix系统下会在<filename>~/.subversion/auth/</filename>，Windows下在<filename>%APPDATA%/Subversion/auth/</filename>（运行区域在<xref
         linkend="svn-ch-7-sect-1"/>会描述更多细节）。成功的凭证会缓存在磁盘，以主机名、端口和认证域的混合作为唯一性区别。</para>  
 
-      <para>当客户端接收到一个认证挑战，它会首先查找磁盘中的认证凭证缓存，如果没有发现，或者是缓存的凭证认证失败，客户端会提示用户需要这些信息。</para>
+      <para>当客户端接收到一个认证请求，它会首先查找磁盘中的认证凭证缓存，如果没有发现，或者是缓存的凭证认证失败，客户端会提示用户需要这些信息。</para>
 
       <para>十分关心安全的人们一定会想<quote>把密码缓存在磁盘？太可怕了，永远不要这样做！</quote>但是请保持冷静，首先，<filename>auth/</filename>是访问保护的，只有用户（拥有者）可以读取这些数据，不是整个世界，如果这对你还不够安全，你可以关闭凭证缓存，只需要一个简单的命令，使用参数<option>--no-auth-cache</option>：</para>
 
@@ -208,7 +208,7 @@ END
       </itemizedlist>
           
 
-      <para>这里是Subversion客户端在收到认证挑战的时候的行为方式：</para>
+      <para>这里是Subversion客户端在收到认证请求的时候的行为方式：</para>
 
       <orderedlist>
         <listitem>
@@ -319,9 +319,9 @@ $ svn checkout svn://host.example.com/project1
         <listitem><para>依赖于位置和授权政策，</para>
 
           <itemizedlist>
-            <listitem><para>如果没有受到认证挑战，客户端可能被允许匿名访问，或者</para></listitem>
+            <listitem><para>如果没有受到认证请求，客户端可能被允许匿名访问，或者</para></listitem>
 
-            <listitem><para>客户端收到认证挑战，或者</para></listitem>
+            <listitem><para>客户端收到认证请求，或者</para></listitem>
 
             <listitem><para>如果操作在<quote>通道模式</quote>，客户端会宣布自己已经在外部得到认证。</para></listitem>
           </itemizedlist>
@@ -329,7 +329,7 @@ $ svn checkout svn://host.example.com/project1
 
       </itemizedlist>
 
-      <para>在撰写本文时，服务器还只知道怎样发送CRAM-MD5<footnote><para>见RFC 2195。</para></footnote>认证挑战，本质上讲，就是服务器发送一些数据到客户端，客户端使用MD5哈希算法创建这些数据组合密码的指纹，然后返回指纹，服务器执行同样的计算并且来计算结果的一致性，<emphasis>真正的密码并没有在互联网上传递。</emphasis></para>
+      <para>在撰写本文时，服务器还只知道怎样发送CRAM-MD5<footnote><para>见RFC 2195。</para></footnote>认证请求，本质上讲，就是服务器发送一些数据到客户端，客户端使用MD5哈希算法创建这些数据组合密码的指纹，然后返回指纹，服务器执行同样的计算并且来计算结果的一致性，<emphasis>真正的密码并没有在互联网上传递。</emphasis></para>
 
       <para>也有可能，当然，如果客户端在外部通过通道代理认证，如<command>SSH</command>，在那种情况下，服务器简单的检验作为那个用户的运行，然后使用它作为认证用户名，更多信息请看<xref
         linkend="svn-ch-6-sect-3.4"/>。</para>
