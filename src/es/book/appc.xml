@@ -191,7 +191,7 @@
               último VR. Cada VCR tiene también un recurso
               <quote>historia</quote>, que hace el seguimiento y ordenamiento de
               varios estados VR.
-              
+
             </para>
           </listitem>
         </varlistentry>
@@ -389,7 +389,7 @@
         <literal>Location</literal> en el archivo
         <filename>httpd.conf</filename>, así:
       </para>
-        
+
       <screen>
         &lt;Location /repos&gt;
         DAV svn
@@ -424,7 +424,7 @@
         está versionando todo automáticamente. Después, un administrador del
         sistema puede usar un cliente de Subversion para buscar y recuperar
         todas las versiones antigüas.
-        
+
       </para>
 
       <para>
@@ -469,7 +469,7 @@
         <footnote><para>Tal vez algún día Subversion desarrolle un modelo de
             checkout reservado con bloqueo que pueda vivir en paz con
             copiar-modificar-mezclar, pero probablemente esto no pase pronto.</para></footnote>
-        
+
       </para>
 
       <para>
@@ -509,84 +509,102 @@
         Esta técnica es un negocio peligroso; de cierta manera, mod_dav_svn le
         está mintiendo ahora al cliente WebDAV. El módulo dice aceptar las
         solicitudes <literal>LOCK</literal>, pero en realidad el bloqueo 
+        no está siendo forzado en todos los niveles. Si un segundo cliente
+        WebDAV intenta hacer un <literal>LOCK</literal> sobre el mismo recurso,
+        entonces mod_dav_lock se dará cuenta de ello y denegará (correctamente)
+        la solicitud.
+        Pero no hay absolutamente nada que evite que un cliente Subversion
+        ordinario cambie el archivo vía el comando <command>svn
+          commit</command>!. Si usted usa esta técnica, le está dando a los
+        usuarios la oprtunidad de pisotear los cambios de otros.
+        En paticular, un cliente WebDAV podría sobreescribir accidentalmente un
+        cambio enviado por cliente svn normal.
+      </para>
 
-        
-        This technique is a risky business; in some sense, the
-        mod_dav_svn is now lying to the WebDAV client.  It claims to
-        accept the <literal>LOCK</literal> request, but in reality the
-        lock isn't being enforced at all levels.  If a second WebDAV
-        client attempts to <literal>LOCK</literal> the same resource,
-        then mod_dav_lock will notice and correctly deny the request.
-        But there's absolutely nothing preventing an ordinary
-        Subversion client from changing the file via a normal
-        <command>svn commit</command>!  If you use this technique,
-        you're giving users the opportunity to stomp on each others'
-        changes.  In particular, a WebDAV client might accidentally
-        overwrite a change committed by regular svn client.</para>
-
-      <para>On the other hand, if you set up your environment very
+      <para>
+        Por otra parte, si usted prepara su entorno cuidadosamente, puede
+        mitigar el riesgo. Por ejemplo, si <emphasis>todos</emphasis> sus
+        usuarios están trabajando a través de clientes WebDAV básicos (en vez de
+        clientes svn), entonces todo debería estar bien.
+        <!--TODO: parece que hay un typo en el libro original
         carefully, you may mitigate the risk.  For example, if
-        <emphasis>all</emphasis> of your users are working though
-        basic WebDAV clients (rather than svn clients), then things
-        should be fine.</para>
+        <emphasis>all</emphasis> of your users are working THOUGH-->
+      </para>
 
     </sect2>
 
   </sect1>
 
   <sect1 id="svn-ap-c-sect-3">
-    <title>Autoversioning Interoperability</title> 
+    <title>Interoperabilidad de autoversionado</title> 
 
-    <para>In this section, we'll describe the most common generic
-      WebDAV clients (at the time of writing), and how well they
-      operate against a mod_dav_svn server using the
-      <literal>SVNAutoversioning</literal> directive.  RFC 2518 is a
-      bit large, and perhaps a bit too flexible.  Every WebDAV
-      client behaves slightly differently, and creates slightly
-      different problems.</para>
+    <para>
+      En esta sección describiremos los clientes WebDAV genéricos más comunes
+      (al momento de escribir esto), y qué tan bien operan con un servidor
+      mod_dav_svn usando la directiva <literal>SVNAutoversioning</literal>. El
+      RFC 2518 es un poco largo, y tal vez demasiado flexible. Cada cliente
+      WebDAV se comporta ligeramente diferente, y esto crea problemas
+      ligeramente diferentes.
+    </para>
 
     <!-- list of subsections goes here. -->
 
     <sect2 id="svn-ap-c-sect-3.1">
-      <title>Win32 WebFolders</title>
+      <title>WebFolders Win32</title>
 
-      <para>Windows 98, 2000, and XP have an integrated WebDAV client
-        known as <quote>WebFolders</quote>.  On Windows 98, the
-        feature might need to be explicitly installed;  if present, a
-        <quote>WebFolders</quote> directory appears directly within My
-        Computer.  On Windows 2000 and XP, simply open My Network
-        Places, and run the Add Network Place icon.  When prompted,
-        enter the WebDAV URL.  The shared folder will appear within My
-        Network Places.</para>
+      <para>
+        Windows 98, 2000, y XP tienen un cliente integrado WebDAV conocido como
+        <quote>WebFolders</quote>. En Windows 98, esta característica puede
+        necesitar ser instalada de manera explícita; si está presente, un
+        directorio <quote>WebFolders</quote> aparece directamente dentro de Mi
+        <!--TODO: debería dejar my computer en vez de mi pc?-->
+        PC. En Windows 2000 y XP, simplemente abra Mis Sitios de Red, y ejecute
+        el icono Añadir Sitio de Red.
+        <!--TODO: me dan ganas de decir haga clic sobre el icono tal, pero mejor
+        espero...-->
+        Cuando se le solicite, ingrese la URL WebDAV. La carpeta compartida
+        aparecerá dentro de Mis Sitios de Red.
+      </para>
 
-      <para>Most write operations work fine against an autoversioning
-        mod_dav_svn server, but there are a few problems:</para>
+      <para>
+        Muchas de las operaciones de escritura funcionan bien con un servidor de
+        autoversionado mod_dav_svn, pero hay unos cuantos problemas:
+      </para>
 
       <itemizedlist>
 
         <listitem>
-          <para>If a Windows XP computer is a member of an NT Domain,
-            then it seems to be unable to connect to the WebDAV share.
-            It repeatedly asks for a name and password, even when the
-            Apache server isn't issuing an authentication challenge!
-            If the machine isn't part of an NT Domain, then the share
-            is mounted without a problem.</para>
+          <para>
+            Si un computador Windows XP es miembro de un dominio NT, parece ser
+            incapaz de conectarse a la carpeta compartida WebDAV. Pide
+            repetidamente el nombre y contraseña, aún cuando el servidor Apache
+            no está presentando un reto de autenticación!
+            <!--TODO: me gustaría dejar esto como "no está solicitando
+            autenticación", pero es lo que dice el libro-->
+            Si la máquina no es parte de un dominio NT, entonces la carpeta
+            compartida es montada sin ningún problema.
+          </para>
 
-          <para>This problem seems to stem from changes in the way
-            Windows XP creates WebFolder shortcuts (
-            <filename>.lnk</filename> files).  It sometimes replaces
-            the URL of the WebDAV share with a Windows
-            <quote>UNC</quote> (Universal Naming Convention) path
-            instead.  This causes Explorer to attempt a connection
-            using SMB instead of HTTP.</para>
+          <para>
+            Este problema parece surgir de los cambios en la manera en que
+            Windows XP crea accesos directos WebFolder (archivos
+            <!--TODO: traduje shortcut como acceso directo, aunque sé que se
+            usan términos como atajo, si bien menos conocidos que el que uso
+            aquí-->
+            <filename>.lnk</filename>). Algunas veces reemplaza
+            la URL de la carpeta compartida WebDAV con una ruta Windows
+            <quote>UNC</quote> (Universal Naming Convention). Esto hace que
+            Explorer intente hacer la conexión usando SMB en vez de HTTP.
+          </para>
 
-          <para>A workaround for this problem is to create the
-            <filename>.lnk</filename> shortcut on a Windows 2000
-            computer and then copy this shortcut to the Windows XP
-            computer.  It would probably also be possible to
-            <quote>fix</quote> the shortcut using a HEX editor, if
-            one were to reverse-engineer the <filename>.lnk</filename>
-            file format.</para>
+          <para>
+            Una manera de resolver el problema es crear el acceso directo
+            <filename>.lnk</filename> en un computador Windows 2000 y luego
+            copiar el acceso directo  al computador  Windows XP. Porbablemente
+            también sería posible <quote>arreglar</quote> el acceso directo
+            usando un editor HEX, si se fuera a hacer ingeniería inversa sobre
+            el formato de archivo <filename>.lnk</filename>.
+          </para>
         </listitem>
 
         <listitem>
