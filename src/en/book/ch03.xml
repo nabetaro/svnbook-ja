@@ -315,12 +315,56 @@ Checked out revision 2499.
 </screen>
     
     <sidebar>
-      <title>Repository Layout</title>
+      <title>What's in a Name?</title>
 
-      <para>If you're wondering what <literal>trunk</literal> is all
-        about in the above URL, it's part of the way we recommend
-        you lay out your Subversion repository which we'll talk a lot
-        more about in <xref linkend="svn.branchmerge"/>.</para>
+      <para>Subversion tries hard not to limit the type of data you
+        can place under version control.  The contents of files and
+        property values are stored and transmitted as binary data, and
+        the <xref linkend="svn.advanced.props.special.mime-type"/>
+        tells you how to give Subversion a hint that
+        <quote>textual</quote> operations don't make sense for a
+        particular file.  There are a few places, however, where
+        Subversion places restrictions on information it
+        stores.</para>
+
+      <para>Subversion handles text internally as UTF-8 encoded
+        Unicode.  As a result, certain items which are inherently
+        <quote>textual</quote>, such as property names, path names,
+        and log messages, can only contain legal UTF-8 characters.  It
+        also provides a minimum requirement for use of the
+        <literal>svn:mime-type</literal> property&mdash;if a file's
+        contents aren't compatible with UTF-8, you should mark it as a
+        binary file.  Otherwise, Subversion will attempt to merge
+        differences using UTF-8, which is likely to leave garbage in
+        the file.</para>
+
+      <para>In addition, path names are used as XML attribute values
+        in WebDAV exchanges, as well in as some of Subversion's
+        housekeeping files.  This means that path names can only
+        contain legal XML (1.0) characters.  Subversion also prohibits
+        TAB, CR, and LF characters in path names, so they aren't
+        broken up in diffs, or in the output of commands like <xref
+        linkend="svn.ref.svn.c.log"/> or <xref
+        linkend="svn.ref.svn.c.status"/>.</para>
+
+      <para>While it may seem like a lot to remember, in practice
+        these limitations are rarely a problem.  As long as your
+        locale settings are compatible with UTF-8, and you don't use
+        control characters in path names, you should have no trouble
+        communicating with Subversion.  The command-line client adds
+        an extra bit of help&mdash;it will automatically escape legal
+        path characters as needed in URLs you type to create
+        <quote>legally correct</quote> versions for internal
+        use.</para>
+
+      <para>Experienced users of Subversion have also developed a set
+        of best-practice conventions for laying out paths in the
+        repository.  While these aren't strict requirements like the
+        syntax described above, they help to organize frequently
+        performed tasks.  The <literal>/trunk</literal> part of URLs
+        you'll find throughout this book is one of these conventions;
+        we'll talk a lot more about it and related recommendations in
+        <xref linkend="svn.branchmerge"/>.</para>
 
     </sidebar>
 
