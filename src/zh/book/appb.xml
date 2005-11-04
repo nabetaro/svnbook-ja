@@ -24,7 +24,7 @@
       <sect3 id="svn-ap-b-sect-1.2.1">
         <title>每当我尝试访问版本库，我的Subversion客户端挂起。</title>
         
-        <para>你的版本库和数据都没有损坏，如果你的进程直接访问版本库（mod_dav_svn、svnlook、svnadmin或者你通过<literal>file://</literal>的URL访问），然后它会使用Berkeley DB来访问你的数据。Berkeley DB是一个日志系统，意味着在做一件事之前会纪录下来所有的事情，如果你的进程被中断（例如一个终止信号或段错误），这样就会留下一个锁文件，还有一个描述未完成业务的日志文件。任何其它尝试访问数据库的进程会挂起，等待锁文件消失。为了唤醒你的版本库，你需要询问Berkeley DB是否结束工作，或者是恢复数据库到前一个已知的稳定状态。
+        <para>你的版本库和数据都没有损坏，如果你的进程直接访问版本库（mod_dav_svn、svnlook、svnadmin或者你通过<literal>file://</literal>的URL访问），然后它会使用Berkeley DB来访问你的数据。Berkeley DB是一个日志系统，意味着在做一件事之前会记录下来所有的事情，如果你的进程被中断（例如一个终止信号或段错误），这样就会留下一个锁文件，还有一个描述未完成业务的日志文件。任何其它尝试访问数据库的进程会挂起，等待锁文件消失。为了唤醒你的版本库，你需要询问Berkeley DB是否结束工作，或者是恢复数据库到前一个已知的稳定状态。
         </para>
 
         <para>确定你使用数据库的拥有者和管理者用户来运行这个命令，而不是root或是其他会在db目录产生root拥有文件的用户，这些文件不可以由管理数据库的非root用户打开，通常是你或你的Apache进程。也要确定在恢复时有正确的umask设置，因为如果失败会把允许访问版本库的用户组锁在外面。
@@ -46,7 +46,7 @@ $ svnadmin recover /path/to/repos
         <title>每当我尝试运行<command>svn</command>，它告诉我工作拷贝已经锁定。
         </title>
         
-        <para>Subversion的工作拷贝，就像Berkeley DB使用日志机制来执行所有的操作，也就是它会在事情发生前纪录所有的操作。如果<command>svn</command>在一个动作中被中断，就会留下一个或多个锁文件以及相关的描述未完成动作的日志文件。（<command>svn status</command>会在锁定的目录前面显示一个<literal>L</literal>。）
+        <para>Subversion的工作拷贝，就像Berkeley DB使用日志机制来执行所有的操作，也就是它会在事情发生前记录所有的操作。如果<command>svn</command>在一个动作中被中断，就会留下一个或多个锁文件以及相关的描述未完成动作的日志文件。（<command>svn status</command>会在锁定的目录前面显示一个<literal>L</literal>。）
         </para>
         
         <para>任何其它尝试访问工作拷贝的进程会在看到锁定后失败，为了唤醒工作拷贝，你需要告诉客户端完成工作，做为修正，在你的工作拷贝顶级目录运行这个命令：
