@@ -3,14 +3,14 @@
 
   <simplesect>
 
-    <para>如果你是从头到尾按章节阅读本书，你一定已经具备了使用Subversion客户端执行大多数不同的版本控制操作足够的知识，你理解了怎样从Subversion版本库取出一个工作拷贝，你已经熟悉了通过<command>svn commit</command>和<command>svn update</command>来提交和接收修改，你一定也养成了使用<command>svn status</command>在的无意识的条件反射，为了所有的目的和意图，你已经准备好了在普通环境中使用Subversion。</para>
+    <para>如果你是从头到尾按章节阅读本书，你一定已经具备了使用Subversion客户端执行大多数不同的版本控制操作足够的知识，你理解了怎样从Subversion版本库取出一个工作拷贝，你已经熟悉了通过<command>svn commit</command>和<command>svn update</command>来提交和接收修改，你甚至也经常下意识的使用<command>svn status</command>，无论目的是什么，你已经可以正常使用Subversion了。</para>
 
-    <para>但是Subversion的特性集不只是<quote>普通的版本控制操作</quote>。</para>
+    <para>但是Subversion的特性集可不只是<quote>一般的版本控制操作</quote>。</para>
 
-    <para>本章重点介绍一些Subversion不常用的特性，在这里，我们会讨论Subversion的属性（或者说<quote>元数据</quote>）支持，和怎样通过更改它的运行中配置区域来修改Subversion的缺省行为方式，我们会描述怎样使用外部定义来指导Subversion从多个版本库得到数据，我们会覆盖一些Subversion分发版本附加的客户端和服务器端的工具的细节。</para>
+    <para>本章重点介绍一些Subversion不常用的特性，在这里，我们会讨论Subversion的属性（或者说<quote>元数据</quote>）支持，和如何通过更改运行配置区来改变Subversion的缺省行为方式，我们会描述怎样使用外部定义来指导Subversion从多个版本库得到数据，我们会覆盖一些Subversion分发版本附加的客户端和服务器端的工具的细节。</para>
 
-    <para>在阅读本章之前，你一定要熟悉Subversion对文件和目录的基本版本操作能力，如果你已经阅读了哪些，或者是你需要一个复习，我们建议你检查<xref
-      linkend="svn-ch-2" />和<xref linkend="svn-ch-3" />，一旦你已经掌握了基础知识和本章，你会是一个Subversion的超级用户！
+    <para>在阅读本章之前，你一定要熟悉Subversion对文件和目录的基本版本操作能力，如果你已经阅读了哪些，或者是你需要一个复习，我们建议你重读<xref
+      linkend="svn-ch-2" />和<xref linkend="svn-ch-3" />，一旦你已经掌握了基础知识和本章的内容，你会变成Subversion的超级用户！
     </para>
 
   </simplesect>
@@ -19,29 +19,29 @@
   <!-- *** SECTION 1:  RUNTIME CONFIGURATION AREA                      *** -->
   <!-- ******************************************************************* -->
   <sect1 id="svn-ch-7-sect-1">
-    <title>运行中配置区域</title>
+    <title>运行配置区</title>
     
-    <para>Subversion提供了许多用户可以控制的可选行为方式，许多是那种用户希望添加到所有的Subversion操作中的选项，所以胜于强制用户记住命令行参数并且使用这些选项，并且在每个命令中使用，Subversion使用配置文件各离岛Subversion的配置区域。</para>
+    <para>Subversion提供了许多用户可以控制的可选行为方式，许多是用户希望添加到所有的Subversion操作中的选项，为了避免强制用户记住命令行参数并且并且在每个命令中使用，Subversion使用配置文件，并且将配置文件保存在独立的Subversion配置区。</para>
 
-    <para>Subversion<firstterm>配置区域</firstterm>是一个双重层次选项名称和他们的值。通常，这归结为一个保存<firstterm>配置文件</firstterm>的特殊目录（第一层），知识一些标准的INI格式（包含<quote>部分</quote>支持第二层）的文本文件。这些文件可以简单用你喜欢的文本编辑器编辑（如Emacs或vi），而且保存了客户端可以读取的指示，用来指导用户的一些行为选项。</para>
+    <para>Subversion<firstterm>配置区</firstterm>是一个双层结构，保存了可选项的名称和值。通常，Subversion配置区是一个保存<firstterm>配置文件</firstterm>的特殊目录（第一层结构），目录种保存了一些标准INI格式的文本文件（文件中的<quote>sections</quote>形成第二层结构）。这些文件可以简单用你喜欢的文本编辑器编辑（如Emacs或vi），而且保存了客户端可以读取的指示，用来指导用户的一些行为选项。</para>
 
     <!-- ***************************************************************** -->
     <sect2 id="svn-ch-7-sect-1.1">
-      <title>配置区域布局</title>
+      <title>配置区布局</title>
 
-      <para><command>svn</command>命令行客户端第一次执行时，它会创建一个每用户的配置区域，在类Unix系统，这个区域在用户主目录，是一个名字为<filename>.subversion</filename>的目录。在Win32系统，Subversion在创建了一个<filename>Subversion</filename>目录，通常是在用户的profile目录（顺便说一句，通常是一个隐藏目录）的<filename>Application Data</filename>区域。然而，在这个平台上具体的位置在各个系统是不一样的，是Windows注册表决定的。
+      <para><command>svn</command>命令行客户端第一次执行时，会创建一个单用户配置区，在Unix类系统中，配置区位于用户主目录中，名为<filename>.subversion</filename>。在Win32系统，Subversion创建一个名为<filename>Subversion</filename>的目录，这个目录通常位于用户配置目录（顺便说一句，通常是一个隐藏目录）的<filename>Application Data</filename>子目录下。然而，在Win32平台上目录的具体位置在不同的系统上是不一样的，由Windows注册表决定。
         <footnote>
-          <para><literal>APPDATA</literal>环境变量指向<filename>Application Data</filename>区域，所以你可以一直通过<filename>%APPDATA%\Subversion</filename>引用这个目录。
+          <para><literal>APPDATA</literal>环境变量指向<filename>Application Data</filename>目录，所以你可以通过<filename>%APPDATA%\Subversion</filename>引用用户配置区目录。
           </para>
         </footnote>
-        我们会通过它的Unix名字<filename>.subversion</filename>来饮用每用户配置区域。
+        我们以Unix下的名字<filename>.subversion</filename>来表示单用户配置区。
       </para>
 
-      <para>除了每用户的配置区域，Subversion也会识别系统级的配置区域，这给了系统管理员有能力来建立缺省值给所有的给定机器的用户，注意那个系统级的配置区域不会规定不变的策略&mdash;每用户的配置区域会覆盖系统级的配置，<command>svn</command>命令行的参数决定最后的行为。在类Unix的平台，系统级的配置区域会在<filename>/etc/subversion</filename>目录，在Windows的机器，它会寻找<filename>Application Data</filename>（再说一次，是由Windows注册表决定）的<filename>Subversion</filename>目录。不像每用户的情况，<command>svn</command>不会试图创建系统级的配置区域。</para>
+      <para>除了单用户配置区，Subversion也提供了系统配置区，通过系统配置区,系统管理员可以为某个机器的所有用户建立缺省配置值。注意系统配置区不会规定强制性的策略&mdash;每个单用户配置区都可以覆盖系统配置区中的配置项，而<command>svn</command>的命令行参数决定了最后的行为。在Unix类的平台上，系统配置区位于<filename>/etc/subversion</filename>目录下，在Windows平台上，系统配置区位于<filename>Application Data</filename>（再说一次，是由Windows注册表决定的）的<filename>Subversion</filename>目录中。与单用户配置区不同，<command>svn</command>不会试图创建系统级的配置区域。</para>
 
-      <para>配置区域现在保存三个文件&mdash;两个配置文件（<filename>config</filename>和<filename>servers</filename>），和一个描述INI格式的<filename>README.txt</filename>文件。他们创建的时候，文件保存缺省的Subversion选项，大多数已经加了注释，并且用文字描述分组，记述了这些值对Subversion的关键影响，为了修改期望的选项值，如果在任何时候你希望恢复缺省的配置，可以直接删除（或者重命名）你的配置目录，并且运行一些无影响的<command>svn</command>命令，如<command>svn --version</command>，一个包含缺省值的新配置目录就会创建起来。</para>
+      <para>目前配置区包含三个文件&mdash;两个配置文件（<filename>config</filename>和<filename>servers</filename>），和一个描述INI文件格式的<filename>README.txt</filename>文件。配置文件创建的时候，缺省的Subversion选项已经设置好，其中大多数已经加了注释，并且用文字描述分组，记述了这些值对Subversion的关键影响。要修改选项，只需用文本编辑器打开并编辑配置文件。如果想要恢复缺省的配置，可以直接删除（或者重命名）配置目录，并且运行一些如<command>svn --version</command>之类的无影响的<command>svn</command>命令，一个包含缺省值的新配置目录就会创建起来。</para>
 
-      <para>每用户配置区域也保存了认证数据的一个缓存，<filename>auth</filename>目录保存了一些子目录中缓存了一些Subversion各种支持的认证方法的信息，这个目录创建为只可以被它的用户读取内容。</para>
+      <para>单用户配置区也缓存了认证信息，<filename>auth</filename>目录下的子目录中缓存了一些Subversion支持的各种认证方法的信息，这个目录需要相应的用户权限才可以读取。</para>
 
     </sect2>
 
