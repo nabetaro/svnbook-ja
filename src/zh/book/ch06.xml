@@ -123,21 +123,21 @@
         linkend="svn-ch-2-sidebar-1"/>），用户可以运行<command>svn
         --version</command>来查看客户端可以使用的URL模式和协议。</para>
 
-      <para>当服务器处理一个客户端请求，它通常会要求客户端确定它自己的身份，它会发出一个认证请求给客户端，而客户端通过提供<firstterm>凭证</firstterm>给服务器，一旦认证结束，服务器会响应客户端最初请求的信息。注意这个系统与CVS之类的系统不一样，它们会在请求之前，预先提供凭证（<quote>logs
+      <para>当服务器处理一个客户端请求，它通常会要求客户端确定它自己的身份，它会发出一个认证请求给客户端，而客户端通过以提供<firstterm>凭证</firstterm>给服务器作为响应，一旦认证结束，服务器会响应客户端最初请求的信息。注意这个系统与CVS之类的系统不一样，它们会在请求之前，预先提供凭证（<quote>logs
         in</quote>）给服务器，在Subversion里，服务器通过请求客户端适时地<quote>拖入</quote>凭证，而不是客户端<quote>推</quote>出。这使得这种操作更加的优雅，例如，如果一个服务器配置为世界上的任何人都可以读取版本库，在客户使用<command>svn
         checkout</command>时，服务器永远不会发起一个认证请求。</para>
 
-      <para>如果客户端请求往版本库写入新的数据（例如<command>svn commit</command>），这会新的修订版本树辉建立起来，如果客户端的请求是经过认证的，认证过的用户的用户名就会作为<literal>svn:author</literal>属性的值保存到新的修订本里（见<xref linkend="svn-ch-5-sect-1.2"/>）。如果客户端没有经过认证（换句话说，服务器没有发起过认证请求），这时修订本的<literal>svn:author</literal>的值是空的，<footnote><para>这个问题实际上是一个FAQ，源自错误的服务器配置。</para></footnote></para>
+      <para>如果客户端请求往版本库写入新的数据（例如<command>svn commit</command>），这会建立新的修订版本树，如果客户端的请求是经过认证的，认证过的用户的用户名就会作为<literal>svn:author</literal>属性的值保存到新的修订本里（见<xref linkend="svn-ch-5-sect-1.2"/>）。如果客户端没有经过认证（换句话说，服务器没有发起过认证请求），这时修订本的<literal>svn:author</literal>的值是空的。<footnote><para>这个问题实际上是一个FAQ，源自错误的服务器配置。</para></footnote></para>
 
     </sect2>
 
     <sect2 id="svn-ch-6-sect-2.2">
       <title>客户端凭证缓存</title>
 
-      <para>许多服务器配置为在每次请求时要求认证，这对一次次输入用户名和密码的用户是非常讨厌的事情。</para>
+      <para>许多服务器配置为在每次请求时要求认证，这对一次次输入用户名和密码的用户来说是非常恼人的事情。</para>
 
-      <para>令人高兴的是，Subversion客户端对此有一个修补：存在一个在磁盘上保存认证凭证缓存的系统，缺省情况下，当一个命令行客户端成功的在服务器上得到认证，它会保存一个认证文件到用户的自由运行配置区域&mdash;类Unix系统下会在<filename>~/.subversion/auth/</filename>，Windows下在<filename>%APPDATA%/Subversion/auth/</filename>（运行区域在<xref
-        linkend="svn-ch-7-sect-1"/>会描述更多细节）。成功的凭证会缓存在磁盘，以主机名、端口和认证域的混合作为唯一性区别。</para>  
+      <para>令人高兴的是，Subversion客户端对此有一个修补：存在一个在磁盘上保存认证凭证缓存的系统，缺省情况下，当一个命令行客户端成功的在服务器上得到认证，它会保存一个认证文件到用户的私有运行配置区&mdash;类Unix系统下会在<filename>~/.subversion/auth/</filename>，Windows下在<filename>%APPDATA%/Subversion/auth/</filename>（运行区在<xref
+        linkend="svn-ch-7-sect-1"/>会有更多细节描述）。成功的凭证会缓存在磁盘，以主机名、端口和认证域的组合作为唯一性区别。</para>  
 
       <para>当客户端接收到一个认证请求，它会首先查找磁盘中的认证凭证缓存，如果没有发现，或者是缓存的凭证认证失败，客户端会提示用户需要这些信息。</para>
 
@@ -196,7 +196,7 @@ END
 
       <para>一旦你定位了正确的缓存文件，只需要删除它。</para>
 
-      <para>客户端认证的行为的最后一点：对使用<option>--username</option>和<option>--password</option>选项的一点说明，许多客户端和子命令接受这个选项，但是要明白这个选项<emphasis>不会</emphasis>主动地发送凭证信息到服务器，为了讨论的简单，服务器会在必须需要的时候才会从客户端<quote>拖</quote>如凭证，客户端不会随意<quote>推</quote>出。如果一个用户名和/或者密码作为选项传入，它们<emphasis>只会</emphasis>在服务器需要时展现给服务器。<footnote><para>在一次，一个常见的错误是把服务器配置为从不会请求认证，当用户传递<option>--username</option>和<option>--password</option>给客户端时，他们惊奇的发现它们没有被使用，如新的修订版本看起来始终是由匿名用户提交的！</para></footnote>通常，在如下情况下使用这些选项：</para>
+      <para>客户端认证的行为的最后一点：对使用<option>--username</option>和<option>--password</option>选项的一点说明，许多客户端和子命令接受这个选项，但是要明白使用这个选项<emphasis>不会</emphasis>主动地发送凭证信息到服务器，就像前面讨论过的，服务器会在需要的时候才会从客户端<quote>拖</quote>入凭证，客户端不会随意<quote>推</quote>出。如果一个用户名和/或者密码作为选项传入，它们<emphasis>只会</emphasis>在服务器需要时展现给服务器。<footnote><para>再次重申，一个常见的错误是把服务器配置为从不会请求认证，当用户传递<option>--username</option>和<option>--password</option>给客户端时，他们惊奇的发现它们没有被使用，如新的修订版本看起来始终是由匿名用户提交的！</para></footnote>通常，只有在如下情况下才会使用这些选项：</para>
 
       <itemizedlist>
         <listitem>
@@ -224,7 +224,7 @@ END
         </listitem>
       </orderedlist>
 
-      <para>如果客户端通过以上的任何一种方式成功认证，它会尝试在磁盘缓存凭证（除非用户已经关闭了这些行为，在前面提到过。）</para>
+      <para>如果客户端通过以上的任何一种方式成功认证，它会尝试在磁盘缓存凭证（除非用户已经关闭了这种行为方式，在前面提到过。）</para>
 
     </sect2>
 
@@ -238,7 +238,7 @@ END
     
     <title>svnserve，一个自定义的服务器</title>
 
-    <para><command>svnserve</command>是一个轻型的服务器，可以同客户端在TCP/IP基础上的自定义有状态协议通讯，客户端通过使用开头为<literal>svn://</literal>或者<literal>svn+ssh://</literal><command>svnserve</command>的URL来访问一个<command>svnserve</command>服务器，这部分将会解释运行<command>svnserve</command>的不同方式，客户端怎样实现服务器的认证，怎样配制版本库恰当的访问控制。</para>
+    <para><command>svnserve</command>是一个轻型的服务器，可以同客户端通过在TCP/IP基础上的自定义有状态协议通讯，客户端通过使用开头为<literal>svn://</literal>或者<literal>svn+ssh://</literal><command>svnserve</command>的URL来访问一个<command>svnserve</command>服务器。这一小节将会解释运行<command>svnserve</command>的不同方式，客户端怎样实现服务器的认证，怎样配制版本库恰当的访问控制。</para>
 
     <sect2 id="svn-ch-6-sect-3.1">
       <title>调用服务器</title>
@@ -274,17 +274,17 @@ $ svnserve -d
 $               # svnserve is now running, listening on port 3690
 </screen>
 
-      <para>当以守护模式运行<command>svnserve</command>时，你可以使用<option>--listen-port=</option>选项<option>--listen-host=</option>来自定义<quote>绑定</quote>的端口和主机。</para>
+      <para>当以守护模式运行<command>svnserve</command>时，你可以使用<option>--listen-port=</option>和<option>--listen-host=</option>选项来自定义<quote>绑定</quote>的端口和主机名。</para>
 
-      <para>也一直有第三种方式,使用<quote>管道模式</quote>,通过<option>-t</option>选项,这个模式假定一个分布式服务程序如<command>RSH</command>或<command>SSH</command>已经验证了一个用户，并且<emphasis>以这个用户</emphasis>调用了一个私有<command>svnserve</command>进程，<command>svnserve</command>运作如常（通过<emphasis>stdin</emphasis>通讯<emphasis>stdout</emphasis>），并且假定通讯转向到一种通道传递到客户端，当<command>svnserve</command>被这样的通道代理调用，确定认证用户对版本数据库有完全的读写权限。（见xref
-        linkend="svn-ch-6-sidebar-1"/>。）这对本地用户使用<literal>file:///</literal>URl访问版本库同样重要。</para>
+      <para>也一直有第三种方式，使用<option>-t</option>选项的<quote>管道模式</quote>，这个模式假定一个分布式服务程序如<command>RSH</command>或<command>SSH</command>已经验证了一个用户，并且<emphasis>以这个用户</emphasis>调用了一个私有<command>svnserve</command>进程，<command>svnserve</command>运作如常（通过<emphasis>stdin</emphasis>和<emphasis>stdout</emphasis>通讯），并且可以设想通讯是自动转向到一种通道传递回客户端，当<command>svnserve</command>被这样的通道代理调用，确定认证用户对版本数据库有完全的读写权限。（见xref
+        linkend="svn-ch-6-sidebar-1"/>。）这与本地用户通过<literal>file:///</literal>URl访问版本库同样重要。</para>
 
       <sidebar id="svn-ch-6-sidebar-1">
-        <title>服务器和许可：一个警告</title>        
+        <title>服务器和访问许可：一个警告</title>        
 
-        <para>首先需要记住，一个Subversion版本库是一组数据库文件，任何进程直接访问版本库需要对整个版本库有正确的读写许可，如果你不小心，这会很头痛，特别是当你使用BerkeleyDB数据库而不是FSFS时，详细信息可以阅读<xref linkend="svn-ch-6-sect-5"/>。</para>
+        <para>首先需要记住，一个Subversion版本库是一组数据库文件，任何进程直接访问版本库需要对整个版本库有正确的读写许可，如果你不仔细处理，这会变得很头痛，特别是当你使用BerkeleyDB数据库而不是FSFS时，详细信息可以阅读<xref linkend="svn-ch-6-sect-5"/>。</para>
 
-        <para>第二点，当配制<command>svnserve</command>、Apache <command>httpd</command>或者其他任何服务器时，不要使用<literal>root</literal>用户（或者其他具备无限制权限的用户）启动服务器进程，依赖于所有权和版本库允许的权限，通常会创建一个新的用户叫做<literal>svn</literal>，赋予这个用户排他的拥有权和对Subversion版本库的导出权利，只让服务器以这个用户运行。</para>
+        <para>第二点，当配制<command>svnserve</command>、Apache <command>httpd</command>或者其他任何服务器时，不要使用<literal>root</literal>用户（或者其他具备无限制权限的用户）启动服务器进程，根据所有权和版本库允许的权限，通常应该创建一个新的自定义用户，例如很多管理员会创建一个叫做<literal>svn</literal>的用户，赋予这个用户排他的拥有权和对Subversion版本库的导出权利，只让服务器以这个用户运行。</para>
       </sidebar>
 
 
@@ -297,7 +297,7 @@ $ svnserve -d -r /usr/local/repositories
 &hellip;
 </screen>
 
-      <para>使用<option>-r</option>可以有效地改变文件系统的根位置，客户端可以使用去掉前部分的路径，留下的要短一些的（更加有提示性）URL：</para>
+      <para>使用<option>-r</option>可以有效地改变文件系统的根位置，客户端可以使用去掉前半部分的路径，留下的要短一些的（更加有提示性）URL：</para>
       
 <screen>
 $ svn checkout svn://host.example.com/project1
@@ -314,12 +314,12 @@ $ svn checkout svn://host.example.com/project1
       <itemizedlist>
         <listitem><para>客户端选择特定的版本库。</para></listitem>
 
-        <listitem><para>服务器处理H本库的<filename>conf/svnserve.conf</filename>文件，并且执行里面定义的所有认证和授权信息。</para></listitem>
+        <listitem><para>服务器处理版本库的<filename>conf/svnserve.conf</filename>文件，并且执行里面定义的所有认证和授权政策。</para></listitem>
 
         <listitem><para>依赖于位置和授权政策，</para>
 
           <itemizedlist>
-            <listitem><para>如果没有受到认证请求，客户端可能被允许匿名访问，或者</para></listitem>
+            <listitem><para>如果没有收到认证请求，客户端可能被允许匿名访问，或者</para></listitem>
 
             <listitem><para>客户端收到认证请求，或者</para></listitem>
 
@@ -331,11 +331,11 @@ $ svn checkout svn://host.example.com/project1
 
       <para>在撰写本文时，服务器还只知道怎样发送CRAM-MD5<footnote><para>见RFC 2195。</para></footnote>认证请求，本质上讲，就是服务器发送一些数据到客户端，客户端使用MD5哈希算法创建这些数据组合密码的指纹，然后返回指纹，服务器执行同样的计算并且来计算结果的一致性，<emphasis>真正的密码并没有在互联网上传递。</emphasis></para>
 
-      <para>也有可能，当然，如果客户端在外部通过通道代理认证，如<command>SSH</command>，在那种情况下，服务器简单的检验作为那个用户的运行，然后使用它作为认证用户名，更多信息请看<xref
+      <para>当然也有可能，如果客户端在外部通过通道代理认证，如<command>SSH</command>，在那种情况下，服务器简单的检验作为那个用户的运行，然后使用它作为认证用户名，更多信息请看<xref
         linkend="svn-ch-6-sect-3.4"/>。</para>
 
-      <para>像你已经猜测到的，版本库的<filename>svnserve.conf</filename>文件是控制认证和授权的中心机制，文件与其它的配置文件是同样的格式（见<xref linkend="svn-ch-7-sect-1"/>）：部分名称使用方括号标记（<literal>[</literal>和<literal>]</literal>），注释以井号（<literal>#</literal>）开始，每一部分都有一些参数可以设置（<literal>variable =
-        value</literal>），让我们浏览这个文件并且学习怎样使用他们。</para>
+      <para>像你已经猜测到的，版本库的<filename>svnserve.conf</filename>文件是控制认证和授权政策的中央机构，这文件与其它配置文件格式相同（见<xref linkend="svn-ch-7-sect-1"/>）：小节名称使用方括号标记（<literal>[</literal>和<literal>]</literal>），注释以井号（<literal>#</literal>）开始，每一小节都有一些参数可以设置（<literal>variable =
+        value</literal>），让我们浏览这个文件并且学习怎样使用它们。</para>
 
       <sect3 id="svn-ch-6-sect-3.2.1">
         <title>创建一个用户文件和域</title>
@@ -364,7 +364,7 @@ sally = barpassword
       <sect3 id="svn-ch-6-sect-3.2.2">
         <title>设置访问控制</title>
 
-        <para><filename>svnserve.conf</filename>有两个或多个参数需要设置：他们检验未认证（匿名）和认证用户可以做的事情，参数<literal>anon-access</literal>和<literal>auth-access</literal>可以设置为<literal>none</literal>、<literal>read</literal>或者<literal>write</literal>，设置为<literal>none</literal>会限制所有方式的访问，<literal>read</literal>允许只读访问，而<literal>write</literal>允许对版本库完全的读/写权限：</para>
+        <para><filename>svnserve.conf</filename>有两个或多个参数需要设置：他们确定未认证（匿名）和认证用户可以做的事情，参数<literal>anon-access</literal>和<literal>auth-access</literal>可以设置为<literal>none</literal>、<literal>read</literal>或者<literal>write</literal>，设置为<literal>none</literal>会限制所有方式的访问，<literal>read</literal>允许只读访问，而<literal>write</literal>允许对版本库完全的读/写权限：</para>
 
 <screen>
 [general]
@@ -378,7 +378,7 @@ anon-access = read
 auth-access = write
 </screen>
 
-        <para>实例设置是，实际上是参数的缺省值，你一定不要忘了设置他们，如果你希望更保守一点，你可以完全封锁匿名访问：</para>
+        <para>实例中的设置实际上是参数的缺省值，你一定不要忘了设置他们，如果你希望更保守一点，你可以完全封锁匿名访问：</para>
 
 <screen>
 [general]
@@ -392,7 +392,7 @@ anon-access = none
 auth-access = write
 </screen>
 
-        <para>注意<command>svnserve</command>只能识别<quote>blanket</quote>的访问控制，一个用户可以有全体的读/写权限，或者只读权限，或没有访问权限，没有对版本库具体路径访问的细节控制，很多项目和站点，这种 访问控制时完全足够了，然而，如果你希望单个目录访问控制，你会需要使用包括<command>mod_authz_svn</command>（见<xref linkend="svn-ch-5-sect-2.1"/>）的Apache，或者是使用<command>pre-commit</command>钩子脚本来控制写访问（见<xref linkend="svn-ch-5-sect-2.1"/>），Subversion的分发版本包含一个<command>commit-access-control.pl</command>和一个更加复杂的<command>svnperms.py</command>将本作为pre-commit脚本使用。</para>
+        <para>注意<command>svnserve</command>只能识别<quote>blanket</quote>的访问控制，一个用户可以有全体的读/写权限，或者只读权限，或没有访问权限，没有对版本库具体路径访问的细节控制，很多项目和站点，这种 访问控制时完全足够了，然而，如果你希望单个目录访问控制，你会需要使用包括<command>mod_authz_svn</command>（见<xref linkend="svn-ch-5-sect-2.1"/>）的Apache，或者是使用<command>pre-commit</command>钩子脚本来控制写访问（见<xref linkend="svn-ch-5-sect-2.1"/>），Subversion的分发版本包含一个<command>commit-access-control.pl</command>和一个更加复杂的<command>svnperms.py</command>脚本可以作为pre-commit脚本使用。</para>
 
       </sect3>
     </sect2>
@@ -417,24 +417,24 @@ baz
 &hellip;
 </screen>
 
-      <para>在这个例子里，Subversion客户端会掉用一个<command>ssh</command>进程，连接到<literal>host.example.com</literal>，使用用户<literal>harry</literal>认证，然后会有一个<command>svnserve</command>私有进程以用户<literal>harry</literal>运行。<command>svnserve</command>是以管道模式调用的（<option>-t</option>），，它的网络协议是通过<command>ssh</command><quote>封装的</quote>，通道的代理<command>svnserve</command>会知道是以用户<literal>harry</literal>运行的，如果客户执行一个提交，认证的用户名会作为版本的参数保存到新的修订本。</para>
+      <para>在这个例子里，Subversion客户端会调用一个<command>ssh</command>进程，连接到<literal>host.example.com</literal>，使用用户<literal>harry</literal>认证，然后会有一个<command>svnserve</command>私有进程以用户<literal>harry</literal>运行。<command>svnserve</command>是以管道模式调用的（<option>-t</option>），它的网络协议是通过<command>ssh</command><quote>封装的</quote>，被管道代理的<command>svnserve</command>会知道程序是以用户<literal>harry</literal>运行的，如果客户执行一个提交，认证的用户名会作为版本的参数保存到新的修订本。</para>
 
-      <para>这里要理解的最重要的事情是Subversion客户端<emphasis>不</emphasis>是连接到运行中的<command>svnserve</command>守护进程，这个访问方法不需要一个守护进程，也不会在需要时开放一个***，它依赖于<command>ssh</command>来发起一个<command>svnserve</command>进程，然后网络断开后终止进程。</para>
+      <para>这里要理解的最重要的事情是Subversion客户端<emphasis>不</emphasis>是连接到运行中的<command>svnserve</command>守护进程，这种访问方法不需要一个运行的守护进程，也不需要在必要时唤醒一个，它依赖于<command>ssh</command>来发起一个<command>svnserve</command>进程，然后网络断开后终止进程。</para>
 
       <para>当使用<literal>svn+ssh://</literal>的URL访问版本库时，记住是<command>ssh</command>提示请求认证，而<emphasis>不</emphasis>是<command>svn</command>客户端程序。这意味着密码不会有自动缓存（见<xref linkend="svn-ch-6-sect-2.2"/>），Subversion客户端通常会建立多个版本库的连接，但用户通常会因为密码缓存特性而没有注意到这一点，当使用<literal>svn+ssh://</literal>的URL时，用户会为<command>ssh</command>在每次建立连接时重复的询问密码感到讨厌，解决方案是用一个独立的SSH密码缓存工具，像类Unix系统的<command>ssh-agent</command>或者是Windows下的<command>pageant</command>。</para>
 
-      <para>党在一个管道上运行时，认证通常是基于操作系统对版本库数据库文件的访问控制，这同Harry直接通过<literal>file:///</literal>的URL直接访问版本库非常类似，如果有多个系统用户要直接访问版本库，你会希望将他们放到一个常见的组里，你应该小心的使用umasks。（确定要阅读<xref
-        linkend="svn-ch-6-sect-5"/>）但是如果是使用管道时，文件<filename>svnserve.conf</filename>还是可以阻止用户访问，如<literal>auth-access = read</literal>或者<literal>auth-access
+      <para>当在一个管道上运行时，认证通常是基于操作系统对版本库数据库文件的访问控制，这同Harry直接通过<literal>file:///</literal>的URL直接访问版本库非常类似，如果有多个系统用户要直接访问版本库，你会希望将他们放到一个常见的组里，你应该小心的使用umasks。（确定要阅读<xref
+        linkend="svn-ch-6-sect-5"/>）但是即使是在管道模式时，文件<filename>svnserve.conf</filename>还是可以阻止用户访问，如<literal>auth-access = read</literal>或者<literal>auth-access
         = none</literal>。</para>
       
-      <para>你会认为SSH管道的故事该结束了，但还不是，Subversion允许你在运行中文件<filename>config</filename>（见<xref linkend="svn-ch-7-sect-1"/>）创建一个自定义的管道行为方式，举个例子，假定你希望使用RSH而不是SSH，在<filename>config</filename>文件的<literal>[tunnels]</literal>部分如下定义：</para>
+      <para>你会认为SSH管道的故事该结束了，但还不是，Subversion允许你在运行配置文件<filename>config</filename>（见<xref linkend="svn-ch-7-sect-1"/>）创建一个自定义的管道行为方式，举个例子，假定你希望使用RSH而不是SSH，在<filename>config</filename>文件的<literal>[tunnels]</literal>部分作如下定义：</para>
 
 <screen>
 [tunnels]
 rsh = rsh
 </screen>
 
-      <para>现在你可以通过指定与定义匹配的URL模式来使用新的管道定义：<literal>svn+rsh://host/path</literal>。当使用新的URL模式时，Subversion客户端会实际上会在后面运行<command>rsh host svnserve -t</command>这个命令，如果你在URL中包括一个用户名（例如，<literal>svn+rsh://username@host/path</literal>），客户端也会在自己的命令中包含这部分（<command>rsh
+      <para>现在你可以通过指定与定义匹配的URL模式来使用新的管道定义：<literal>svn+rsh://host/path</literal>。当使用新的URL模式时，Subversion客户端实际上会在后台运行<command>rsh host svnserve -t</command>这个命令，如果你在URL中包括一个用户名（例如，<literal>svn+rsh://username@host/path</literal>），客户端也会在自己的命令中包含这部分（<command>rsh
         username@host svnserve -t</command>），但是你可以定义比这个更加智能的新的管道模式：</para>
 
 <screen>
@@ -444,7 +444,7 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
 
       <para>这个例子里论证了一些事情，首先，它展现了如何让Subversion客户端启动一个特定的管道程序（这个在<filename>/opt/alternate/ssh</filename>），在这个例子里，使用<literal>svn+joessh://</literal>的URL会以<option>-p 29934</option>参数调用特定的SSH程序&mdash;对连接到非标准端口的程序非常有用。</para>
 
-      <para>第二点，它展示了怎样定义一个自定义的环境变量来覆盖管道程序中的名字，设置<literal>SVN_SSH</literal>环境变量是覆盖缺省的SSH管道的一种简便方法，但是如果你需要为多个服务器做出多个不同的覆盖，每一个或许联系不同的端口或者传递不同的SSH选项集，你可以使用本例论述的机制。现在如果我们设置<literal>JOESSH</literal>环境变量，它的值会覆盖管道中的变量值&mdash;<command>$JOESSH</command>会执行而不是执行<command>/opt/alternate/ssh -p
+      <para>第二点，它展示了怎样定义一个自定义的环境变量来覆盖管道程序中的名字，设置<literal>SVN_SSH</literal>环境变量是覆盖缺省的SSH管道的一种简便方法，但是如果你需要为多个服务器做出多个不同的覆盖，或许每一个都联系不同的端口或传递不同的SSH选项，你可以使用本例论述的机制。现在如果我们设置<literal>JOESSH</literal>环境变量，它的值会覆盖管道中的变量值&mdash;会执行<command>$JOESSH</command>而不是<command>/opt/alternate/ssh -p
         29934</command>。</para>
 
     </sect2>
@@ -452,31 +452,27 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
     <sect2 id="svn-ch-6-sect-3.5">
       <title>SSH配置技巧</title>
 
-      <para>不仅仅是可以控制客户端调用<command>ssh</command>方式，也可以控制服务器中的<command>sshd</command>的行为方式，在本小节，我们会展示怎样控制<command>sshd</command>执行<command>svnserve</command>，就像我们怎样让多给用户分享同一个系统帐户。</para>
+      <para>不仅仅是可以控制客户端调用<command>ssh</command>方式，也可以控制服务器中的<command>sshd</command>的行为方式，在本小节，我们会展示怎样控制<command>sshd</command>执行<command>svnserve</command>，包括如何让多个用户分享同一个系统帐户。</para>
       
       <sect3 id="svn-ch-6-sect-3.5.1">
         <title>初始设置</title>
         
-        <para>作为开始，定位到你启动<command>svnserve</command>的帐号的主目录，确定这个账户有一个SSH公开/私有密钥对已经安装，用户可以通过公开密钥认证，因为所有如下的技巧关注于使用SSH<filename>授权密钥</filename>文件，密码认证不会工作。</para>
+        <para>作为开始，定位到你启动<command>svnserve</command>的帐号的主目录，确定这个账户已经安装了一套SSH公开/私有密钥对，用户可以通过公开密钥认证，因为所有如下的技巧围绕着使用SSH<filename>authorized_keys</filename>文件，密码认证在这里不会工作。</para>
 
-        <para>If it doesn't already exist, create the
-          <filename>authorized_keys</filename> file (on Unix,
-          typically <filename>~/.ssh/authorized_keys</filename>).
-          Each line in this file describes a public key that is
-          allowed to connect.  The lines are typically of the
-          form:</para>
+        <para>如果这个文件还不存在，创建一个<filename>authorized_keys</filename>文件（在UNIX下通常是<filename>~/.ssh/authorized_keys</filename>），这个文件的每一行描述了一个允许连接的公钥，这些行通常是下面的形式：
+       </para>
 
 <screen>
   ssh-dsa AAAABtce9euch.... user@example.com
 </screen>
           
-        <para>第一个字段描述了密钥的类型，第二个字段时未加密的密钥本身，第三个字段是注释，然而，这是一个很少人知道的事实，可以使用一个<literal>command</literal>来处理整行：</para>
+        <para>第一个字段描述了密钥的类型，第二个字段是未加密的密钥本身，第三个字段是注释。然而，这是一个很少人知道的事实，可以使用一个<literal>command</literal>来处理整行：</para>
 
 <screen>
   command="program" ssh-dsa AAAABtce9euch.... user@example.com
 </screen>
 
-        <para>当<literal>command</literal>字段设置后，SSH守护进程运行命名的程序而不是通常Subversion客户端询问的<command>svnserve -t</command>。这样开启了许多服务器端的小技巧，在下面的例子里，我们会简写这个文件的这些行：</para>
+        <para>当<literal>command</literal>字段设置后，SSH守护进程运行命名的程序而不是通常Subversion客户端询问的<command>svnserve -t</command>。这为实施许多服务器端技巧开启了大门，在下面的例子里，我们简写了文件的这些行：</para>
 
 <screen>
   command="program" TYPE KEY COMMENT
@@ -487,13 +483,13 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
       <sect3 id="svn-ch-6-sect-3.5.2">
         <title>控制调用的命令</title>
 
-        <para>因为我们可以指定执行服务器端命令，我们很容易来命名一个<command>svnserve</command>程序来运行和传递给他额外的参数：</para>
+        <para>因为我们可以指定服务器端执行的命令，我们很容易来选择运行一个特定的<command>svnserve</command>程序来并且传递给它额外的参数：</para>
         
 <screen>
   command="/path/to/svnserve -t -r /virtual/root" TYPE KEY COMMENT
 </screen>
 
-        <para>在这个例子里，<filename>/path/to/svnserve</filename>也许会是一个<command>svnserve</command>程序的包裹脚本，会来设置umask（见<xref linkend="svn-ch-6-sect-5"/>）。它也展示了怎样在虚拟根目录定位一个<command>svnserve</command>，就像我们经常在使用守护进程模式下运行<command>svnserve</command>一样。这样也许会不仅限制了对系统的部分访问，也使用户不需要在<literal>svn+ssh://</literal>URL里输入绝对路径。</para>
+        <para>在这个例子里，<filename>/path/to/svnserve</filename>也许会是一个<command>svnserve</command>程序的包裹脚本，会来设置umask（见<xref linkend="svn-ch-6-sect-5"/>）。它也展示了怎样在虚拟根目录定位一个<command>svnserve</command>，就像我们经常在使用守护进程模式下运行<command>svnserve</command>一样。这样做不仅可以把访问限制在系统的一部分，也可以使用户不需要在<literal>svn+ssh://</literal>URL里输入绝对路径。</para>
         
         <para>多个用户也可以共享同一个帐号，作为为每个用户创建系统帐户的替代，我们创建一个公开/私有密钥对，然后在<filename>authorized_users</filename>文件里放置各自的公钥，一个用户一行，使用<option>--tunnel-user</option>选项：</para>
 
@@ -502,9 +498,9 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
   command="svnserve -t --tunnel-user=sally" TYPE2 KEY2 sally@example.com
 </screen>
 
-        <para>这个例子允许Harry和Sally通过公钥认证连接同一个的账户，每个人有自己的自定义命令将会执行。<option>--tunnel-user</option>选项告诉<command>svnserve -t</command>命令假定命名的参数是认证的用户，如果没有<option>--tunnel-user</option>，所有的提交会作为共享的系统帐户提交。</para>
+        <para>这个例子允许Harry和Sally通过公钥认证连接同一个的账户，每个人自定义的命令将会执行。<option>--tunnel-user</option>选项告诉<command>svnserve -t</command>命令采用命名的参数作为经过认证的用户，如果没有<option>--tunnel-user</option>，所有的提交会作为共享的系统帐户提交。</para>
 
-        <para>最后要小心：设定通过公钥共享账户进行用户访问时还会允许其它形式的SSH访问，即使你设置了<filename>authorized_keys</filename>的<literal>command</literal>值，举个例子，用户仍然可以通过SSH得到shell访问，或者是通过服务器执行X11或者是端口转移。为了给用户尽可能少的访问权限，你或许希望在<literal>command</literal>命令之后指定一些限制选项：</para>
+        <para>最后要小心：设定通过公钥共享账户进行用户访问时还会允许其它形式的SSH访问，即使你设置了<filename>authorized_keys</filename>的<literal>command</literal>值，举个例子，用户仍然可以通过SSH得到shell访问，或者是通过服务器执行X11或者是端口转发。为了给用户尽可能少的访问权限，你或许希望在<literal>command</literal>命令之后指定一些限制选项：</para>
 
 <screen>
   command="svnserve -t --tunnel-user=harry",no-port-forwarding,\
@@ -530,14 +526,14 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
         <para>他们讨厌这样做。</para>
       </footnote>这样一个Apache-Subversion服务器具备了许多<command>svnserve</command>没有的特性，但是也有一点难于配置，灵活通常会带来复杂性。</para>
 
-    <para>下面的讨论包括了对Apache配置指示的引用，给了一些使用这些指示的例子，详细地描述不再本章的范围之内，Apache小组维护了完美的文档，公开存放在他们的站点<systemitem class="url">http://httpd.apache.org</systemitem>。例如，一个一般的配置参考位于<systemitem class="url">http://httpd.apache.org/docs-2.0/mod/directives.html</systemitem>。</para>
+    <para>下面的讨论包括了对Apache配置指示的引用，给了一些使用这些指示的例子，详细地描述不在本章的范围之内，Apache小组维护了完美的文档，公开存放在他们的站点<systemitem class="url">http://httpd.apache.org</systemitem>。例如，一个一般的配置参考位于<systemitem class="url">http://httpd.apache.org/docs-2.0/mod/directives.html</systemitem>。</para>
     
-    <para>同样，当你修改你的Apache设置，很有可能会出现一些错误，如果你还不熟悉Apache的日志子系统，你一定需要认识到这一点。在你的文件<filename>httpd.conf</filename>里会指定Apache生成的访问和错误日志（<literal>CustomLog</literal>和<literal>ErrorLog</literal>指示，各自的）的磁盘位置。Subversion的mod_dav_svn使用Apache的错误日志接口，你可以浏览这个文件的内容查看信息来查找不一注意到的问题根源。</para>
+    <para>同样，当你修改你的Apache设置，很有可能会出现一些错误，如果你还不熟悉Apache的日志子系统，你一定需要认识到这一点。在你的文件<filename>httpd.conf</filename>里会指定Apache生成的访问和错误日志（<literal>CustomLog</literal>和<literal>ErrorLog</literal>指示）的磁盘位置。Subversion的mod_dav_svn使用Apache的错误日志接口，你可以浏览这个文件的内容查看信息来查找难于发现的问题根源。</para>
     
     <sidebar>
       <title>为什么是Apache 2？</title>
 
-      <para>如果你系统管理员，很有可能是你已经运行了Apache服务器，并且有一些高级经验。写本文的时候，Apache 1.3是Apache最流行的版本，这个世界因为许多原因而放缓升级到2.X系列：如人们害怕改变，如web服务器这种重要的变化，有些人需要一些在Apache 1.3 API下工作的插件模块，在等待2.X的版本。无论什么原因，许多人会在首次发现Subversion的Apache模块只是为Apache 2 API写的后开始担心。</para>
+      <para>如果你系统管理员，很有可能是你已经运行了Apache服务器，并且有一些高级经验。写本文的时候，Apache 1.3是Apache最流行的版本，这个世界因为许多原因而放缓升级到2.X系列：如人们害怕改变，特别是像web服务器这种重要的变化，有些人需要一些在Apache 1.3 API下工作的插件模块，在等待2.X的版本。无论什么原因，许多人会在首次发现Subversion的Apache模块只是为Apache 2 API写的后开始担心。</para>
 
       <para>对此问题的适当反应是：不需要担心，同时运行Apache 1.3和Apache 2非常简单，只需要安装到不同的位置，用Apache 2作为Subversion的专用服务器，并且不使用80端口，客户端可以访问版本库时在URL里指定端口：</para>
 
@@ -551,7 +547,7 @@ $ svn checkout http://host.example.com:7382/repos/project
     <sect2 id="svn-ch-6-sect-4.1">
       <title>必备条件</title>
       
-      <para>为了让你的版本库使用HTTP网络，你可以基本上需要两个包里的四个部分。你需要Apache <command>httpd</command> 2.0和包括的<command>mod_dav</command> DAV模块，Subversion和与之一同分发的<command>mod_dav_svn</command>文件系统提供者模块，如果你有了这些组件，网络化你的版本库将非常简单，如：</para>
+      <para>为了让你的版本库使用HTTP网络，你基本上需要两个包里的四个部分。你需要Apache <command>httpd</command> 2.0和包括的<command>mod_dav</command> DAV模块，Subversion和与之一同分发的<command>mod_dav_svn</command>文件系统提供者模块，如果你有了这些组件，网络化你的版本库将非常简单，如：</para>
       
       <itemizedlist>
         <listitem>
@@ -565,7 +561,7 @@ $ svn checkout http://host.example.com:7382/repos/project
         </listitem>
       </itemizedlist>
       
-      <para>你可以通过从源代码编译<command>httpd</command>和Subversion来完成前两个项目，也可以通过你的系统上的已经编译好的二进制包来安装。查看最新的编译为Apache HTTP服务器使用的Subversion的方法可以看Subversion源代码树根目录的<filename>INSTALL</filename>文件。</para>
+      <para>你可以通过从源代码编译<command>httpd</command>和Subversion来完成前两个项目，也可以通过你的系统上的已经编译好的二进制包来安装。最新的使用Apache HTTP的Subversion的编译方法和Apache的配置方式可以看Subversion源代码树根目录的<filename>INSTALL</filename>文件。</para>
       
     </sect2>
 
@@ -586,7 +582,7 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
 </screen>
 
     
-      <para>在你的配置文件后面的位置，你需要告诉Apache你在什么地方保存Subversion版本库（也许是多个），<literal>位置</literal>指示有一个很像XML的符号，开始于一个开始标签，以一个结束标签结束，配合中间许多的其它配置。<literal>Location</literal>指示的目的是告诉Apache在特定的URL以及子URL下需要特殊的处理，如果是为Subversion准备的，你希望可以通过告诉Apache特定URL是指向版本化的资源，从而把支持转交给DAV层，你可以告诉Apache代理所有路径部分（URL中服务器名称和端口之后的部分）以<filename>/repos/</filename>开头的URL，并且交由DAV服务提供者处理，DAV服务提供者的版本库位于<filename>/absolute/path/to/repository</filename>，使用如下的<filename>httpd.conf</filename>语法：</para>
+      <para>在你的配置文件后面的位置，你需要告诉Apache你在什么地方保存Subversion版本库（也许是多个），<literal>位置</literal>指示有一个很像XML的符号，开始于一个开始标签，以一个结束标签结束，配合中间许多的其它配置。<literal>Location</literal>指示的目的是告诉Apache在特定的URL以及子URL下需要特殊的处理，如果是为Subversion准备的，你希望可以通过告诉Apache特定URL是指向版本化的资源，从而把支持转交给DAV层，你可以告诉Apache将所有路径部分（URL中服务器名称和端口之后的部分）以<filename>/repos/</filename>开头的URL交由DAV服务提供者处理。一个DAV服务提供者的版本库位于<filename>/absolute/path/to/repository</filename>，可以使用如下的<filename>httpd.conf</filename>语法：</para>
                 
         <screen>
 &lt;Location /repos&gt;
@@ -608,33 +604,33 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
 &lt;/Location&gt;
 </screen>
             
-      <para>使用前面的语法，Apache会代理所有URL路径部分为<filename>/svn/</filename>的请求道Subversion的DAV提供者，Subversion会认为<literal>SVNParentPath</literal>指定的目录下的所有项目是真实的Subversion版本库，这通常是一个便利的语法，不像是用<literal>SVNPath</literal>指示，我们在此不必为创建新的版本库而重启Apache。</para>      
+      <para>使用上面的语法，Apache会代理所有URL路径部分为<filename>/svn/</filename>的请求到Subversion的DAV提供者，Subversion会认为<literal>SVNParentPath</literal>指定的目录下的所有项目是真实的Subversion版本库，这通常是一个便利的语法，不像是用<literal>SVNPath</literal>指示，我们在此不必为创建新的版本库而重启Apache。</para>      
 
-      <para>请确定当你定义新的<literal>位置</literal>，不会与其他导出的位置重叠，例如你的主要<literal>DocumentRoot</literal>是<filename>/www</filename>，不要把Subversion版本库导出到<literal>&lt;Location
-        /www/repos&gt;</literal>,如果一个请求的URI是<filename>/www/repos/foo.c</filename>,Apache不知道是直接到<filename>repos/foo.c</filename>访问这个文件还是让<command>mod_dav_svn</command>代理返回<filename>foo.c</filename>到Subversion版本库。</para>
+      <para>请确定当你定义新的<literal>位置</literal>，不会与其它输出的位置重叠，例如你的主要<literal>DocumentRoot</literal>是<filename>/www</filename>，不要把Subversion版本库输出到<literal>&lt;Location
+        /www/repos&gt;</literal>，如果一个请求的URI是<filename>/www/repos/foo.c</filename>，Apache不知道是直接到<filename>repos/foo.c</filename>访问这个文件还是让<command>mod_dav_svn</command>代理从Subversion版本库返回<filename>foo.c</filename>。</para>
 
       <sidebar>
-        <title>服务器名称和拷贝请求Server Names and the COPY Request</title>
+        <title>服务器名称和拷贝请求</title>
         
-        <para>Subversion利用<literal>COPY</literal>请求类型来执行服务器端的文件和目录拷贝，作为一个健全的Apache模块***，拷贝源和拷贝的目标通常坐落在同一个机器上，为了满足这个需求，你或许需要告诉mod_dav服务器主机的名称，通常你可以使用<filename>httpd.conf</filename>的<literal>ServerName</literal>指示来完成此目的。</para>
+        <para>Subversion利用<literal>COPY</literal>请求类型来执行服务器端的文件和目录拷贝，作为一个健全的Apache模块的一部分，拷贝源和拷贝的目标通常坐落在同一个机器上，为了满足这个需求，你或许需要告诉mod_dav服务器主机的名称，通常你可以使用<filename>httpd.conf</filename>的<literal>ServerName</literal>指示来完成此目的。</para>
         
         <screen>
 ServerName svn.example.com
 </screen>
             
-        <para>如果你通过<literal>NameVirtualHost</literal>指示使用Apache的虚拟主机，你或许需要<literal>ServerAlias</literal>指示来指定额外的名称，再说一次，查看Apache文档的来得到细节。</para>
+        <para>如果你通过<literal>NameVirtualHost</literal>指示使用Apache的虚拟主机，你或许需要<literal>ServerAlias</literal>指示来指定额外的名称，再说一次，可以查看Apache文档的来得到更多细节。</para>
       </sidebar>
 
-      <para>在本阶段，你一定要考虑访问权限问题，如果你已经作为普通的web服务器运行过Apache，你一定有了一些内容&mdash;网页、脚本和其他。这些项目已经配置了许多在Apache下可以工作访问许可，或者更适当一点，允许Apache与这些文件一起工作。Apache当作为Subversion服务器运行时，同样需要正确的访问许可来读写你的Subversion版本库。（见<xref linkend="svn-ch-6-sidebar-1"/>。）</para>
+      <para>在本阶段，你一定要考虑访问权限问题，如果你已经作为普通的web服务器运行过Apache，你一定有了一些内容&mdash;网页、脚本和其他。这些项目已经配置了许多在Apache下可以工作的访问许可，或者更准确一点，允许Apache与这些文件一起工作。Apache当作为Subversion服务器运行时，同样需要正确的访问许可来读写你的Subversion版本库。（见<xref linkend="svn-ch-6-sidebar-1"/>。）</para>
     
-      <para>你会需要检验权限系统的设置满足Subversion的需求，同时不会把以前的页面和脚本搞乱。这或许意味着修改Subversion的访问许可来配合Apache服务器已经使用的工具，或者可能意味着需要使用<filename>httpd.conf</filename>的<literal>User</literal>和<literal>Group</literal>指示来指定Apache作为运行的用户和Subversion版本库的组。并不是只有一条正确的方式来设置许可，每个管理员都有不同的原因来以特定方式操作，只要意识到当使用Apache配置一个Subversion版本库时许可关联的问题通常会被疏忽。</para>
+      <para>你会需要检验权限系统的设置满足Subversion的需求，同时不会把以前的页面和脚本搞乱。这或许意味着修改Subversion的访问许可来配合Apache服务器已经使用的工具，或者可能意味着需要使用<filename>httpd.conf</filename>的<literal>User</literal>和<literal>Group</literal>指示来指定Apache作为运行的用户和Subversion版本库的组。并不是只有一条正确的方式来设置许可，每个管理员都有不同的原因来以特定的方式操作，只需要意识到许可关联的问题经常在为Apache配置Subversion版本库的过程中被疏忽。</para>
 
     </sect2>
 
     <sect2 id="svn-ch-6-sect-4.3">
       <title>认证选项</title>
 
-      <para>此时，如果你配置<filename>httpd.conf</filename>保存象下面的内容</para>
+      <para>此时，如果你配置的<filename>httpd.conf</filename>保存如下的内容</para>
 
       <screen>
 &lt;Location /svn&gt;
@@ -706,9 +702,9 @@ $
         <para>一定要阅读后面的部分（<xref
           linkend="svn-ch-6-sect-4.4"/>）来得到<literal>Require</literal>的细节，和授权政策的其他设置方法。</para>
 
-        <para>需要警惕：HTTP基本认证的密码几乎是用明文传输，但是非常不可靠的，如果你担心密码偷窥，最好是使用某种SSL加密，所以客户端认证使用<literal>https://</literal>而不是<literal>http://</literal>，为了方便，你可以配置Apache为自签名认证。
+        <para>需要警惕：HTTP基本认证的密码几乎是用明文传输，因此非常不可靠的，如果你担心密码偷窥，最好是使用某种SSL加密，所以客户端认证使用<literal>https://</literal>而不是<literal>http://</literal>，为了方便，你可以配置Apache为自签名认证。
           <footnote>
-            <para>当使用自签名的服务器时仍会遭受<quote>中间人</quote>攻击，但是与偷取未保护的密码相比,这样的攻击对一个偶然的攻击者来说很难成功。</para>
+            <para>当使用自签名的服务器时仍会遭受<quote>中间人</quote>攻击，但是与偷取未保护的密码相比，这样的攻击比一个偶然的获取要艰难许多。</para>
           </footnote>
           参考Apache的文档（和OpenSSL文档）来查看怎样做。</para>
 
@@ -716,13 +712,13 @@ $
 
 
       <sect3 id="svn-ch-6-sect-4.3.2">
-        <title>SSL认证管理</title>
+        <title>SSL证书管理</title>
         
-        <para>商业应用需要越过公司防火墙的版本库访问，防火墙需要小心的考虑非认证用户<quote>吸取</quote>他们的网络流量的情况，SSL可以那种形式的注意不会导致敏感数据泄露。</para>
+        <para>商业应用需要越过公司防火墙的版本库访问，防火墙需要小心的考虑非认证用户<quote>吸取</quote>他们的网络流量的情况，SSL让那种形式的关注更不容易导致敏感数据泄露。</para>
 
-        <para>如果Subversion使用OpenSSL编译，它就会具备与Subversion服务器使用<literal>https://</literal>的URL通讯的能力，Subversion使用的Neon库不是仅仅可以用来提供客户端证书验证，也可以提供需要时提供客户端证书，如果客户端和服务器交换了SSL凭证并且成功地互相认证，所有剩下的交流都会通过一个会话关键字加密。</para>
+        <para>如果Subversion使用OpenSSL编译，它就会具备与Subversion服务器使用<literal>https://</literal>的URL通讯的能力，Subversion客户端使用的Neon库不仅仅可以用来验证服务器证书，也可以必要时提供客户端证书，如果客户端和服务器交换了SSL证书并且成功地互相认证，所有剩下的交流都会通过一个会话关键字加密。</para>
 
-        <para>怎样产生客户端和服务器端证书以及怎样使用它们已经超出了本书的范围，许多书籍，包括Apache自己的文档，描述这个任务，现在我们<emphasis>可以</emphasis>覆盖的是普通的客户端怎样来管理服务器与客7端证书。</para>
+        <para>怎样产生客户端和服务器端证书以及怎样使用它们已经超出了本书的范围，许多书籍，包括Apache自己的文档，描述这个任务，现在我们<emphasis>可以</emphasis>覆盖的是普通的客户端怎样来管理服务器与客户端证书。</para>
 
         <para>当通过<literal>https://</literal>与Apache通讯时，一个Subversion客户端可以接收两种类型的信息：</para>
 
@@ -731,7 +727,7 @@ $
           <listitem><para>一个客户端证书的要求</para></listitem>
         </itemizedlist>
 
-        <para>如果客户端接收了一个服务器证书，它需要去验证它是可以相信的：这个服务器是它自称的那一个吗？OpenSSL库会去检验服务器证书的签名人或者是<firstterm>核证机构</firstterm>（CA）。如果OpenSSL不可以自动取信任这个CA，或者是一些其他的问题（如证书过期或者是主机名不匹配），Subversion命令行客户端会询问你是否期望无论如何也要信任这个证书：</para>
+        <para>如果客户端接收了一个服务器证书，它需要去验证它是可以相信的：这个服务器是它自称的那一个吗？OpenSSL库会去检验服务器证书的签名人或者是<firstterm>核证机构</firstterm>（CA）。如果OpenSSL不可以自动信任这个CA，或者是一些其他的问题（如证书过期或者是主机名不匹配），Subversion命令行客户端会询问你是否愿意仍然信任这个证书：</para>
 
         <screen>
 $ svn list https://host.example.com/repos/project
@@ -749,9 +745,9 @@ Certificate information:
 </screen>
 
         <para>这个对话看起来很熟悉，这是你会在web浏览器（另一种HTTP客户端，就像Subversion）经常看到的问题，如果你选择(p)ermanent选项，服务器证书会存放在你存放那个用户名和密码缓存（见<xref
-          linkend="svn-ch-6-sect-2.2"/>。）的私有运行域<filename>auth/</filename>中，缓存后，Subversion会自动记住在以后的交流中信任这个证书。</para>
+          linkend="svn-ch-6-sect-2.2"/>。）的私有运行区<filename>auth/</filename>中，缓存后，Subversion会自动记住在以后的交流中信任这个证书。</para>
 
-        <para>你的运行中<filename>servers</filename>文件也会给你能力使你可以让Subversion客户端自动信任特定的CA，包括全局的或是每主机为基础的，只需要设置<literal>ssl-authority-files</literal>为一组逗号隔开的PEM加密的CA证书列表：</para>
+        <para>你的运行中<filename>servers</filename>文件也会给你能力可以让Subversion客户端自动信任特定的CA，包括全局的或是每主机为基础的，只需要设置<literal>ssl-authority-files</literal>为一组逗号隔开的PEM加密的CA证书列表：</para>
 
         <screen>
 [global]
@@ -760,7 +756,7 @@ ssl-authority-files = /path/to/CAcert1.pem;/path/to/CAcert2.pem
         
         <para>许多OpenSSL安装包括一些预先定义好的可以普遍信任的<quote>缺省的</quote>CA，为了让Subversion客户端自动信任这些标准权威，设置<literal>ssl-trust-default-ca</literal>为<literal>true</literal>。</para>
 
-        <para>当与Apache，也就是Subversion客户端通话时也会收到一个客户端证书的要求，Apache是询问客户端来证明自己的身份：这个客户端是否是他所说的那一个？如果一切正常，Subversion客户端会发送回一个通过Apache信任的CA签名的私有证书，一个客户端证书通常会以加密方式存放在磁盘，使用本地密码保护，当Subversion收到这个要求，它会询问你证书的路径和保护用的密码：</para>
+        <para>当与Apache通话时，Subversion客户端也会收到一个证书的要求，Apache是询问客户端来证明自己的身份：这个客户端是否是他所说的那一个？如果一切正常，Subversion客户端会发送回一个通过Apache信任的CA签名的私有证书，一个客户端证书通常会以加密方式存放在磁盘，使用本地密码保护，当Subversion收到这个要求，它会询问你证书的路径和保护用的密码：</para>
 
         <screen>
 $ svn list https://host.example.com/repos/project
@@ -771,9 +767,9 @@ Passphrase for '/path/to/my/cert.p12':  ********
 &hellip;
 </screen>
 
-        <para>注意这个客户端证书是一个<quote>p12</quote>文件，为了让Subversion使用客户端证书它必须是运输标准的PKCS#12格式，大多数浏览器可以导入和导出这种格式的证书，另一个选择是用OpenSSL命令行工具来转化存在的证书为PKCS#12格式。</para>
+        <para>注意这个客户端证书是一个<quote>p12</quote>文件，为了让Subversion使用客户端证书，它必须是运输标准的PKCS#12格式，大多数浏览器可以导入和导出这种格式的证书，另一个选择是用OpenSSL命令行工具来转化存在的证书为PKCS#12格式。</para>
 
-        <para>再次，运行中<filename>servers</filename>文件允许你自动为每个主机自动响应这种要求，单独或者两条信息可以用来描述运行参数：</para>
+        <para>再次，运行中<filename>servers</filename>文件允许你为每个主机自动响应这种要求，单个或两条信息可以用运行参数来描述：</para>
 
         <screen>
 [groups]
@@ -785,7 +781,7 @@ ssl-client-cert-password = somepassword
 </screen>
 
         <para>一旦你设置了<literal>ssl-client-cert-file</literal>和
-          <literal>ssl-client-cert-password</literal>参数，Subversion客户端可以自动相应客户端证书要求而不会打扰你。
+          <literal>ssl-client-cert-password</literal>参数，Subversion客户端可以自动响应客户端证书请求而不会打扰你。
           <footnote>
             <para>更多有安全意识的人不会希望在运行中<filename>servers</filename>文件保存客户端证书密码。</para>
           </footnote>
@@ -805,7 +801,7 @@ ssl-client-cert-password = somepassword
 
         <para>最简单的访问控制形式是授权特定用户为只读版本库访问或者是读/写访问版本库。</para>
 
-        <para>你可以通过在<literal>&lt;Location&gt;</literal>区块添加<literal>Require valid-user</literal>指示来限制所有的版本库操作，使用我们前面的例子，这意味着只有客户端只可以是<literal>harry</literal>或者<literal>sally</literal>，而且他们必须提供正确的用户名对应密码，这样允许对Subversion版本库做任何事：</para>
+        <para>你可以通过在<literal>&lt;Location&gt;</literal>区块添加<literal>Require valid-user</literal>指示来限制所有的版本库操作，使用我们前面的例子，这意味着只有客户端只可以是<literal>harry</literal>或者<literal>sally</literal>，而且他们必须提供正确的用户名及对应密码，这样允许对Subversion版本库做任何事：</para>
     
         <screen>
 &lt;Location /svn&gt;
@@ -822,8 +818,8 @@ ssl-client-cert-password = somepassword
 &lt;/Location&gt;
 </screen>
 
-        <para>有时候，你不需要这样严密的运行这艘船，举个例子，Subversion自己在<systemitem
-          class="url">http://svn.collab.net/repos/svn</systemitem>的源代码允许全世界的人执行版本库的只读操作（就像检出我们的工作拷贝并且使用浏览器浏览版本库），但是限定只有认证用户可以执行写操作。为了执行特定的限制，你可以使用<literal>Limit</literal>和<literal>LimitExcept</literal>配置指示，就像<literal>Location</literal>指示，这个区块又开始和结束标签，你需要在<literal>&lt;Location&gt;</literal>中添加这个指示。</para>
+        <para>有时候，你不需要这样严密，举个例子，Subversion自己在<systemitem
+          class="url">http://svn.collab.net/repos/svn</systemitem>的源代码允许全世界的人执行版本库的只读操作（例如检出我们的工作拷贝和使用浏览器浏览版本库），但是限定只有认证用户可以执行写操作。为了执行特定的限制，你可以使用<literal>Limit</literal>和<literal>LimitExcept</literal>配置指示，就像<literal>Location</literal>指示，这个区块有开始和结束标签，你需要在<literal>&lt;Location&gt;</literal>中添加这个指示。</para>
   
         <para>在<literal>Limit</literal>和<literal>LimitExcept</literal>中使用的参数是可以被这个区块影响的HTTP请求类型，举个例子，如果你希望禁止所有的版本库访问，只是保留当前支持的只读操作，你可以使用<literal>LimitExcept</literal>指示，并且使用<literal>GET</literal>，<literal>PROPFIND</literal>，<literal>OPTIONS</literal>和<literal>REPORT</literal>请求类型参数，然后前面提到过的<literal>Require valid-user</literal>指示将会在<literal>&lt;LimitExcept&gt;</literal>区块中而不是在<literal>&lt;Location&gt;</literal>区块。</para>
     
@@ -853,7 +849,7 @@ ssl-client-cert-password = somepassword
       <sect3 id="svn-ch-6-sect-4.4.2">
         <title>每目录访问控制</title>
 
-        <para>也可以使用Apache的httpd模块<command>mod_authz_svn</command>更加细致的设置访问权限，这个模块收集客户端欻递过来的不同不透明URL信息，询问<command>mod_dav_svn</command>来解码，然后根据在配置文件定义的访问政策来裁决请求。</para>
+        <para>也可以使用Apache的httpd模块<command>mod_authz_svn</command>更加细致的设置访问权限，这个模块收集客户端传递过来的不同的晦涩的URL信息，询问<command>mod_dav_svn</command>来解码，然后根据在配置文件定义的访问政策来裁决请求。</para>
 
         <para>如果你从源代码创建Subversion，<command>mod_authz_svn</command>会自动附加到<command>mod_dav_svn</command>，许多二进制分发版本也会自动安装，为了验证它是安装正确，确定它是在<filename>httpd.conf</filename>的<literal>LoadModule</literal>指示中的<command>mod_dav_svn</command>后面：</para>
 
@@ -863,11 +859,11 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
 LoadModule authz_svn_module   modules/mod_authz_svn.so
 </screen>
 
-        <para>为了激活这个模块，你需要配置你的<literal>Location</literal>区块的<literal>AuthzSVNAccessFile</literal>指示，指定保存路径中的版本库访问政策的文件。（此刻，我们将会讨论这个文件的格式。）</para>
+        <para>为了激活这个模块，你需要配置你的<literal>Location</literal>区块的<literal>AuthzSVNAccessFile</literal>指示，指定保存路径中的版本库访问政策的文件。（一会儿我们将会讨论这个文件的格式。）</para>
 
-        <para>Apache非常的灵活，你可以从三种模式里选择一种来配置你的区块，（下面的例子非常简单；见Apache自己的文档中的认证和授权选项来查看更多的细节。）</para>
+        <para>Apache非常的灵活，你可以从三种模式里选择一种来配置你的区块，作为开始，你选择一种基本的配置模式。（下面的例子非常简单；见Apache自己的文档中的认证和授权选项来查看更多的细节。）</para>
 
-        <para>最简单的区块是允许任何人可以访问，在这个场景里，Apache决不会发送认证请求，，所有的用户作为<quote>匿名</quote>对待。</para>
+        <para>最简单的区块是允许任何人可以访问，在这个场景里，Apache决不会发送认证请求，所有的用户作为<quote>匿名</quote>对待。</para>
 
         <example id="svn-ch-6-sect-4.4.2-ex-1">
           <title>匿名访问的配置实例。</title>
@@ -905,7 +901,7 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           </programlisting>
         </example>
 
-        <para>第三种流行的模式是允许认证和匿名用户的组合，举个例子，许多管理员希望允许匿名用户读取特定的版本库路径，但希望只有认证用户可以读（或者写）更多敏感的区域，在这个设置里，所有的用户开始时用匿名用户访问版本库，如果你的访问控制策略在任何时候要求一个真实的用户名，Apache将会要求从客户端认证，为此，你可以一起使用<literal>Satisfy Any</literal>和<literal>Require valid-user</literal>指示。</para>
+        <para>第三种流行的模式是允许认证和匿名用户的组合，举个例子，许多管理员希望允许匿名用户读取特定的版本库路径，但希望只有认证用户可以读（或者写）更多敏感的区域，在这个设置里，所有的用户开始时用匿名用户访问版本库，如果你的访问控制策略在任何时候要求一个真实的用户名，Apache将会要求认证客户端，为此，你可以同时使用<literal>Satisfy Any</literal>和<literal>Require valid-user</literal>指示。</para>
 
         <example id="svn-ch-6-sect-4.4.2-ex-3">
           <title>一个混合认证/匿名访问的配置实例。</title>
@@ -932,9 +928,9 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
         
         <para>一旦你的基本<literal>Location</literal>区块已经配制了，你可以创建一个定义一些授权规则的访问文件。</para>
 
-        <para>访问文件的语法与<command>svnserve.conf</command>和运行中配置文件非常相似，以（<literal>#</literal>）开头的行会被忽略，在它的简单形式里，每一部分命名一个版本库和一个里面的路径，认证用户名是在每个部分可选择的名字。每个选项的值描述了用户的访问版本库的级别：<literal>r</literal>（只读）或者<literal>rw</literal>（读写），如果用户没有提到，访问是不允许的。</para>
+        <para>访问文件的语法与<command>svnserve.conf</command>和运行中配置文件非常相似，以（<literal>#</literal>）开头的行会被忽略，在它的简单形式里，每一小节命名一个版本库和一个里面的路径，认证用户名是在每个小节中的选项名，每个选项的值描述了用户访问版本库的级别：<literal>r</literal>（只读）或者<literal>rw</literal>（读写），如果用户没有提到，访问是不允许的。</para>
 
-        <para>详细一点：这个部分名称是<literal>[repos-name:path]</literal>或者<literal>[path]</literal>的形式，如果你使用<literal>SVNParentPath</literal>指示，指定版本库的名字是很重要的，如果你漏掉了他们，<literal>[/some/dir]</literal>部分就会与<filename>/some/dir</filename>的所有版本库匹配，如果你使用<literal>SVNPath</literal>指示，然而，在你的部分只是定义路径&mdash;毕竟，只有一个版本库。</para>
+        <para>具体一点：这个小节的名称是<literal>[repos-name:path]</literal>或者<literal>[path]</literal>的形式，如果你使用<literal>SVNParentPath</literal>指示，指定版本库的名字是很重要的，如果你漏掉了他们，<literal>[/some/dir]</literal>部分就会与<filename>/some/dir</filename>的所有版本库匹配，如果你使用<literal>SVNPath</literal>指示，因此在你的小节中只是定义路径也很好&mdash;毕竟只有一个版本库。</para>
           
         <screen>
 [calc:/branches/calc/bug-142]
@@ -956,9 +952,9 @@ sally = r
 sally = rw
 </screen>
 
-        <para>现在Sally可以读取<filename>testing</filename>子目录或者叫做分支，但对其他部分还是只可以读，同时，Harry对整个分支还继续有完全的读写权限。</para>
+        <para>现在Sally可以读取分支的<filename>testing</filename>子目录，但对其他部分还是只可以读，同时，Harry对整个分支还继续有完全的读写权限。</para>
 
-        <para>也可以通过显式的拒绝继承规则来拒绝某人的访问，只需要设置用户名参数为空：</para>
+        <para>也可以通过继承规则明确的的拒绝某人的访问，只需要设置用户名参数为空：</para>
 
         <screen>
 [calc:/branches/calc/bug-142]
@@ -973,16 +969,16 @@ harry =
 
         <para>有一件事需要记住的是需要找到最匹配的目录，<command>mod_authz_svn</command>模块首先找到匹配自己的目录，然后父目录，然后父目录的父目录，就这样继续下去，更具体的路径控制会覆盖所有继承下来的访问控制。</para>
 
-        <para>缺省情况下，没有人对版本库任何访问，这意味着如果你已经从一个空文件开始，你会希望给所有用户对版本库根目录具备读权限，你可以使用<literal>*</literal>实现，用来代表<quote>所有用户</quote>：</para>
+        <para>缺省情况下，没有人对版本库有任何访问，这意味着如果你已经从一个空文件开始，你会希望给所有用户对版本库根目录具备读权限，你可以使用<literal>*</literal>实现，用来代表<quote>所有用户</quote>：</para>
 
         <screen>
 [/]
 * = r
 </screen>
 
-        <para>这是一个普通的设置；注意在小节名中没有提到版本库名称，这让版本库对所有的用户可读，不管你是使用<literal>SVNPath</literal>或是<literal>SVNParentPath</literal>。当所有用户对版本库有了读权利，你可以赋予特定用户对特定子目录的<literal>rw</literal>权限。</para>
+        <para>这是一个普通的设置；注意在小节名中没有提到版本库名称，这让所有版本库对所有的用户可读，不管你是使用<literal>SVNPath</literal>或是<literal>SVNParentPath</literal>。当所有用户对版本库有了读权利，你可以赋予特定用户对特定子目录的<literal>rw</literal>权限。</para>
 
-        <para>星号（<literal>*</literal>）参数需要在这里详细强调：这是匹配匿名用户的<emphasis>唯一</emphasis>模式，如果你已经配置了你的<literal>Location</literal>区块允许匿名和认证用户的混合访问，所有用户作为Apache匿名用户开始访问，<command>mod_authz_svn</command>会查找定义要访问的路径的<literal>*</literal>值；如果可以发现一个，Apache可以要求真实的客户端认证。</para>
+        <para>星号（<literal>*</literal>）参数需要在这里详细强调：这是匹配匿名用户的<emphasis>唯一</emphasis>模式，如果你已经配置了你的<literal>Location</literal>区块允许匿名和认证用户的混合访问，所有用户作为Apache匿名用户开始访问，<command>mod_authz_svn</command>会在要访问路径的定义中查找<literal>*</literal>值；如果找不到，Apache就会要求真实的客户端认证。</para>
 
         <para>访问文件也允许你定义一组的用户，很像Unix的<filename>/etc/group</filename>文件：</para>
 
@@ -993,7 +989,7 @@ paint-developers = frank, sally, jane
 everyone = harry, sally, joe, frank, sally, jane
 </screen>
 
-        <para>组可以赋予组像用户一样的访问权限，使用<quote>at</quote>（<literal>@</literal>）前缀来加以区别：</para>
+        <para>组可以被赋予通用户一样的访问权限，使用<quote>at</quote>（<literal>@</literal>）前缀来加以区别：</para>
 
         <screen>
 [calc:/projects/calc]
@@ -1004,7 +1000,7 @@ everyone = harry, sally, joe, frank, sally, jane
 jane = r 
 </screen>
 
-        <para>...并且会有很多相似的内容。***</para>
+        <para>...并且非常接近。</para>
 
       </sect3>
 
@@ -1012,12 +1008,12 @@ jane = r
         <title>关闭路径为基础的检查</title>
 
         <para><command>mod_dav_svn</command>模块做了许多工作来确定你标记为“不可读”的数据不会因意外而泄露，这意味着需要紧密监控通过<command>svn
-          checkout</command>或是<command>svn update</command>返回的路径和文件内容，如果这些命令遇到一些根据认证策略不是可读的路径，这个路径通常会被一起忽略，在历史或者重命名操作时&mdash;例如运行一个类似<command>svn cat -r OLD foo.c</command>的命令来操作一个很久以前改过名字的文件 &mdash; 如果一个对象的以前的名字检测到是只读的，重命令追踪会简单的终止这个操作。</para>
+          checkout</command>或是<command>svn update</command>返回的路径和文件内容，如果这些命令遇到一些根据认证策略不是可读的路径，这个路径通常会被一起忽略，在历史或者重命名操作时&mdash;例如运行一个类似<command>svn cat -r OLD foo.c</command>的命令来操作一个很久以前改过名字的文件 &mdash; 如果一个对象的以前的名字检测到是只读的，重命令追踪就会终止。</para>
 
-        <para>路径检查在有时会非常昂贵，特别是<command>svn
-          log</command>的情况。当检索一列修订版本时，服务器会查看所有修订版本修改的路径，并且检查可读性，如果发现了一个不可读路径，它会从修订版本的修改路径中忽略（可以查看<option>--verbose</option>选项），并且整个的日志信息会被禁止，不必说这必定影响大量文件的修订版本会是一个非常耗时的操作。这是安全的代价：即使你并没有配置<command>mod_authz_svn</command>模块，<command>mod_dav_svn</command>还是会询问<command>httpd</command>来对所有路径运行认证检查，<command>mod_dav_svn</command>模块没有办法知道那个认证模块被安装，所以只有询问Apache来调用所提供的模块。</para>
+        <para>所有的路径检查在有时会非常昂贵，特别是<command>svn
+          log</command>的情况。当检索一列修订版本时，服务器会查看所有修订版本修改的路径，并且检查可读性，如果发现了一个不可读路径，它会从修订版本的修改路径中忽略（可以查看<option>--verbose</option>选项），并且整个的日志信息会被禁止，不必多说，这种影响大量文件修订版本的操作会非常耗时。这是安全的代价：即使你并没有配置<command>mod_authz_svn</command>模块，<command>mod_dav_svn</command>还是会询问<command>httpd</command>来对所有路径运行认证检查，<command>mod_dav_svn</command>模块没有办法知道那个认证模块被安装，所以只有询问Apache来调用所提供的模块。</para>
 
-        <para>在另一方面，也有一个安全舱门允许你用安全特性来交换速度，如果你不是要求任何一种每目录的认证（如不使用 <command>mod_authz_svn</command>和类似的模块），你就可以关闭所有的路径检查，在你的<filename>httpd.conf</filename>文件，使用<literal>SVNPathAuthz</literal>指示：</para>
+        <para>在另一方面，也有一个安全舱门允许你用安全特性来交换速度，如果你不是坚持要求有每目录授权（如不使用 <command>mod_authz_svn</command>和类似的模块），你就可以关闭所有的路径检查，在你的<filename>httpd.conf</filename>文件，使用<literal>SVNPathAuthz</literal>指示：</para>
 
         <example id="svn-ch-6-sect-4.4.3-ex-1">
           <title>Disabling path checks altogether</title>
@@ -1049,7 +1045,7 @@ jane = r
 
         <para>因为URL不能确定你所希望看到的资源的版本，mod_dav_svn会一直返回最新的版本，这样会有一些美妙的副作用，你可以直接把Subversion的URL传递给文档作为引用，这些URL会一直指向文档最新的材料，当然，你也可以在别的网站作为超链使用这些URL。</para>
 
-        <para>你通常会在版本化的文件的URL之外得到更多地用处&mdash;毕竟那里是有兴趣的内容存在的地方***，但是你会偶尔浏览一个Subversion的目录列表，你会很快发现展示列表生成的HTML非常基本，并且一定是没有想法为了让人高兴（或者是为了引起注意）而去美化，为了自定义这些目录显示，Subversion提供了一个XML目录特性，一个单独的<literal>SVNIndexXSLT</literal>指示在你的<filename>httpd.conf</filename>文件版本库的<literal>Location</literal>块里，它将会指导mod_dav_svn在显示目录列表的时候生成XML输出，并且引用你选择的XSLT样式表文件：</para>
+        <para>你通常会在版本化的文件的URL之外得到更多地用处&mdash;毕竟那里是有趣的内容存在的地方，但是你会偶尔浏览一个Subversion的目录列表，你会很快发现展示列表生成的HTML非常基本，并且一定没有在外观上（或者是有趣上）下功夫，为了自定义这些目录显示，Subversion提供了一个XML目录特性，一个单独的<literal>SVNIndexXSLT</literal>指示在你的<filename>httpd.conf</filename>文件版本库的<literal>Location</literal>块里，它将会指导mod_dav_svn在显示目录列表的时候生成XML输出，并且引用你选择的XSLT样式表文件：</para>
  
         <screen>
 &lt;Location /svn&gt;
@@ -1060,14 +1056,14 @@ jane = r
 &lt;/Location&gt;
 </screen>
 
-        <para>使用<literal>SVNIndexXSLT</literal>指示和创建一个XSLT样式表，你可以让你的目录列表的颜色模式与你的网站的其它部分匹配，否则，如果你愿意，你可以使用Subversion源分发版本中的<filename>tools/xslt/</filename>目录下的样例样式表。记住提供给<literal>SVNIndexXSLT</literal> 指示的路径是一个URL路径&mdash;浏览器需要可以按顺序阅读你的样式表来利用它们！</para>
+        <para>使用<literal>SVNIndexXSLT</literal>指示和创建一个XSLT样式表，你可以让你的目录列表的颜色模式与你的网站的其它部分匹配，否则，如果你愿意，你可以使用Subversion源分发版本中的<filename>tools/xslt/</filename>目录下的样例样式表。记住提供给<literal>SVNIndexXSLT</literal> 指示的路径是一个URL路径&mdash;浏览器需要阅读你的样式表来利用它们！</para>
 
         <sidebar>
           <title>我可以看到老的修订版本吗？</title>
 
           <para>通过一个普通的浏览器？一句话：不可以，至少是当你只使用<command>mod_dav_svn</command>作为唯一的工具时。</para>
 
-          <para>你的Web浏览器只会说普通的HTTP，也就是说它只会GET公共的URL，这个URL代表了最新版本的文件和目录，根据WebDAV/DeltaV规范，每种服务器定义了一种私有的URL语法来代表老的资源的版本，这个语法对客户端是不透明的，为了得到老的版本，一个客户端必须通过一种规范过程来<quote>发现</quote>正确的URL；这个过程包括执行一系列WebDAV PROPFIND请求俄和明白DeltaV概念，这些事情一般是你的web浏览器做不了的。</para>
+          <para>你的Web浏览器只会说普通的HTTP，也就是说它只会GET公共的URL，这个URL代表了最新版本的文件和目录，根据WebDAV/DeltaV规范，每种服务器定义了一种私有的URL语法来代表老的资源的版本，这个语法对客户端是不透明的，为了得到老的版本，一个客户端必须通过一种规范过程来<quote>发现</quote>正确的URL；这个过程包括执行一系列WebDAV PROPFIND请求和理解DeltaV概念，这些事情一般是你的web浏览器做不了的。</para>
 
           <para>为了回答这些问题，一个明显的看老版本文件和目录的方式是带<option>--revision</option>参数的<command>svn
             list</command>和<command>svn cat</command>命令，为了在浏览器里察看老版本，你可以使用第三方的软件，一个好的例子是ViewCVS（<systemitem
@@ -1083,7 +1079,7 @@ jane = r
     
         <para>Deflate压缩给服务器和客户端带来了更多地负担，压缩和解压缩减少了网络传输的实际文件的大小，如果网络带宽比较紧缺，这种方法会大大提高服务器和客户端之间发送数据的速度，在极端情况下，这种最小化的传输会造成超时和成功的区别。</para>
   
-        <para>没有那么有趣，但是更加有用一点，这另一个Apache和Subversion关系的特性，像可以指定自定义的端口（而不是缺省的HTTP的80）或者是一个Subversion可以被访问的虚拟主机名，或者是通过代理服务器访问的能力，这些特性都是Neon所支持的，所以Subversion免费得到这些支持。</para>
+        <para>不怎么有趣，但同样重要，是Apache和Subversion关系的一些特性，像可以指定自定义的端口（而不是缺省的HTTP的80）或者是一个Subversion可以被访问的虚拟主机名，或者是通过代理服务器访问的能力，这些特性都是Neon所支持的，所以Subversion轻易得到这些支持。</para>
 
         <para>最后，因为<command>mod_dav_svn</command>是使用一个半完成的WebDAV/DeltaV方言，所以通过第三方的DAV客户端访问也是可能的，几乎所有的现代操作系统（Win32、OS X和Linux）都有把DAV服务器影射为普通的网络<quote>共享</quote>的内置能力，这是一个复杂的主题；察看<xref
           linkend="svn-ap-c"/>来得到更多细节。</para>
@@ -1103,7 +1099,7 @@ jane = r
     
     <title>支持多种版本库访问方法</title>
 
-    <para>你已经看到了一个版本库可以用多种方式访问，但是可以&mdash;或者说安全的&mdash;用几种方式同时并行的访问你的版本库吗？回答是可以，倘若你有一些远见。</para>
+    <para>你已经看到了一个版本库可以用多种方式访问，但是可以&mdash;或者说安全的&mdash;用几种方式同时并行的访问你的版本库吗？回答是可以，倘若你有一些深谋远虑的使用。</para>
     
     <para>在任何给定的时间，这些进程会要求读或者写访问你的版本库：</para>
     
@@ -1115,16 +1111,16 @@ jane = r
         <para>正规的系统用户连接使用SSH调用的访问版本库的<command>svnserve</command>进程（以他们自己运行）；</para>
       </listitem>
       <listitem>
-        <para>一个<command>svnserve</command>进程&mdash;或者是一个守护进程，或者是通过<command>inetd</command>启动&mdash;作为一个固定的用户运行；</para>
+        <para>一个<command>svnserve</command>进程&mdash;是一个守护进程或是通过<command>inetd</command>启动的&mdash;作为一个固定的用户运行；</para>
       </listitem>
       <listitem>
         <para>一个Apache <command>httpd</command>进程，以一个固定用户运行。</para>
       </listitem>
     </itemizedlist>
     
-    <para>最通常的一个问题是管理进入到版本库的所有权和访问许可，是前面例子的所有进程 （或者说是用户）都有读写Berkeley DB的权限？假定你有一个类Unix的操作系统，一个直接的办法是在新的<literal>svn</literal>组的版本库用户添加所有潜在的用户，但这样还不足够，一位一个进程会使用不友好的umask来写数据库文件&mdash;o用来防止别的用户的访问。</para>
+    <para>最通常的一个问题是管理进入到版本库的所有权和访问许可，是前面例子的所有进程 （或者说是用户）都有读写Berkeley DB的权限？假定你有一个类Unix的操作系统，一个直接的办法是在新的<literal>svn</literal>组添加所有潜在的用户，然后让这个组完全拥有版本库，但这样还不足够，因为一个进程会使用不友好的umask来写数据库文件&mdash;用来防止别的用户的访问。</para>
     
-    <para>所以下一步超越为每个版本库用户设置一个共同的组的方法是qiangzhi每个版本库访问进程是用一个健全的umask，对用户直接访问版本库，你可以使用<command>svn</command>的包裹脚本来首先设置<command>umask 002</command>，然后运行真实的<command>svn</command>客户端程序，你可以为<command>svnserve</command>写相同的脚本，并且增加<command>umask
+    <para>所以下一步我们不选择为每个版本库用户设置一个共同的组的方法，而是强制每个版本库访问进程使用一个健全的umask，对直接访问版本库的用户，你可以使用<command>svn</command>的包裹脚本来首先设置<command>umask 002</command>，然后运行真实的<command>svn</command>客户端程序，你可以为<command>svnserve</command>写相同的脚本，并且增加<command>umask
       002</command>命令到Apache自己的启动脚本<filename>apachectl</filename>中。例如：</para>
 
     <screen>
@@ -1137,20 +1133,20 @@ umask 002
 
 </screen>
 
-    <para>另一个在类Unix系统下常见的问题是，当版本库在使用时，BerkeleyDB有时候川建一个新的日志文件来记录它的东西，即使这个版本库是完全由<command>svn</command>组拥有，这个新创建的文件不是必须被同一个组拥有，这给你的用户造成了更多地许可问题。一个好的工作区应该设置组的SUID字节到版本库的<filename>db</filename>目录，这会导致所有新创建的日志文件拥有同父目录相同的组拥有者。</para>
+    <para>另一个在类Unix系统下常见的问题是，当版本库在使用时，BerkeleyDB有时候创建一个新的日志文件来记录它的东西，即使这个版本库是完全由<command>svn</command>组拥有，这个新创建的文件不是必须被同一个组拥有，这给你的用户造成了更多地许可问题。一个好的工作区应该设置组的SUID字节到版本库的<filename>db</filename>目录，这会导致所有新创建的日志文件拥有同父目录相同的组拥有者。</para>
 
-    <para>一旦你跳过了这些障碍，你的版本库一定是可以通过各种可能的手段访问了，这看起来有点混乱和负责，但是这个让多个用户分享对一个文件的写权限的问题是一个经典问题，并且经常是没有优雅的解决。</para>
+    <para>一旦你跳过了这些障碍，你的版本库一定是可以通过各种可能的手段访问了，这看起来有点凌乱和复杂，但是这个让多个用户分享对一个文件的写权限的问题是一个经典问题，并且经常是没有优雅的解决。</para>
     
     <para>幸运的是，大多数版本库管理员不<emphasis>需要</emphasis>这样复杂的配置，用户如果希望访问本机的版本库，并不是一定要通过<literal>file://</literal>的URL&mdash;他们可以用<literal>localhost</literal>机器名联系Apache的HTTP服务器或者是<command>svnserve</command>，协议分别是<literal>http://</literal>或<literal>svn://</literal>。为你的Subversion版本库维护多个服务器进程，版本库会发生超出需要的头痛，我们建议你选择最符合你的需要的版本库，并且坚持使用！</para>
 
     <sidebar>
       <title>svn+ssh://服务器检查列表</title>
 
-      <para>让一些用户通过存在的SSH帐户来共享版本库而没有访问许可问题是一件很有技巧的事情，如果你为自己需要在你（作为一个管理员）的类Unix系统上做的事情感到迷惑，这里是一些快速的检查列表总结了本小节讨论的事情：</para>
+      <para>让一些用户通过存在的SSH帐户来共享版本库而没有访问许可问题是一件很有技巧的事情，如果你为自己需要在（作为一个管理员）类Unix系统上做的事情感到迷惑，这里是一些快速的检查列表，总结了本小节讨论的事情：</para>
 
       <itemizedlist>
         <listitem>
-          <para>所有的SSH用户需要能够读写版本库，把所有的SSH用户放到同一个组里，让版本库完全属于这个组，摄制组的权限是读/写。</para>
+          <para>所有的SSH用户需要能够读写版本库，把所有的SSH用户放到同一个组里，让版本库完全属于这个组，设置组的权限是读/写。</para>
         </listitem>
 
         <listitem>
