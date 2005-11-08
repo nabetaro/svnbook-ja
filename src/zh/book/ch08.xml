@@ -2,7 +2,7 @@
   <title>开发者信息</title>
   
   <simplesect>
-    <para>Subversion是一个开源的软件项目，使用Apache样式的软件许可证。这个项目由位于加利福尼亚的CollabNet, Inc.软件开发公司资助。这个关于Subversion开发的社区一直欢迎新成员贡献自己的时间和注意力。鼓励志愿者做他们能做的任何帮助，不管是发现和诊断bug，精炼代码还是补充新的特性。
+    <para>Subversion是一个开源的软件项目，使用Apache样式的软件许可证。这个项目由位于加利福尼亚的CollabNet, Inc.软件开发公司资助。这个关于Subversion开发的社区一直欢迎新成员贡献自己的时间和注意力。鼓励志愿者做他们能做的任何帮助，不管是发现和诊断bug，精炼已存的代码还是补充新的特性。
    </para>
     
     <para>本章是为那些希望实际参与源代码编写来帮助Subversion不断进步的人们准备的。我们要知道，在这里我们会涉及到许多软件内在的细节，在开发subversion本身&mdash;或利用subversion库开发全新工具时&mdash;所用到的许多技术本质。如果你无法预见到你是否会以这种层级参与到这个软件中来，那么也可以随意跳过这一章，而你作为一个Subversion用户的体验不会受到任何影响。
@@ -16,10 +16,11 @@
   <sect1 id="svn-ch-8-sect-1">
     <title>分层的库设计</title>
 
-    <para>Subversion有一个模块化的设计，通过一套C库实现。每一个库都有一套定义良好的目的和接口，每一个模块都属于三层中某一层&mdash;版本库层，版本库访问（RA）层或是客户端层。我们会立刻考察这些层，但是首先让我们看一下<xref linkend="svn-ch-8-table-1"/>中的Subversion库的摘要目录，为了一致性，我们通过他们的Unix库名称（例如libsvn_fs、libsvn_wc和mod_dav_svn）来引用它们。</para>
+    <para>Subversion有一个模块化的设计，通过一套C库<footnote><para>译者：这里的“库（library）”指函数库，与文中大量出现的“版本库（Repository）”不同，一般情况下，作为独词出现的“库”应属于前者。</para>
+	</footnote>来实现。每一个库都有一套定义良好的目标与接口，据称，大部分模块都属于三层中某一层&mdash;版本库层、版本库访问（RA）层或是客户端层。我们很快就会考察这些层，但首先让我们看一下<xref linkend="svn-ch-8-table-1"/>中的有关于Subversion库的摘要目录，为了一致性，我们将通过它们的无扩展Unix库名（例如libsvn_fs、libsvn_wc和mod_dav_svn）来引用它们。</para>
 
     <table id="svn-ch-8-table-1">
-      <title>A Brief Inventory of the Subversion Libraries</title>
+      <title>Subversion库的摘要目录</title>
       <tgroup cols="2">
         <thead>
           <row>
@@ -70,7 +71,7 @@
           </row>
           <row>
             <entry>libsvn_subr</entry>
-            <entry>各种有用的子程序</entry>
+            <entry>名色名样的有用的子程序</entry>
           </row>
           <row>
             <entry>libsvn_wc</entry>
@@ -88,7 +89,7 @@
       </tgroup>
     </table>
 
-    <para>单词<quote>各种</quote>只在列表<xref linkend="svn-ch-8-table-1"/>出现了一次是一个好的迹象。Subversion开发团队十分看重功能所在的层库，或许模块化设计最大的好处就是从开发者角度看减少了复杂性。作为一个开发者，你很快可以明确的说明那副<quote>大图片</quote>，允许你容易的找出某一块功能所在的位置。</para>
+    <para>单词<quote>各色各样的</quote>只在列表<xref linkend="svn-ch-8-table-1"/>出现过一次是一个好的迹象。Subversion开发团队非常注意将功能归入合适的层和库，或许模块化设计最大的好处就是从开发者的角度看减少了复杂性。作为一个开发者，你很快可以明确的说明那副<quote>大图片</quote>，允许你容易的找出某一块功能所在的位置。</para>
 
     <para>模块化的另一个好处是我们有能力用实现同样API的新模块替换整个给定的模块，而又不会影响代码基础。在一些方面，Subversion已经这样做了。libsvn_ra_dav、libsvn_ra_local和libsvn_ra_svn all都实现了同样的接口，三个都与版本库层通讯&mdash;libsvn_ra_dav和libsvn_ra_svn通过网络，而libsvn_ra_local则是直接连接。
    </para>
