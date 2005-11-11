@@ -5,7 +5,7 @@
     <para>Subversion是一个开源的软件项目，使用Apache样式的软件许可证。这个项目由位于加利福尼亚的CollabNet, Inc.软件开发公司资助。这个关于Subversion开发的社区一直欢迎新成员贡献自己的时间和注意力。鼓励志愿者做他们能做的任何帮助，不管是发现和诊断bug，精炼已存的代码还是补充新的特性。
    </para>
     
-    <para>本章是为那些希望实际参与源代码编写来帮助Subversion不断进步的人们准备的。我们要知道，在这里我们会涉及到许多软件内在的细节，在开发subversion本身&mdash;或利用subversion库开发全新工具时&mdash;所用到的许多技术本质。如果你无法预见到你是否会以这种层级参与到这个软件中来，那么也可以随意跳过这一章，而你作为一个Subversion用户的体验不会受到任何影响。
+    <para>本章是为那些希望实际参与源代码编写来帮助Subversion不断进步的人们准备的。我们要知道，在这里我们会涉及到许多软件内在的细节，在开发subversion本身&mdash;或利用subversion库开发全新工具时&mdash;所用到的许多核心技术。如果你无法预测你是否会以这种层级参与到这个软件中来，那么也可以随意跳过这一章，而你作为一个Subversion用户的体验不会受到任何影响。
    </para>
 
   </simplesect>
@@ -17,7 +17,7 @@
     <title>分层的库设计</title>
 
     <para>Subversion有一个模块化的设计，通过一套C库<footnote><para>译者：这里的“库（library）”指函数库，与文中大量出现的“版本库（Repository）”不同，一般情况下，作为独词出现的“库”应属于前者。</para>
-	</footnote>来实现。每一个库都有一套定义良好的目标与接口，据称，大部分模块都属于三层中某一层&mdash;版本库层、版本库访问（RA）层或是客户端层。我们很快就会考察这些层，但首先让我们看一下<xref linkend="svn-ch-8-table-1"/>中的有关于Subversion库的摘要目录，为了一致性，我们将通过它们的无扩展Unix库名（例如libsvn_fs、libsvn_wc和mod_dav_svn）来引用它们。</para>
+	</footnote>来实现。每一个库都有一套定义良好的目标与接口，据称，大部分模块都属于三层中的某一层&mdash;版本库层、版本库访问（RA）层或是客户端层。我们很快就会考察这些层，但首先让我们看一下<xref linkend="svn-ch-8-table-1"/>中的有关于Subversion库的摘要目录，为了一致性，我们将通过它们的无扩展Unix库名（例如libsvn_fs、libsvn_wc和mod_dav_svn）来引用它们。</para>
 
     <table id="svn-ch-8-table-1">
       <title>Subversion库的摘要目录</title>
@@ -71,7 +71,7 @@
           </row>
           <row>
             <entry>libsvn_subr</entry>
-            <entry>名色名样的有用的子程序</entry>
+            <entry>各色各样的有用的子程序</entry>
           </row>
           <row>
             <entry>libsvn_wc</entry>
@@ -89,22 +89,22 @@
       </tgroup>
     </table>
 
-    <para>单词<quote>各色各样的</quote>只在列表<xref linkend="svn-ch-8-table-1"/>出现过一次是一个好的迹象。Subversion开发团队非常注意将功能归入合适的层和库，或许模块化设计最大的好处就是从开发者的角度看减少了复杂性。作为一个开发者，你可以很快就描画出一副<quote>大图像</quote>，以便于你更精确地，也相对容易地找出某一功能所在的位置。</para>
+    <para>单词<quote>各色各样的</quote>只在列表<xref linkend="svn-ch-8-table-1"/>中出现过一次是一个好的迹象。Subversion开发团队非常注意将功能归入合适的层和库，或许模块化设计最大的好处就是从开发者的角度看减少了复杂性。作为一个开发者，你可以很快就描画出一副<quote>大图像</quote>，以便于你更精确地，也相对容易地找出某一功能所在的位置。</para>
 
     <para>模块化的另一个好处是我们有能力去构造一个全新的，能够完全实现相同API功能的库，以替换整个给定的模块，而又不会影响基础代码。在某种意义上，Subversion已经这样做了。libsvn_ra_dav、libsvn_ra_local和libsvn_ra_svn all都实现了相同的接口，三者均与版本库层进行通讯&mdash;libsvn_ra_dav和libsvn_ra_svn通过网络，而libsvn_ra_local则是直接连接。
    </para>
 
-    <para>客户端设计本身就给我们所提倡的模块化设计理念增色很多，尽管Subversion目前只是附带了一个命令行方式的客户端，但已经出现了一些由第三方开发的GUI客户端程序，这些GUI客户端程序全都使用了与原装命令行客户端程序相同的API。对于Subversion客户端程序设计来说，Subversion的libsvn_client库提供了绝大多数够用、实用的功能（见<xref
+    <para>客户端设计本身就给模块化设计理念增色不少，Subversion目前只是附带了一个命令行方式的客户端，但已经出现了一些由第三方开发的GUI客户端程序，这些GUI客户端程序全都使用了与原装命令行客户端程序相同的API。为了开发一个实用的Subversion客户端程序，对于绝大部分功能，仅使用Subversion的libsvn_client库就够了（见<xref
       linkend="svn-ch-8-sect-1.3"/>）。</para>
 
     <!-- ***************************************************************** -->
     <sect2 id="svn-ch-8-sect-1.1">
       <title>版本库层</title>
 
-      <para>当提到Subversion版本库层时，我们通常会讨论两个库&mdash;版本库（函数）库和文件系统（函数）库。这两个库为你的版本控制数据的各个修订版本提供了存储和报告机制，该层通过版本库访问层连接到客户层，而且，从Subversion用户的角度看，这是资料存储过程<quote>另一端</quote>。</para>
+      <para>当提到Subversion版本库层时，我们通常会讨论两个库&mdash;版本库（函数）库和文件系统（函数）库。这两个库为你的版本控制数据的各个修订版本提供了存储和报告机制，该层通过版本库访问层连接到客户层，而且，从Subversion用户的角度看，这是资料存储过程中的<quote>链接的另一端</quote>。</para>
 
-      <para>Subversion文件系统是通过libsvn_fs的API访问的，这不是一个可以安装到操作系统（例如Linux ext2或NTFS）的内核级文件系统，而是一个虚拟文件系统。不是用真实的文件和目录（也就是你用shell程序可以导航的那种）保存<quote>文件</quote>和<quote>目录</quote>，而是从两种抽象后端方式中选择一种使用&mdash;一个是Berkeley DB数据库环境或者是一个普通文件表示。（为了了解更多关于版本库后端的信息，请看<xref
-        linkend="svn-ch-5-sect-1.3"/>）。然而，社区也非常有兴趣考虑使Subversion具备使用其它后端数据库系统的能力，或许通过一个类似开放式数据库连接（JDBC）的机制。</para>
+      <para>Subversion文件系统通过libsvn_fs API来访问，它并不是一个安装在操作系统之上的内核级的文件系统（例如Linux ext2或NTFS），而是一个虚拟文件系统。它并未将<quote>文件</quote>和<quote>目录</quote>保存为真实的文件和目录（也就是用你熟知的shell程序可以浏览的那种），而是采用了一种抽象的后端存储方式，这个后端存储方式有两种&mdash;一个是Berkeley DB数据库环境，另一个是普通文件表示。（要了解更多关于版本库后端的信息，请看<xref
+        linkend="svn-ch-5-sect-1.3"/>）。除此之外，开发社区也非常有兴趣考虑在Subversion的未来版本 中提供某种使用其它后端数据库系统的能力，也许是开放式数据库连接（ODBC）的机制。</para>
 
       <para>libsvn_fs支持的文件系统API包含了所有其他文件系统的功能：你可以创建和删除文件和目录、拷贝和移动、修改文件内容等等。它也包含了一些不太常用的特性，如对任意文件和目录添加、修改和删除元数据（<quote>properties</quote>）的能力。此外，Subversion文件系统是一个版本化的文件系统，意味着你修改你的目录树时，Subversion会记住修改以前的样子。等等，所有的回到开始版本化的时间是在添加到文件系统的时候（且刚刚超过***）。</para>
 
