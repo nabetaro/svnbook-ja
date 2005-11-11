@@ -35,7 +35,7 @@ def get_base(fname = ''):
       if re.match('Revision: ', line):
         return int(re.sub('Revision: ', '', line))
   else:
-    rmin = 0xffffffff
+    rmin = sys.maxint
     rlist = []
     for file in bfiles:
       for line in os.popen('svn info '+file):
@@ -71,7 +71,7 @@ def get_list():
   import platform
   global bfiles
   frlist = ()
-  rmin = 0xffffffff
+  rmin = sys.maxint
   rbase = get_base() + 1
   for file in bfiles:
     rev = get_last(file)
