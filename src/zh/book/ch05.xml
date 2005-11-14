@@ -176,17 +176,17 @@
         <para>在Subversion的初始设计阶段，开发者因为多种原因而决定采用Berkeley
         DB，比如它的开源协议、事务支持、可靠性、性能、简单的API、线程安全、支持游标等。</para>
 
-        <para>BerkeleyDB提供了真正的事务支持－这或许是它最强大的特性，访问你的Subversion版本库的多个进程不必担心偶尔会破坏其他进程的数据。事务系统提供的隔离对于任何给定的操作，Subversion版本库代码看到的只是数据库的静态剪影－而不是一个受其他进程影响不断变化的情况－并能够根据该静态剪影作出操作决定。如果该操作决定正好同其他进程所做操作冲突，整个操作会回滚，就像什么都没有发生一样。然后Subversion优雅的使用一个更新的静态剪影重新开始操作。</para>
+        <para>Berkeley DB提供了真正的事务支持－这或许是它最强大的特性，访问你的Subversion版本库的多个进程不必担心偶尔会破坏其他进程的数据。事务系统提供的隔离对于任何给定的操作，Subversion版本库代码看到的只是数据库的静态视图－而不是一个在其他进程影响不断变化的数据库－并能够根据该视图作出决定。如果该决定正好同其他进程所做操作冲突，整个操作会回滚，就像什么都没有发生一样，并且Subversion会优雅的再次对更新的静态视图进行操作。</para>
 
-        <para>BerkeleyDB另一个强大的特性是热备份－不必“下线”就可以备份数据库环境的能力。我们将会在<xref
+        <para>Berkeley DB另一个强大的特性是热备份－不必<quote>脱机</quote>就可以备份数据库环境的能力。我们将会在<xref
         linkend="svn-ch-5-sect-3.6" />讨论如何备份你的版本库，能够不停止系统对版本库做全面备份的好处是显而易见的。</para>
 
-        <para>BerkeleyDB同时是一个可信赖的数据库系统。Subversion使用BerkeleyDB的日志工具，这意味着数据库先在磁盘上写一个日志文件，描述它将要做的修改，然后再做这些修改。这是为了确保如果哪里出了差错，数据库系统能回复到先前的检出点－一个在日志文件中已知的不会冲突的位置，重新开始事务直到数据存储成为一个可用的状态。更多关于BerkeleyDB日志文件的信息请查看<xref
+        <para>Berkeley DB同时是一个可信赖的数据库系统。Subversion利用了Berkeley DB可以记日志的便利，这意味着数据库先在磁盘上写一个日志文件，描述它将要做的修改，然后再做这些修改。这是为了确保如果如果任何地方出了差错，数据库系统能回复到先前的检查点&mdash;一个日志文件认为没有错误的位置，重新开始事务直到数据恢复为一个可用的状态。关于Berkeley DB日志文件的更多信息请查看<xref
         linkend="svn-ch-5-sect-3.3" />。</para>
 
-        <para>每朵玫瑰都有刺，我们也必须记录一些BerkeleyDB已知的缺陷。首先，BerkeleyDB环境不是跨平台的。你不能简单的拷贝一个创建在Unix上的Subversion版本库到一个Windows系统，也无法期望创建在Unix系统上的版本库能顺利移植到Windows系统正常运行。尽管BerkeleyDB数据库格式架构设计独立，有一些其他环境方面没有独立出来。其次，Subversion使用BerkeleyDB不能在95/98系统上运行－如果你需要将版本库建在一个Windows机器上，请装到Windows2000或WindowsXP上。另外，不要在网络上共享BerkeleyDB版本库。尽管BerkeleyDB承诺如果按照一套特定规范的话，可以在网络共享上正常运行，但实际上已知的共享类型几乎都不满足这套规范。</para>
+        <para>但是每朵玫瑰都有刺，我们也必须记录一些Berkeley DB已知的缺陷。首先，Berkeley DB环境不是跨平台的。你不能简单的拷贝一个在Unix上创建的Subversion版本库到一个Windows系统并期望它能够正常工作。尽管Berkeley DB数据库的大部分格式是不受架构约束的，但环境还是有一些方面没有独立出来。其次，使用Berkeley DB的Subversion不能在95/98系统上运行&mdash;如果你需要将版本库建在一个Windows机器上，请装到Windows2000或WindowsXP上。另外，Berkeley DB版本库不能放在网络共享文件夹中，尽管Berkeley DB承诺如果按照一套特定规范的话，可以在网络共享上正常运行，但实际上已知的共享类型几乎都不满足这套规范。</para>
 
-        <para>最后，因为BerkeleyDB是以连接库的形式被Subversion使用，它对于中断比典型的关系型数据库系统更为敏感。大多数SQL系统，举例来说，有一个主服务进程来协调对数据库表的访问。如果一个访问数据库的程序因为某种原因出现问题，数据库守护进程察觉到连接中断会做一些清理。因为数据库守护进程是唯一访问数据库表的进程，应用程序不需要担心访问许可的冲突。但是，这些情况与BerkeleyDB不同。Subversion（和使用Subversion库的程序）直接访问数据库的表，这意味着如果有一个程序崩溃，就会使数据库处于一个暂时的不一致、不可访问的状态。当这种情况发生时，管理员需要让BerkeleyDB回复到一个检查点，这的确有点讨厌。除了崩溃的进程，还有一些情况能让版本库出现异常，比如程序在所有权上发生冲突或者数据库文件的访问权限。BerkeleyDB版本库非常快，还可以升级，不过最好使用一个单独的服务进程，通过一个用户来访问－比如Apache的<command>httpd</command>或<command>svnserve</command>（参见<xref linkend="svn-ch-6" />）—而不是多用户通过<literal>file:///</literal>或<literal>svn+ssh://</literal>URL的方式多用户访问。如果将BerkeleyDB版本库直接用作多用户访问，请先阅读<xref linkend="svn-ch-6-sect-5" />。</para>
+        <para>最后，因为Berkeley DB的库直接链接到了Subversion中，它对于中断比典型的关系型数据库系统更为敏感。大多数SQL系统，举例来说，有一个主服务进程来协调对数据库表的访问。如果一个访问数据库的程序因为某种原因出现问题，数据库守护进程察觉到连接中断会做一些清理。因为数据库守护进程是唯一访问数据库表的进程，应用程序不需要担心访问许可的冲突。但是，这些情况与BerkeleyDB不同。Subversion（和使用Subversion库的程序）直接访问数据库的表，这意味着如果有一个程序崩溃，就会使数据库处于一个暂时的不一致、不可访问的状态。当这种情况发生时，管理员需要让Berkeley DB恢复到一个检查点，这的确有点讨厌。除了崩溃的进程，还有一些情况能让版本库出现异常，比如程序在数据库文件的所有权或访问权限上发生冲突。因为Berkeley DB版本库非常快，并且可以扩展，非常适合使用一个单独的服务进程，通过一个用户来访问&mdash;比如Apache的<command>httpd</command>或<command>svnserve</command>（参见<xref linkend="svn-ch-6" />）&mdash;而不是多用户通过<literal>file:///</literal>或<literal>svn+ssh://</literal>URL的方式多用户访问。如果将Berkeley DB版本库直接用作多用户访问，请先阅读<xref linkend="svn-ch-6-sect-5" />。</para>
       </sect3>
 
       <!-- ***************************************************************** -->
@@ -194,32 +194,17 @@
       <sect3 id="svn-ch-5-sect-1.3.2">
         <title>FSFS</title>
 
-        <para>在2004年中期，另一种版本库存储系统慢慢形成了：一种不需要数据库的存储系统。FSFS版本库在一个文件中存储修订版本树，所以版本库中所有的修订版本都在一个子文件夹中有限的几个文件里。事务在单独的子目录中被创建，创建完成后，一个单独的事务文件被创建并移动到修订版本目录，这保证提交是原子性的。因为一个修订版本文件是持久不可改变的，版本库也可以做到热备份，就象BerkeleyDB版本库一样。</para>
+        <para>在2004年中期，另一种版本库存储系统慢慢形成了：一种不需要数据库的存储系统。FSFS版本库在单一文件中存储修订版本树，所以版本库中所有的修订版本都在一个子文件夹中有限的几个文件里。事务在单独的子目录中被创建，创建完成后，一个单独的事务文件被创建并移动到修订版本目录，这保证提交是原子性的。因为一个修订版本文件是持久不可改变的，版本库也可以做到热备份，就象Berkeley DB版本库一样。</para>
 
-        <para>修订版本文件格式代表了一个修订版本的目录结构，文件内容，和其他修订版本树中相关信息。不像BerkeleyDB数据库，这种存储格式可跨平台并且与CPU架构无关。因为没有日志或用到共享内存的文件，数据库能被网络文件系统安全的</para>
+        <para>修订版本文件格式代表了一个修订版本的目录结构，文件内容，和其他修订版本树中相关信息。不像BerkeleyDB数据库，这种存储格式可跨平台并且与CPU架构无关。因为没有日志或用到共享内存的文件，数据库能被网络文件系统安全的访问和检查只读环境。缺少数据库花消同时也意味着版本库的总体体积可以稍小一点。</para>
 
-        <para>访问和检查只读环境。缺少数据库花消同时也意味着版本库的总体体积可以稍小一点。</para>
+        <para>FSFS也有一种不同的性能特性。当提交大量文件时，FSFS使用O(N)算法来追加条目，而Berkeley DB则用(N^2)算法来重写整个目录。另一方面，FSFS通过写入与上一个版本比较的变化来记录新版本，这也意味着获取最新修订版本时会比Berkeley DB慢一点，提交时FSFS也会有一个更长的延迟，在某些极端情况下会导致客护端在等待回应时超时。</para>
 
-        <para>FSFS也有一种不同的表现属性。当确定大量文件的存贮目录是，FSFS用O(N) 算法来填加入口，而
-        Berkeley数据库则用(N^2)算法来重写整个目录。另一方面，与较早版本相比FSFS将最近版本的文件当作delta写入，这也意味着与在头版本的</para>
 
-        <para>Berkeley数据库中获取整个文件相比检查最近的树会稍慢一点。当完成一个确认时，FSFS也会有一个更长的延迟，在某些极端情况下会导致</para>
+        <para>最重要的区别是当出现错误时FSFS不会楔住的能力。如果使用Berkeley DB的进程发生许可错误或突然崩溃，数据库会一直无法使用，直到管理员恢复。假如在应用FSFS版本库时发生同样的情况，版本库不会受到任何干扰，最坏情况下也就是会留下一些事务数据。</para>
 
-        <para>客护端在等待回应时超时。</para>
+        <para>唯一真正对FSFS不利的是相对于Berkeley DB的不成熟，缺乏足够的使用和压力测试，许多关于速度和可扩展性的判断都是建立在良好的猜测之上。在理论上，它承诺会降低管理员新手的门槛并且更加不容易发生问题。在实践中，只有时间可以证明。</para>
 
-        <para />
-
-        <para />
-
-        <para>最重要的区别是当出现错误时FSFS停滞不前。假如应用Berkeley处理时发生许可错误或突然崩溃系统，数据库会无法使用直到管理员</para>
-
-        <para>恢复。假如在应用FSFS版本库发生同样的情况，版本库不会受到任何干扰。在最坏情况下也仅仅是一些处理信息被丢弃。</para>
-
-        <para>唯一真正对FSFS不利的是它与Berkeley数据库相比相对不可靠。它没有接受用户的足够多的检验。仅在理论来说，它减少了新管理者的负担，</para>
-
-        <para>以及较少有疑问的问题。在实践中，也只有时间才能在评判。</para>
-
-        <para />
       </sect3>
     </sect2>
   </sect1>
@@ -1143,7 +1128,7 @@ $
       <sect3 id="svn-ch-5-sect-3.1.5">
         <title>Berkeley DB工具</title>
 
-        <para>如果你使用Berkeley DB版本库，那么所有纳入版本控制的文件系统结构和数据都储存在一系列数据库的表中，而这个位于版本库的<filename>db</filename>子目录下。这个子目录是一个标准的Berkeley DB环境目录，可以应用任何Berkeley数据库工具进行操作（参考SleepyCat网站<systemitem class="url">http://www.sleepycat.com/</systemitem>上关于这些工具的介绍）。</para>
+        <para>如果你使用Berkeley DB版本库，那么所有纳入版本控制的文件系统结构和数据都储存在一系列数据库的表中，而这个位于版本库的<filename>db</filename>子目录下。这个子目录是一个标准的Berkeley DB环境目录，可以应用任何Berkeley数据库工具进行操作（参考SleepyCat网站<systemitem class="url">http://www.sleepycat.com/</systemitem>上关于这些工具的介绍）。</para>
 
         <para>对于Subversion的日常使用来说，这些工具并没有什么用处。大多数Subversion版本库必须的数据库操作都集成到<command>svnadmin</command>工具中。比如，<command>svnadmin list-unused-dblogs</command>和<command>svnadmin list-dblogs</command>实现了Berkeley <command>db_archive</command>命令功能的一个子集，而<command>svnadmin recover</command>则起到了 <command>db_recover</command>工具的作用。</para>
 
