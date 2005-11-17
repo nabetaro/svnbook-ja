@@ -225,13 +225,10 @@
 $ svnadmin create /path/to/repos
 </screen>
 
-    <para>这个命令在目录<filename>/path/to/repos</filename>创建了一个新的版本库。这个新的版本库会以修订版本版本0开始其生命周期，里面除了最上层的根目录(<filename>/</filename>)，什么都没有。刚开始，修订版本0有一个修订版本</para>
-
-    <para>属性<literal>svn:date</literal>，被设置为版本库创建的时间。</para>
+    <para>这个命令在目录<filename>/path/to/repos</filename>创建了一个新的版本库。这个新的版本库会以修订版本版本0开始其生命周期，里面除了最上层的根目录(<filename>/</filename>)，什么都没有。刚开始，修订版本0有一个修订版本属性<literal>svn:date</literal>，设置为版本库创建的时间。</para>
 
     <para>在 Subversion 1.1中，版本库默认使用Berkeley
-    DB后端存储方式来创建。在以后的发行版中这个行为会被改变。不管怎样，存储类型可以使用<option>--fs-type</option>
-    参数显视的选择。:</para>
+    DB后端存储方式来创建。在以后的发行版中这个行为会被改变。不管怎样，存储类型可以使用<option>--fs-type</option>参数明确说明。:</para>
 
     <screen>
 $ svnadmin create --fs-type fsfs /path/to/repos
@@ -239,27 +236,21 @@ $ svnadmin create --fs-type bdb /path/to/other/repos
 </screen>
 
     <warning>
-      <para>不要在网络共享上创建Berkeley DB版本库—它不能存在于诸如NFS， AFS， 或 Windows SMB的远程文件系统中。Berkeley 数据要求底层文件系统实现严格的</para>
+      <para>不要在网络共享上创建Berkeley DB版本库&mdash;它不能存在于诸如NFS， AFS或Windows SMB的远程文件系统中，Berkeley 数据要求底层文件系统实现严格的POSIX锁定语义，几乎没有任何网络文件系统提供这些特性，假如你在网络共享上使用Berkeley DB，结果是不可预知的——许多错误可能会立刻发现，也有可能在几个月之后才能发现</para>
 
-      <para>POSIX语义锁定。几乎没有网络文件系统提供这些特征，假如你网络共享Berkeley数据库，结果是不可预知的——你当前发现的错误也许是几个月前的，你的版本库</para>
-
-      <para>也会相当脆弱。</para>
-
-      <para>假如你需要多台计算机来访问，你需要创造网络共享的FSFS版本库，而不是Berkeley数据库的版本库。或者更好的办法，你建立一个真正的服务方式（诸如Apache或<command>svnserve），把版本库放在</command>服务器能访问到的本地文件系统中，以便能通过网络访问。详情请参看<xref linkend="svn-ch-6" /></para>
+      <para>假如你需要多台计算机来访问，你需要需要在网络共享上创建FSFS版本库，而不是Berkeley DB的版本库。或者更好的办法，你建立一个真正的服务进程（例如Apache或<command>svnserve），把版本库放在</command>服务器能访问到的本地文件系统中，以便能通过网络访问。详情请参看<xref linkend="svn-ch-6" /></para>
     </warning>
 
-    <para>你可能已经注意到了，<command>svnadmin</command>命令的路径参数只是一个规则的文件系统路径，而不是一个<command>svn</command>客户端程序访问版本库时使用的URL。<command>svnadmin</command>和<command>svnlook</command>都被认为是服务器端工具－</para>
+    <para>你可能已经注意到了，<command>svnadmin</command>命令的路径参数只是一个普通的文件系统路径，而不是一个<command>svn</command>客户端程序访问版本库时使用的URL。<command>svnadmin</command>和<command>svnlook</command>都被认为是服务器端工具&mdash;它们在版本库所在的机器上使用，用来检查或修改版本库，不能通过网络来执行任务。一个Subversion的新手通常会犯的错误，就是试图将URL（甚至<quote>本地</quote><literal>file:</literal>路径）传给这两个程序。</para>
 
-    <para>它们使用在版本库所在的机器上，被用来检查或修改版本库，不能通过网络来执行任务。一个Subversion的新手通常会犯的错误，就是试图将URL（甚至<quote>本地</quote><literal>file:</literal>路径）传给这两个程序。</para>
-
-    <para>所以，当你运行<command>svnadmin create</command>命令后，就在创建目录中有了一个全新的Subversion版本库。 让我们看一下在目录中实际都创建了什么东西。</para>
+    <para>所以，当你运行<command>svnadmin create</command>命令后，就会在运行目录创建一个崭新的Subversion版本库，让我们看一下在这个目录创建中创建了什么。</para>
 
     <screen>
 $ ls repos
 conf/  dav/  db/  format  hooks/  locks/  README.txt
 </screen>
 
-    <para>除了<filename>README.txt</filename>和<filename>format</filename>文件，版本库目录由一群子目录组成。就像Subversion其他部分的设计一样，模块化是一个很重要的原则，而且层次化的组织要比杂乱无章好。下面是对新的版本库目录中，各个项目的简要介绍：</para>
+    <para>除了<filename>README.txt</filename>和<filename>format</filename>文件，版本库目录就是一些子目录了。就像Subversion其他部分的设计一样，模块化是一个很重要的原则，而且层次化的组织要比杂乱无章好。下面是对新的版本库目录中各个项目的简要介绍：</para>
 
     <variablelist>
       <varlistentry>
@@ -282,7 +273,7 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
         <term>db</term>
 
         <listitem>
-          <para>你所有的受版本控制数据的所在之处。这个目录或者是个Berkeley DB环境（满是数据表和其他东西）或者是一个包含修订版本文件的FSFS环境。</para>
+          <para>你所有的受版本控制数据的所在之处。这个目录或者是个Berkeley DB环境（满是数据表和其他东西），或者是一个包含修订版本文件的FSFS环境。</para>
         </listitem>
       </varlistentry>
 
@@ -290,7 +281,7 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
         <term>format</term>
 
         <listitem>
-          <para>一个包含一个整数的文件，用来表示版本库配置的版本号码。</para>
+          <para>包含了用来表示版本库布局版本号的整数。</para>
         </listitem>
       </varlistentry>
 
@@ -306,7 +297,7 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
         <term>locks</term>
 
         <listitem>
-          <para>一个存储Subversion版本库锁定资料的目录，被用来追踪对版本库的访问。</para>
+          <para>一个存储Subversion版本库锁定数据的目录，被用来追踪对版本库的访问。</para>
         </listitem>
       </varlistentry>
 
@@ -319,14 +310,14 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
       </varlistentry>
     </variablelist>
 
-    <para>一般来说，你不需要手动干预版本库。<command>svnadmin</command>工具应该足以用来处理对版本库的任何修改，或者你也可以使用第三方工具（比如BerkeleyDB的工具包）来调整部分版本库。不过还是会有些例外情况，我们会在这里提到。</para>
+    <para>一般来说，你不需要手动干预版本库。<command>svnadmin</command>工具应该足以用来处理对版本库的任何修改，或者你也可以使用第三方工具（比如Berkeley DB的工具包）来调整部分版本库。不过还是会有些例外情况，我们会在这里提到。</para>
 
     <!-- ***************************************************************** -->
 
     <sect2 id="svn-ch-5-sect-2.1">
       <title>钩子脚本</title>
 
-      <para>所谓钩子<firstterm>就是与一些版本库事件相关的程序，它由新修订版本所创，或是无形式属性的变更。每个钩子都携带有足够多的信息，说明那是什么事件，操作的对象，和触发事件的用户名。通过钩子的输出或返回状态，钩子程序能继续运行，停止或以某种方式挂起。</firstterm></para>
+      <para>所谓<firstterm>钩子</firstterm>就是与一些版本库事件触发的程序，例如新修订版本的创建，或是未版本化属性的修改。每个钩子都会被告知足够多的信息，包括那是什么事件，所操作的对象，和触发事件的用户名。通过钩子的输出或返回状态，钩子程序能让工作继续、停止或是以某种方式挂起。</para>
 
       <para>
         <firstterm>默认情况下，钩子的子目录中包含各种版本库钩子模板。</firstterm>
@@ -341,46 +332,31 @@ pre-commit.tmpl
 
       <para />
 
-      <para>对于每个钩子的都有一个模板,该模版由Subversion资源库实现，由模版的脚本检查其内容，这样，你能看到脚本运行时所触发的事件及</para>
+      <para>对每种Subversion版本库支持的钩子的都有一个模板，通过查看这些脚本的内容，你能看到是什么事件触发了脚本及如何给传脚本传递数据。同时，这些模版也是如何使用这些脚本，结合Subversion支持的工具来完成有用任务的例子。要实际安装一个可用的钩子，你需要在<filename>repos/hooks</filename>目录下安装一些与钩子同名（如 <command>start-commit</command>或者<command>post-commit</command>）的可执行程序或脚本。</para>
 
-      <para>传给脚本的数据。同时，一些模版当于Subversion所提供的程序合用，来完成有用的任务，也提供了模版如何使用脚本的例子。要实际安装一个可用的钩子你需要在<filename>repos/hooks</filename></para>
+      <para>在Unix平台上，这意味着要提供一个与钩子同名的脚本或程序（可能是shell 脚本，Python 程序，编译过的c语言二进制文件或其他东西）。当然，脚本模板文件不仅仅是展示了一些信息&mdash;在Unix下安装钩子最简单的办法就是拷贝这些模板，并且去掉.tmpl扩展名，然后自定义钩子的内容，确定脚本是可运行的。Windows用文件的扩展名来决定一个程序是否可运行，所以你要使程序的基本名与钩子同名，同时，它的扩展名是Windows系统所能辨认的，例如<filename>exe</filename>、<filename>com</filename>和批处理的<filename>bat</filename>。</para>
 
-      <para>目录下安装一些与钩子同名(如 <command>start-commit</command>或者<command>post-commit</command>)的能运行的程序或脚本。</para>
-
-      <para>在Unix平台上，这是指提供一个与钩子同名的脚本或程序(或者是个shell 脚本，Python 程序，编译过的c语言二进制文件， 或其他东西) 。当然，脚本文件提供的信息不仅仅用来在Unix平台上简单的安装钩子，或是把合适模版复制到正好缺少的该模版文件的模版文件中。tmpl的扩充，钩子的客户化，都要确定脚本是可运行的。Windows用文件的扩展名来决定一个程序是否可运行，所以你要使程序的基本名与钩子同名，同时，它的扩展名是Windows系统所能辨认的，诸如<filename>exe</filename>
-      或<filename>com</filename> 或<filename>批处理的bat。</filename></para>
-
-      <para>Tip 由于安全原因，Subversion资源库在一个“空”环境中执行钩子脚本，这里所说的”空“是指没有任何环境变量，甚至
-      <literal>$PATH</literal> or <literal>%PATH%</literal>。</para>
-
-      <para>由于这个原因，令很多管理者很困惑的是，他们的钩子脚本手工运行是很好，可在Subversion中却不能运行。要注意，必须在你的钩子设置环境变量或为你的程序指定好绝对路径。</para>
-
-      <para>目前Subversion有五种已实现了的钩子</para>
+      <tip>
+      <para>由于安全原因，Subversion版本库在一个空环境中执行钩子脚本&mdash;就是没有任何环境变量，甚至没有<literal>$PATH</literal>或<literal>%PATH%</literal>。由于这个原因，许多管理员会感到很困惑，它们的钩子脚本手工运行时正常，可在Subversion中却不能运行。要注意，必须在你的钩子中设置好环境变量或为你的程序指定好绝对路径。</para>
+</tip>
+      <para>目前Subversion有已实现了五种钩子：</para>
 
       <variablelist>
         <varlistentry>
           <term>
             <filename>start-commit</filename>
           </term>
-
-          <listitem>
-            <para>它在提交事务产生前已运行。它通常用来决定用户进行了特权操作。版本库传给该程序两个变量：到版本库的路径，和要进行操作的用户名。假如程序返回一个非零的返回值，在事务产生前停止该提交操作。假如钩子程序要在stderr中写入数据，它将排队送至客户端。</para>
-
-            <para />
+          <listitem>            <para>它在提交事务产生前已运行，通常用来判定一个用户是否有权提交。版本库传给该程序两个参数：到版本库的路径，和要进行提交的用户名。如果程序返回一个非零值，会在事务产生前停止该提交操作。如果钩子程序要在stderr中写入数据，它将排队送至客户端。</para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term>
-            <filename>pre-commit它在事务完成但在提交操作前运行。通常，该钩子用来保护那些由于内容或是地址不允许访问的commits（例如，你的site也许要求对一个确定的分支</filename>
-          </term>
+        <term><filename>pre-commit</filename></term>
+        <para>在事务完成提交之前运行，通常这个钩子是用来保护因为内容或位置（例如，你要求所有到一个特定分支的提交必须包括一个bug追踪的ticket号，或者是要求日志信息不为空）而不允许的提交。版本库传递两个参数到程序：版本库的路径和正在提交的事务名称，如果程序返回非零值，提交会失败，事务也会删除。如果钩子程序在stderr中写入了数据，也会传递到客户端。</para>
+        
 
-          <listitem>
-            <para>的commits要包含从bug tracker中得到的icket number，或者ncoming log是非空的）版本库传给程序两个变量：到版本库的路径和要进行操作的用户名。假如程序返回一个非零的返回值，提交应当取消，事务应被删除。</para>
-
-            <para>假如钩子 程序要在stderr中写入数据，它将排队送至客户端。</para>
-
-            <para>分布式Subversion有一些控制脚本（在Subversion的源代码树的tools/hook-scripts目录中）来在pre-commit中实现pre-commit。另外还有<command>mod_authz_svn</command>Apache httpd可选模式，这可用来对个人目录进行读或写的控制。（详见<xref linkend="svn-ch-6-sect-4.4.2" />）。在以后的Subversion中，我们可以实现在文件系统中直接的访问控制。</para>
+            <para>Subversion的分发版本包括了一些访问控制脚本（在Subversion源文件目录树的<filename>tools/hook-scripts</filename>目录），可以用来被<command>pre-commit</command>调用来实现精密的写访问控制。另一个选择是使用Apache的httpd模块<command>mod_authz_svn</command>，可以对单个目录进行读写访问控制（见<xref
+              linkend="svn-ch-6-sect-4.4.2"/>）。在未来的Subversion版本中,我们计划直接在文件系统中实现访问控制列表（ACLs）。</para>
           </listitem>
         </varlistentry>
 
@@ -389,10 +365,11 @@ pre-commit.tmpl
             <filename>post-commit</filename>
           </term>
 
-          <listitem>
-            <para>它在事务完成后运行，创建一个新的修订版本。大多数人用这个钩子来发送关于运行的描述性电子邮件，或者作为资源库的备份。资源库版本库传给程序两个变量：到版本库的路径和被创建的新的修订版本号。退出程序会被忽略。分布式Subversion包括<command>mailer，<command>py</command>和<command>commit-email。<command>pl</command> 脚本（存于Subversion源代码树中的tools/hook-scripts/目录中）可被用于发送给定操作的描述性email。这种mail包含</command></command>变化的路径清单，有关操作的信息日志，操作的日期和作者。</para>
+          <listitem>            <para>它在事务完成后运行，创建一个新的修订版本。大多数人用这个钩子来发送关于提交的描述性电子邮件，或者作为版本库的备份。版本库传给程序两个参数：到版本库的路径和被创建的新的修订版本号。退出程序会被忽略。</para>
+          
+          <para>Subversion分发版本中包括<command>mailer.py</command>和<command>commit-email.pl</command>脚本（存于Subversion源代码树中的tools/hook-scripts/目录中）可以用来发送描述给定提交的email（并且或只是追加到一个日志文件），这种mail包含</command></command>变化的路径清单，提交的日志信息、日期和作者以及修改文件的GNU区别样式输出。</para>
 
-            <para>Subversion提供的另一个有用的工具是hot-backup。<command>py</command>脚本（在Subversion源代码树中的tools/backup/目录中）。这种脚本做为Subversion版本库的热备份使用，可被用来作为版本库的per-commit snapshot。</para>
+            <para>Subversion提供的另一个有用的工具是<command>hot-backup.py</command>脚本（在Subversion源代码树中的tools/backup/目录中）。这个脚本可以为Subversion版本库进行热备份（Berkeley DB数据库后端支持的一种特性），可以制作版本库每次提交的快照作为归档和紧急情况的备份。</para>
           </listitem>
         </varlistentry>
 
@@ -402,15 +379,9 @@ pre-commit.tmpl
           </term>
 
           <listitem>
-            <para />
+<para>因为Subversion的修订版本属性不是版本化的，对这类属性的修改（例如提交日志属性<literal>svn:log</literal>）将会永久覆盖以前的属性值。因为数据在此可能丢失，所以Subversion提供了这种钩子（及与之对应的<filename>post-revprop-change</filename>），因此版本库管理员可用一些外部方法记录变化。作为对丢失未版本化属性数据的防范，Subversion客户端不能远程修改修订版本属性，除非为你的版本库实现这个钩子。</para>
 
-            <para>因为Subversion的revision不是versioned，这一属性的修改（例如，<literal>svn“执行信息日志属性）将会重写以前的属性值。因为数据在此可能丢失，Subversion提供了</literal></para>
-
-            <para><literal>这种钩子（及它的类似物，post-revprop-change），资源库管理者可用一些外部方法保持变化记录。</literal>作为一种丢失unversioned属性数据的预先警告，Subversion客户端不能远程修改revision属性，除非为你的资源库实现这个钩子。</para>
-
-            <para>这个钩子只在对资源库修改时才运行。资源库给钩子传递四个参数：到资源库的路径，要修改的属性存在的revision，经过校验的生成变化的用户名，和属性自身的名字。</para>
-
-            <para />
+            <para>这个钩子在对版本库进行这种修改时才会运行，版本库给钩子传递四个参数：到版本库的路径，要修改属性的修订版本，经过认证的用户名和属性自身的名字。</para>
           </listitem>
         </varlistentry>
 
@@ -420,18 +391,10 @@ pre-commit.tmpl
           </term>
 
           <listitem>
-            <para>它是一个早期版本的方法，这个钩子是<filename>pre-revprop-change</filename>钩子的类似物。事实上，出于某种偏执这个脚本并不运行，除非存在<filename>pre-revprop-change</filename>钩子。当这两个钩子都存在时，<filename>post-revprop-changehook只在revision版本库被改变时才运行，它通常被用来发送包含变化了的新参数的email。版本库传递</filename></para>
+            <para>我们在前面提到过，这个钩子与<filename>pre-revprop-change</filename>对应。事实上，因为多疑的原因，只有存在<filename>pre-revprop-change</filename>时这个脚本才会执行。当这两个钩子都存在时，<filename>post-revprop-change</filename>在修订版本属性被改变之后运行，通常用来发送包含新属性的email。版本库传递四个参数给该钩子：到版本库的路径，属性存在的revision，经过校验的产生变化的用户名，和属性自身的名字。</para>
 
-            <para>四个参数给该钩子：到版本库的路径，属性存在的revision，经过校验的产生变化的用户名，和属性自身的名字。</para>
-
-            <para>分布式Subversion包含<command>propchange-email。<command>py</command>
-            脚本（在Subversion源代码树中的tools/backup/目录中）被用来发送于revision的属性变</command></para>
-
-            <para>
-              <command>化细节有关的email。这种email包含revision和发生变化的属性名，产生变化的用户名，新属性值。</command>
+            <para>Subversion分发版本中包含<command>propchange-email.pl</command>脚本（在Subversion源代码树中的<filename>tools/hook-scripts/</filename>目录中），可以用来发送修订版本属性修改细节的email（并且或只是追加到一个日志文件）。这个email包含修订版本和发生变化的属性名，作出修改的用户和新属性值。</command>
             </para>
-
-            <para />
           </listitem>
         </varlistentry>
       </variablelist>
@@ -439,25 +402,18 @@ pre-commit.tmpl
       <warning>
         <para />
 
-        <para>不要尝试用钩子脚本修改事务。一个通常的例子就是这可能会在运行式自动设置诸如<literal>svn:eol-style</literal>
-        或
-        <literal>svn:mime-type</literal>属性。这看起来是个好主意，但它会引起问题。主要的问题是客户并不知道由钩子脚本改变的变化，同时没有办法通告客户它的数据是过时的。</para>
+        <para>不要尝试用钩子脚本修改事务。一个常见的例子就是在提交时自动设置<literal>svn:eol-style</literal>或<literal>svn:mime-type</literal>这类属性。这看起来是个好主意，但它会引起问题。主要的问题是客户并不知道由钩子脚本进行的修改，同时没有办法通告客户它的数据是过时的，这种矛盾会导致出人意料和不能预测的行为。</para>
 
-        <para>这种不连续会导致出人意料和不能预测的行为。</para>
-
-        <para>检查<filename>pre-commit</filename>
-        钩子的事务及假如它不满足要求，通告它，是一种取代修改事务更好的办法。</para>
-
-        <para>Subversion会执行hooks</para>
+        <para>作为尝试修改事务的替代，我们通过检查<filename>pre-commit</filename>钩子的事务，在不满足要求时拒绝提交。</para>
       </warning>
 
-      <para>Subversion会试图以当前访问版本库的用户身份执行钩子。通常，对版本库的访问总是通过Apache HTTP服务器和mod_dav_svn进行，因此，运行Apache的用户就是执行钩子的用户。要运行钩子，需要具有操作系统级权限的用户对其进行配置。不仅是钩子，其它被钩子使用和调用的文件或程序（包括Subversion版本库本身）也一样以同一个用户的身份访问，不管访问是直接的还是间接的。因此，要注意潜在的用户权限问题，它可能会让你的钩子无法顺利执行。</para>
+      <para>Subversion会试图以当前访问版本库的用户身份执行钩子。通常，对版本库的访问总是通过Apache HTTP服务器和mod_dav_svn进行，因此，执行钩子的用户就是运行Apache的用户。钩子本身需要具有操作系统级的访问许可，用户可以运行它。另外，其它被钩子直接或间接使用的文件或程序（包括Subversion版本库本身）也要被同一个用户访问。换句话说，要注意潜在的访问控制问题，它可能会让你的钩子无法按照你的目的顺利执行。</para>
     </sect2>
 
     <!-- ***************************************************************** -->
 
     <sect2 id="svn-ch-5-sect-2.2">
-      <title>Berkeley DB 设置</title>
+      <title>Berkeley DB配置</title>
 
       <para>Berkeley DB 环境是一个或多个数据库、日志文件、 域文件和配置文件的封装。Berkeley DB环境有它自己预设的设定值，像是任何时间可使用的锁定数目、 日志文件的大小等。 Subversion程序会为Berkeley DB配置选项设定默认的值。 不过，有时你的特定版本库需要特定的数据集合和访问类型，可能需要不同的配置选项。</para>
 
