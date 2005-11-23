@@ -56,9 +56,9 @@
     <sect2 id="svn-ch-5-sect-1.3">
       <title>版本库数据存储</title>
 
-      <para>在Subversion1.1中，版本库中存储数据有两种方式。一种是在BerkeleyDB数据库中存储数据；另一种是使用普通的文件，使用自定义格式。因为Subversion的开发者称版本库为[版本化的]文件系统，他们接受了称后一种存储方式为FSFS的习惯，也就是说，使用本地操作系统文件系统来存储数据的版本化文件系统。</para>
+      <para>在Subversion1.1中，版本库中存储数据有两种方式。一种是在Berkeley DB数据库中存储数据；另一种是使用普通的文件，使用自定义格式。因为Subversion的开发者称版本库为[版本化的]文件系统，他们接受了称后一种存储方式为FSFS的习惯，也就是说，使用本地操作系统文件系统来存储数据的版本化文件系统。</para>
 
-      <para>建立一个版本库时，管理员必须决定使用BerkeleyDB还是FSFS。他们各有优缺点，我们将描述一下。它们任何一个都不比另一个更正式，访问版本库的程序与采用哪一种实现方式无关。访问程序并不知道版本库如何存储数据，它们只是从版本库的API读取到修订版本和事务树。</para>
+      <para>建立一个版本库时，管理员必须决定使用Berkeley DB还是FSFS。它们各有优缺点，我们将详细描述。这两个中并没有一个是更正式的，访问版本库的程序与采用哪一种实现方式无关。访问程序并不知道版本库如何存储数据，它们只是从版本库的API读取到修订版本和事务树。</para>
 
       <para>下面的表从总体上比较了Berkeley DB和FSFS版本库，下一部分将会详细讲述细节。</para>
 
@@ -120,13 +120,13 @@
             <row>
               <entry>可扩展性：修订版本树的数量</entry>
 
-              <entry>数据库; 没有限制</entry>
+              <entry>数据库，没有限制</entry>
 
               <entry>许多古老的本地文件系统在处理单一目录包含上千个条目时出现问题。</entry>
             </row>
 
             <row>
-              <entry>可扩展性: 文件较多的目录</entry>
+              <entry>可扩展性：文件较多的目录</entry>
 
               <entry>较慢</entry>
 
@@ -181,12 +181,12 @@
         <para>Berkeley DB另一个强大的特性是热备份－不必<quote>脱机</quote>就可以备份数据库环境的能力。我们将会在<xref
         linkend="svn-ch-5-sect-3.6" />讨论如何备份你的版本库，能够不停止系统对版本库做全面备份的好处是显而易见的。</para>
 
-        <para>Berkeley DB同时是一个可信赖的数据库系统。Subversion利用了Berkeley DB可以记日志的便利，这意味着数据库先在磁盘上写一个日志文件，描述它将要做的修改，然后再做这些修改。这是为了确保如果如果任何地方出了差错，数据库系统能回复到先前的检查点&mdash;一个日志文件认为没有错误的位置，重新开始事务直到数据恢复为一个可用的状态。关于Berkeley DB日志文件的更多信息请查看<xref
+        <para>Berkeley DB同时是一个可信赖的数据库系统。Subversion利用了Berkeley DB可以记日志的便利，这意味着数据库先在磁盘上写一个日志文件，描述它将要做的修改，然后再做这些修改。这是为了确保如果如果任何地方出了差错，数据库系统能恢复到先前的检查点&mdash;一个日志文件认为没有错误的位置，重新开始事务直到数据恢复为一个可用的状态。关于Berkeley DB日志文件的更多信息请查看<xref
         linkend="svn-ch-5-sect-3.3" />。</para>
 
         <para>但是每朵玫瑰都有刺，我们也必须记录一些Berkeley DB已知的缺陷。首先，Berkeley DB环境不是跨平台的。你不能简单的拷贝一个在Unix上创建的Subversion版本库到一个Windows系统并期望它能够正常工作。尽管Berkeley DB数据库的大部分格式是不受架构约束的，但环境还是有一些方面没有独立出来。其次，使用Berkeley DB的Subversion不能在95/98系统上运行&mdash;如果你需要将版本库建在一个Windows机器上，请装到Windows2000或WindowsXP上。另外，Berkeley DB版本库不能放在网络共享文件夹中，尽管Berkeley DB承诺如果按照一套特定规范的话，可以在网络共享上正常运行，但实际上已知的共享类型几乎都不满足这套规范。</para>
 
-        <para>最后，因为Berkeley DB的库直接链接到了Subversion中，它对于中断比典型的关系型数据库系统更为敏感。大多数SQL系统，举例来说，有一个主服务进程来协调对数据库表的访问。如果一个访问数据库的程序因为某种原因出现问题，数据库守护进程察觉到连接中断会做一些清理。因为数据库守护进程是唯一访问数据库表的进程，应用程序不需要担心访问许可的冲突。但是，这些情况与BerkeleyDB不同。Subversion（和使用Subversion库的程序）直接访问数据库的表，这意味着如果有一个程序崩溃，就会使数据库处于一个暂时的不一致、不可访问的状态。当这种情况发生时，管理员需要让Berkeley DB恢复到一个检查点，这的确有点讨厌。除了崩溃的进程，还有一些情况能让版本库出现异常，比如程序在数据库文件的所有权或访问权限上发生冲突。因为Berkeley DB版本库非常快，并且可以扩展，非常适合使用一个单独的服务进程，通过一个用户来访问&mdash;比如Apache的<command>httpd</command>或<command>svnserve</command>（参见<xref linkend="svn-ch-6" />）&mdash;而不是多用户通过<literal>file:///</literal>或<literal>svn+ssh://</literal>URL的方式多用户访问。如果将Berkeley DB版本库直接用作多用户访问，请先阅读<xref linkend="svn-ch-6-sect-5" />。</para>
+        <para>最后，因为Berkeley DB的库直接链接到了Subversion中，它对于中断比典型的关系型数据库系统更为敏感。大多数SQL系统，举例来说，有一个主服务进程来协调对数据库表的访问。如果一个访问数据库的程序因为某种原因出现问题，数据库守护进程察觉到连接中断会做一些清理。因为数据库守护进程是唯一访问数据库表的进程，应用程序不需要担心访问许可的冲突。但是，这些情况与Berkeley DB不同。Subversion（和使用Subversion库的程序）直接访问数据库的表，这意味着如果有一个程序崩溃，就会使数据库处于一个暂时的不一致、不可访问的状态。当这种情况发生时，管理员需要让Berkeley DB恢复到一个检查点，这的确有点讨厌。除了崩溃的进程，还有一些情况能让版本库出现异常，比如程序在数据库文件的所有权或访问权限上发生冲突。因为Berkeley DB版本库非常快，并且可以扩展，非常适合使用一个单独的服务进程，通过一个用户来访问&mdash;比如Apache的<command>httpd</command>或<command>svnserve</command>（参见<xref linkend="svn-ch-6" />）&mdash;而不是多用户通过<literal>file:///</literal>或<literal>svn+ssh://</literal>URL的方式多用户访问。如果将Berkeley DB版本库直接用作多用户访问，请先阅读<xref linkend="svn-ch-6-sect-5" />。</para>
       </sect3>
 
       <!-- ***************************************************************** -->
@@ -196,7 +196,7 @@
 
         <para>在2004年中期，另一种版本库存储系统慢慢形成了：一种不需要数据库的存储系统。FSFS版本库在单一文件中存储修订版本树，所以版本库中所有的修订版本都在一个子文件夹中有限的几个文件里。事务在单独的子目录中被创建，创建完成后，一个单独的事务文件被创建并移动到修订版本目录，这保证提交是原子性的。因为一个修订版本文件是持久不可改变的，版本库也可以做到热备份，就象Berkeley DB版本库一样。</para>
 
-        <para>修订版本文件格式代表了一个修订版本的目录结构，文件内容，和其他修订版本树中相关信息。不像BerkeleyDB数据库，这种存储格式可跨平台并且与CPU架构无关。因为没有日志或用到共享内存的文件，数据库能被网络文件系统安全的访问和检查只读环境。缺少数据库花消同时也意味着版本库的总体体积可以稍小一点。</para>
+        <para>修订版本文件格式代表了一个修订版本的目录结构，文件内容，和其它修订版本树中相关信息。不像Berkeley DB数据库，这种存储格式可跨平台并且与CPU架构无关。因为没有日志或用到共享内存的文件，数据库能被网络文件系统安全的访问和在只读环境下检查。缺少数据库花消同时也意味着版本库的总体体积可以稍小一点。</para>
 
         <para>FSFS也有一种不同的性能特性。当提交大量文件时，FSFS使用O(N)算法来追加条目，而Berkeley DB则用(N^2)算法来重写整个目录。另一方面，FSFS通过写入与上一个版本比较的变化来记录新版本，这也意味着获取最新修订版本时会比Berkeley DB慢一点，提交时FSFS也会有一个更长的延迟，在某些极端情况下会导致客护端在等待回应时超时。</para>
 
@@ -238,7 +238,7 @@ $ svnadmin create --fs-type bdb /path/to/other/repos
     <warning>
       <para>不要在网络共享上创建Berkeley DB版本库&mdash;它不能存在于诸如NFS， AFS或Windows SMB的远程文件系统中，Berkeley 数据要求底层文件系统实现严格的POSIX锁定语义，几乎没有任何网络文件系统提供这些特性，假如你在网络共享上使用Berkeley DB，结果是不可预知的——许多错误可能会立刻发现，也有可能在几个月之后才能发现</para>
 
-      <para>假如你需要多台计算机来访问，你需要需要在网络共享上创建FSFS版本库，而不是Berkeley DB的版本库。或者更好的办法，你建立一个真正的服务进程（例如Apache或<command>svnserve），把版本库放在</command>服务器能访问到的本地文件系统中，以便能通过网络访问。详情请参看<xref linkend="svn-ch-6" /></para>
+      <para>假如你需要多台计算机来访问，你需要在网络共享上创建FSFS版本库，而不是Berkeley DB的版本库。或者更好的办法，你建立一个真正的服务进程（例如Apache或<command>svnserve），把版本库放在</command>服务器能访问到的本地文件系统中，以便能通过网络访问。详情请参看<xref linkend="svn-ch-6" /></para>
     </warning>
 
     <para>你可能已经注意到了，<command>svnadmin</command>命令的路径参数只是一个普通的文件系统路径，而不是一个<command>svn</command>客户端程序访问版本库时使用的URL。<command>svnadmin</command>和<command>svnlook</command>都被认为是服务器端工具&mdash;它们在版本库所在的机器上使用，用来检查或修改版本库，不能通过网络来执行任务。一个Subversion的新手通常会犯的错误，就是试图将URL（甚至<quote>本地</quote><literal>file:</literal>路径）传给这两个程序。</para>
@@ -250,7 +250,7 @@ $ ls repos
 conf/  dav/  db/  format  hooks/  locks/  README.txt
 </screen>
 
-    <para>除了<filename>README.txt</filename>和<filename>format</filename>文件，版本库目录就是一些子目录了。就像Subversion其他部分的设计一样，模块化是一个很重要的原则，而且层次化的组织要比杂乱无章好。下面是对新的版本库目录中各个项目的简要介绍：</para>
+    <para>除了<filename>README.txt</filename>和<filename>format</filename>文件，版本库目录就是一些子目录了。就像Subversion其它部分的设计一样，模块化是一个很重要的原则，而且层次化的组织要比杂乱无章好。下面是对新的版本库目录中各个项目的简要介绍：</para>
 
     <variablelist>
       <varlistentry>
@@ -387,7 +387,7 @@ pre-commit.tmpl
           </term>
 
           <listitem>
-            <para>我们在前面提到过，这个钩子与<filename>pre-revprop-change</filename>对应。事实上，因为多疑的原因，只有存在<filename>pre-revprop-change</filename>时这个脚本才会执行。当这两个钩子都存在时，<filename>post-revprop-change</filename>在修订版本属性被改变之后运行，通常用来发送包含新属性的email。版本库传递四个参数给该钩子：到版本库的路径，属性存在的revision，经过校验的产生变化的用户名，和属性自身的名字。</para>
+            <para>我们在前面提到过，这个钩子与<filename>pre-revprop-change</filename>对应。事实上，因为多疑的原因，只有存在<filename>pre-revprop-change</filename>时这个脚本才会执行。当这两个钩子都存在时，<filename>post-revprop-change</filename>在修订版本属性被改变之后运行，通常用来发送包含新属性的email。版本库传递四个参数给该钩子：到版本库的路径，属性存在的修订版本，经过校验的产生变化的用户名，和属性自身的名字。</para>
 
             <para>Subversion分发版本中包含<command>propchange-email.pl</command>脚本（在Subversion源代码树中的<filename>tools/hook-scripts/</filename>目录中），可以用来发送修订版本属性修改细节的email（并且或只是追加到一个日志文件）。这个email包含修订版本和发生变化的属性名，作出修改的用户和新属性值。
             </para>
@@ -440,7 +440,7 @@ pre-commit.tmpl
       <sect3 id="svn-ch-5-sect-3.1.1">
         <title>svnlook</title>
 
-        <para><command>svnlook</command>是Subversion提供的用来查看版本库中不同的修订版本和事务。这个程序不会修改版本库内容－这是个“只读”的工具。<command>svnlook</command>通常用在版本库挂钩程序中，用来记录版本库即将提交的变更（<command>用在pre-commit挂钩时）</command>或者已经提交的（用在<command>post-commit</command>挂钩时）。版本库管理员可以将这个工具用于诊断。</para>
+        <para><command>svnlook</command>是Subversion提供的用来查看版本库中不同的修订版本和事务。这个程序不会修改版本库内容－这是个<quote>只读</quote>的工具。<command>svnlook</command>通常用在版本库钩子程序中，用来记录版本库即将提交（<command>用在pre-commit钩子时）</command>或者已经提交的（用在<command>post-commit</command>钩子时）修改。版本库管理员可以将这个工具用于诊断。</para>
 
         <para><command>svnlook</command> 的语法很直接：</para>
 
@@ -501,7 +501,7 @@ Greek tree.
           </listitem>
         </orderedlist>
 
-        <para>这种输出是人可阅读的，像是时间戳这种有意义的条目，使用文本表示，而不是其他比较晦涩的方式（Tasty Freeze）。这种输出也是机器可读的&mdash;因为日志信息可以有多行，没有长度的限制，<command>svnlook</command>在日志消息之前提供了消息的长度，这使得脚本或者其他对这个命令进行的封装提供了更强的功能，比如日志消息使用了多少内存，或在这个输出成为最后一个字节之前应该略过多少字节。</para>
+        <para>这种输出是人可阅读的，像是时间戳这种有意义的条目，使用文本表示，而不是其他比较晦涩的方式（例如许多无聊的人推荐的十亿分之一秒的数量）。这种输出也是机器可读的&mdash;因为日志信息可以有多行，没有长度的限制，<command>svnlook</command>在日志消息之前提供了消息的长度，这使得脚本或者其他对这个命令进行的封装提供了更强的功能，比如日志消息使用了多少内存，或在这个输出成为最后一个字节之前应该略过多少字节。</para>
 
         <para>另一个<command>svnlook</command>常见的用法是查看修订版本树或事务树的内容。<command>svnlook tree</command> 命令显示在请求的树中的目录和文件。如果你提供了<option>--show-ids</option>选项，它还会显示每个路径的文件系统节点修订版本ID（这一点对开发者往往更有用）。</para>
 
@@ -828,7 +828,7 @@ Available subcommands:
         <para>Subversion版本库转储文件记录了所有版本数据的变更信息，而且以易于阅读的格式保存。可以使用<command>svnadmin dump</command>命令生成转储文件，然后用<command>svnadmin load</command>命令生成一个新的版本库。（参见 <xref
         linkend="svn-ch-5-sect-3.5" />）。转储文件易于阅读意味着你可以小心翼翼的查看和修改它。当然，问题是如果你有一个运行了两年的版本库，那么生成的转储文件会很庞大，阅读和手工修改起来都会花费很多时间。</para>
 
-        <para>虽然在管理员的日常工作中并不会经常使用，不过<command>svndumpfilter</command>可以对特定的路径进行过滤。这是有一个独特而很有意义的用法，可以帮助你快速方便的修改转储的数据。使用时，只需提供一个你想要保留的（或者不想保留的）路径列表，然后把你的版本库转储文件送进这个过滤器。最后你就可以得到一个仅包含你想保留的路径的转储数据流。</para>
+        <para>虽然在管理员的日常工作中并不会经常使用，不过<command>svndumpfilter</command>可以对特定的路径进行过滤。这是一个独特而很有意义的用法，可以帮助你快速方便的修改转储的数据。使用时，只需提供一个你想要保留的（或者不想保留的）路径列表，然后把你的版本库转储文件送进这个过滤器。最后你就可以得到一个仅包含你想保留的路径的转储数据流。</para>
 
         <para><command>svndumpfilter</command>的语法如下：</para>
 
@@ -983,7 +983,7 @@ $
           </varlistentry>
         </variablelist>
 
-        <para>尽管<command>svndumpfilter</command>十分有用，能节省大量的时间，但它却不折不扣是把双刃剑。首先，这个工具对路径语义极为敏感。仔细检查转储文件中的路径是不是以斜线开头。也许<literal>Node-path</literal>和<literal>Copyfrom-path</literal>这两个头参数对你有些帮助。</para>
+        <para>尽管<command>svndumpfilter</command>十分有用，能节省大量的时间，但它却是把不折不扣的双刃剑。首先，这个工具对路径语义极为敏感。仔细检查转储文件中的路径是不是以斜线开头。也许<literal>Node-path</literal>和<literal>Copyfrom-path</literal>这两个头参数对你有些帮助。</para>
 
         <screen>
 …
@@ -1167,7 +1167,7 @@ done
       </example>
 
       <para>可以用下面的命令使用上例中脚本：
-      <command>/path/to/txn-info.sh /path/to/repos</command>。该命令的输出主要有多个<command>svnlook info</command>参见<xref linkend="svn-ch-5-sect-3.1.1" />）的输出组成，类似于下面的例子：</para>
+      <command>/path/to/txn-info.sh /path/to/repos</command>。该命令的输出主要由多个<command>svnlook info</command>参见<xref linkend="svn-ch-5-sect-3.1.1" />）的输出组成，类似于下面的例子：</para>
 
       <screen>
 $ txn-info.sh myrepos
@@ -1465,10 +1465,10 @@ $
         </footnote>
       而且因为你可以改变修订版本的属性，而不需要遵照时间顺序&mdash;你可在任何时刻修改任何修订版本的属性&mdash;因此最新版本的增量备份不会捕捉到以前特定修订版本的属性修改。</para>
 
-      <para>通常说来，在每次提交时，只有妄想狂才会备份整个版本库，然而，假设一个给定的版本库拥有一些恰当粒度得冗余机制（如每次提交的邮件），版本库管理员也许会希望将版本库的热备份引入到系统级的每夜备份，对大多数版本库，归档的提交邮件为保存资源提供了足够的冗余措施，至少对于最近的提交。但是它是你的数据&mdash;你喜欢怎样保护都可以。</para>
+      <para>通常说来，在每次提交时，只有妄想狂才会备份整个版本库，然而，假设一个给定的版本库拥有一些恰当粒度的冗余机制（如每次提交的邮件）。版本库管理员也许会希望将版本库的热备份引入到系统级的每夜备份，对大多数版本库，归档的提交邮件为保存资源提供了足够的冗余措施，至少对于最近的提交。但是它是你的数据&mdash;你喜欢怎样保护都可以。</para>
 
       <para>通常情况下，最好的版本库备份方式是混合的，你可以平衡完全和增量备份，另外配合提交邮件的归档，Subversion开发者，举个例子，在每个新的修订版本建立时备份Subversion的源代码版本库，并且保留所有的提交和属性修改通知文件。你的解决方案类似，必须迎合你的需要，平衡便利和你的偏执。然而这些不会改变你的硬件来自钢铁的命运。<footnote>
-          <para>你知道的&mdash;所有的术语只是她的 <quote>变幻无常的手指</quote>。</para>
+          <para>你知道的&mdash;只是对各种变化莫测的问题的统称。</para>
         </footnote> 这一定会帮助你减少尝试的时间。</para>
     </sect2>
   </sect1>
@@ -1602,7 +1602,7 @@ $
   <!-- ******************************************************************* -->
 
   <sect1 id="svn-ch-5-sect-7">
-    <title>总结</title>
+    <title>摘要</title>
 
     <para>现在，你应该已经对如何创建、配置以及维护Subversion版本库有了个基本的认识。我们向您介绍了几个可以帮助您工作的工具。通过这一章，我们说明了一些常见的管理误区，并提出了避免陷入误区的建议。</para>
 
