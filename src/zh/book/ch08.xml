@@ -5,7 +5,7 @@
     <para>Subversion是一个开源的软件项目，使用Apache样式的软件许可证。这个项目由位于加利福尼亚的CollabNet, Inc.软件开发公司资助。这个关于Subversion开发的社区一直欢迎新成员贡献自己的时间和注意力。鼓励志愿者做他们能做的任何帮助，不管是发现和诊断bug，精炼已存的代码还是补充新的特性。
    </para>
     
-    <para>本章是为那些希望实际参与源代码编写来帮助Subversion不断进步的人们准备的。我们要知道，在这里我们会涉及到许多软件内在的细节，在开发subversion本身&mdash;或利用subversion库开发全新工具时&mdash;所用到的许多核心技术。如果你无法预测你是否会以这种层级参与到这个软件中来，那么也可以随意跳过这一章，而你作为一个Subversion用户的体验不会受到任何影响。
+    <para>本章是为那些希望实际参与源代码编写来帮助Subversion不断进步的人们准备的。我们要知道，在这里我们会涉及到许多软件内在的细节，在开发Subversion本身&mdash;或利用Subversion库开发全新工具时&mdash;所用到的许多核心技术。如果你无法预测你是否会以这种层级参与到这个软件中来，那么也可以随意跳过这一章，而你作为一个Subversion用户的体验不会受到任何影响。
    </para>
 
   </simplesect>
@@ -106,7 +106,7 @@
       <para>Subversion文件系统通过libsvn_fs API来访问，它并不是一个安装在操作系统之上的内核级的文件系统（例如Linux ext2或NTFS），而是一个虚拟文件系统。它并未将<quote>文件</quote>和<quote>目录</quote>保存为真实的文件和目录（也就是用你熟知的shell程序可以浏览的那种），而是采用了一种抽象的后端存储方式，这个后端存储方式有两种&mdash;一个是Berkeley DB数据库环境，另一个是普通文件表示。（要了解更多关于版本库后端的信息，请看<xref
         linkend="svn-ch-5-sect-1.3"/>）。除此之外，开发社区也非常有兴趣考虑在Subversion的未来版本 中提供某种使用其它后端数据库系统的能力，也许是开放式数据库连接（ODBC）的机制。</para>
 
-      <para>libsvn_fs支持的文件系统API包含了所有其他文件系统的功能：你可以创建和删除文件和目录、拷贝和移动、修改文件内容等等。它也包含了一些不太常用的特性，如对任意文件和目录添加、修改和删除元数据（<quote>properties</quote>）的能力。此外，Subversion文件系统是一个版本化的文件系统，意味着你修改你的目录树时，Subversion会记住修改以前的样子。等等，所有的回到开始版本化的时间是在添加到文件系统的时候（且刚刚超过***）。</para>
+      <para>libsvn_fs支持的文件系统API包含了所有其他文件系统的功能：你可以创建和删除文件和目录、拷贝和移动、修改文件内容等等。它也包含了一些不太常用的特性，如对任意文件和目录添加、修改和删除元数据（<quote>properties</quote>）的能力。此外，Subversion文件系统是一个版本化的文件系统，意味着你修改你的目录树时，Subversion会记住修改以前的样子。等等，可以回到所有初始化版本库之后（且仅仅之后）的版本。</para>
 
       <para>所有你对目录树的修改包含在Subversion事务的上下文中，下面描述了修改文件系统的例程：
       </para>
@@ -150,7 +150,7 @@
         <graphic fileref="images/ch08dia1.png"/>
       </figure>
 
-      <para>当然，Subversion文件系统有一个其它文件系统的第三维&mdash;时间！
+      <para>当然，Subversion文件系统有一个其它文件系统所没有的第三维&mdash;时间！
         <footnote>
           <para>我们理解这一定会给科幻小说迷带来一个震撼，他们认为时间是<emphasis>第四</emphasis>维的，我们要为提出这样一个不同理论的断言而伤害了他们的作出道歉。
          </para>
@@ -299,7 +299,7 @@ make_new_directory (const char *repos_path,
       <para>如果说Subversion版本库层是在<quote>这条线的另一端</quote>，那版本库访问层就是这条线。负责在客户端库和版本库之间编码数据，这一层包括libsvn_ra模块加载模块，RA模块本身（现在包括了libsvn_ra_dav、libsvn_ra_local和libsvn_ra_svn），和所有一个或多个RA模块需要的附加库，例如与Apache模块mod_dav_svn通讯的libsvn_ra_dav或者是libsvn_ra_svn的服务器，<command>svnserve</command>。
      </para>
 
-      <para>因为Subversion使用URL来识别版本库资源，URL模式的URL部分（通常是<literal>file:</literal>、<literal>http:</literal>、<literal>https:</literal>或<literal>svn:</literal>）用来监测那个RA模块用来处理通讯。每个模块注册一组它们知道如何<quote>说话</quote>的协议，所以RA加载器可以在运行中监测在手边的任务中使用那个模块。通过运行<command>svn --version</command>，你可以监测Subversion命令行客户端所支持的RA模块和他们声明支持的协议：</para>
+      <para>因为Subversion使用URL来识别版本库资源，URL模式的协议部分（通常是<literal>file:</literal>、<literal>http:</literal>、<literal>https:</literal>或<literal>svn:</literal>）用来监测那个RA模块用来处理通讯。每个模块注册一组它们知道如何<quote>说话</quote>的协议，所以RA加载器可以在运行中监测在手边的任务中使用哪个模块。通过运行<command>svn --version</command>，你可以监测Subversion命令行客户端所支持的RA模块和它们声明支持的协议：</para>
      
       <screen>
 $ svn --version
@@ -355,7 +355,7 @@ The following repository access (RA) modules are available:
         <para>作为标准HTTP/WebDAV协议的补充，Subversion也提供了一个使用自定义协议的RA实现，libsvn_ra_svn模块实现了自己的网络套接字连接，与一个独立服务器通讯&mdash;<filename>svnserve</filename>程序&mdash;在存放版本库的机器上。客户端可以使用<literal>svn://</literal>访问版本库。
        </para>
 
-        <para>这个RA实现缺乏前面小节提到的Apache的大多数有点；然而虽然如此，系统管理员会非常有兴趣，因为这配置和运行异常的简单；设置一个<filename>svnserve</filename>几乎是立刻的，它与Apache相比也是非常的小（从代码长度这方面说），让它非常容易进行安全或其他方面原因的审核。此外，一些系统管理员或许已经有了一个SSH安全基础，希望Subversion使用它，客户端使用ra_svn可以容易的使用SSH封装这个协议。
+        <para>这个RA实现缺乏前面小节提到的Apache的大多数优点；然而虽然如此，系统管理员会非常有兴趣，因为这配置和运行异常的简单；设置一个<filename>svnserve</filename>几乎是立刻的，它与Apache相比也是非常的小（从代码长度这方面说），让它非常容易进行安全或其它方面原因的审核。此外，一些系统管理员或许已经有了一个SSH安全基础，希望Subversion使用它，客户端使用ra_svn可以容易的使用SSH封装这个协议。
        </para>
 
       </sect3>
@@ -378,7 +378,7 @@ The following repository access (RA) modules are available:
       <sect3 id="svn-ch-8-sect-1.2.4">
         <title>你的RA库在这里</title>
 
-        <para>对那些一直希望使用另一个协议来访问Subversion版本库的人，正好是为什么版本库访问层是模块化的！开发者可以简单的编写一个新的库来在一侧实现RA接口并且与另一侧的版本库通讯。你的新库可以使用存在的网络协议，或者发明你自己的。你可以使用进程间的通讯调用，或者&mdash;让我们发狂，我们会吗？&mdash;你甚至可以实现一个电子邮件为基础的协议，Subversion提供了API；你提供创造性。
+        <para>对那些一直希望使用另一个协议来访问Subversion版本库的人，正好是为什么版本库访问层是模块化的！开发者可以简单的编写一个新的库来在一侧实现RA接口并且与另一侧的版本库通讯。你的新库可以使用存在的网络协议，或者发明你自己的。你可以使用进程间的通讯调用，或者&mdash;让我们发狂，我们会吗？&mdash;你甚至可以实现一个电子邮件为基础的协议，Subversion提供了API，你提供创造性。
        </para>
 
       </sect3>
@@ -395,7 +395,7 @@ The following repository access (RA) modules are available:
         linkend="svn-ch-8-sect-3"/>。
         </para>
 
-      <para>Subversion客户端库libsvn_client具备最广泛的职责；它的工作是结合工作拷贝库和版本库访问苦的功能，然后为希望普通版本控制的应用提供最高级的API。举个例子，<function>svn_client_checkout</function>方法是用一个URL作为参数，传递这个URL到RA层然后在特定版本库打开一个会话。然后向版本库要求一个特定的目录树，然后把目录树发送给工作拷贝库，然后把完全的工作拷贝写到磁盘（<filename>.svn</filename>目录和一切）。</para>
+      <para>Subversion客户端库libsvn_client具备最广泛的职责；它的工作是结合工作拷贝库和版本库访问库的功能，然后为希望普通版本控制的应用提供最高级的API。举个例子，<function>svn_client_checkout</function>方法是用一个URL作为参数，传递这个URL到RA层然后在特定版本库打开一个会话。然后向版本库要求一个特定的目录树，然后把目录树发送给工作拷贝库，然后把完全的工作拷贝写到磁盘（<filename>.svn</filename>目录和一切）。</para>
 
       <para>客户端库是为任何程序使用设计的，尽管Subversion的源代码包括了一个标准的命令行客户端，用客户端库编写GUI客户端也是很简单，Subversion新的GUI（或者任何新的客户端，真的）不需要紧密围绕包含的命令行客户端&mdash;他们对具有相同功能、数据和回调机制的libsvn_client的API有完全的访问权利。
      </para>
@@ -403,7 +403,7 @@ The following repository access (RA) modules are available:
       <sidebar>
         <title>直接绑定&mdash;关于正确性</title>
 
-        <para>为什么GUI程序要直接访问libsvn_client而不以命令行客户端的包裹运行？除了效率以外，这也关系到潜在的正确性问题。一个命令行客户端程序（如Subversion提供的）如果绑定了客户端库，需要将反馈和请求数据字节从C翻译为刻度的输出，这种翻译时有损耗的，程序不能得到API所提供的所有信息，或者是得到紧凑的信息。
+        <para>为什么GUI程序要直接访问libsvn_client而不以命令行客户端的包裹运行？除了效率以外，这也关系到潜在的正确性问题。一个命令行客户端程序（如Subversion提供的）如果绑定了客户端库，需要将反馈和请求数据字节从C翻译为可读的输出，这种翻译是有损耗的，程序不能得到API所提供的所有信息，或者是得到紧凑的信息。
        </para>
 
         <para>如果你已经包裹了这样一个命令行程序，第二个程序只能访问已经经过解释的（如我们提到的，不完全）信息，需要<emphasis>再次</emphasis>转化为<emphasis>它本身的</emphasis>展示格式。由于各层的包裹，原始数据的完整性越来越难以保证，结果很像对喜欢的录音带或录像带反复的拷贝（一个拷贝&hellip;）。
@@ -428,7 +428,7 @@ The following repository access (RA) modules are available:
 
     <!-- ***************************************************************** -->
     <sect2 id="svn-ch-8-sect-2.1">
-      <title>Apache便携运行库</title>
+      <title>Apache可移植运行库</title>
       <para>伴随Subversion自己的数据类型，你会看到许多<literal>apr_</literal>开头的数据类型引用&mdash;来自Apache便携运行库（APR）的对象。APR是Apache便携运行库，源自为了服务器代码的多平台性，尝试将不同的操作系统特定字节与操作系统无关代码隔离。结果就提供了一个基础API的库，只有一些适度区别&mdash;或者是广泛的&mdash;来自各个操作系统。Apache HTTP服务器很明显是APR库的第一个用户，Subversion开发者立刻发现了使用APR库的价值。意味着Subversion没有操作系统特定的代码，也意味着Subversion客户端可以在Server存在的平台编译和运行。当前这个列表包括，各种类型的Unix、Win32、OS/2和Mac OS X。
      </para>
 
@@ -512,7 +512,7 @@ def crawl_filesystem_dir (root, directory, pool):
       <para>在本章的前面小节，我们提到<filename>libsvn_client</filename>接口，并且解释了它存在的唯一目的是为了简化编写Subversion客户端的过程，下面是一个如何同SWIG绑定访问库的简短例子，简单的几句Python代码，我们就可以检出一个完全功能的Subversion工作拷贝！</para>
 
       <example id="svn-ch-8-sect-2.3-ex-2">
-        <title>A Simple Script to Check Out a Working Copy.</title>
+        <title>一段检出工作拷贝的简单脚本</title>
 
         <programlisting>
 #!/usr/bin/env python
@@ -664,7 +664,7 @@ if __name__ == '__main__':
     <title>WebDAV</title>
 
     <para>WebDAV（<quote>Web-based Distributed Authoring
-      and Versioning</quote>的缩写）是一个标准HTTP协议的扩展，把web变成一个可读写的媒体，作为当今基本的只读媒体的替代。原理就是目录和文件时可以共享的&mdash;都是可读写的对象&mdash;通过web。RFCs2518和3253描述了WebDAV/DeltaV 对于HTTP的扩展，存放于（随之有许多其他有用的信息）<systemitem
+      and Versioning</quote>的缩写）是一个标准HTTP协议的扩展，把web变成一个可读写的媒体，作为当今基本的只读媒体的替代。原理就是目录和文件时可以共享的&mdash;都是可读写的对象&mdash;通过web。RFCs2518和3253描述了WebDAV/DeltaV 对于HTTP的扩展，存放于（随之有许多其它有用的信息）<systemitem
       class="url">http://www.webdav.org/</systemitem>。</para>
 
     <para>已经有一些操作系统文件浏览器可以使用WebDAV装配网络目录，在Win32中，Windows浏览器可以像普通共享文件夹一样浏览叫做网络文件夹（只是一个设置好WebDAV的网络位置）的目录，在Mac OS X也有这个能力，就像Nautilus和Konqueror作的（分别对应GNOME和KDE）。
@@ -687,11 +687,11 @@ if __name__ == '__main__':
 
     <para>一个内存池是程序所需要分配内存的一个抽象表示，不选择使用标准的<function>malloc()</function>从操作系统直接申请内存，而使用向APR申请的池申请创建的（使用<function>apr_pool_create()</function>方法）内存。APR会从操作系统分配合适的内存块这些内存可以立刻在程序里使用，当程序需要更多的池内存时，它会使用APR的池API方法，如<function>apr_palloc()</function>，返回池中的基本内存位置，这个程序可以继续从池中请求内存，在超过最初的池的容量后，APR会自动满足程序的要求扩大池的大小，直到系统没有足够的内存。</para>
 
-    <para>现在，如果这是池故事的结尾，我们就不应该再作过多的关注，很幸运，不是这个情况。池不可以仅仅被创建；它也可以被清空和销毁，分别使用<function>apr_pool_clear()</function>和<function>apr_pool_destroy()</function>。这给了用户灵活性来分配许多&mdash;或者是数千&mdash;东西自这个池，然后使用一个命令来清空！更进一步，池由登记，你可以为前一步创建的池创建<quote>子池</quote>。当你清空一个池，所有的子池会被销毁；如果你销毁一个池，它和所有的子池也会被销毁。</para>
+    <para>现在，如果这是池故事的结尾，我们就不应该再作过多的关注，很幸运，不是这个情况。池不可以仅仅被创建；它也可以被清空和销毁，分别使用<function>apr_pool_clear()</function>和<function>apr_pool_destroy()</function>。这给了用户灵活性来分配许多&mdash;或者是数千&mdash;东西自这个池，然后使用一个命令来清空！更进一步，池可以分级，你可以为前一步创建的池创建<quote>子池</quote>。当你清空一个池，所有的子池会被销毁；如果你销毁一个池，它和所有的子池也会被销毁。</para>
 
     <para>在我们进一步研究之前，开发者会发现在Subversion源代码中并没有对前面提到的APR池方法有很多的调用，APR提供了许多扩展机制，像使用自定义的附加到池的<quote>用户数据</quote>的能力，注册当池销毁时的所要调用的清理方法的机制，Subversion使用一些不太琐碎的方法来利用这些扩展，所以Subversion提供了（大多数代码使用的）包裹方法<function>svn_pool_create()</function>、<function>svn_pool_clear()</function>和<function>svn_pool_destroy()</function>。</para>
 
-    <para>尽管池帮助我们基本的内存管理，池的创建确实投射出了循环和迭代场景，因为反复在循环中经常没有界限，在深度迭代中，一定区域的内存消耗变得不可预料，很幸运，使用嵌套的内存池可以简单的管理这种潜在的混乱情形，下面的例子描述了在这个情形下嵌套池的基本使用非常平常&mdash;迭代的对目录树的遍历，对树上的每一个部分做一些人物。
+    <para>尽管池帮助我们基本的内存管理，池的创建确实投射出了循环和迭代场景，因为反复在循环中经常没有界限，在深度迭代中，一定区域的内存消耗变得不可预料，很幸运，使用嵌套的内存池可以简单的管理这种潜在的混乱情形，下面的例子描述了在这个情形下嵌套池的基本使用非常平常&mdash;迭代的对目录树的遍历，对树上的每一个部分做一些任务。
    </para>
 
     <example id="svn-ch-8-sect-5-ex-1">
@@ -780,7 +780,7 @@ crawl_dir (apr_array_header_t *files,
 </programlisting>
     </example>
 
-    <para>在前一个例子里描述了在循环和迭代情况下有效地池使用，每次迭代会从为传递给池的建立一个子池开始，池在循环区域中使用在每次迭代清理。结果是内存使用比例和深度成比例，而不是顶级目录包含所有的子目录的总数量。当迭代的第一个调用最终结束时，实际上只有很小的传递过来的数据存放在池中，现在想想一下如果在每片数据使用时使用<function>alloc()</function>和<function>free()</function>时会面临的复杂性！</para>
+    <para>在前一个例子里描述了在循环和迭代情况下有效地池使用，每次迭代会从为方法传递一个新建的子池开始，池在循环区域中使用，在每次迭代清理。结果是内存使用比例和深度成比例，而不是顶级目录包含所有的子目录的总数量。当迭代的第一个调用最终结束时，实际上只有很小的传递过来的数据存放在池中，现在想想一下如果在每片数据使用时使用<function>alloc()</function>和<function>free()</function>时会面临的复杂性！</para>
     
     <para>池并不是对所有的应用是理想的，但是在Subversion中非常有用，作为一个Subversion开发者，你会需要学会适应池并且正确地使用它，内存使用的bug和膨胀可能会非常难于诊断和修正，但是APR提供的pool结构被证明了是非常的方便的，节约时间的功能。</para>
 
@@ -800,34 +800,9 @@ crawl_dir (apr_array_header_t *files,
     <sect2 id="svn-ch-8-sect-6.1">
       <title>加入社区</title>
       
-      <para>
-      The first step in community participation is to find a way
-        to stay on top of the latest happenings.  To do this most
-        effectively, you will want to subscribe to the main developer
-        discussion list (<email>dev@subversion.tigris.org</email>) and
-        commit mail list (<email>svn@subversion.tigris.org</email>).
-        By following these lists even loosely, you will have access
-        to important design discussions, be able to see actual changes
-        to Subversion source code as they occur, and be able to
-        witness peer reviews of those changes and proposed changes.
-        These email based discussion lists are the primary
-        communication media for Subversion development.  See the
-        Mailing Lists section of the website for other
-        Subversion-related lists you might be interested in.</para>
+      <para>加入社区的第一步是关注最新发生的事情，最有效的办法是订阅主要的开发邮件列表（<email>dev@subversion.tigris.org</email>）和提交邮件列表（<email>svn@subversion.tigris.org</email>）。通过轻松的跟踪这些列表，你可以参与最重要的设计讨论，并且可以看到实际发生效果的Subversion代码，并且可以见证这些修改并提出修改建议。这些基于邮件列表的讨论是我们Subversion开发最主要的交流媒体。如果你对其他Subversion相关的列表有兴趣，可以查看本网站的邮件列表部分。</para>
 
-      <para>But how do you know what needs to be done?  It is quite
-        common for a programmer to have the greatest intentions of
-        helping out with the development, yet be unable to find a good
-        starting point.  After all, not many folks come to the
-        community having already decided on a particular itch they
-        would like to scratch.  But by watching the developer
-        discussion lists, you might see mentions of existing bugs or
-        feature requests fly by that particularly interest you.  Also,
-        a great place to look for outstanding, unclaimed tasks is the
-        Issue Tracking database on the Subversion website.  There you
-        will find the current list of known bugs and feature requests.
-        If you want to start with something small, look for issues
-        marked as <quote>bite-sized</quote>.</para>
+      <para>但是你如何知道需要做什么？这是一个希望参与帮助我们开发的程序员最关心的问题，很难找到一个好的开始。毕竟，来到社区的很多人并没有已经决定好了要做什么，但是通过阅读开发者的讨论，你会看到很感兴趣的已知bug或特性需求。另外也可以在问题追踪数据库找出那些突出的没有人做的任务，这里你会发现当前列表的已知bug和特性需求，如果你希望从一些小事开始，可以查看那些标记为<quote>bite-sized</quote>的问题。</para>
       
     </sect2>
     
@@ -864,11 +839,11 @@ A  subversion/build.conf
     <sect2 id="svn-ch-8-sect-6.3">
       <title>开始熟悉社区政策</title>
       
-      <para>现在你有了包含最新Subversion源代码的工作拷贝，你一定希望来通过工作拷贝顶级目录下的<filename>HACKING</filename>文件来做一次浏览。这个<filename>HACKING</filename>文件包含了如何对Subversion做贡献的说明，包括如何正确地格式化代码与余下的代码基保持一致性，如何使用有效的提交日志描述你的被提议修改，如何测试修改，等等。对Subversion源代码的提交特权是赢得的&mdash;被精英所管理。
+      <para>现在你有了包含最新Subversion源代码的工作拷贝，你一定希望来通过工作拷贝顶级目录下的<filename>HACKING</filename>文件来做一次浏览。这个<filename>HACKING</filename>文件包含了如何对Subversion做贡献的说明，包括如何正确地格式化代码与余下的代码基保持一致性，如何使用有效的提交日志描述你的被提议修改，如何测试修改，等等。对Subversion源代码的提交特权是需要争取得到的&mdash;被精英所管理。
         <footnote>
           <para>浅薄的看起来这像是某种高人一等的优越感，<quote>赢得你的提交特权</quote>这个概念关于效率&mdash;检查和应用别人的修改是否安全和有用会花费大量的时间和精力，与之相比的是取消危险的代码的潜在代价。</para>
         </footnote>
-        <filename>HACKING</filename>文件是一个无价的资源，当它来确定你被提议作的修改取得了赞美表示它们值得不会被学术性拒绝。</para>
+        <filename>HACKING</filename>文件是一个无价的资源，它可以确保你被提议作的修改能够取得承认，而不会因为技术原因被拒绝。</para>
 
     </sect2>
 
@@ -880,21 +855,21 @@ A  subversion/build.conf
 
       <para>Subversion有一个相当彻底
         <footnote>
-          <para>你或许希望抓一些爆米花，在这个情况下，在附近花三十分钟转一下，渡过非交互的机器活动。***</para>
+          <para>在这个情况下，你或许希望抓一些爆米花，在附近花三十分钟转一下，渡过非交互的机器时间。</para>
         </footnote>
         的回归测试套件，你提议的修改期望不会带来任何这种测试失败，通过在源代码根目录运行<command>make check</command>（在Unix）你可以完全测试你的修改。提交会导致测试套间失败的代码是拒绝（或者是提供一个好的日志信息）你贡献的代码的最快方法。</para>
         
 
       <!-- ### TODO: Describe building and testing on Windows. -->
 
-      <para>在最好的情况下，你实际上应该添加适当的测试到测试套件来验证你提议的修改工作正常，实际上，有时候一个人可以做到的最好贡献就是让添加的测试能够独立起来。你可以添加回归测试来保护当前工作的代码在将来修改时这个区域里不会触发失败。另外，你也可以写测试来描述已知的失败，为了这个目的，Subversion测试套件允许你指定一个给定的测试是期望会失败的（叫做<literal>XFAIL</literal>），而且只要Subversion按照预期失败，一个<literal>XFAIL</literal>测试会认为是一个成功。最后，测试组件越好，就会花费更少的时间来诊断潜在晦涩回归bug。
+      <para>在最好的情况下，你实际上应该添加适当的测试到测试套件来验证你提议的修改工作正常，实际上，有时候一个人可以做到的最好贡献就是让添加的测试能够独立起来。你可以添加回归测试来保护当前工作的代码在将来修改时这个区域里不会触发失败。另外，你也可以写测试来描述已知的失败，为了这个目的，Subversion测试套件允许你指定一个给定的测试是期望会失败的（叫做<literal>XFAIL</literal>），而且只要Subversion按照预期失败，一个<literal>XFAIL</literal>测试会认为是一个成功。最后，测试组件越好，就会花费更少的时间来诊断潜在的晦涩的回归bug。
      </para>
 
     </sect2>
 
     <!-- ***************************************************************** -->
     <sect2 id="svn-ch-8-sect-6.5">
-      <title>捐赠你的修改</title>
+      <title>贡献你的修改</title>
       
       <para>当完成了对源代码的修改，写一个干净的和细致的日志信息来描述那些修改和原因。然后，发送一个包含日志信息和<command>svn diff</command>（在Subversion工作拷贝顶级目录运行）输出的邮件到开发者列表。如果社区成员认为你的修改可以接受，一些有提交权限（允许在Subversion源代码版本库提交新的修订版本）的用户会添加你的新的修改到公共源代码树。回想对版本库直接的提交权限是赋予那些展现能力的人&mdash;如果你展示了对Subversion的理解，编程能力，和<quote>团队精神</quote>，你会很可能授予那个权限。</para>
 
