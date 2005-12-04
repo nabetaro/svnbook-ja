@@ -316,7 +316,7 @@ $ svn log --revision HEAD
 
 $ svn diff --revision HEAD
 <!-- @ENGLISH {{{
-# compares your working file (with local mods) to the latest version
+# compares your working file (with local changes) to the latest version
 # in the repository
 @ENGLISH }}} -->
 # сравнение вашего рабочего файла (с учетом локальных изменений)
@@ -324,7 +324,7 @@ $ svn diff --revision HEAD
 
 $ svn diff --revision BASE:HEAD foo.c
 <!-- @ENGLISH {{{
-# compares your <quote>pristine</quote> foo.c (no local mods) with the
+# compares your <quote>pristine</quote> foo.c (no local changes) with the 
 # latest version in the repository
 @ENGLISH }}} -->
 # сравнение вашего <quote>исходного</quote> foo.c (без учета локальных
@@ -523,11 +523,11 @@ $ svn log --revision {2002-11-20}:4040
       (latest revision) of the Subversion repository that you specify
       on the command line:</para>
     @ENGLISH }}} -->
-    <para>Как правило использование хранилища Subversion начинается с
-      <firstterm>создания рабочей копии</firstterm> вашего проекта.
-      При создании рабочей копии на вашей локальной машине создается копия
+    <para>Как правило работа с Subversion-хранилищем начинается с
+      <firstterm>создания рабочей копии</firstterm> проекта.
+      При создании рабочей копии на локальной машине создается копия
       хранилища. Эта копия содержит <literal>HEAD</literal> (последнюю
-      ревизию) указанного вами в командной строке хранилища:</para>
+      правку) хранилища, указанного в командной строке:</para>
 
 
     <screen>
@@ -543,19 +543,110 @@ Checked out revision 2499.
 
     <sidebar>
       <!-- @ENGLISH {{{
-      <title>Repository Layout</title>
+     <title>What's in a Name?</title>
       @ENGLISH }}} -->
-      <title>Структура хранилища</title>
+      <title></title>
 
       <!-- @ENGLISH {{{
-      <para>If you're wondering what <literal>trunk</literal> is all
-        about in the above URL, it's part of the way we recommend
-        you lay out your Subversion repository which we'll talk a lot
-        more about in <xref linkend="svn.branchmerge"/>.</para>
+      <para>Subversion tries hard not to limit the type of data you
+        can place under version control.  The contents of files and
+        property values are stored and transmitted as binary data, and
+        the <xref linkend="svn.advanced.props.special.mime-type"/>
+        tells you how to give Subversion a hint that
+        <quote>textual</quote> operations don't make sense for a
+        particular file.  There are a few places, however, where
+        Subversion places restrictions on information it
+        stores.</para>
       @ENGLISH }}} -->
-      <para>Если вас удивляет почему в приведенном выше URL встречается
-        <literal>trunk</literal> &mdash; это часть рекомендуемой нами
-        структуры хранилища Subversion, о ней мы поговорим более подробно в
+      <para>Subversion очень старается не ограничивать типы данных,
+        которые можно поместить под контроль системы. Содержимое файлов и
+        значения свойств хранятся и передаются как бинарная информация,
+        как сказать Subversion о том, что для отдельного файла 
+        <quote>текстовые</quote> операции не имеют смысла вы узнаете в разделе
+        <xref linkend="svn.advanced.props.special.mime-type"/>. Однако есть
+        ситуации, когда Subversion налагает некоторые ограничения на хранимую
+        информацию.</para>
+
+      <!-- @ENGLISH {{{
+      <para>Subversion handles text internally as UTF-8 encoded
+        Unicode.  As a result, certain items which are inherently
+        <quote>textual</quote>, such as property names, path names,
+        and log messages, can only contain legal UTF-8 characters.  It
+        also provides a minimum requirement for use of the
+        <literal>svn:mime-type</literal> property&mdash;if a file's
+        contents aren't compatible with UTF-8, you should mark it as a
+        binary file.  Otherwise, Subversion will attempt to merge
+        differences using UTF-8, which is likely to leave garbage in
+        the file.</para>
+      @ENGLISH }}} -->
+      <para>Внутри Subversion текст представляется в Unicode-кодировке
+        UTF-8. Как следствие, некоторые элементы, имеющие 
+        <quote>текстовую</quote> сущность, например имена свойств, пути 
+        и лог-сообщения, могут содержать только корректные UTF-8 
+        символы. Это частично объясняет необходимость свойства 
+        <literal>svn:mime-type</literal> &mdash; файл, не совместимый с 
+        UTF-8 необходимо пометить как бинарный. В противном случае 
+        Subversion будет пытаться, используя UTF-8,  выполнить 
+        объединение различий, что скорее всего закончиться 
+        замусориванием файла.</para>
+
+      <!-- @ENGLISH {{{
+      <para>In addition, path names are used as XML attribute values
+        in WebDAV exchanges, as well in as some of Subversion's
+        housekeeping files.  This means that path names can only
+        contain legal XML (1.0) characters.  Subversion also prohibits
+        TAB, CR, and LF characters in path names, so they aren't
+        broken up in diffs, or in the output of commands like <xref
+        linkend="svn.ref.svn.c.log"/> or <xref
+        linkend="svn.ref.svn.c.status"/>.</para>
+      @ENGLISH }}} -->
+      <para>Кроме того, пути используются как значения XML атрибутов при 
+        WebDAV тразакциях, а так же в некоторых собственных файлах 
+        Subversion. Это значит, что при указании путей могут 
+        использоваться только корректные для XML (1.0) символы. Так же при 
+        указании путей Subversion запрещает использовать символы TAB, CR 
+        и LF, что бы они не рассыпались при показе различий и в выводе 
+        таких команд как <xref linkend="svn.ref.svn.c.log"/> или <xref
+        linkend="svn.ref.svn.c.status"/>.</para>
+
+      <!-- @ENGLISH {{{
+      <para>While it may seem like a lot to remember, in practice
+        these limitations are rarely a problem.  As long as your
+        locale settings are compatible with UTF-8, and you don't use
+        control characters in path names, you should have no trouble
+        communicating with Subversion.  The command-line client adds
+        an extra bit of help&mdash;it will automatically escape legal
+        path characters as needed in URLs you type to create
+        <quote>legally correct</quote> versions for internal
+        use.</para>
+      @ENGLISH }}} -->
+      <para>Возможно вам показалось, что необходимо помнить очень много 
+        всего, однако на практике эти ограничения не вызывают 
+        сложностей. Если ваши локальные установки совместимы с UTF-8 и 
+        вы не используете специальных символов при указании путей, 
+        проблем при работе с Subversion у вас не возникнет. Клиент для 
+        командной строки немного в этом помогает &mdash; автоматически 
+        заменяет некорректные символы, встречающиеся в набранных URL,
+        <quote>юридически правильными</quote> версиями для внутреннего 
+        использования.</para>
+
+      <!-- @ENGLISH {{{
+      <para>Experienced users of Subversion have also developed a set
+        of best-practice conventions for laying out paths in the
+        repository.  While these aren't strict requirements like the
+        syntax described above, they help to organize frequently
+        performed tasks.  The <literal>/trunk</literal> part of URLs
+        you'll find throughout this book is one of these conventions;
+        we'll talk a lot more about it and related recommendations in
+        <xref linkend="svn.branchmerge"/>.</para>
+      @ENGLISH }}} -->
+      <para>Кроме этого, опытные пользователи Subversion разработали 
+        набор правил хорошего тона для организации структуры хранилища.
+        Хотя эти правила и не являются строгой необходимостью, как 
+        описанный выше синтаксис, они помогают при выполнении типовых 
+        задач. Используемая по тексту книги часть пути
+        <literal>/trunk</literal> является одним из таких правил; 
+        подробнее об этой и других подобных рекомендациях мы поговорим в
         <xref linkend="svn.branchmerge"/>.</para>
 
     </sidebar>
@@ -2095,7 +2186,7 @@ $ svn status README
           <command>svn revert</command>) can be used without any
           network access.  This makes it easy to manage your
           changes-in-progress when you are somewhere without a network
-          connection, such as traveling on an airplane, riding a
+          connection, such as travelling on an airplane, riding a
           commuter train or hacking on the beach.</para>
         @ENGLISH }}} -->
         <para>Все эти три команды (<command>svn
@@ -2229,7 +2320,7 @@ Updated to revision 46.
 
         <listitem>
           <!-- @ENGLISH {{{
-          <para>If Subversion considers the file to be of a mergable
+          <para>If Subversion considers the file to be of a mergeable
             type, it places <firstterm>conflict
             markers</firstterm>&mdash;special strings of text which
             delimit the <quote>sides</quote> of the
