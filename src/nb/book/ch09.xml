@@ -4363,20 +4363,45 @@ $ svnadmin create /usr/local/svn/repos --fs-type fsfs
             revision tree.  See <xref linkend="svn.reposadmin.maint.migrate"/>
             for a practical use.</para>
 
-          <para>If the size of your Subversion dumpfile is a concern,
-            you can use the <option>--deltas</option> switch to (in
-            some cases drastically) reduce the size of the dumpfile
-            that <command>svnadmin</command> creates.  With this
-            switch, instead of writing the full content of each
-            revision to the dumpfile, <command>svnadmin dump</command>
-            will only emit the differences from one revision to the
-            next.  There are, however, disadvantages to creating
-            deltified dumpfiles&mdash;it's more CPU intensive to
-            create them, <command>svndumpfilter</command> can't
-            operate on them, and non-deltified dumpfiles tend to
-            compress better.</para>
+          <para>By default, the Subversion dumpfile stream contains a
+            single revision (the first revision in the requested
+            revision range) in which every file and directory in the
+            repository in that revision is presented as if that whole
+            tree was added at once, followed by other revisions (the
+            remainder of the revisions in the requested range) which
+            contain only the files and directories which were modified
+            in those revisions.  For a modified file, the complete
+            fulltext representation of its contents, as well as all of
+            its properties, are presented in the dumpfile; for a
+            directory, all of its properties are presented.</para>
 
-            </refsect1>
+          <para>There are a pair of useful options which modify the
+            dumpfile generator's behavior.  The first is the
+            <option>--incremental</option> option, which simply causes
+            that first revision in the dumpfile stream to contain only
+            the files and directories modified in that revision,
+            instead of being presented as the addition of a new tree,
+            and in exactly the same way that every other revision in
+            the dumpfile is presented.  This is useful for generating
+            a dumpfile that is to be loaded into another repository
+            which already has the files and directories that exist in
+            the original repository.</para>
+
+          <para>The second useful option is <option>--deltas</option>.
+            This switch causes <command>svnadmin dump</command> to,
+            instead of emitting fulltext representations of file
+            contents and property lists, emit only deltas of those
+            items against their previous versions.  This reduces (in
+            some cases, drastically) the size of the dumpfile that
+            <command>svnadmin dump</command> creates.  There are, however,
+            disadvantages to using this option&mdash;deltified
+            dumpfiles are more CPU intensive to create, cannot be
+            operated on by <command>svndumpfilter</command>, and tend
+            not to compress as well as their non-deltified counterparts
+            when using third-party tools like <command>gzip</command>
+            and <command>bzip2</command>.</para>
+
+        </refsect1>
         <refsect1>
           <title>Switches</title>
           
