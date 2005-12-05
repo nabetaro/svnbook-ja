@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# vim:sw=4
 
 import sys
 import os
@@ -8,7 +9,7 @@ import time
 import string
 
 if len(sys.argv) < 3:
-    sys.stderr.write("""Usage: %s SRC-DIR TGT-DIR
+    sys.stderr.write("""Usage: %s SRC-DIR TGT-DIR --dryrun
 
 Crawl SRC-DIR looking for book translations, building distributions of
 them, and exploding those distributions into TGT-DIR.
@@ -17,9 +18,16 @@ them, and exploding those distributions into TGT-DIR.
 
 BOOKSRC = sys.argv[1]
 DROPSPOT = sys.argv[2]
+DRYRUN = (len(sys.argv) > 3)
+
+skip_locales = ('de',)
+skip_pdf_locales = ('ru', 'zh')
 
 # Update the working copy
-os.system('svn up -q ' + BOOKSRC)
+if DRYRUN:
+    print "SVN-Update: %s" % BOOKSRC
+else:
+    os.system('svn up -q ' + BOOKSRC)
 
 # Find translations
 locales = []
@@ -34,6 +42,11 @@ for kid in kids:
         locales.append(kid)
 
 # Build the locales
+for i in skip_locales:
+    try:
+        locales.remove(i)
+    except ValueError:
+        pass
 locales.sort()
 cwd = os.getcwd()
 for locale in locales:
@@ -42,21 +55,39 @@ for locale in locales:
     tarball_name = tarball_base_name + '.tar.gz'
     tarball_path = os.path.join(locale_dir, tarball_name)
     try:
+        book_formats = [ 'html', 'html-chunk', 'pdf' ]
+        if locale in skip_pdf_locales:
+            book_formats.remove('pdf')
+        command = (['../tools/book-dist.py'] + map(lambda x: '--%s' % x,
+            book_formats) + ['--name="%s"' % tarball_base_name])
         os.chdir(locale_dir)
-        os.system('../tools/book-dist.py --html --html-chunk --pdf ' + \
-                  '--name="%s"' % (tarball_base_name))
+        if DRYRUN:
+            print "Run: %s" % (" ".join(command))
+        else:
+            os.system(" ".join(command))
         os.chdir(DROPSPOT)
         if os.path.isdir(locale):
-            shutil.rmtree(locale)
-        os.system('tar xfz %s' % (tarball_path))
-        os.rename(tarball_base_name, locale)
-        os.unlink(tarball_path)
+            if DRYRUN:
+                print "Erase: %s/%s" % (DROPSPOT, locale)
+            else:
+                shutil.rmtree(locale)
+        if DRYRUN:
+            print "Unpack and remove: %s" % tarball_path
+        else:
+            os.system('tar xfz %s' % (tarball_path))
+            os.rename(tarball_base_name, locale)
+            os.unlink(tarball_path)
         built_locales.append(locale)
-    except:
-        pass
+    finally:
+        os.chdir(cwd)
 
 # Write out index.html
-fp = open(os.path.join(DROPSPOT, 'index.html'), 'w')
+if DRYRUN:
+    print "Write index.html:"
+    fp = sys.stdout
+else:
+    fp = open(os.path.join(DROPSPOT, 'index.html'), 'w')
+
 fp.write("""<html>
 <head>
 <title>Version Control with Subversion Nightlies</title>
@@ -75,8 +106,9 @@ for locale in built_locales:
     fp.write("""<dt>%s</dt>
 <dd>[<a href="%s/svn-book.html">single-page HTML</a>]</dd>
 <dd>[<a href="%s/index.html">multi-page HTML</a>]</dd>
-<dd>[<a href="%s/svn-book.pdf">PDF</a>]</dd>
-""" % (string.upper(locale), locale, locale, locale))
+""" % (string.upper(locale), locale, locale))
+    if locale not in skip_pdf_locales:
+        fp.write('<dd>[<a href="%s/svn-book.pdf">PDF</a>]</dd>\n' % locale)
 fp.write("""</dl>
 </ul>
 </body>
