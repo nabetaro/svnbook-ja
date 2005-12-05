@@ -21,7 +21,7 @@ def usage(err_msg):
 Options:
    --html:         Make the single-page HTML book
    --html-chunk:   Make the chunked HTML book
-   --pdf:          Make the PDF book (requires JAVA_HOME environment variable)
+   --pdf:          Make the PDF book
    --name:         The base name of the tarball, and top-level tar directory
 """ % (os.path.basename(sys.argv[0])))
     sys.exit(err_msg and 1 or 0)
@@ -48,9 +48,6 @@ def main():
             pdf = 1
         if opt == '--name':
             name = arg
-
-    if pdf and not os.getenv('JAVA_HOME'):
-        usage('JAVA_HOME is not set.')
 
     if os.path.basename(name) != name:
         usage('Name "%s" is not a single path component' % (name))
