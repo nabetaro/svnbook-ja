@@ -58,11 +58,15 @@
           </row>
           <row>
             <entry>libsvn_delta</entry>
-            <entry>Tree and text differencing routines</entry>
+            <entry>Tree and byte-stream differencing routines</entry>
+          </row>
+          <row>
+            <entry>libsvn_diff</entry>
+            <entry>Contextual differencing and merging routines</entry>
           </row>
           <row>
             <entry>libsvn_fs</entry>
-            <entry>The Subversion filesystem library</entry>
+            <entry>Filesystem commons and module loader</entry>
           </row>
           <row>
             <entry>libsvn_fs_base</entry>
@@ -86,7 +90,7 @@
           </row>
           <row>
             <entry>libsvn_ra_svn</entry>
-            <entry>A custom protocol Repository Access module</entry>
+            <entry>The custom protocol Repository Access module</entry>
           </row>
           <row>
             <entry>libsvn_repos</entry>
@@ -131,7 +135,9 @@
       libsvn_ra_local, and libsvn_ra_svn all implement the same
       interface.  And all three communicate with the Repository
       Layer&mdash;libsvn_ra_dav and libsvn_ra_svn do so across a
-      network, and libsvn_ra_local connects to it directly.</para>
+      network, and libsvn_ra_local connects to it directly.  The
+      libsvn_fs_base and libsvn_fs_fs libraries are another example of
+      this.</para>
 
     <para>The client itself also highlights modularity in the
       Subversion design.  While Subversion currently comes with only a
@@ -518,22 +524,23 @@ make_new_directory (const char *repos_path,
      
       <screen>
 $ svn --version
-svn, version 1.0.1 (r9023)
-   compiled Mar 17 2004, 09:31:13
+svn, version 1.2.3 (r15833)
+   compiled Sep 13 2005, 22:45:22
 
-Copyright (C) 2000-2004 CollabNet.
+Copyright (C) 2000-2005 CollabNet.
 Subversion is open source software, see http://subversion.tigris.org/
 This product includes software developed by CollabNet (http://www.Collab.Net/).
 
 The following repository access (RA) modules are available:
 
 * ra_dav : Module for accessing a repository via WebDAV (DeltaV) protocol.
-  - handles 'http' schema
-  - handles 'https' schema
-* ra_local : Module for accessing a repository on local disk.
-  - handles 'file' schema
+  - handles 'http' scheme
+  - handles 'https' scheme
 * ra_svn : Module for accessing a repository using the svn network protocol.
-  - handles 'svn' schema
+  - handles 'svn' scheme
+* ra_local : Module for accessing a repository on local disk.
+  - handles 'file' scheme
+
 </screen>
     
       <sect3 id="svn.developer.layerlib.ra.dav">
@@ -585,14 +592,14 @@ The following repository access (RA) modules are available:
           receives these requests (exactly as it does generic HTTP
           requests that your web browser might make), notices that the
           requests are directed at a URL that is configured as a DAV
-          location (using the <sgmltag>Location</sgmltag> directive in
-          <filename>httpd.conf</filename>), and hands the request off
-          to its own mod_dav module.  When properly configured,
-          mod_dav knows to use Subversion's mod_dav_svn for any
-          filesystem-related needs, as opposed to the generic
-          mod_dav_fs that comes with Apache.  So ultimately, the
-          client is communicating with mod_dav_svn, which binds
-          directly to the Subversion Repository Layer.</para>
+          location (using the <literal>&lt;Location&gt;</literal>
+          directive in <filename>httpd.conf</filename>), and hands the
+          request off to its own mod_dav module.  When properly
+          configured, mod_dav knows to use Subversion's mod_dav_svn for
+          any filesystem-related needs, as opposed to the generic
+          mod_dav_fs that comes with Apache.  So ultimately, the client
+          is communicating with mod_dav_svn, which binds directly to the
+          Subversion Repository Layer.</para>
   
         <para>That was a simplified description of the actual
           exchanges taking place, though.  For example, the Subversion
@@ -834,7 +841,7 @@ The following repository access (RA) modules are available:
     <sect2 id="svn.developer.usingapi.apr">
       <title>The Apache Portable Runtime Library</title>
 
-      <para>Along with Subversion's own datatype, you will see many
+      <para>Along with Subversion's own datatypes, you will see many
         references to datatypes that begin with
         <literal>apr_</literal>&mdash;symbols from the Apache
         Portable Runtime (APR) library.  APR is Apache's portability
@@ -1667,11 +1674,11 @@ crawl_dir (apr_array_header_t *files,
 
       <screen>
 $ svn checkout http://svn.collab.net/repos/svn/trunk subversion
-A  subversion/HACKING
-A  subversion/INSTALL
-A  subversion/README
-A  subversion/autogen.sh
-A  subversion/build.conf
+A    subversion/HACKING
+A    subversion/INSTALL
+A    subversion/README
+A    subversion/autogen.sh
+A    subversion/build.conf
 &hellip;
 </screen>
 
@@ -1694,15 +1701,18 @@ A  subversion/build.conf
       
       <para>Now that you have a working copy containing the latest
         Subversion source code, you will most certainly want to take a
-        cruise through the <filename>HACKING</filename> file in that
-        working copy's top-level directory.  The
-        <filename>HACKING</filename> file contains general
-        instructions for contributing to Subversion, including how to
-        properly format your source code for consistency with the rest
-        of the codebase, how to describe your proposed changes with an
-        effective change log message, how to test your changes, and so
-        on.  Commit privileges on the Subversion source repository are
-        earned&mdash;a government by meritocracy.
+        cruise through the <quote>Hacker's Guide to Subversion</quote>,
+        which is available either as the
+        <filename>www/hacking.html</filename> file in the working copy,
+        or on the Subversion website at <ulink
+          url="http://subversion.tigris.org/hacking.html"/>.  This guide
+        contains general instructions for contributing to Subversion,
+        including how to properly format your source code for
+        consistency with the rest of the codebase, how to describe your
+        proposed changes with an effective change log message, how to
+        test your changes, and so on.  Commit privileges on the
+        Subversion source repository are earned&mdash;a government by
+        meritocracy.
         <footnote>
           <para>While this may superficially appear as some sort of
             elitism, this <quote>earn your commit privileges</quote>
@@ -1712,10 +1722,10 @@ A  subversion/build.conf
             potential costs of undoing changes that are
             dangerous.</para>
         </footnote>
-        The <filename>HACKING</filename> file is an invaluable
-        resource when it comes to making sure that your proposed
-        changes earn the praises they deserve without being rejected
-        on technicalities.</para>
+        The <quote>Hacker's Guide</quote> is an invaluable resource when
+        it comes to making sure that your proposed changes earn the
+        praises they deserve without being rejected on
+        technicalities.</para>
 
     </sect2>
 
