@@ -52,6 +52,8 @@
         WebDAV básico asumen que sólo existe una versión de cada archivo
         o directorio, y puede ser sobreescrita repetidamente.
         <footnote><para>Por esta razón, algunas personas se refieren en broma
+            <!--No, no escribí mal, en el libro originalmente dice WebDA (debe
+            ser algo como clientes  "güevas")-->
             a los clientes genéricos de WebDAV como clientes <quote>WebDA</quote></para></footnote>
       </para>
 
@@ -637,31 +639,29 @@
 
       <para>
         Desafortunadamente, este cliente se rehúsa a trabajar con autoversionado
-        mod_dav_svn debido a la falta de soporte de <literal>LOCK</literal>
+        mod_dav_svn debido a la falta de soporte de <literal>LOCK</literal>. Mac
+        OS X descubre la falta de <literal>LOCK</literal> durante el intercambio
+        de las características HTTP <literal>OPTIONS</literal>, y debido a esto
+        monta el repositorio Subversion como una carpeta compartida de sólo
+        lectura. Desupés de esto, no es posible hacer operaciones de escritura
+        en absoluto. Para montar el repositorio como una carpeta compartida de
+        lectura-escritura, usted <emphasis>debe</emphasis> usar el truco con
+        mod_dav_lock como se discutión previamente. Una vez el bloqueo parezca
+        trabajar, la carpeta compartida se comporta bastante bien: los archivos
+        pueden abrirse directamente para lectura/escritura, aunque cada
+        operación de guardado hará que el cliente haga un <literal>PUT</literal>
+        a una ubicación temporal, un <literal>DELETE</literal> del archivo
+        original, y un <literal>MOVE</literal> del recurso temporal al nombre de
+        archivo original. ¡Ésas son tres revisiones Subversion nuevas en cada
+        guardado!
+      </para>
 
-        Unfortunately, this client refuses to work against an
-        autoversioning mod_dav_svn because of its lack of
-        <literal>LOCK</literal> support.  Mac OS X discovers the
-        missing <literal>LOCK</literal> ability during the initial
-        HTTP <literal>OPTIONS</literal> feature exchange, and thus
-        decides to mount the Subversion repository as a read-only
-        share.  After that, no write operations are possible at all.
-        In order to mount the repository as a read-write share, you
-        <emphasis>must</emphasis> use the mod_dav_lock trick discussed
-        previously.  Once locking seems to work, the share behaves
-        very nicely: files can be opened directly in read/write mode,
-        although each save operation will cause the client to do a
-        <literal>PUT</literal> to a temporary location, a
-        <literal>DELETE</literal> of original file, and a
-        <literal>MOVE</literal> of the temporary resource to the
-        original filename.  That's three new Subversion revisions per
-        save!</para>
-
-      <para>One more word of warning: OS X's WebDAV client can be
-        overly sensitive to HTTP redirects.  If you're unable to mount
-        the repository at all, you may need to enable the
-        <literal>BrowserMatch</literal> directive in your
-        <filename>httpd.conf</filename>:</para>
+      <para>
+        Una palabra de advertencia: El cliente WebDAV de OS X puede ser
+        demasiado sensitivo a las redirecciones HTTP. Si usted no puede montar
+        el repositorio en absoluto, puede que necesite habilitar la directiva
+        <literal>BrowserMatch</literal> en su <filename>httpd.conf</filename>:
+      </para>
 
       <screen>
         BrowserMatch "^WebDAVFS/1.[012]" redirect-carefully
@@ -672,41 +672,52 @@
     <sect2 id="svn-ap-c-sect-3.3">
       <title>Unix: Nautilus 2</title>
 
-      <para>Nautilus is the official file manager/browser for the
-        GNOME desktop.  Its main home page is at <systemitem
-          class="url">http://www.gnome.org/projects/nautilus/</systemitem>.
-        By simply typing a WebDAV URL into the Nautilus window,
-        the DAV share appears like a local filesystem.</para>
+      <para>
+        Nautilus es el administrador/explorador de archivos oficial del
+        escritorio GNOME. Su página principal está en 
+        <systemitem class="url">http://www.gnome.org/projects/nautilus/</systemitem>.
+        Sólo con escribir una URL WebDAV en la ventana de Nautilus, la carpeta
+        DAV aparece como un sistema de archivos local.
+      </para>
 
-      <para>In general, Nautilus 2 works reasonably well against an
-        autoversioning mod_dav_svn, with the following caveats:</para>
+      <para>
+        En general, Nautilus 2 trabaja razonablemente bien con un mod_dav_svn
+        que haga autoversionado, con las siguientes precauciones:
+      </para>
 
       <itemizedlist>
 
         <listitem>
-          <para>Any files opened directly from the share are treated
-            as read-only.  Even the mod_dav_lock trick seems to have
-            no effect.  It seems that Nautilus never issues the
-            <literal>LOCK</literal> method at all.  The <quote>copy
-              locally, edit, copy back</quote> trick does work, however.
-            Unfortunately, Nautilus overwrites the old file by issuing
-            a <literal>DELETE</literal> first, which creates an extra
-            revision.</para>
+          <para>
+            Cualquier archivo abierto directamente desde la carpeta compartida
+            es tratado como de sólo lectura. Aún el truco con mod_dav_lock
+            parece no tener efecto. Parece que Nautilus nunca llama
+            <!--TODO:traduje issue como llamar. No es lo más correcto pero suena
+            bastante bien :) 
+            no effect.  It seems that Nautilus never issues the-->
+            el método <literal>LOCK</literal> en absoluto. El truco
+            <quote>copiar localmente, editar, copiar de vuelta</quote> funciona,
+            sin embargo. Desafortunadamente, Nautilus sobreescribe el archivo
+            viejo llamando a <literal>DELETE</literal> primero, lo que crea una
+            revisión extra.
+          </para>
         </listitem>
 
         <listitem>
-          <para>When overwriting or creating a file , Nautilus first
-            does a <literal>PUT</literal> of an empty file, then
-            overwrites it with a second <literal>PUT</literal>.  This
-            creates two Subversion filesystem revisions, rather than
-            one.</para>
+          <para>
+            Cuando se sobreescribe o se crea un archivo, Nautilus hace primero
+            un <literal>PUT</literal> de un archivo vacío, y luego lo
+            sobreescribe con un segundo <literal>PUT</literal>. Esto crea dos
+            revisiones en el sistema de archivos Subversion, en vez de una sola.
+          </para>
         </listitem>
 
         <listitem>
-          <para>When deleting a collection, it issues an HTTP
-            <literal>DELETE</literal> on each individual child instead
-            of on the collection itself.  This creates a whole bunch of
-            new revisions.</para>
+          <para>
+            Cuando se borra una colección, se llama un <literal>DELETE</literal>
+            HTTP en cada hijo individual en vez de hacerlo sobre toda la
+            colección. Esto crea un montón de revisiones nuevas.
+          </para>
         </listitem>
 
       </itemizedlist>
@@ -716,18 +727,26 @@
     <sect2 id="svn-ap-c-sect-3.4">
       <title>Linux davfs2</title>
 
-      <para>Linux davfs2 is a filesystem module for the Linux kernel,
-        whose development is located at <systemitem
-          class="url">http://dav.sourceforge.net/</systemitem>.  Once
+      <para>Linux davfs2 es un módulo de sistema de archivos para el kernel de
+        Linux, cuyo desarrollo se ubica en 
+        <systemitem class="url">http://dav.sourceforge.net/</systemitem>. Una
+        vez instalado, una carpeta WebDAV compartida puede ser montada con el
+        comando estándar de Linux <command>mount</command>.
+        <!--TODO: tal vez me excedo un poco en el ajuste de forma, pero suena
+        mejor que la traducción literal al español
+        
         installed, a WebDAV network share can be mounted with the
-        usual Linux <command>mount</command> command.</para>
+        usual Linux <command>mount</command> command.
+        -->
+      </para>
 
-      <para>The word on the street is that this DAV client doesn't
-        work at all with mod_dav_svn's autoversioning.  Every single
-        attempt to write to the server is preceded by a
-        <literal>LOCK</literal> request, which mod_dav_svn doesn't
-        support.  At this time, there is no data indicating whether
-        the use of mod_dav_lock resolves this problem.</para>
+      <para>
+        Se dice en las calles que este cliente DAV no funciona en absoluto con
+        el autoversionado de mod_dav_svn. Cada intento de escribir al servidor
+        es precedido por una solicitud <literal>LOCK</literal>, que mod_dav_svn,
+        no soporta. En este momento, no hay datos que indiquen si el uso de
+        mod_dav_lock resuelva este problema.
+      </para>
 
     </sect2>
 
