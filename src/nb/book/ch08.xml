@@ -58,11 +58,15 @@
           </row>
           <row>
             <entry>libsvn_delta</entry>
-            <entry>Tree and text differencing routines</entry>
+            <entry>Tree and byte-stream differencing routines</entry>
+          </row>
+          <row>
+            <entry>libsvn_diff</entry>
+            <entry>Contextual differencing and merging routines</entry>
           </row>
           <row>
             <entry>libsvn_fs</entry>
-            <entry>The Subversion filesystem library</entry>
+            <entry>Filesystem commons and module loader</entry>
           </row>
           <row>
             <entry>libsvn_fs_base</entry>
@@ -86,7 +90,7 @@
           </row>
           <row>
             <entry>libsvn_ra_svn</entry>
-            <entry>A custom protocol Repository Access module</entry>
+            <entry>The custom protocol Repository Access module</entry>
           </row>
           <row>
             <entry>libsvn_repos</entry>
@@ -131,7 +135,9 @@
       libsvn_ra_local, and libsvn_ra_svn all implement the same
       interface.  And all three communicate with the Repository
       Layer&mdash;libsvn_ra_dav and libsvn_ra_svn do so across a
-      network, and libsvn_ra_local connects to it directly.</para>
+      network, and libsvn_ra_local connects to it directly.  The
+      libsvn_fs_base and libsvn_fs_fs libraries are another example of
+      this.</para>
 
     <para>The client itself also highlights modularity in the
       Subversion design.  While Subversion currently comes with only a
@@ -346,7 +352,7 @@
         use of both the repository and filesystem interfaces to create
         a new revision of the filesystem in which a directory is
         added.  Note that in this example (and all others throughout
-        this book), the <function>SVN_ERR</function> macro simply
+        this book), the <function>SVN_ERR()</function> macro simply
         checks for a non-successful error return from the function it
         wraps, and returns that error if it exists.</para>
 
@@ -433,7 +439,7 @@ make_new_directory (const char *repos_path,
       <para>In the previous code segment, calls were made to both the
         repository and filesystem interfaces.  We could just as easily
         have committed the transaction using
-        <function>svn_fs_commit_txn</function>.  But the filesystem
+        <function>svn_fs_commit_txn()</function>.  But the filesystem
         API knows nothing about the repository library's hook
         mechanism.  If you want your Subversion repository to
         automatically perform some set of non-Subversion tasks every
@@ -441,7 +447,7 @@ make_new_directory (const char *repos_path,
         email that describes all the changes made in that transaction
         to your developer mailing list), you need to use the
         libsvn_repos-wrapped version of that
-        function&mdash;<function>svn_repos_fs_commit_txn</function>.
+        function&mdash;<function>svn_repos_fs_commit_txn()</function>.
         This function will actually first run the
         <literal>pre-commit</literal> hook script if one exists, then
         commit the transaction, and finally will run a
@@ -518,22 +524,23 @@ make_new_directory (const char *repos_path,
      
       <screen>
 $ svn --version
-svn, version 1.0.1 (r9023)
-   compiled Mar 17 2004, 09:31:13
+svn, version 1.2.3 (r15833)
+   compiled Sep 13 2005, 22:45:22
 
-Copyright (C) 2000-2004 CollabNet.
+Copyright (C) 2000-2005 CollabNet.
 Subversion is open source software, see http://subversion.tigris.org/
 This product includes software developed by CollabNet (http://www.Collab.Net/).
 
 The following repository access (RA) modules are available:
 
 * ra_dav : Module for accessing a repository via WebDAV (DeltaV) protocol.
-  - handles 'http' schema
-  - handles 'https' schema
-* ra_local : Module for accessing a repository on local disk.
-  - handles 'file' schema
+  - handles 'http' scheme
+  - handles 'https' scheme
 * ra_svn : Module for accessing a repository using the svn network protocol.
-  - handles 'svn' schema
+  - handles 'svn' scheme
+* ra_local : Module for accessing a repository on local disk.
+  - handles 'file' scheme
+
 </screen>
     
       <sect3 id="svn.developer.layerlib.ra.dav">
@@ -559,9 +566,9 @@ The following repository access (RA) modules are available:
           optimizations like network pipelining and caching.  By using
           Apache as a server, Subversion gets all of these features
           for free.  And since most firewalls already allow HTTP
-          traffic to pass through, sysadmins typically don't even have
-          to change their firewall configurations to allow Subversion
-          to work.</para>
+          traffic to pass through, system administrators typically
+          don't even have to change their firewall configurations to
+          allow Subversion to work.</para>
   
         <para>Subversion uses HTTP and WebDAV (with DeltaV) to
           communicate with an Apache server.  You can read more about
@@ -585,14 +592,14 @@ The following repository access (RA) modules are available:
           receives these requests (exactly as it does generic HTTP
           requests that your web browser might make), notices that the
           requests are directed at a URL that is configured as a DAV
-          location (using the <sgmltag>Location</sgmltag> directive in
-          <filename>httpd.conf</filename>), and hands the request off
-          to its own mod_dav module.  When properly configured,
-          mod_dav knows to use Subversion's mod_dav_svn for any
-          filesystem-related needs, as opposed to the generic
-          mod_dav_fs that comes with Apache.  So ultimately, the
-          client is communicating with mod_dav_svn, which binds
-          directly to the Subversion Repository Layer.</para>
+          location (using the <literal>&lt;Location&gt;</literal>
+          directive in <filename>httpd.conf</filename>), and hands the
+          request off to its own mod_dav module.  When properly
+          configured, mod_dav knows to use Subversion's mod_dav_svn for
+          any filesystem-related needs, as opposed to the generic
+          mod_dav_fs that comes with Apache.  So ultimately, the client
+          is communicating with mod_dav_svn, which binds directly to the
+          Subversion Repository Layer.</para>
   
         <para>That was a simplified description of the actual
           exchanges taking place, though.  For example, the Subversion
@@ -652,15 +659,16 @@ The following repository access (RA) modules are available:
 
         <para>This RA implementation lacks most of the advantages of
           Apache mentioned in the previous section; however, it may be
-          appealing to some sysadmins nonetheless.  It is dramatically
-          easier to configure and run; setting up an
+          appealing to some system administrators nonetheless.  It is
+          dramatically easier to configure and run; setting up an
           <filename>svnserve</filename> process is nearly
           instantaneous.  It is also much smaller (in terms of lines
           of code) than Apache, making it much easier to audit, for
-          security reasons or otherwise.  Furthermore, some sysadmins
-          may already have an SSH security infrastructure in place,
-          and want Subversion to use it.  Clients using ra_svn can
-          easily tunnel the protocol over SSH.</para>
+          security reasons or otherwise.  Furthermore, some system
+          administrators may already have an SSH security
+          infrastructure in place, and want Subversion to use it.
+          Clients using ra_svn can easily tunnel the protocol over
+          SSH.</para>
 
       </sect3>
 
@@ -748,7 +756,7 @@ The following repository access (RA) modules are available:
         Repository Access Layer, and then to provide the highest-level
         API to any application that wishes to perform general revision
         control actions.  For example, the function
-        <function>svn_client_checkout</function> takes a URL as an
+        <function>svn_client_checkout()</function> takes a URL as an
         argument.  It passes this URL to the RA layer and opens an
         authenticated session with a particular repository.  It then
         asks the repository for a certain tree, and sends this tree
@@ -833,7 +841,7 @@ The following repository access (RA) modules are available:
     <sect2 id="svn.developer.usingapi.apr">
       <title>The Apache Portable Runtime Library</title>
 
-      <para>Along with Subversion's own datatype, you will see many
+      <para>Along with Subversion's own datatypes, you will see many
         references to datatypes that begin with
         <literal>apr_</literal>&mdash;symbols from the Apache
         Portable Runtime (APR) library.  APR is Apache's portability
@@ -861,7 +869,7 @@ The following repository access (RA) modules are available:
         uses these types extensively throughout the codebase.  But
         perhaps the most pervasive APR datatype, found in nearly every
         Subversion API prototype, is the
-        <literal>apr_pool_t</literal>&mdash;the APR memory pool.
+        <structname>apr_pool_t</structname>&mdash;the APR memory pool.
         Subversion uses pools internally for all its memory allocation
         needs (unless an external library requires a different memory
         management schema for data passed through its API),
@@ -909,8 +917,8 @@ The following repository access (RA) modules are available:
         class="url">file:///home/username/My%20File.txt</systemitem>.
         Again, Subversion supplies helper functions that your
         application can
-        use&mdash;<function>svn_path_uri_encode</function> and
-        <function>svn_path_uri_decode</function>, for URI encoding and
+        use&mdash;<function>svn_path_uri_encode()</function> and
+        <function>svn_path_uri_decode()</function>, for URI encoding and
         decoding, respectively.</para>
     </sect2>
 
@@ -920,15 +928,14 @@ The following repository access (RA) modules are available:
 
       <para>If you are interested in using the Subversion libraries in
         conjunction with something other than a C program&mdash;say a
-        Python script or Java application&mdash;Subversion has some
-        initial support for this via the Simplified Wrapper and
-        Interface Generator (SWIG).  The SWIG bindings for Subversion
-        are located in <filename>subversion/bindings/swig</filename>
-        and are slowly maturing into a usable state.  These bindings
-        allow you to call Subversion API functions indirectly, using
-        wrappers that translate the datatypes native to your
-        scripting language into the datatypes needed by Subversion's
-        C libraries.</para>
+        Python or Perl script&mdash;Subversion has some support for this
+        via the Simplified Wrapper and Interface Generator (SWIG).  The
+        SWIG bindings for Subversion are located in
+        <filename>subversion/bindings/swig</filename> and whilst still
+        maturing, they are in a usable state.  These bindings allow you
+        to call Subversion API functions indirectly, using wrappers that
+        translate the datatypes native to your scripting language into
+        the datatypes needed by Subversion's C libraries.</para>
 
       <para>There is an obvious benefit to accessing the Subversion
         APIs via a language binding&mdash;simplicity.  Generally
@@ -1148,16 +1155,15 @@ if __name__ == '__main__':
       <para>Subversion's language bindings unfortunately tend to lack
         the level of attention given to the core Subversion modules.
         However, there have been significant efforts towards creating
-        functional bindings for Python, Perl, and Java.  Once you have
-        the SWIG interface files properly configured, generation of
-        the specific wrappers for all the supported SWIG languages
-        (which currently includes versions of C#, Guile, Java,
-        MzScheme, OCaml, Perl, PHP, Python, Ruby, and Tcl) should
-        theoretically be trivial.  Still, some extra programming is
-        required to compensate for complex APIs that SWIG needs some
-        help generalizing.  For more information on SWIG itself, see
-        the project's website at <systemitem
-        class="url">http://www.swig.org/</systemitem>.</para>
+        functional bindings for Python, Perl, and Ruby.  To some extent,
+        the work done preparing the SWIG interface files for the these
+        languages is reusable in efforts to generate bindings for other
+        languages supported by SWIG (which includes versions of C#,
+        Guile, Java, MzScheme, OCaml, PHP, Tcl, and others).
+        However, some extra programming is required to compensate for
+        complex APIs that SWIG needs some help interfacing with.  For
+        more information on SWIG itself, see the project's website at
+        <ulink url="http://www.swig.org/"/>.</para>
 
     </sect2>
   </sect1>
@@ -1243,26 +1249,30 @@ if __name__ == '__main__':
 &lt;entry
    committed-rev="1"
    name=""
-   committed-date="2002-09-24T17:12:44.064475Z"
-   url="http://svn.red-bean.com/tests/.greek-repo/A/D"
+   committed-date="2005-04-04T13:32:28.526873Z"
+   url="http://svn.red-bean.com/repos/greek-tree/A/D"
+   last-author="jrandom"
    kind="dir"
+   uuid="4e820d15-a807-0410-81d5-aa59edf69161"
    revision="1"/&gt;
+&lt;entry
+   name="lambda"
+   copied="true"
+   kind="file"
+   copyfrom-rev="1"
+   schedule="add"
+   copyfrom-url="http://svn.red-bean.com/repos/greek-tree/A/B/lambda"/&gt;
 &lt;entry
    committed-rev="1"
    name="gamma"
-   text-time="2002-09-26T21:09:02.000000Z"
-   committed-date="2002-09-24T17:12:44.064475Z"
-   checksum="QSE4vWd9ZM0cMvr7/+YkXQ=="
+   text-time="2005-12-11T16:32:46.000000Z"
+   committed-date="2005-04-04T13:32:28.526873Z"
+   checksum="ada10d942b1964d359e048dbacff3460"
+   last-author="jrandom"
    kind="file"
-   prop-time="2002-09-26T21:09:02.000000Z"/&gt;
+   prop-time="2005-12-11T16:32:45.000000Z"/&gt;
 &lt;entry
    name="zeta"
-   kind="file"
-   schedule="add"
-   revision="0"/&gt;
-&lt;entry
-   url="http://svn.red-bean.com/tests/.greek-repo/A/B/delta"
-   name="delta"
    kind="file"
    schedule="add"
    revision="0"/&gt;
@@ -1378,8 +1388,7 @@ if __name__ == '__main__':
       both readable and writable objects&mdash;over the web.  RFCs
       2518 and 3253 describe the WebDAV/DeltaV extensions to HTTP, and
       are available (along with a lot of other useful information) at
-      <systemitem
-      class="url">http://www.webdav.org/</systemitem>.</para>
+      <ulink url="http://www.webdav.org/"/>.</para>
 
     <para>A number of operating system file browsers are already able
       to mount networked directories using WebDAV.  On Win32, the
@@ -1594,14 +1603,13 @@ crawl_dir (apr_array_header_t *files,
     <title>Contributing to Subversion</title>
     
     <para>The official source of information about the Subversion
-      project is, of course, the project's website at <systemitem
-      class="url">http://subversion.tigris.org/</systemitem>.  There
-      you can find information about getting access to the source code
-      and participating on the discussion lists.  The Subversion
-      community always welcomes new members.  If you are
-      interested in participating in this community by contributing
-      changes to the source code, here are some hints on how to get
-      started.</para>
+      project is, of course, the project's website at
+      <ulink url="http://subversion.tigris.org/"/>.  There you can
+      find information about getting access to the source code and
+      participating on the discussion lists.  The Subversion community
+      always welcomes new members.  If you are interested in
+      participating in this community by contributing changes to the
+      source code, here are some hints on how to get started.</para>
 
     <!-- =============================================================== -->
     <sect2 id="svn.developer.contrib.join">
@@ -1657,8 +1665,8 @@ crawl_dir (apr_array_header_t *files,
 
       <para>After you have a working Subversion client, you are now
         poised to checkout a working copy of the Subversion source
-        repository from <systemitem
-        class="url">http://svn.collab.net/repos/svn/trunk/</systemitem>:
+        repository from <ulink
+         url="http://svn.collab.net/repos/svn/trunk/"/>:
         <footnote>
           <para>Note that the URL checked out in the example above
             ends not with <literal>svn</literal>, but with a
@@ -1669,11 +1677,11 @@ crawl_dir (apr_array_header_t *files,
 
       <screen>
 $ svn checkout http://svn.collab.net/repos/svn/trunk subversion
-A  subversion/HACKING
-A  subversion/INSTALL
-A  subversion/README
-A  subversion/autogen.sh
-A  subversion/build.conf
+A    subversion/HACKING
+A    subversion/INSTALL
+A    subversion/README
+A    subversion/autogen.sh
+A    subversion/build.conf
 &hellip;
 </screen>
 
@@ -1696,15 +1704,18 @@ A  subversion/build.conf
       
       <para>Now that you have a working copy containing the latest
         Subversion source code, you will most certainly want to take a
-        cruise through the <filename>HACKING</filename> file in that
-        working copy's top-level directory.  The
-        <filename>HACKING</filename> file contains general
-        instructions for contributing to Subversion, including how to
-        properly format your source code for consistency with the rest
-        of the codebase, how to describe your proposed changes with an
-        effective change log message, how to test your changes, and so
-        on.  Commit privileges on the Subversion source repository are
-        earned&mdash;a government by meritocracy.
+        cruise through the <quote>Hacker's Guide to Subversion</quote>,
+        which is available either as the
+        <filename>www/hacking.html</filename> file in the working copy,
+        or on the Subversion website at <ulink
+          url="http://subversion.tigris.org/hacking.html"/>.  This guide
+        contains general instructions for contributing to Subversion,
+        including how to properly format your source code for
+        consistency with the rest of the codebase, how to describe your
+        proposed changes with an effective change log message, how to
+        test your changes, and so on.  Commit privileges on the
+        Subversion source repository are earned&mdash;a government by
+        meritocracy.
         <footnote>
           <para>While this may superficially appear as some sort of
             elitism, this <quote>earn your commit privileges</quote>
@@ -1714,10 +1725,10 @@ A  subversion/build.conf
             potential costs of undoing changes that are
             dangerous.</para>
         </footnote>
-        The <filename>HACKING</filename> file is an invaluable
-        resource when it comes to making sure that your proposed
-        changes earn the praises they deserve without being rejected
-        on technicalities.</para>
+        The <quote>Hacker's Guide</quote> is an invaluable resource when
+        it comes to making sure that your proposed changes earn the
+        praises they deserve without being rejected on
+        technicalities.</para>
 
     </sect2>
 
