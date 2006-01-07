@@ -57,10 +57,15 @@ convfiles:
 	done
 
 bookdiff:
-	mkdir $(BDTMP)
+	@mkdir $(BDTMP) || { \
+		echo -n "\"$(BDTMP)\" already exists. Press ENTER to delete it, or CTRL-C to abort..." >&2; \
+		read; \
+		rm -rf $(BDTMP); \
+		mkdir $(BDTMP); \
+	}
 	$(MAKE) engdir
 	cp -a book/eng $(BDTMP)/
-	for _ptd in $(BDFILES); do \
+	@for _ptd in $(BDFILES); do \
 		cat $(BDTMP)/eng/$$_ptd | bin/clean_files -e >>$(BDTMP)/eng.txt; \
 		cat book/$$_ptd | bin/clean_files -e >>$(BDTMP)/norw.txt; \
 	done
