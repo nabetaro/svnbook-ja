@@ -120,27 +120,14 @@
       最后，一切都要归结到一条重要的因素：用户交流。当用户交流贫乏，语法和语义的冲突就会增加，没有系统可以强制用户完美的交流，没有系统可以检测语义上的冲突，所以没有任何证据能够承诺锁定系统可以防止冲突，实践中，锁定除了约束了生产力，并没有做什么事。</para>
       
       <sidebar id="svn.basic.vsn-models.copy-merge.sb-1">
-        <title>When Locking is Necessary</title>
+        <title>什么时候锁定是必需的</title>
         
-        <para>While the lock-modify-unlock model is considered
-          generally harmful to collaboration, there are still times
-          when locking is appropriate.</para>
+        <para>锁定-修改-解锁模型被认为不利于协作，但有时候锁定会更好。</para>
 
-        <para>The copy-modify-merge model is based on the assumption
-          that files are contextually mergeable: that is, that the
-          majority of the files in the repository are line-based text
-          files (such as program source code).  But for files with
-          binary formats, such as artwork or sound, it's often
-          impossible to merge conflicting changes.  In these
-          situations, it really is necessary to users to take strict
-          turns when changing the file.  Without serialized access,
-          somebody ends up wasting time on changes that are ultimately
-          discarded.</para>
+        <para>拷贝-修改-合并模型假定文件是可以根据上下文合并的：就是版本库的文件主要是以行为基础的文本文件（例如程序源代码）。但对于二进制格式，例如艺术品或声音，在这种情况下，十分有必要让用户轮流修改文件，如果没有线性的访问，有些人的许多工作就最终要被放弃。</para>
 
-        <para>While CVS and Subversion are still primarily
-          copy-modify-merge systems, they both recognize the need to
-          lock an occasional file and provide mechanisms for this.
-          See <xref linkend="svn.advanced.locking"/>.</para>
+        <para>尽管CVS和Subversion一直主要是拷贝-修改-合并系统，它们都意识到了需要锁定一些文件，并且提供这种锁定机制。见<xref linkend="svn.advanced.locking"/>。
+        </para>
 
       </sidebar>
 
@@ -420,132 +407,49 @@ calc/Makefile:6
     <sect2 id="svn.basic.in-action.mixedrevs">
       <title>混合修订版本的工作拷贝</title>
 
-      <para>As a general principle, Subversion tries to be as flexible
-        as possible.  One special kind of flexibility is the ability
-        to have a working copy containing files and directories with a
-        mix of different working revision numbers.  Unfortunately,
-        this flexibility tends to confuse a number of new users.  If
-        the earlier example showing mixed revisions perplexed you,
-        here's a primer on both why the feature exists and how to make
-        use of it.</para>
+      <para>作为一个普遍原理，Subversion努力做到尽可能的灵活，一个特殊的灵活特性就是让工作拷贝包含不同工作修订版本号的文件和目录，不幸的是，这个灵活性会让许多新用户感到迷惑。如果上一个混合修订版本的例子让你感到困惑，这里是一个为何有这种特性和如何利用这个特性的基础介绍。</para>
 
       <sect3 id="svn.basic.in-action.mixedrevs.update-commit">
-        <title>Updates and Commits are Separate</title>
+        <title>更新和提交是分开的</title>
 
-        <para>One of the fundamental rules of Subversion is that
-          a <quote>push</quote> action does not cause
-          a <quote>pull</quote>, nor the other way around.  Just
-          because you're ready to submit new changes to the repository
-          doesn't mean you're ready to receive changes from other
-          people.  And if you have new changes still in progress,
-          then <command>svn update</command> should gracefully merge
-          repository changes into your own, rather than forcing you to
-          publish them.</para>
+        <para>Subversion有一个基本原则就是一个<quote>push</quote>动作不会导致<quote>push</quote>，或者相反的过程，因为你准备好了提交你的修改并不意味着你已经准备好了从其他人那里接受修改。如果你的新的修改还在进行，<command>svn update</command>将会优雅的合并版本库的修改到你的工作拷贝，而不会强迫将修改发布。
+       </para>
 
-        <para>The main side-effect of this rule is that it means a
-          working copy has to do extra bookkeeping to track mixed
-          revisions, and be tolerant of the mixture as well.  It's
-          made more complicated by the fact that directories
-          themselves are versioned.</para>
+        <para>这个规则的主要副作用就是工作拷贝需要记录额外的信息来追踪混合修订版本，并且也需要能容忍这种混合，当目录本身也是版本化的时候情况更加复杂。
+       </para>
 
-        <para>For example, suppose you have a working copy entirely at
-          revision 10.  You edit the
-          file <filename>foo.html</filename> and then perform
-          an <command>svn commit</command>, which creates revision 15
-          in the repository.  After the commit succeeds, many new
-          users would expect the working copy to be entirely at
-          revision 15, but that's not the case!  Any number of changes
-          might have happened in the repository between revisions 10
-          and 15.  The client knows nothing of those changes in the
-          repository, since you haven't yet run <command>svn
-          update</command>, and <command>svn commit</command> doesn't
-          pull down new changes.  If, on the other hand,
-          <command>svn commit</command> <emphasis>were</emphasis> to
-          automatically download the newest changes, then it would be
-          possible to set the entire working copy to revision
-          15&mdash;but then we'd be breaking the fundamental rule
-          of <quote>push</quote> and <quote>pull</quote> remaining
-          separate actions.  Therefore the only safe thing the
-          Subversion client can do is mark the one
-          file&mdash;<filename>foo.html</filename>&mdash;as being at
-          revision 15.  The rest of the working copy remains at
-          revision 10.  Only by running <command>svn update</command>
-          can the latest changes be downloaded, and the whole working
-          copy be marked as revision 15.</para>
+        <para>举个例子，假定你有一个工作拷贝，修订版本号是10。你修改了<filename>foo.html</filename>，然后执行<command>svn commit</command>，在版本库里创建了修订版本15。当成功提交之后，许多用户希望工作拷贝完全变成修订版本15，但是事实并非如此。修订版本从10到15会发生任何修改，可是客户端在运行<command>svn
+          update</command>之前不知道版本库发生了怎样的改变，<command>svn commit</command>不会拖出任何新的修改。另一方面，如果<command>svn commit</command>会自动下载最新的修改，可以使得整个工作拷贝成为修订版本15&mdash;但是，那样我们会打破<quote>push</quote>和<quote>pull</quote>完全分开的原则。因此，Subversion客户端最安全的方式是标记一个文件&mdash;<filename>foo.html</filename>&mdash;为修订版本15，工作拷贝余下的部分还是修订版本10。只有运行<command>svn update</command>才会下载最新的修改，整个工作拷贝被标记为修订版本15。
+          </para>
 
         </sect3>
 
         <sect3 id="svn.basic.in-action.mixedrevs.normal">
-          <title>Mixed revisions are normal</title>
+          <title>混合修订版本非常正常</title>
           
-          <para>The fact is, <emphasis>every time</emphasis> you
-            run <command>svn commit</command>, your working copy ends
-            up with some mixture of revisions.  The things you just
-            committed are marked as having larger working revisions
-            than everything else.  After several commits (with no
-            updates in-between) your working copy will contain a whole
-            mixture of revisions.  Even if you're the only person
-            using the repository, you will still see this phenomenon.
-            To examine your mixture of working revisions, use
-            the <command>svn status --verbose</command> command (see
-            <xref linkend="svn.tour.cycle.examine.status"/> for more
-            information.)</para>
+          <para>事实上，<emphasis>每次</emphasis>运行<command>svn commit</command>，你的工作拷贝都会进入混合多个修订版本的状态，刚刚提交的文件会比其他文件有更高的修订版本号。经过多次提交（之间没有更新），你的工作拷贝会完全是混合的修订版本。即使只有你一个人使用版本库，你依然会见到这个现象。为了检验混合工作修订版本，可以使用<command>svn status --verbose</command>命令（详细信息见<xref linkend="svn.tour.cycle.examine.status"/>）。
+          </para>
 
-          <para>Often, new users are completely unaware that their
-            working copy contains mixed revisions.  This can be
-            confusing, because many client commands are sensitive to
-            the working revision of the item they're examining.  For
-            example, the <command>svn log</command> command is used to
-            display the history of changes to a file or directory (see
-            <xref linkend="svn.tour.history.log"/>).  When the user
-            invokes this command on a working copy object, they expect
-            to see the entire history of the object.  But if the
-            object's working revision is quite old (often
-            because <command>svn update</command> hasn't been run in a
-            long time), then the history of
-            the <emphasis>older</emphasis> version of the object is
-            shown.</para>
+          <para>通常，新用户对于工作拷贝的混合修订版本一无所知，这会让人糊涂，因为许多客户端命令对于所检验条目的修订版本很敏感。例如<command>svn log</command>命令显示一个文件或目录的历史修改信息（见<xref linkend="svn.tour.history.log"/>），当用户对一个工作拷贝对象调用这个命令，他们希望看到这个对象的整个历史信息。但是如果这个对象的修订版本已经相当老了（通常因为很长时间没有运行<command>svn update</command>），此时会显示比这个对象<emphasis>更老的</emphasis>历史。
+         </para>
         </sect3>
 
         <sect3 id="svn.basic.in-action.mixedrevs.useful">
-          <title>Mixed revisions are useful</title>
+          <title>混合修订版本很有用</title>
 
-          <para>If your project is sufficiently complex, you'll
-            discover that it's sometimes nice to forcibly
-            <quote>backdate</quote> portions of your working copy to
-            an earlier revision; you'll learn how to do that in
-            Chapter 3.  Perhaps you'd like to test an earlier version
-            of a sub-module contained in a subdirectory, or perhaps
-            you'd like to figure out when a bug first came into
-            existence in a specific file.  This is the <quote>time
-            machine</quote> aspect of a version control system &mdash;
-            the feature which allows you to move any portion of your
-            working copy forward and backward in history.</para>
+          <para>如果你的项目十分复杂，有时候你会发现强制工作拷贝的一部分<quote>回溯</quote>到过去非常有用，你将在第三章学习到如何这样做。或许你很希望测试某一子目录下某一子模块的早期版本，又或是要测试一个bug什么时候发生，这是版本控制系统像<quote>时间机器</quote>的一个方面&mdash;这个特性允许工作拷贝的任何一个部分在历史中前进或后退。</para>
 
         </sect3>
 
         <sect3 id="svn.basic.in-action.mixedrevs.limits">
-          <title>Mixed revisions have limitations</title>
+          <title>混合修订版本也有限制</title>
 
-          <para>However you make use of mixed revisions in your
-            working copy, there are limitations to this
-            flexibility.</para>
+          <para>无论你如何在工作拷贝中利用混合修订版本，这种灵活性还是有限制的。
+          </para>
           
-          <para>First, you cannot commit the deletion of a file or
-            directory which isn't fully up-to-date.  If a newer
-            version of the item exists in the repository, your attempt
-            to delete will be rejected, to prevent you from
-            accidentally destroying changes you've not yet
-            seen.</para>
+          <para>首先，你不可以提交一个不是完全最新的文件或目录，如果有个新的版本存在于版本库，你的删除操作会被拒绝，这防止你不小心破坏你没有见到的东西。</para>
 
-          <para>Second, you cannot commit a metadata change to a
-            directory unless it's fully up-to-date.  You'll learn
-            about attaching
-            <quote>properties</quote> to items in Chapter 6.  A
-            directory's working revision defines a specific set of
-            entries and properties, and thus committing a property
-            change to an out-of-date directory may destroy properties
-            you've not yet seen.</para>
+          <para>第二，如果目录已经不是最新的了，你不能提交一个目录的元数据更改。你将会在第6章学习附加<quote>属性</quote>，一个目录的工作修订版本定义了许多条目和属性，因而对一个过期的版本提交属性会破坏一些你没有见到的属性。</para>
 
         </sect3>
 
