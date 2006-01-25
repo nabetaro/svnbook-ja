@@ -1,4 +1,4 @@
-﻿<chapter id="svn-ch-7">
+﻿<chapter id="svn.advanced">
   <title>高级主题</title>
 
   <simplesect>
@@ -9,24 +9,20 @@
 
     <para>本章重点介绍一些Subversion不常用的特性，在这里，我们会讨论Subversion的属性（或者说<quote>元数据</quote>）支持，和如何通过更改运行配置区来改变Subversion的缺省行为方式，我们会描述怎样使用外部定义来指导Subversion从多个版本库得到数据，我们会覆盖一些Subversion分发版本附加的客户端和服务器端的工具的细节。</para>
 
-    <para>在阅读本章之前，你一定要熟悉Subversion对文件和目录的基本版本操作能力，如果你还没有阅读这些内容，或者是需要一个复习，我们建议你重读<xref
-      linkend="svn-ch-2" />和<xref linkend="svn-ch-3" />，一旦你已经掌握了基础知识和本章的内容，你会变成Subversion的超级用户！
+    <para>在阅读本章之前，你一定要熟悉Subversion对文件和目录的基本版本操作能力，如果你还没有阅读这些内容，或者是需要一个复习，我们建议你重读linkend="svn.basic" />和<xref linkend="svn.tour" />，一旦你已经掌握了基础知识和本章的内容，你会变成Subversion的超级用户！
     </para>
 
   </simplesect>
 
-  <!-- ******************************************************************* -->
-  <!-- *** SECTION 1:  RUNTIME CONFIGURATION AREA                      *** -->
-  <!-- ******************************************************************* -->
-  <sect1 id="svn-ch-7-sect-1">
+  <sect1 id="svn.advanced.confarea">
     <title>运行配置区</title>
     
     <para>Subversion提供了许多用户可以控制的可选行为方式，许多是用户希望添加到所有的Subversion操作中的选项，为了避免强制用户记住命令行参数并且在每个命令中使用，Subversion使用配置文件，并且将配置文件保存在独立的Subversion配置区。</para>
 
     <para>Subversion<firstterm>配置区</firstterm>是一个双层结构，保存了可选项的名称和值。通常，Subversion配置区是一个保存<firstterm>配置文件</firstterm>的特殊目录（第一层结构），目录中保存了一些标准INI格式的文本文件（文件中的<quote>section</quote>形成第二层结构）。这些文件可以简单用你喜欢的文本编辑器编辑（如Emacs或vi），而且保存了客户端可以读取的指示，用来指导用户的一些行为选项。</para>
 
-    <!-- ***************************************************************** -->
-    <sect2 id="svn-ch-7-sect-1.1">
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.confarea.layout">
       <title>配置区布局</title>
 
       <para><command>svn</command>命令行客户端第一次执行时，会创建一个用户配置区，在类Unix系统中，配置区位于用户主目录中，名为<filename>.subversion</filename>。在Win32系统，Subversion创建一个名为<filename>Subversion</filename>的目录，这个目录通常位于用户配置目录（顺便说一句，通常是一个隐藏目录）的<filename>Application Data</filename>子目录下。然而，在Win32平台上，此目录的具体位置在不同的系统上是不一样的，由Windows注册表决定。
@@ -45,8 +41,8 @@
 
     </sect2>
 
-    <!-- ***************************************************************** -->
-    <sect2 id="svn-ch-7-sect-1.2">
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.confarea.windows-registry">
       <title>配置和Windows注册表</title>
 
       <para>除了基于INI文件的配置区，运行在Windows平台的Subversion客户端也可以使用Windows注册表来保存配置数据。注册表中保存的选项名称和值的含义与INI文件中相同，<quote>file/section</quote>在注册表中表现为注册表键树的层级，使得双层结构得以保留下来。</para>
@@ -77,7 +73,7 @@
 
       <para><command>svn</command>命令行客户端不会尝试写Windows注册表，也不会在注册表中创建默认配置区。不过可以使用<command>REGEDIT</command>创建所需的键。此外，还可以创建一个<filename>.reg</filename>文件，并在文件浏览器中双击这个文件，文件中的数据就会合并到注册表中。</para>
 
-      <example id="svn-ch-7-sect-1.2-ex-1">
+      <example id="svn.advanced.confarea.windows-registry.ex-1">
         <title>注册表条目（.reg）样本文件。</title>
 
         <programlisting>
@@ -125,13 +121,13 @@ REGEDIT4
 
     </sect2>
 
-    <!-- ***************************************************************** -->
-    <sect2 id="svn-ch-7-sect-1.3">
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.confarea.opts">
       <title>配置选项</title>
       
       <para>本节我们会详细讨论Subversion目前支持的运行配置选项。</para>
 
-      <sect3 id="svn-ch-7-sect-1.3.1">
+      <sect3 id="svn.advanced.confarea.opts.servers">
         <title>服务器</title>
 
         <para><filename>servers</filename>文件保存了Subversion关于网络层的配置选项，这个文件有两个特别的小节：<literal>groups</literal> 和<literal>global</literal>。<literal>groups</literal>小节是一个交叉引用表，其中的关键字是<filename>servers</filename>文件中其它小节的名字，值则是一个可以包含通配符的字符序列，对应于接收Subversion请求的主机名，称为glob。</para>
@@ -192,7 +188,7 @@ collabnet = svn.collab.net
           <varlistentry>
             <term><literal>neon-debug-mask</literal></term>
             <listitem>
-              <para>只是一个整形的掩码，底层的HTTP库Neon用来选择产生调试的输出，缺省值是<literal>0</literal>，意思是关闭所有的调试输出，关于Subversion使用Neon的详细信息，见<xref linkend="svn-ch-8" />。</para>
+              <para>只是一个整形的掩码，底层的HTTP库Neon用来选择产生调试的输出，缺省值是<literal>0</literal>，意思是关闭所有的调试输出，关于Subversion使用Neon的详细信息，见<xref linkend="svn.developer" />。</para>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -222,7 +218,7 @@ collabnet = svn.collab.net
         </variablelist>
 
       </sect3>
-      <sect3 id="svn-ch-7-sect-1.3.2">
+      <sect3 id="svn.advanced.confarea.opts.config">
         <title>config</title>
 
         <para>其它的Subversion运行选项保存在<filename>config</filename>文件中，这些运行选项与网络连接无关，只是一些正在使用的选项，但是为了应对未来的扩展，也按小节划分成组。</para>
@@ -234,7 +230,7 @@ collabnet = svn.collab.net
             <term><literal>store-passwords</literal></term>
             <listitem>
               <para>这告诉Subversion是否缓存服务器认证要求时用户提供的密码，缺省值是<literal>yes</literal>。设置为<literal>no</literal>可以关闭在存盘的密码缓存，你可以通过<command>svn</command>的<option>--no-auth-cache</option>命令行参数（那些支持这个参数的子命令）来覆盖这个设置，详细信息请见<xref
-                linkend="svn-ch-6-sect-2.2"/>。
+                linkend="svn.serverconfig.netmodel.credcache"/>。
               </para>
             </listitem>
           </varlistentry>
@@ -252,20 +248,20 @@ collabnet = svn.collab.net
           <varlistentry>
             <term><literal>editor-cmd</literal></term>
             <listitem>
-              <para>Subversion在提交操作时用来询问用户日志信息的程序，例如使用<command>svn commit</command>而没有指定<option>--message</option>（<option>-m</option>）或者<option>--file</option>（<option>-F</option>）选项。这个程序也会与<command>svn propedit</command>一起使用&mdash;一个临时文件跳出来包含已经存在的用户希望编辑的属性，然后用户可以对这个属性进行编辑（见<xref linkend="svn-ch-7-sect-2" />），这个选项的缺省值为空，如果这个选项没有设置，Subversion会依次检查环境变量<literal>SVN_EDITOR</literal>、<literal>VISUAL</literal>和<literal>EDITOR</literal>（这个顺序）来找到一个编辑器命令。</para>
+              <para>Subversion在提交操作时用来询问用户日志信息的程序，例如使用<command>svn commit</command>而没有指定<option>--message</option>（<option>-m</option>）或者<option>--file</option>（<option>-F</option>）选项。这个程序也会与<command>svn propedit</command>一起使用&mdash;一个临时文件跳出来包含已经存在的用户希望编辑的属性，然后用户可以对这个属性进行编辑（见<xref linkend="svn.advanced.props" />），这个选项的缺省值为空，如果这个选项没有设置，Subversion会依次检查环境变量<literal>SVN_EDITOR</literal>、<literal>VISUAL</literal>和<literal>EDITOR</literal>（这个顺序）来找到一个编辑器命令。</para>
             </listitem>
           </varlistentry>
           <varlistentry>
             <term><literal>diff-cmd</literal></term>
             <listitem>
-              <para>这个命令是比较程序的绝对路径，当Subversion生成了<quote>diff</quote>输出时（例如当使用<command>svn diff</command>命令）就会使用，缺省Subversion会使用一个内置的比较库&mdash;设置这个参数会强制它使用外部程序执行这个任务。
+              <para>这个命令是比较程序的绝对路径，当Subversion生成了<quote>diff</quote>输出时（例如当使用<command>svn diff</command>命令）就会使用，缺省Subversion会使用一个内置的比较库&mdash;设置这个参数会强制它使用外部程序执行这个任务，此类程序的更多信息见<xref linkend="svn.advanced.externaldifftools"/>。
               </para>
             </listitem>
           </varlistentry>
           <varlistentry>
             <term><literal>diff3-cmd</literal></term>
             <listitem>
-              <para>这指定了一个三向的比较程序，Subversion使用这个程序来合并用户和从版本库接受的修改，缺省Subversion会使用一个内置的比较库&mdash;设置这个参数会导致它会使用外部程序执行这个任务。
+              <para>这指定了一个三向的比较程序，Subversion使用这个程序来合并用户和从版本库接受的修改，缺省Subversion会使用一个内置的比较库&mdash;设置这个参数会导致它会使用外部程序执行这个任务，此类程序的更多信息见<xref linkend="svn.advanced.externaldifftools"/>。
               </para>
             </listitem>
           </varlistentry>
@@ -277,7 +273,7 @@ collabnet = svn.collab.net
           </varlistentry>
         </variablelist>
 
-        <para><literal>tunnels</literal>小节允许你定义一个<command>svnserve</command>和<literal>svn://</literal>客户端连接使用的管道模式，更多细节见<xref linkend="svn-ch-6-sect-3.4"/>。</para>
+        <para><literal>tunnels</literal>小节允许你定义一个<command>svnserve</command>和<literal>svn://</literal>客户端连接使用的管道模式，更多细节见<xref linkend="svn.serverconfig.svnserve.sshauth"/>。</para>
 
         <para><literal>miscellany</literal>小节是一些没法归到别处的选项。
           <footnote>
@@ -289,9 +285,9 @@ collabnet = svn.collab.net
           <varlistentry>
             <term><literal>global-ignores</literal></term>
             <listitem>
-              <para>当运行<command>svn status</command>命令时，Subversion会和版本化的文件一样列出未版本化的文件和目录，并使用<literal>?</literal>字符（见see <xref linkend="svn-ch-3-sect-5.3.1" />）标记，有时候察看无关的未版本化文件会很讨厌&mdash;比如程序编译产生的对象文件&mdash;的显示出来。<literal>global-ignores</literal>选项是一个空格分隔的列表，用来描述Subversion在它们版本化之前不想显示的文件和目录，缺省值是<literal>*.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store</literal>。</para>
+              <para>当运行<command>svn status</command>命令时，Subversion会和版本化的文件一样列出未版本化的文件和目录，并使用<literal>?</literal>字符（见see <xref linkend="svn.tour.cycle.examine.status" />）标记，有时候察看无关的未版本化文件会很讨厌&mdash;比如程序编译产生的对象文件&mdash;的显示出来。<literal>global-ignores</literal>选项是一个空格分隔的列表，用来描述Subversion在它们版本化之前不想显示的文件和目录，缺省值是<literal>*.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store</literal>。</para>
 
-              <para>就像<command>svn status</command>，<command>svn add</command>和<command>svn import</command>命令也会忽略匹配这个列表的文件，你可以用单个的<option>--no-ignore</option>命令行参数来覆盖这个选项，关于更加细致的控制忽略的项目，见<xref linkend="svn-ch-7-sect-2.3.3"/>。</para>
+              <para>就像<command>svn status</command>，<command>svn add</command>和<command>svn import</command>命令也会忽略匹配这个列表的文件，你可以用单个的<option>--no-ignore</option>命令行参数来覆盖这个选项，关于更加细致的控制忽略的项目，见<xref linkend="svn.advanced.props.special.ignore"/>。</para>
             </listitem>
           </varlistentry>
           
@@ -305,7 +301,7 @@ collabnet = svn.collab.net
           <varlistentry>
             <term><literal>log-encoding</literal></term>
             <listitem>
-              <para>这个变量设置提交日志缺省的字符集，是<option>--encoding</option>选项（见<xref linkend="svn-ch-9-sect-1.1"/>）的永久形式，Subversion版本库保存了一些UTF8的日志信息，并且假定你的日志信息是用操作系统的本地编码，如果你提交的信息使用别的编码方式，你一定要指定不同的编码。</para>
+              <para>这个变量设置提交日志缺省的字符集，是<option>--encoding</option>选项（见<xref linkend="svn.ref.svn.sw"/>）的永久形式，Subversion版本库保存了一些UTF8的日志信息，并且假定你的日志信息是用操作系统的本地编码，如果你提交的信息使用别的编码方式，你一定要指定不同的编码。</para>
             </listitem>
           </varlistentry>
 
@@ -329,10 +325,10 @@ collabnet = svn.collab.net
     </sect2>
   </sect1>
 
-  <!-- ******************************************************************* -->
-  <!-- *** SECTION 2:  PROPERTIES                                      *** -->
-  <!-- ******************************************************************* -->
-  <sect1 id="svn-ch-7-sect-2">
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.advanced.props">
     <title>属性</title>
 
     <para>我们已经详细讲述了Subversion存储和检索版本库中不同版本的文件和目录的细节，并且用了好几个章节来论述这个工具的基本功能。到此为止，Subversion还仅仅表现出一个普通的版本控制理念。但是Subversion并没有就此止步。</para>
@@ -342,27 +338,27 @@ collabnet = svn.collab.net
     <sidebar>
       <title>Subversion的其他属性</title>
 
-      <para>Subversion的属性也可以在别的地方出现，就像文件和目录可能附加有任意的属性名和值，每个修订版本作为一个整体也可以附加任意的属性，也有同样的限制&mdash;可读的文本名称和任何你希望的，二进制值&mdash;除了修订版本不是版本化的，参见<xref linkend="svn-ch-5-sect-1.2" />获得版本化的属性信息。</para>
+      <para>Subversion的属性也可以在别的地方出现，就像文件和目录可能附加有任意的属性名和值，每个修订版本作为一个整体也可以附加任意的属性，也有同样的限制&mdash;可读的文本名称和任何你希望的，二进制值&mdash;除了修订版本不是版本化的，参见<xref linkend="svn.reposadmin.basics.revprops" />获得版本化的属性信息。</para>
     </sidebar>
 
     <para>在本小节，我们将会检验这个工具&mdash;不仅是对Subversion的用户，也对Subversion本身&mdash;对于属性的支持。你会学到与属性相关的<command>svn</command>子命令，和属性怎样影响你的普通Subversion工作流，希望你会感到Subversion的属性可以提高你的版本控制体验。</para>
 
-    <!-- ***************************************************************** -->
-    <sect2 id="svn-ch-7-sect-2.1">
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.props.why">
       <title>为什么需要属性？</title>
 
       <para>属性可能会是工作拷贝的有益补充，实际上，Subversion本身使用属性来存放特殊的信息，作为支持特别操作的一种方法，同样，你也可以使用属性来实现自己的目的，当然，你对属性作的任何事情也可以针对普通的版本化文件，但是先考虑下面Subversion使用属性的例子。</para>
 
       <para>假定你希望设计一个网站存放许多数码图片，并且显示他们的标题和时间戳，现在你的图片集经常修改，所以你希望你的网站能够尽量的自动化，这些图片可能非常大，所以根据这个网站的特性，你希望在网站给用户提供图标图像。你可以用传统的文件做这件事，你可以有一个<filename>image123.jpg</filename>和一个<filename>image123-thumbnail.jpg</filename>对应在同一个目录，有时候你希望保持文件名相同，你可以使用不同的目录，如<filename>thumbnails/image123.jpg</filename>。你可以用一种相似的样式来保存你的标题和时间戳同原始图像文件分开。很快你的目录树会是一团糟，每个新图片的添加都会成倍的增加混乱。</para>
 
-      <para>现在考虑使用Subversion文件的属性来做相同的设置，想象我们有一个单独的图像文件<filename>image123.jpg</filename>，然后这个文件的属性集包括<literal>caption</literal>、<literal>datestamp</literal>甚至<literal>thumbnail</literal>。现在你的工作拷贝目录看起来更容易管理&mdash;实际上，它看起来只有图像文件，但是你的自动化脚本知道得更多，它们知道可以用<command>svn</command>（更好的选择是使用Subversion的语言绑定&mdash;见<xref linkend="svn-ch-8-sect-2.3" />）来挖掘更多的站点显示需要的额外信息，而不必去阅读一个索引文件或者是玩一个路径处理的游戏。</para>
+      <para>现在考虑使用Subversion文件的属性来做相同的设置，想象我们有一个单独的图像文件<filename>image123.jpg</filename>，然后这个文件的属性集包括<literal>caption</literal>、<literal>datestamp</literal>甚至<literal>thumbnail</literal>。现在你的工作拷贝目录看起来更容易管理&mdash;实际上，它看起来只有图像文件，但是你的自动化脚本知道得更多，它们知道可以用<command>svn</command>（更好的选择是使用Subversion的语言绑定&mdash;见<xref linkend="svn.developer.usingapi.otherlangs" />）来挖掘更多的站点显示需要的额外信息，而不必去阅读一个索引文件或者是玩一个路径处理的游戏。</para>
 
       <para>你怎样（而且如果）使用Subversion完全在你，像我们提到的，Subversion拥有它自己的属性集，我们会在后面的章节讨论，但首先，让我们讨论怎样使用<command>svn</command>的属性处理选项。</para>
 
     </sect2>
 
-    <!-- ***************************************************************** -->
-    <sect2 id="svn-ch-7-sect-2.2">
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.props.manip">
       <title>处理属性</title>
 
       <para><command>svn</command>命令提供一些方法来添加和修改文件或目录的属性，对于短的，可读的属性，最简单的添加方法是在<command>propset</command>子命令里指定正确的名称和值。</para>
@@ -373,6 +369,18 @@ property 'copyright' set on 'calc/button.c'
 $
 </screen>
        
+      <para>There are some restrictions on the names you can use for
+        properties.  A property name must start with a letter, a colon
+        (<literal>:</literal>), or an underscore
+        (<literal>_</literal>); after that, you can also use digits,
+        hyphens (<literal>-</literal>), and periods
+        (<literal>.</literal>).
+          <footnote>
+            <para>If you're familiar with XML, this is pretty much the
+            ASCII subset of the syntax for XML "Name".</para>
+          </footnote>
+      </para>
+
       <para>但是我们已经“吹嘘”过Subversion为属性值提供的灵活性，如果你计划有一个多行的可读文本，甚至是二进制文件的属性值，你通常不希望在命令行里指定，所以<command>propset</command>子命令使用<option>--file</option>（<option>-F</option>）选项来指定一个保存新属性值的文件的名字。</para>
 
       <screen>
@@ -381,7 +389,7 @@ property 'license' set on 'calc/button.c'
 $
 </screen>
 
-      <para>作为<command>propset</command>命令的补充，<command>svn</command>提供了一个<command>propedit</command>命令，这个命令使用定制的编辑器程序（见<xref linkend="svn-ch-7-sect-1.3.2" />）来添加和修改属性。当你运行这个命令，<command>svn</command>调用你的编辑器程序打开一个临时文件，文件中保存当前的属性值（或者是空文件，如果你正在添加新的属性）。然后你只需要修改为你想要的值，保存临时文件，然后离开编辑器程序。如果Subversion发现你已经修改了属性值，就会接受新值，如果你未作任何修改而离开，不会产生属性修改操作。</para>
+      <para>作为<command>propset</command>命令的补充，<command>svn</command>提供了一个<command>propedit</command>命令，这个命令使用定制的编辑器程序（见<xref linkend="svn.advanced.confarea.opts.config" />）来添加和修改属性。当你运行这个命令，<command>svn</command>调用你的编辑器程序打开一个临时文件，文件中保存当前的属性值（或者是空文件，如果你正在添加新的属性）。然后你只需要修改为你想要的值，保存临时文件，然后离开编辑器程序。如果Subversion发现你已经修改了属性值，就会接受新值，如果你未作任何修改而离开，不会产生属性修改操作。</para>
 
       <screen>
 $ svn propedit copyright calc/button.c  ### exit the editor without changes
@@ -470,7 +478,7 @@ property 'svn:log' set on repository revision '11'
 $
 </screen>
 
-        <para>注意，修改这些未版本化的属性的能力一定要明确的添加给版本库管理员（见<xref linkend="svn-ch-5-sect-2.1" />）。因为属性没有版本化，如果编辑的时候不小心，就会冒丢失信息的风险，版本库管理员可以设置方法来防范这种意外，缺省情况下，修改未版本化的属性是禁止的。</para>
+        <para>注意，修改这些未版本化的属性的能力一定要明确的添加给版本库管理员（见<xref linkend="svn.reposadmin.create.hooks" />）。因为属性没有版本化，如果编辑的时候不小心，就会冒丢失信息的风险，版本库管理员可以设置方法来防范这种意外，缺省情况下，修改未版本化的属性是禁止的。</para>
 
       </sidebar>
 
@@ -488,7 +496,7 @@ Name: copyright
 $
 </screen>
 
-      <para>注意<command>status</command>子命令显示的<literal>M</literal>在第二列而不是在第一列，这是因为我们修改了<filename>calc/button.c</filename>的属性，而不是它的文本内容，如果我们都修改了，我们也会看到<literal>M</literal>出现在第一列（见<xref linkend="svn-ch-3-sect-5.3.1" />）。</para>
+      <para>注意<command>status</command>子命令显示的<literal>M</literal>在第二列而不是在第一列，这是因为我们修改了<filename>calc/button.c</filename>的属性，而不是它的文本内容，如果我们都修改了，我们也会看到<literal>M</literal>出现在第一列（见<xref linkend="svn.tour.cycle.examine.status" />）。</para>
 
       <sidebar>
         <title>属性冲突</title>
@@ -524,14 +532,14 @@ $
 
     </sect2>
 
-    <!-- ***************************************************************** -->
-    <sect2 id="svn-ch-7-sect-2.3">
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.props.special">
       
       <title>特别属性</title>
 
       <para>Subversion没有关于属性的特殊政策&mdash;你可以通过它们实现自己的目的。Subversion只是要求你不要使用<literal>svn:</literal>开头的命名空间作为属性名，这是Subversion自己使用的命名空间。实际上，Subversion定义了某些特殊的属性，这些属性对它们所附加的文件和目录有特殊的影响。在本小节，我们会解开这个谜团，并且描述这些属性怎样让你的生活更加容易。</para>
       
-      <sect3 id="svn-ch-7-sect-2.3.1">
+      <sect3 id="svn.advanced.props.special.executable">
         <title><literal>svn:executable</literal></title>
  
         <para><literal>svn:executable</literal>属性用来控制一个版本化的文件自动执行文件权限设定，这个属性没有特定的值&mdash;它只是说明一个Subversion可以保留的文件权限的期望值，删除这个属性会恢复操作系统对这些权限的完全控制。</para>
@@ -548,7 +556,7 @@ $
 
       </sect3>
 
-      <sect3 id="svn-ch-7-sect-2.3.2">
+      <sect3 id="svn.advanced.props.special.mime-type">
         <title><literal>svn:mime-type</literal></title>
         
         <para><literal>svn:mime-type</literal>属性为Subversion的许多目的服务，除了保存一个文件的多用途网际邮件扩展（MIME）分类以外，这个属性值也描述了一些Subversion自己使用的行为特性。
@@ -561,10 +569,10 @@ $
 
       </sect3>
 
-      <sect3 id="svn-ch-7-sect-2.3.3">
+      <sect3 id="svn.advanced.props.special.ignore">
         <title><literal>svn:ignore</literal></title>
 
-        <para>这个<literal>svn:ignore</literal>属性保存了一个Subversion特定操作忽略的文件模式列表，或许这个是最常用的属性，它可以与<literal>global-ignores</literal>运行配置选项配合使用（见<xref linkend="svn-ch-7-sect-1.3.2" />）来过滤<command>svn status</command>、<command>svn add</command>和<command>svn import</command>命令中操作的未版本化文件。</para>
+        <para>这个<literal>svn:ignore</literal>属性保存了一个Subversion特定操作忽略的文件模式列表，或许这个是最常用的属性，它可以与<literal>global-ignores</literal>运行配置选项配合使用（见<xref linkend="svn.advanced.confarea.opts.config" />）来过滤<command>svn status</command>、<command>svn add</command>和<command>svn import</command>命令中操作的未版本化文件。</para>
 
         <para><literal>svn:ignore</literal>背后的基本原理很容易解释，Subversion不会假定工作拷贝中的所有文件或子目录是版本控制的一部分，资源必须被显式的使用<command>svn add</command>或者<command>svn import</command>放到Subversion的管理控制之下，作为结果，经常有许多工作拷贝的资源并没有版本化。</para>
 
@@ -650,7 +658,7 @@ I      calc/debug_log.3.gz
    
       </sect3>
 
-      <sect3 id="svn-ch-7-sect-2.3.4">
+      <sect3 id="svn.advanced.props.special.keywords">
         <title><literal>svn:keywords</literal></title>
 
         <para>Subversion具备有添加<firstterm>关键字</firstterm>的能力&mdash;一些有用的，关于版本化的文件动态信息的片断&mdash;不必直接添加到文件本身。关键字通常会用来描述文件最后一次修改的一些信息，因为这些信息每次都有改变，更重要的一点，这是在文件修改<emphasis>之后</emphasis>，除了版本控制系统，对于任何处理完全保持最新的数据都是一场争论，作为人类作者，信息变得陈旧是不可避免的。</para>
@@ -747,7 +755,7 @@ $
 
         <para>在你提交了属性修改后，Subversion会立刻更新你的工作文件为新的替代文本，你将无法找到<literal>$LastChangedDate$</literal>的关键字anchor，你会看到替换的结果，这个结果也保存了关键字的名字，与美元符号（<literal>$</literal>）绑定在一起，而且我们预测的，<literal>Rev</literal>关键字不会被替换，因为我们没有要求这样做。</para>
 
-        <para>注意我们设置<literal>svn:keywords</literal>属性为"Date Author"，关键字anchor使用别名<literal>$LastChangedDate$</literal>并且正确的扩展。
+        <para>注意我们设置<literal>svn:keywords</literal>属性为<quote>Date Author</quote>，关键字anchor使用别名<literal>$LastChangedDate$</literal>并且正确的扩展。
         </para>
 
         <screen>
@@ -762,7 +770,7 @@ Cumulus clouds are appearing more frequently as summer approaches.
 
       </sect3>
 
-      <sect3 id="svn-ch-7-sect-2.3.5">
+      <sect3 id="svn.advanced.props.special.eol-style">
         <title><literal>svn:eol-style</literal></title>
 
         <para>不像我们说过的版本化文件的<literal>svn:mime-type</literal>属性，Subversion假定这个文件保存了可读的数据，一般来讲，Subversion因为这个属性来判断一个文件是否可以用上下文区别报告，否则，对Subversion来说只是字节。</para>
@@ -818,42 +826,632 @@ Cumulus clouds are appearing more frequently as summer approaches.
         
       </sect3>
 
-      <sect3 id="svn-ch-7-sect-2.3.6">
+      <sect3 id="svn.advanced.props.special.externals">
         <title><literal>svn:externals</literal></title>
 
-        <para><literal>svn:externals</literal>属性保存了指导Subversion从一个或多个取出的工作拷贝移出目录的指示，关于这个关键字的更多信息，见<xref linkend="svn-ch-7-sect-3"/>。
+        <para><literal>svn:externals</literal>属性保存了指导Subversion从一个或多个取出的工作拷贝移出目录的指示，关于这个关键字的更多信息，见<xref linkend="svn.advanced.externals"/>。
        </para>
 
       </sect3>
 
-      <sect3 id="svn-ch-7-sect-2.3.7">
+      <sect3 id="svn.advanced.props.special.special">
         <title><literal>svn:special</literal></title>
 
-        <para><literal>svn:special</literal>是唯一一个不是用户直接设置和修改的<literal>svn:</literal>属性，当<quote>特别的</quote>对象如一个对象链接计划加入到版本库，Subversion会自动设置这个属性。版本库像普通文件一样保存<literal>svn:special</literal>对象，然而，当一个客户端在检出和更新操作时看到这个属性时，就会翻译这个文件的内容，并且将文件转化为特殊类型的对象，在Subversion1.1中，只有版本化的符号链接有这个属性附加，但在以后的版本中其它特殊的节点也有可能使用这个属性。</para>
+        <para><literal>svn:special</literal>是唯一一个不是用户直接设置和修改的<literal>svn:</literal>属性，当<quote>特别的</quote>对象如一个对象链接计划加入到版本库，Subversion会自动设置这个属性。版本库像普通文件一样保存<literal>svn:special</literal>对象，然而，当一个客户端在检出和更新操作时看到这个属性时，就会翻译这个文件的内容，并且将文件转化为特殊类型的对象，在Subversion目前的版本中，只有版本化的符号链接有这个属性附加，但在以后的版本中其它特殊的节点也有可能使用这个属性。</para>
 
         <para>注意：Windows客户端不会有符号链接，因此会忽略含有<literal>svn:special</literal>声明为符号链的文件，在Windows，用户会以一个工作拷贝中的版本化的文件作为结束。
        </para>
       </sect3>
 
+      <sect3 id="svn.advanced.props.special.needs-lock">
+        <title><literal>svn:needs-lock</literal></title>
+
+        <para>This property is used to signify that the file it's
+          attached to ought to be locked before editing.  The value of
+          the property is irrelevant; Subversion will normalize its
+          value to <literal>*</literal>.  When present, the file will
+          be read-only <emphasis>unless</emphasis> the user has
+          explicitly locked the file.  When a lock-token is present
+          (as a result of running <command>svn lock</command>), the
+          file becomes read-write.  When the lock is released, the
+          file becomes read-only again.</para>
+
+        <para>To learn more about how, when, and why this property
+          should be used, see
+          <xref
+          linkend="svn.advanced.locking.lock-communication"/>.</para>
+      </sect3>
+
     </sect2>
 
-    <!-- ***************************************************************** -->
-    <sect2 id="svn-ch-7-sect-2.4">
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.props.auto">
       <title>自动属性设置</title>
 
       <para>属性是Subversion一个强大的特性，成为本章和其它章讨论的许多Subversion特性的关键组成部分&mdash;文本区别和合并支持、关键字替换、新行的自动转换等等。但是为了从属性得到完全的利益，他们必须设置到正确的文件和目录。不幸的是，在日常工作中很容易忘记这一步工作，特别是当没有设置属性不会引起明显的错误时（至少相对与未能添加一个文件到版本控制这种操作），为了帮助你在需要添加属性的文件上添加属性，Subversion提供了一些简单但是有用的特性。</para>
 
       <para>当你使用<command>svn add</command>或是<command>svn import</command>准备加入一个版本控制的文件时，Subversion会运行一个基本探测来检查文件是包括了可读还是不可读的内容，如果Subversion猜测错误，或者是你希望使用<literal>svn:mime-type</literal>属性更精确的设置&mdash;或许是<literal>image/png</literal>或者<literal>application/x-shockwave-flash</literal>&mdash;你可以一直删除或编辑那个属性。</para>
 
-      <para>Subversion也提供了自动属性特性，允许你创建文件名到属性名称与值影射，这个影射在你的运行配置区域设置，它们会影响添加和导入操作，而且不仅仅会覆盖Subversion所有缺省的MIME类型判断操作，也会设置额外的Subversion或者自定义的属性。举个例子，你会创建一个影射文件说在任何时候你添加了一个JPEG文件&mdash;一些符合<literal>*.jpg</literal>的文件&mdash;Subversion一定会自动设置它们的<literal>svn:mime-type</literal>属性为<literal>image/jpeg</literal>。或者是任何匹配<literal>*.cpp</literal>的文件，必须把<literal>svn:eol-style</literal>设置为<literal>native</literal>，并且<literal>svn:keywords</literal>设置为<literal>Id</literal>。自动属性支持是Subversion工具箱中属性相关最垂手可得的工具，见<xref linkend="svn-ch-7-sect-1.3.2"/>来查看更多的配置支持。</para>
+      <para>Subversion也提供了自动属性特性，允许你创建文件名到属性名称与值影射，这个影射在你的运行配置区域设置，它们会影响添加和导入操作，而且不仅仅会覆盖Subversion所有缺省的MIME类型判断操作，也会设置额外的Subversion或者自定义的属性。举个例子，你会创建一个影射文件说在任何时候你添加了一个JPEG文件&mdash;一些符合<literal>*.jpg</literal>的文件&mdash;Subversion一定会自动设置它们的<literal>svn:mime-type</literal>属性为<literal>image/jpeg</literal>。或者是任何匹配<literal>*.cpp</literal>的文件，必须把<literal>svn:eol-style</literal>设置为<literal>native</literal>，并且<literal>svn:keywords</literal>设置为<literal>Id</literal>。自动属性支持是Subversion工具箱中属性相关最垂手可得的工具，见<xref linkend="svn.advanced.confarea.opts.config"/>来查看更多的配置支持。</para>
 
     </sect2>     
   </sect1>
 
-  <!-- ******************************************************************* -->
-  <!-- *** SECTION 2 1/2:  PEG AND OPERATIVE REVISIONS                 *** -->
-  <!-- ******************************************************************* -->
-  <sect1 id="svn-ch-7-sect-2b">
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.advanced.locking">
+    <title>Locking</title>
+
+    <para>Subversion's <quote>copy-modify-merge</quote> model is
+      optimal when users are collaborating on projects that consist of
+      line-based text files, such as program source code.  However, as
+      discussed in <xref
+      linkend="svn.basic.vsn-models.copy-merge.sb-1"/>, sometimes one
+      has to use the <quote>lock-modify-unlock</quote> model instead
+      of Subversion's standard concurrent model.  When a file consists
+      of binary data, it's often difficult or impossible to merge two
+      sets of changes made in parallel by different users.  For this
+      reason, Subversion 1.2 and later offers a feature known as
+      <firstterm>locking</firstterm>, often known as <quote>reserved
+      checkouts</quote> in other version control systems.</para>
+
+    <para>Subversion's locking feature has two main goals:</para>
+
+    <itemizedlist>
+      <listitem><para><emphasis>Serializing access to a
+          resource</emphasis>.  Allow a user to grab an exclusive
+          right to change to a file in the repository.  If Harry
+          reserves the right to change <filename>foo.jpg</filename>,
+          then Sally should not be able to commit a change to it.</para>
+      </listitem>
+      <listitem><para><emphasis>Aiding communication</emphasis>.
+          Prevent users from wasting time on unmergeable changes.  If
+          Harry has reserved the right to change
+          <filename>foo.jpg</filename>, then it should be easy for
+          Sally to notice this fact and avoid working on the
+          file.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Subversion's locking feature is currently limited to files
+      only&mdash;it's not yet possible to reserve access to a whole
+      directory tree.</para>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.locking.creation">
+      <title>Creating locks</title>
+      
+      <para>In the Subversion repository, a
+        <firstterm>lock</firstterm> is a piece of metadata which
+        grants exclusive access to one user to change a file.  This
+        user is said to be the <firstterm>lock owner</firstterm>.
+        Each lock also has a unique identifier, typically a long
+        string of characters, known as the <firstterm>lock
+        token</firstterm>.  The repository manages locks in a separate
+        table, and enforces locks during a commit operation.  If any
+        commit transaction attempts to modify or delete the file (or
+        delete a parent of the file), the repository will demand two
+        pieces of information:</para>
+      
+      <orderedlist>
+        <listitem><para><emphasis role="bold">User
+          authentication</emphasis>.  The client performing the commit
+          must be authenticated as the lock owner.</para>
+        </listitem>
+        <listitem><para><emphasis role="bold">Software
+          authorization</emphasis>.  The user's working copy must send
+          the lock token with the commit, proving that it knows
+          exactly which lock it's using.</para>
+        </listitem>
+      </orderedlist>
+      
+      <para>An example is in order, to demonstrate.  Let's say that
+        Harry has decided to change a JPEG image.  To prevent other
+        people from committing changes to the file, he locks the file
+        in the repository using the <command>svn lock</command>
+        command:</para>
+
+      <screen>
+$ svn lock banana.jpg --message "Editing file for tomorrow's release."
+'banana.jpg' locked by user 'harry'.
+
+$ svn status
+     K banana.jpg
+
+$ svn info banana.jpg
+Path: banana.jpg
+Name: banana.jpg
+URL: http://svn.example.com/repos/project/banana.jpg
+Repository UUID: edb2f264-5ef2-0310-a47a-87b0ce17a8ec
+Revision: 2198
+Node Kind: file
+Schedule: normal
+Last Changed Author: frank
+Last Changed Rev: 1950
+Last Changed Date: 2005-03-15 12:43:04 -0600 (Tue, 15 Mar 2005)
+Text Last Updated: 2005-06-08 19:23:07 -0500 (Wed, 08 Jun 2005)
+Properties Last Updated: 2005-06-08 19:23:07 -0500 (Wed, 08 Jun 2005)
+Checksum: 3b110d3b10638f5d1f4fe0f436a5a2a5
+Lock Token: opaquelocktoken:0c0f600b-88f9-0310-9e48-355b44d4a58e
+Lock Owner: harry
+Lock Created: 2005-06-14 17:20:31 -0500 (Tue, 14 Jun 2005)
+Lock Comment (1 line):
+Editing file for tomorrow's release.
+
+</screen>
+
+      <para>There are a number of new things demonstrated in the
+        previous example.  First, notice that Harry passed the
+        <option>--message</option> option to <command>svn
+        lock</command>.  Similar to <command>svn commit</command>,
+        the <command>svn lock</command> command can take comments
+        (either via
+        <option>--message (-m)</option> or <option>--file
+        (-F)</option>) to describe the reason for locking the file.
+        Unlike <command>svn commit</command>, however, <command>svn
+        lock</command> will not demand a message by launching your
+        preferred text editor.  Lock comments are optional, but still
+        recommended to aid communication.</para>
+
+      <para>Second, the lock attempt succeeded.  This means that the
+        file wasn't already locked, and that Harry had the latest
+        version of the file.  If Harry's working copy of the file had
+        been out-of-date, the repository would have rejected the
+        request, forcing harry to <command>svn update</command> and
+        reattempt the locking command.</para>
+
+      <para>Also notice that after creating the lock in the
+        repository, the working copy has cached information about the
+        lock&mdash;most importantly, the lock token.  The presence of
+        the lock token is critical.  It gives the working copy
+        authorization to make use of the lock later on.  The
+        <command>svn status</command> command shows a
+        <literal>K</literal> next to the file (short for locKed),
+        indicating that the lock token is present.</para>
+
+      <sidebar>
+        <title>Regarding lock tokens</title>
+
+        <para>A lock token isn't an authentication token, so much as
+          an <emphasis>authorization</emphasis> token.  The token
+          isn't a protected secret.  In fact, a lock's unique token is
+          discoverable by anyone who runs <command>svn info
+          URL</command>.</para>
+
+        <para>A lock token is special only when it lives inside a
+          working copy.  It's proof that the lock was created in that
+          particular working copy, and not somewhere else by some
+          other client.  Merely authenticating as the lock owner isn't
+          enough to prevent accidents.</para>
+
+        <para>For example: suppose you lock a file using a computer at
+         your office, perhaps as part of a changeset in progress.  It
+         should not be possible for a working copy (or alternate
+         Subversion client) on your home computer to accidentally
+         commit a change to that same file, just because you've
+         authenticated as the lock's owner.  In other words, the lock
+         token prevents one piece of Subversion-related software from
+         undermining the work of another.  (In our example, if you
+         really need to change the file from an alternate working
+         copy, you would need to break the lock and re-lock the
+         file.)</para>
+      </sidebar>
+
+      <para>Now that Harry has locked <filename>banana.jpg</filename>,
+        Sally is unable to change or delete that file:</para>
+
+      <screen>
+$ whoami
+sally
+
+$ svn delete banana.jpg
+D         banana.jpg
+
+$ svn commit -m "Delete useless file."
+Deleting       banana.jpg
+svn: Commit failed (details follow):
+svn: DELETE of
+'/repos/project/!svn/wrk/64bad3a9-96f9-0310-818a-df4224ddc35d/banana.jpg':
+423 Locked (http://svn.example.com)
+
+</screen>
+
+      <para>But Harry, after touching up the banana's shade of yellow,
+        is able to commit his changes to the file.  That's because he
+        authenticates as the lock owner, and also because his working
+        copy holds the correct lock token:</para>
+
+      <screen>
+$ whoami
+harry
+
+$ svn status
+M    K banana.jpg
+
+$ svn commit -m "Make banana more yellow"
+Sending        banana.jpg
+Transmitting file data .
+Committed revision 2201.
+
+$ svn status
+$
+</screen>
+
+      <para>Notice that after the commit is finished, <command>svn
+          status</command> shows that the lock token is no longer
+          present in working copy.  This is the standard behavior
+          of <command>svn commit</command>: it walks the working copy
+          (or list of targets, if you provide such a list), and sends
+          all lock tokens it encounters to the server as part of the
+          commit transaction.  After the commit completes
+          successfully, all of the repository locks that were
+          mentioned are released&mdash;<emphasis>even on files that
+          weren't committed.</emphasis> The rationale here is to
+          discourage users from being sloppy about locking, or from
+          holding locks for too long.  For example, suppose Harry were
+          to haphazardly lock thirty files in a directory named
+          <filename>images</filename>, because he's unsure of which
+          files he needs to change.  He ends up making changes to only
+          four files.  When he runs <command>svn commit
+          images</command>, the process would still release all thirty
+          locks.</para>
+
+      <para>This behavior of automatically releasing locks can be
+          overridden with the <option>--no-unlock</option> option
+          to <command>svn commit</command>.  This is best used for
+          those times when you want to commit changes, but still plan
+          to make more changes and thus need to retain existing locks.
+          This behavior is also semi-permanently tweakable, by setting
+          <literal>no-unlock = yes</literal> in your run-time
+          <filename>config</filename> file (see <xref
+          linkend="svn.advanced.confarea"/>.)</para>
+
+      <para>Of course, locking a file doesn't oblige one to commit a
+        change to it.  The lock can be released at any time with a
+        simple
+        <command>svn unlock</command> command:</para>
+
+      <screen>
+$ svn unlock banana.c
+'banana.c' unlocked.
+</screen>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.locking.discovery">
+      <title>Discovering locks</title>
+
+      <para>When a commit fails due to someone else's locks, it's
+        fairly easy to learn about them.  The easiest of
+        these is <command>svn status --show-updates</command>:</para>
+
+      <screen>
+$ whoami
+sally
+
+$ svn status --show-updates
+M              23   bar.c
+M    O         32   raisin.jpg
+       *       72   foo.h
+Status against revision:     105
+</screen>
+
+      <para>In this example, Sally can see not only that her copy of
+        <filename>foo.h</filename> is out-of-date, but that one of the
+        two modified files she plans to commit is locked in the
+        repository.  The <literal>O</literal> symbol stands for
+        <quote>Other</quote>, meaning that a lock exists on the file,
+        and was created by somebody else.  If she were to attempt a
+        commit, the lock on <filename>raisin.jpg</filename> would
+        prevent it.  Sally is left wondering who made the lock, when,
+        and why.  Once again, <command>svn info</command> has the
+        answers:</para>
+
+      <screen>
+$ svn info http://svn.example.com/repos/project/raisin.jpg
+Path: raisin.jpg
+Name: raisin.jpg
+URL: http://svn.example.com/repos/project/raisin.jpg
+Repository UUID: edb2f264-5ef2-0310-a47a-87b0ce17a8ec
+Revision: 105
+Node Kind: file
+Last Changed Author: sally
+Last Changed Rev: 32
+Last Changed Date: 2005-01-25 12:43:04 -0600 (Tue, 25 Jan 2005)
+Lock Token: opaquelocktoken:fc2b4dee-98f9-0310-abf3-653ff3226e6b
+Lock Owner: harry
+Lock Created: 2005-02-16 13:29:18 -0500 (Wed, 16 Feb 2005)
+Lock Comment (1 line):
+Need to make a quick tweak to this image.
+</screen>
+
+      <para>Just as <command>svn info</command> can be used to examine
+        objects in the working copy, it can also be used to examine
+        objects in the repository.  If the main argument to
+        <command>svn info</command> is a working copy path, then all
+        of the working copy's cached information is displayed; any
+        mention of a lock means that the working copy is holding a
+        lock token (if a file is locked by another user or in another
+        working copy, <command>svn info</command> on a working copy
+        path will show no lock information at all).  If the main
+        argument to <command>svn info</command> is a URL, then the
+        information reflects the latest version of an object in the
+        repository; any mention of a lock describes the current lock
+        on the object.</para>
+
+      <para>So in this particular example, Sally can see that Harry
+        locked the file on February 16th to <quote>make a quick
+        tweak</quote>.  It being June, she suspects that he probably
+        forgot all about the lock.  She might phone Harry to complain
+        and ask him to release the lock.  If he's unavailable, she
+        might try to forcibly break the lock herself or ask an
+        administrator to do so.</para>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.locking.break-steal">
+      <title>Breaking and stealing locks</title>
+
+      <para>A repository lock isn't sacred; it can be released not
+        only by the person who created it, but by anyone at all.  When
+        somebody other than the original lock creator destroys a lock,
+        we refer to this as <firstterm>breaking</firstterm> the
+        lock.</para>
+
+      <para>From the administrator's chair, it's simple to break
+        locks.  The <command>svnlook</command>
+        and <command>svnadmin</command> programs have the ability to
+        display and remove locks directly from the repository.  (For
+        more information about these tools, see
+        <xref linkend="svn.reposadmin.maint.tk"/>.)</para>
+
+      <screen>
+$ svnadmin lslocks /usr/local/svn/repos
+Path: /project2/images/banana.jpg
+UUID Token: opaquelocktoken:c32b4d88-e8fb-2310-abb3-153ff1236923
+Owner: frank
+Created: 2005-06-15 13:29:18 -0500 (Wed, 15 Jun 2005)
+Expires: 
+Comment (1 line):
+Still improving the yellow color.
+
+Path: /project/raisin.jpg
+UUID Token: opaquelocktoken:fc2b4dee-98f9-0310-abf3-653ff3226e6b
+Owner: harry
+Created: 2005-02-16 13:29:18 -0500 (Wed, 16 Feb 2005)
+Expires: 
+Comment (1 line):
+Need to make a quick tweak to this image.
+
+$ svnadmin rmlocks /usr/local/svn/repos /project/raisin.jpg
+Removed lock on '/project/raisin.jpg'.
+</screen>
+
+      <para>The more interesting option is allowing users to break
+        each other's locks over the network.  To do this, one simply
+        needs to pass the <option>--force</option> to the unlock
+        command:</para>
+
+      <screen>
+$ whoami
+sally
+
+$ svn status --show-updates
+M              23   bar.c
+M    O         32   raisin.jpg
+       *       72   foo.h
+Status against revision:     105
+
+$ svn unlock raisin.jpg
+svn: 'raisin.jpg' is not locked in this working copy
+
+$ svn info raisin.jpg | grep URL
+URL: http://svn.example.com/repos/project/raisin.jpg
+
+$ svn unlock http://svn.example.com/repos/project/raisin.jpg
+svn: Unlock request failed: 403 Forbidden (http://svn.example.com)
+
+$ svn unlock --force http://svn.example.com/repos/project/raisin.jpg
+'raisin.jpg' unlocked.
+</screen>
+
+      <para>Sally's initial attempt to unlock failed because she
+        ran <command>svn unlock</command> directly on her working copy
+        of the file, and no lock token was present.  To remove the
+        lock directly from the repository, she needs to pass a URL
+        to <command>svn unlock</command>.  Her first attempt to unlock
+        the URL fails, because she can't authenticate as the lock
+        owner (nor does she have the lock token).  But when she
+        passes <option>--force</option>, the authentication and
+        authorization requirements are ignored, and the remote lock is
+        broken.</para>
+        
+      <para>Of course, simply breaking a lock may not be enough.  In
+        the running example, Sally may not only want to break Harry's
+        long-forgotten lock, but re-lock the file for her own use.
+        She can accomplish this by running <command>svn unlock
+        --force</command> and then <command>svn lock</command>
+        back-to-back, but there's a small chance that somebody else
+        might lock the file between the two commands.  The simpler thing
+        to is <firstterm>steal</firstterm> the lock, which involves
+        breaking and re-locking the file all in one atomic step.  To
+        do this, pass the <option>--force</option> option
+        to <command>svn lock</command>:</para>
+
+        <screen>
+$ svn lock raisin.jpg
+svn: Lock request failed: 423 Locked (http://svn.example.com)
+
+$ svn lock --force raisin.jpg
+'raisin.jpg' locked by user 'sally'.
+</screen>
+
+        <para>In any case, whether the lock is broken or stolen, Harry
+          may be in for a surprise.  Harry's working copy still
+          contains the original lock token, but that lock no longer
+          exists.  The lock token is said to
+          be <firstterm>defunct</firstterm>.  The lock represented by
+          the lock-token has either been broken (no longer in the
+          repository), or stolen (replaced with a different lock).
+          Either way, Harry can see this by asking <command>svn
+          status</command> to contact the repository:</para>
+
+        <screen>
+$ whoami
+harry
+
+$ svn status
+     K raisin.jpg
+
+$ svn status --show-updates
+     B         32   raisin.jpg
+
+$ svn update
+  B  raisin.jpg
+
+$ svn status
+
+$
+</screen>
+
+        <para>If the repository lock was broken, then <command>svn
+            status --show-updates</command> displays
+            a <literal>B</literal> (Broken) symbol next to the file.
+            If a new lock exists in place of the old one, then
+            a <literal>T</literal> (sTolen) symbol is shown.
+            Finally, <command>svn update</command> notices any defunct
+            lock tokens and removes them from the working copy.</para>
+
+        <sidebar>
+          <title>Locking Policies</title>
+        
+          <para>Different systems have different notions of how strict
+            a lock should be.  Some folks argue that locks must be
+            strictly enforced at all costs, releasable only by the
+            original creator or administrator.  They argue that if
+            anyone can break a lock, then chaos breaks loose and the
+            whole point of locking is defeated.  The other side argues
+            that locks are first and foremost a communication tool.
+            If users are constantly breaking each others' locks, then
+            it represents a cultural failure within the team and the
+            problem falls outside the scope of software
+            enforcement.</para>
+
+          <para>Subversion defaults to the <quote>softer</quote>
+            approach, but still allows administrators to create
+            stricter enforcement policies through the use of hook
+            scripts.  In particular, the <filename>pre-lock</filename>
+            and <filename>pre-unlock</filename> hooks allow
+            administrators to decide when lock creation and lock
+            releases are allowed to happen.  Depending on whether or
+            not a lock already exists, these two hooks can decide
+            whether or not to allow a certain user to break or steal a
+            lock.  The <filename>post-lock</filename>
+            and <filename>post-unlock</filename> hooks are also
+            available, and can be used to send email after locking
+            actions.</para>
+
+          <para>To learn more about repository hooks, see
+            <xref linkend="svn.reposadmin.create.hooks"/>.</para>
+        </sidebar>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.locking.lock-communication">
+      <title>Lock Communication</title>
+
+      <para>We've seen how <command>svn lock</command>
+        and <command>svn unlock</command> can be used to create,
+        release, break, and steal locks.  This satisfies the goal of
+        serializing commit access to a file.  But what about the
+        larger problem of preventing wasted time?</para>
+
+      <para>For example, suppose Harry locks an image file and then
+        begins editing it.  Meanwhile, miles away, Sally wants to do
+        the same thing.  She doesn't think to run <command>svn status
+        --show-updates</command>, so she has no idea that Harry has
+        already locked the file.  She spends hours editing the file,
+        and when she tries to commit her change, she discovers that
+        either the file is locked or that she's out-of-date.
+        Regardless, her changes aren't mergeable with Harry's.  One of
+        these two people has to throw away their work, and a lot of
+        time has been wasted.</para>
+      
+      <para>Subversion's solution to this problem is provide a
+        mechanism to remind users that a file ought to be locked
+        <emphasis>before</emphasis> the editing begins.</para>
+
+      <para>The mechanism is a special
+        property, <literal>svn:needs-lock</literal>.  If the property
+        is attached to a file (the value is irrelevant), then the file
+        will have read-only permissions.  When the user locks the file
+        and receives a lock token, the file becomes read-write.  When
+        the lock is released&mdash;either explicitly unlocked, or
+        released via commit&mdash;the file returns to read-only
+        again.</para>
+      
+      <para>The theory, then, is that if the image file has this
+        property attached, then Sally would immediately notice
+        something is strange when she opens the file for editing.  Her
+        application would be unable to save changes, or (better yet)
+        tell her that the file is read-only.  This reminds her to lock
+        the file before editing, whereby she discovers the
+        pre-existing lock:</para>
+
+      <screen>
+$ /usr/local/bin/gimp raisin.jpg
+gimp: error: file is read-only!
+
+$ ls -l raisin.jpg
+-r--r--r--   1 sally   sally   215589 Jun  8 19:23 raisin.jpg
+
+$ svn lock raisin.jpg
+svn: Lock request failed: 423 Locked (http://svn.example.com)
+
+$ svn info http://svn.example.com/repos/project/raisin.jpg | grep Lock
+Lock Token: opaquelocktoken:fc2b4dee-98f9-0310-abf3-653ff3226e6b
+Lock Owner: harry
+Lock Created: 2005-06-08 07:29:18 -0500 (Thu, 08 June 2005)
+Lock Comment (1 line):
+Making some tweaks.  Locking for the next two hours.
+
+</screen>
+
+        <para>As a matter of <quote>best practice</quote>, both users
+          and administrators are encouraged to attach
+          the <literal>svn:needs-lock</literal> property to any file
+          which cannot be contextually merged.  It's the main
+          technique for encouraging good locking habits and preventing
+          wasted effort.</para>
+
+        <para>Note that this property is a communication tool which
+          works independently from the locking system.  In other
+          words, any file can be locked, whether or not this property
+          is present.  And conversely, the presence of this property
+          doesn't make the repository require a lock when
+          committing.</para>
+
+        <para>The system isn't flawless, either.  It's possible that
+          even when a file has the property, the read-only reminder
+          won't always work.  Sometimes applications misbehave and
+          <quote>hijack</quote> the read-only file, silently allowing
+          users to edit and save the file anyway.  Unfortunately,
+          there's not much Subversion can do about this.</para>
+
+    </sect2>
+
+  </sect1>
+
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.advanced.pegrevs">
     <title>Peg和实施修订版本</title>
 
     <para>文件和目录的拷贝、移动和改名能力可以让我们可以删除一个对象，然后在同样的路径添加一个新的&mdash;这是我们在电脑上对文件和目录经常作的操作，我们认为这些操作都是理所当然的。Subversion很乐意你认为这些操作已经赋予给你，Subversion的文件管理操作是这样的解放，提供了几乎和普通文件一样的操作版本化文件的灵活性，但是灵活意味着在整个版本库的生命周期中，一个给定的版本化的资源可能会出现在许多不同的路径，一个给定的路径会展示给我们许多完全不同的版本化资源。</para>
@@ -886,7 +1484,45 @@ Cumulus clouds are appearing more frequently as summer approaches.
       我们可以把<quote>主大道</quote>看作路径，把<quote>惠顿</quote>当作我们的peg修订版本。这两段信息确认了我们可以旅行（主大道的北方或南方）的唯一路径，也会保持我们不会在前前后后寻找目标时走到错误的主大道。现在我们把<quote>606 N.</quote>作为我们实施的修订版本，我们<emphasis>精确的</emphasis>知道到哪里。
       </para>
 
-    <para>当使用peg和实施修订版本来查找我们需要工作文件时，Subversion会执行一个很直接的算法。首先，找到与peg修订版本相关的路径坐落于版本库的那个修订版本，Subversion开始从那里开始向后查询这个对象的历史前辈。每个前辈表示这个对象的以前的一个版本，每一个版本的对象都保存了自己被创建的修订版本和路径，所以通过前辈集，Subversion可以注意到哪个版本是这个实施修订版本最年轻的版本，如果是，可以将实施修订版本影射到前辈创建的路径/创建修订版本对。算法在所有的实施修订版本影射到真实的对象位置后，或者是没有更多的前辈时完成，就是任何未影射的实施修订版本已经标记为不符合操作的对象。</para>
+    <sidebar>
+      <title>The "peg-revision" algorithm</title>
+      
+      <para>When the commandline client sees a command of the
+        form:</para>
+
+      <screen>
+$ svn <replaceable>command</replaceable> -r <replaceable>OPERATIVE-REV</replaceable> item@<replaceable>PEG-REV</replaceable>
+</screen>
+      
+      <para>...it performs the following algorithm:</para>
+
+      <itemizedlist>
+        
+        <listitem>
+          <para>Go to revision <replaceable>PEG-REV</replaceable>, and
+          find <replaceable>item</replaceable>.  This locates a unique
+          object in the repository.</para>
+        </listitem>
+
+        <listitem>
+          <para>Trace the object's history backwards (through any
+            possible renames) to its ancestor in
+            revision <replaceable>OPERATIVE-REV</replaceable>.</para>
+        </listitem>
+
+        <listitem>
+          <para>Perform the requested action on that ancestor,
+            wherever it is located, or whatever its name might
+            be.</para>
+        </listitem>
+
+      </itemizedlist>
+
+      <para>Remember that even when you don't explicitly supply a
+        peg-revision, it's still present.  It defaults to BASE for
+        working copy items, and to HEAD for URLs.</para>
+        
+    </sidebar>
 
     <para>也就是说很久以前我们创建了我们的版本库，在修订版本1添加我们第一个<filename>concept</filename>目录，并且在这个目录增加一个<filename>IDEA</filename>文件与concept相关，在几个修订版本之后，真实的代码被添加和修改，我们在修订版本20，修改这个目录为<filename>frabnaggilywort</filename>。通过修订版本27，我们有了一个新的概念，所以一个新的<filename>concept</filename>目录用来保存这些东西，一个新的<filename>IDEA</filename>文件来描述这个概念，然后经过5年20000个修订版本，就像他们都有一个非常浪漫的历史。
    </para>
@@ -960,16 +1596,16 @@ Index: frabnaggilywort/IDEA
 
   </sect1>
 
-  <!-- ******************************************************************* -->
-  <!-- *** SECTION 3:  EXTERNALS DEFINITIONS                           *** -->
-  <!-- ******************************************************************* -->
-  <sect1 id="svn-ch-7-sect-3">
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.advanced.externals">
     <title>外部定义</title>
     
     <para>有时候创建一个由多个不同检出得到的工作拷贝是非常有用的，举个例子，你或许希望不同的子目录来自不同的版本库位置，或者是不同的版本库。你可以手工设置这样一个工作拷贝&mdash;使用<command>svn checkout</command>来创建这种你需要的嵌套的工作拷贝结构。但是如果这个结构对所有的用户是很重要的，每个用户需要执行同样的检出操作。</para>
 
     <para>很幸运，Subversion提供了<firstterm>外部定义</firstterm>的支持，一个外部定义是一个本地路经到URL的影射&mdash;也有可能一个特定的修订版本&mdash;一些版本化的资源。在Subversion你可以使用<literal>svn:externals</literal>属性来定义外部定义，你可以用<command>svn propset</command>或<command>svn
-      propedit</command>（见<xref linkend="svn-ch-7-sect-2.1"/>）创建和修改这个属性。它可以设置到任何版本化的路经，它的值是一个多行的子目录和完全有效的Subversion版本库URL的列表（相对于设置属性的版本化目录）。
+      propedit</command>（见<xref linkend="svn.advanced.props.why"/>）创建和修改这个属性。它可以设置到任何版本化的路经，它的值是一个多行的子目录和完全有效的Subversion版本库URL的列表（相对于设置属性的版本化目录）。
       </para>
 
     <screen>
@@ -1008,23 +1644,47 @@ Fetching external item into calc/third-party/skins
 
     <para><command>svn status</command>命令也认识外部定义，会为外部定义的子目录显示<literal>X</literal>状态码，然后迭代这些子目录来显示外部项目的子目录状态信息。</para>
 
+<tip>
+      <para>You should strongly consider using explicit revision
+        numbers in all of your externals definitions.  Doing so means
+        that you get to decide when to pull down a different snapshot
+        of external information, and exactly which snapshot to pull.
+        Besides the common sense aspect of not being surprised by
+        changes to third-party repositories that you might not have
+        any control over, using explicit revision numbers also means
+        that as you backdate your working copy to a previous
+        revision, your externals definitions will also revert to the
+        way they looked in that previous revision, which in turn means
+        that the external working copies will be updated to match they
+        way <emphasis>they</emphasis> looked back when your repository was
+        at that previous revision.  For software projects, this could
+        be the difference between a successful and a failed build of
+        an older snapshot of your complex codebase.</para>
+    </tip>
     <para>Subversion目前对外部定义的支持可能会引起误导，首先，一个外部定义只可以指向目录，而不是文件。第二，外部定义不可以指向相对路径（如<filename>../../skins/myskin</filename>）。第三，同过外部定义创建的工作拷贝与主工作拷贝没有连接，所以举个例子，如果你希望提交一个或多个外部定义的拷贝，你必须在这些工作拷贝显示的运行<command>svn commit</command>&mdash;对主工作拷贝的提交不会迭代到外部定义的部分。</para>
 
     <para>另外，因为定义本身使用绝对路径，移动和拷贝路径他们附着的路径不会影响他们作为外部的检出（尽管相对的本地目标子目录会这样，当然，根据重命名的目录）。这看起来有些迷惑&mdash;甚至让人沮丧&mdash;在特定情形。举个例子，如果你在<filename>/trunk</filename>开发线对一个目录使用外部定义，指向同一条线上的其他区域，然后使用<command>svn copy</command>把分支开发线拷贝到<filename>/branches/my-branch</filename>这个新位置，这个项目新分支的外部定义仍然指向<filename>/trunk</filename>版本化资源。另外，需要意识到如果你需要一个重新规划你的工作拷贝的父目录（使用<command>svn switch --relocate</command>），外部定义<emphasis>不</emphasis>会重新选择父目录。</para>
 
+    <para>Finally, there might be times when you would prefer that
+      <command>svn</command> subcommands would not recognize or
+      otherwise operate on the external working copies created as the
+      result of externals definition handling.  In those instances,
+      you can pass the <option>--ignore-externals</option> option to
+      the subcommand.</para>
+
   </sect1>
 
-  <!-- ******************************************************************* -->
-  <!-- *** SECTION 4:  VENDOR BRANCHES                                 *** -->
-  <!-- ******************************************************************* -->
-  <sect1 id="svn-ch-7-sect-4">
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.advanced.vendorbr">
     <title>卖主分支</title>
 
     <para>当开发软件时有这样一个情况，你版本控制的数据可能关联于或者是依赖于其他人的数据，通常来讲，你的项目的需要会要求你自己的项目对外部实体提供的数据保持尽可能最新的版本，同时不会牺牲稳定性，这种情况总是会出现&mdash;只要某个小组的信息对另一个小组的信息有直接的影响。</para>
  
-    <para>举个例子，软件开发者会工作在一个使用第三方库的应用，Subversion恰好是和Apache的Portable Runtime library（见<xref linkend="svn-ch-8-sect-2.1" />）有这样一个关系。Subversion源代码依赖于APR库来实现可移植需求。在Subversion的早期开发阶段，项目紧密地追踪APR的API修改，经常在库代码的<quote>流血的边缘</quote>粘住，现在APR和Subversion都已经成熟了，Subversion只尝试同步APR的经过良好测试的，稳定的API库。</para>
+    <para>举个例子，软件开发者会工作在一个使用第三方库的应用，Subversion恰好是和Apache的Portable Runtime library（见<xref linkend="svn.developer.usingapi.apr" />）有这样一个关系。Subversion源代码依赖于APR库来实现可移植需求。在Subversion的早期开发阶段，项目紧密地追踪APR的API修改，经常在库代码的<quote>流血的边缘</quote>粘住，现在APR和Subversion都已经成熟了，Subversion只尝试同步APR的经过良好测试的，稳定的API库。</para>
 
-    <para>现在，如果你的项目依赖于其他人的信息，有许多方法可以用来尝试同步你的信息，最痛苦的，你可以为项目所有的贡献者发布口头或书写的指导，告诉他们确信他们拥有你们的项目需要的特定版本的第三方信息。如果第三方信息是用Subversion版本库维护，你可以使用Subversion的外部定义来有效的<quote>强制</quote>特定的版本的信息在你的工作拷贝的的位置（见<xref linkend="svn-ch-7-sect-3" />）。</para>
+    <para>现在，如果你的项目依赖于其他人的信息，有许多方法可以用来尝试同步你的信息，最痛苦的，你可以为项目所有的贡献者发布口头或书写的指导，告诉他们确信他们拥有你们的项目需要的特定版本的第三方信息。如果第三方信息是用Subversion版本库维护，你可以使用Subversion的外部定义来有效的<quote>强制</quote>特定的版本的信息在你的工作拷贝的的位置（见<xref linkend="svn.advanced.externals" />）。</para>
 
     <para>但是有时候，你希望在你自己的版本控制系统维护一个针对第三方数据的自定义修改，回到软件开发的例子，程序员为了他们自己的目的会需要修改第三方库，这些修改会包括新的功能和bug修正，在成为第三方工具官方发布之前，只是内部维护。或者这些修改永远不会传给库的维护者，只是作为满足软件开发需要的单独的自定义修改存在。</para>
 
@@ -1034,8 +1694,8 @@ Fetching external item into calc/third-party/skins
 
     <para>卖主分支提供了两个关键的益处，第一，通过在我们的版本控制系统保存现在支持的卖主drop，你项目的成员不需要指导他们是否有了正确版本的卖主数据，他们只需要作为不同工作拷贝更新的一部份，简单的接受正确的版本就可以了。第二，因为数据存在于你自己的Subversion版本库，你可以在恰当的位置保存你的自定义修改&mdash;你不需要一个自动的（或者是更坏，手工的）方法来交换你的自定义行为。</para>
 
-    <!-- ***************************************************************** -->
-    <sect2 id="svn-ch-7-sect-4.1">
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.vendorbr.general">
       <title>常规的卖主分支管理过程</title>
 
       <para>管理卖主分支通常会像这个样子，你创建一个顶级的目录（如<filename>/vendor</filename>）来保存卖主分支，然后你导入第三方的代码到你的子目录。然后你将拷贝这个子目录到主要的开发分支（例如<filename>/trunk</filename>）的适当位置。你一直在你的主要开发分支上做本地修改，当你的追踪的代码有了新版本，你会把带到卖主分支并且把它合并到你的<filename>/trunk</filename>，解决任何你的本地修改和他们的修改的冲突。</para>
@@ -1049,7 +1709,7 @@ $ svn import /path/to/libcomplex-1.0 \
 &hellip;
 </screen>
     
-      <para>我们现在在<filename>/vendor/libcomplex/current</filename>有了libcomplex当前版本的代码，现在我们为那个版本作标签（见<xref linkend="svn-ch-4-sect-6" />），然后拷贝它到主要开发分支，我们的拷贝会在<filename>calc</filename>项目目录创建一个新的目录<filename>libcomplex</filename>，它是这个我们将要进行自定义的卖主数据的拷贝版本。</para>
+      <para>我们现在在<filename>/vendor/libcomplex/current</filename>有了libcomplex当前版本的代码，现在我们为那个版本作标签（见<xref linkend="svn.branchmerge.tags" />），然后拷贝它到主要开发分支，我们的拷贝会在<filename>calc</filename>项目目录创建一个新的目录<filename>libcomplex</filename>，它是这个我们将要进行自定义的卖主数据的拷贝版本。</para>
     
       <screen>
 $ svn copy http://svn.example.com/repos/vendor/libcomplex/current  \
@@ -1098,8 +1758,8 @@ $ svn commit -m 'merging libcomplex-1.1 into the main branch'
          another section on bypassing svn_load_dirs.pl altogether and
          running with just svn merge, now that it ignores ancestry. -->
 
-    <!-- ***************************************************************** -->
-    <sect2 id="svn-ch-7-sect-4.2">
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.vendorbr.svn_load_dirs">
       <title><command>svn_load_dirs.pl</command></title>
 
       <para>不仅仅包含一些删除、添加和移动的卖主drops使得升级第三方数据后续版本的过程变得复杂，所以Subversion提供了一个<command>svn_load_dirs.pl</command>脚本来辅助这个过程，这个脚本自动进行我们前面提到的常规卖主分支管理过程的导入步骤，从而使得错误最小化。你仍要负责使用合并命令合并第三方的新
@@ -1160,15 +1820,16 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
     </sect2>
   </sect1>
 
-  <!-- ******************************************************************* -->
-  <!-- *** SECTION 5:  LOCALIZATION                                    *** -->
-  <!-- ******************************************************************* -->
-  <sect1 id="svn-ch-7-sect-5">
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.advanced.l10n">
     <title>本地化</title>
 
     <para><firstterm>本地化</firstterm>是让程序按照地区特定方式运行的行为，如果一个程序的格式、数字或者是日期是你的本地方式，或者是打印的信息（或者是接受的输入）是你本地的语言，这个程序被叫做已经<firstterm>本地化了</firstterm>，这部分描述了针对本地化的Subversion的步骤。</para>
 
-    <sect2 id="svn-ch7-sect-5.1">
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.l10n.understanding">
       <title>理解地区</title>
 
       <para>许多现代操作系统都有一个<quote>当前地区</quote>的概念&mdash;也就是本地化习惯服务的国家和地区。这些习惯&mdash;通常是被一些运行配置机制选择&mdash;影响程序展现数据的方式，也有接受用户输入的方式。</para>
@@ -1193,7 +1854,8 @@ LC_ALL="C"
 
     </sect2>
 
-    <sect2 id="svn-ch7-sect-5.2">
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.l10n.svnuse">
       <title>Subversion对地区的支持</title>
 
       <para>Subversion客户端，<command>svn</command>通过两种方式支持当前的地区配置。首先，它会注意<literal>LC_MESSAGES</literal>的值，然后尝试使用特定的语言打印所有的信息，例如：</para>
@@ -1201,8 +1863,8 @@ LC_ALL="C"
       <screen>
 $ export LC_MESSAGES=de_DE
 $ svn help cat
-cat: Ausgabe des Inhaltes der angegebenen Dateien oder URLs
-Aufruf: cat ZIEL...
+cat: Gibt den Inhalt der angegebenen Dateien oder URLs aus.
+Aufruf: cat ZIEL[@REV]...
 &hellip;
 </screen>
 
@@ -1220,10 +1882,13 @@ Aufruf: cat ZIEL...
         <para>当使用Subversion，你或许会碰到一个字符集转化关联的错误：</para>
 
         <screen>
-svn: Can't recode string.
+svn: Can't convert string from native encoding to 'UTF-8':
+&hellip;
+svn: Can't convert string from 'UTF-8' to native encoding:
+&hellip;
 </screen>
     
-        <para>这个信息是神秘的，但是通常会发生在Subversion客户端从版本库接收到一个UTF-8串，但是字符不能转化为当前的地区文字，举个例子，如果你的地区设置是<literal>en_US</literal>，但是一个写作者使用日本文件名提交，你会在<command>svn
+        <para>这个错误信息通常会发生在Subversion客户端从版本库接收到一个UTF-8串，但字符不能转化为当前的地区文字时，举个例子，如果你的地区设置是<literal>en_US</literal>，但是一个写作者使用日本文件名提交，你会在<command>svn
           update</command>接受文件时会看到这个错误。</para>
 
         <para>解决方案或者是设置你的地区为<emphasis>可以</emphasis>表示即将到来的UTF-8数据，或者是修改版本库的文件名或信息。（不要忘记和你的合作者拍拍手&mdash;项目必须首先决定通用的语言，这样所有的参与者会使用相同的地区设置。）</para>
@@ -1233,10 +1898,249 @@ svn: Can't recode string.
 
   </sect1>
 
-  <!-- ******************************************************************* -->
-  <!-- *** SECTION 6:  SUBVERSION REPOSITORY URLS                      *** -->
-  <!-- ******************************************************************* -->
-  <sect1 id="svn-ch-7-sect-6">
+<!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.advanced.externaldifftools">
+    <title>Using External Differencing Tools</title>
+
+    <para>The presence of <option>--diff-cmd</option> and
+      <option>--diff3-cmd</option> options, and similarly named
+      runtime configuration parameters (see <xref
+      linkend="svn.advanced.confarea.opts.config"/>), can lead to a
+      false notion of how easy it is to use external differencing (or
+      <quote>diff</quote>) and merge tools with Subversion.  While
+      Subversion can use most of popular such tools available, the
+      effort invested in setting this up often turns out to be
+      non-trivial.</para>
+
+    <para>The interface between Subversion and external diff and merge
+      tools harkens back to a time when Subversion's only contextual
+      differencing capabilities were built around invocations of the
+      GNU diffutils toolchain, specifically the
+      <command>diff</command> and <command>diff3</command> utilities.
+      To get the kind of behavior Subversion needed, it called these
+      utilities with more than a handful of options and parameters,
+      most of which were quite specific to the utilities.  Some time
+      later, Subversion grew its own internal differencing library,
+      and as a failover mechanism,
+      <footnote>
+        <para>Subversion developers are good, but even the best make
+          mistakes.</para>
+      </footnote>
+      the <option>--diff-cmd</option> and <option>--diff3-cmd</option>
+      options were added to the Subversion command-line client so
+      users could more easily indicate that they preferred to use the
+      GNU diff and diff3 utilities instead of the newfangled internal
+      diff library.  If those options were used, Subversion would
+      simply ignore the internal diff library, and fall back to
+      running those external programs, lengthy argument lists and all.
+      And that's where things remain today.</para>
+
+    <para>It didn't take long for folks to realize that having such
+      easy configuration mechanisms for specifying that Subversion
+      should use the external GNU diff and diff3 utilities located at
+      a particular place on the system could be applied toward the use
+      of other diff and merge tools, too.  After all, Subversion
+      didn't actually verify that the things it was being told to run
+      were members of the GNU diffutils toolchain.  But the only
+      configurable aspect of using those external tools is their
+      location on the system&mdash;not the option set, parameter
+      order, etc.  Subversion continues throwing all those GNU utility
+      options at your external diff tool regardless of whether or not
+      that program can understand those options.  And that's where
+      things get unintuitive for most users.</para>
+
+    <para>The key to using external diff and merge tools (other than
+      GNU diff and diff3, of course) with Subversion is to use wrapper
+      scripts which convert the input from Subversion into something
+      that your differencing tool can understand, and then to convert
+      the output of your tool back into a format which Subversion
+      expects&mdash;the format that the GNU tools would have used.
+      The following sections cover the specifics of those
+      expectations.</para>
+
+    <note>
+      <para>The decision on when to fire off a contextual diff or
+        merge as part of a larger Subversion operation is made
+        entirely by Subversion, and is affected by, among other
+        things, whether or not the files being operated on are
+        human-readable as determined by their
+        <literal>svn:mime-type</literal> property.  This means, for
+        example, that even if you had the niftiest Microsoft
+        Word-aware differencing or merging tool in the Universe, it
+        would never be invoked by Subversion so long as your versioned
+        Word documents had a configured MIME type that denoted that
+        they were not human-readable (such as
+        <literal>application/msword</literal>).  For more about MIME
+        type settings, see <xref
+        linkend="svn.advanced.props.special.mime-type"/></para>
+    </note>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.externaldifftools.diff">
+      <title>External diff</title>
+
+      <para>Subversion calls external diff programs with parameters
+        suitable for the GNU diff utility, and expects only that the
+        external program return with a successful error code.  For
+        most alternative diff program, only the sixth and seventh
+        arguments, the paths of the files which represent the left and
+        right sides of the diff, respectively, are of interest.  Note
+        that Subversion runs the diff program once per modified file
+        covered by the Subversion operation, so if your program runs
+        in an asynchronous fashion (or <quote>backgrounded</quote>),
+        you might have several instances of it all running
+        simultaneously.  Finally, Subversion expects that your program
+        return an errorcode of 0 if your program detected differences,
+        or 1 if it did not&mdash;any other errorcode is considered a
+        fatal error.
+        <footnote>
+          <para>The GNU diff manual page puts it this way: <quote>An
+            exit status of 0 means no differences were found, 1 means some
+            differences were found, and 2 means trouble.</quote></para>
+        </footnote>
+      </para>
+
+      <para><xref linkend="svn.advanced.externaldifftools.diff.ex-1"/>
+        and <xref linkend="svn.advanced.externaldifftools.diff.ex-2"/>
+        are templates for external diff tool wrappers in the Bourne
+        shell and Windows batch scripting languages,
+        respectively.</para>
+
+      <example id="svn.advanced.externaldifftools.diff.ex-1">
+        <title>diffwrap.sh</title>
+        <programlisting>
+#!/bin/sh
+
+# Configure your favorite diff program here.
+DIFF="/usr/local/bin/my-diff-tool"
+
+# Subversion provides the paths we need as the sixth and seventh 
+# parameters.
+LEFT=${6}
+RIGHT=${7}
+
+# Call the diff command (change the following line to make sense for
+# your merge program).
+$DIFF --left $LEFT --right $RIGHT
+
+# Return an errorcode of 0 if no differences were detected, 1 if some were.
+# Any other errorcode will be treated as fatal.
+</programlisting>
+      </example>
+
+      <example id="svn.advanced.externaldifftools.diff.ex-2">
+        <title>diffwrap.bat</title>
+        <programlisting>
+@ECHO OFF
+
+REM Configure your favorite diff program here.
+SET DIFF="C:\Program Files\Funky Stuff\My Diff Tool.exe"
+
+REM Subversion provides the paths we need as the sixth and seventh 
+REM parameters.
+SET LEFT=%6
+SET RIGHT=%7
+
+REM Call the diff command (change the following line to make sense for
+REM your merge program).
+%DIFF% --left %LEFT% --right %RIGHT%
+
+REM Return an errorcode of 0 if no differences were detected, 1 if some were.
+REM Any other errorcode will be treated as fatal.
+</programlisting>
+      </example>
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.externaldifftools.diff3">
+      <title>External diff3</title>
+
+      <para>Subversion calls external merge programs with parameters
+        suitable for the GNU diff3 utility, expecting that the
+        external program return with a successful error code and that
+        the full file contents which result from the completed merge
+        operation are printed on the standard output stream (so that
+        Subversion can redirect them into the appropriate version
+        controlled file).  For most alternative merge programs, only
+        the ninth, tenth, and eleventh arguments, the paths of the
+        files which represent the <quote>mine</quote>,
+        <quote>older</quote>, and <quote>yours</quote> inputs,
+        respectively, are of interest.  Note that because Subversion
+        depends on the output of your merge program, you wrapper
+        script must not exit before that output has been delivered to
+        Subversion.  When it finally does exit, it should return an
+        errorcode of 0 if the merge was successful, or 1 if unresolved
+        conflicts remain in the output&mdash;any other errorcode is
+        considered a fatal error.</para>
+
+      <para><xref linkend="svn.advanced.externaldifftools.diff3.ex-1"/> 
+        and <xref linkend="svn.advanced.externaldifftools.diff3.ex-2"/> are
+        templates for external merge tool wrappers in the Bourne shell
+        and Windows batch scripting languages, respectively.</para>
+
+      <example id="svn.advanced.externaldifftools.diff3.ex-1">
+        <title>diff3wrap.sh</title>
+        <programlisting>
+#!/bin/sh
+
+# Configure your favorite diff3/merge program here.
+DIFF3="/usr/local/bin/my-merge-tool"
+
+# Subversion provides the paths we need as the ninth, tenth, and eleventh 
+# parameters.
+MINE=${9}
+OLDER=${10}
+YOURS=${11}
+
+# Call the merge command (change the following line to make sense for
+# your merge program).
+$DIFF3 --older $OLDER --mine $MINE --yours $YOURS
+
+# After performing the merge, this script needs to print the contents
+# of the merged file to stdout.  Do that in whatever way you see fit.
+# Return an errorcode of 0 on successful merge, 1 if unresolved conflicts
+# remain in the result.  Any other errorcode will be treated as fatal.
+</programlisting>
+      </example>
+
+      <example id="svn.advanced.externaldifftools.diff3.ex-2">
+        <title>diff3wrap.bat</title>
+        <programlisting>
+@ECHO OFF
+
+REM Configure your favorite diff3/merge program here.
+SET DIFF3="C:\Program Files\Funky Stuff\My Merge Tool.exe"
+
+REM Subversion provides the paths we need as the ninth, tenth, and eleventh 
+REM parameters.  But we only have access to nine parameters at a time, so we
+REM shift our nine-parameter window twice to let us get to what we need.
+SHIFT
+SHIFT
+SET MINE=%7
+SET OLDER=%8
+SET YOURS=%9
+
+REM Call the merge command (change the following line to make sense for
+REM your merge program).
+%DIFF3% --older %OLDER% --mine %MINE% --yours %YOURS%
+
+REM After performing the merge, this script needs to print the contents
+REM of the merged file to stdout.  Do that in whatever way you see fit.
+REM Return an errorcode of 0 on successful merge, 1 if unresolved conflicts
+REM remain in the result.  Any other errorcode will be treated as fatal.
+</programlisting>
+      </example>
+
+    </sect2>
+  </sect1>
+
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.advanced.reposurls">
     <title>Subversion版本库URL</title>
 
     <para>正如我们在整本书里描述的，Subversion使用URL来识别Subversion版本库中的版本化资源，通常情况下，这些URL使用标准的语法，允许服务器名称和端口作为URL的一部分：</para>
