@@ -9,7 +9,7 @@
 
     <para>本章重点介绍一些Subversion不常用的特性，在这里，我们会讨论Subversion的属性（或者说<quote>元数据</quote>）支持，和如何通过更改运行配置区来改变Subversion的缺省行为方式，我们会描述怎样使用外部定义来指导Subversion从多个版本库得到数据，我们会覆盖一些Subversion分发版本附加的客户端和服务器端的工具的细节。</para>
 
-    <para>在阅读本章之前，你一定要熟悉Subversion对文件和目录的基本版本操作能力，如果你还没有阅读这些内容，或者是需要一个复习，我们建议你重读linkend="svn.basic" />和<xref linkend="svn.tour" />，一旦你已经掌握了基础知识和本章的内容，你会变成Subversion的超级用户！
+    <para>在阅读本章之前，你一定要熟悉Subversion对文件和目录的基本版本操作能力，如果你还没有阅读这些内容，或者是需要一个复习，我们建议你重读<linkend="svn.basic" />和<xref linkend="svn.tour" />，一旦你已经掌握了基础知识和本章的内容，你会变成Subversion的超级用户！
     </para>
 
   </simplesect>
@@ -369,15 +369,9 @@ property 'copyright' set on 'calc/button.c'
 $
 </screen>
        
-      <para>There are some restrictions on the names you can use for
-        properties.  A property name must start with a letter, a colon
-        (<literal>:</literal>), or an underscore
-        (<literal>_</literal>); after that, you can also use digits,
-        hyphens (<literal>-</literal>), and periods
-        (<literal>.</literal>).
+      <para>对于属性名称也有一些限制，属性名必须以一个字符、一个冒号(<literal>:</literal>)或下划线(<literal>_</literal>)开始，之后你可以使用数字，横线(<literal>-</literal>)和句号(<literal>.</literal>)。
           <footnote>
-            <para>If you're familiar with XML, this is pretty much the
-            ASCII subset of the syntax for XML "Name".</para>
+            <para>如果你熟悉XML，其实这就是XML的"Name"语法的ASCII子集。</para>
           </footnote>
       </para>
 
@@ -846,20 +840,11 @@ Cumulus clouds are appearing more frequently as summer approaches.
       <sect3 id="svn.advanced.props.special.needs-lock">
         <title><literal>svn:needs-lock</literal></title>
 
-        <para>This property is used to signify that the file it's
-          attached to ought to be locked before editing.  The value of
-          the property is irrelevant; Subversion will normalize its
-          value to <literal>*</literal>.  When present, the file will
-          be read-only <emphasis>unless</emphasis> the user has
-          explicitly locked the file.  When a lock-token is present
-          (as a result of running <command>svn lock</command>), the
-          file becomes read-write.  When the lock is released, the
-          file becomes read-only again.</para>
+        <para>这个属性用来标示这个文件在编辑之前需要锁定，属性值无所谓，Subversion会规格化为<literal>*</literal>。当有这个值时，<emphasis>除非</emphasis>用户锁定这个文件，否则文件一直是只读的。当得到一个锁定令牌（运行<command>svn lock</command>的结果），文件变成可读写，当释放这个锁后，文件又变成只读。
+       </para>
 
-        <para>To learn more about how, when, and why this property
-          should be used, see
-          <xref
-          linkend="svn.advanced.locking.lock-communication"/>.</para>
+        <para>为什么要使用这个属性的更多信息见<xref
+          linkend="svn.advanced.locking.lock-communication"/>。</para>
       </sect3>
 
     </sect2>
@@ -882,76 +867,40 @@ Cumulus clouds are appearing more frequently as summer approaches.
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.advanced.locking">
-    <title>Locking</title>
+    <title>锁定</title>
 
-    <para>Subversion's <quote>copy-modify-merge</quote> model is
-      optimal when users are collaborating on projects that consist of
-      line-based text files, such as program source code.  However, as
-      discussed in <xref
-      linkend="svn.basic.vsn-models.copy-merge.sb-1"/>, sometimes one
-      has to use the <quote>lock-modify-unlock</quote> model instead
-      of Subversion's standard concurrent model.  When a file consists
-      of binary data, it's often difficult or impossible to merge two
-      sets of changes made in parallel by different users.  For this
-      reason, Subversion 1.2 and later offers a feature known as
-      <firstterm>locking</firstterm>, often known as <quote>reserved
-      checkouts</quote> in other version control systems.</para>
+    <para>Subversion的<quote>拷贝-修改-合并</quote>模型是以行为基础（如程序源代码 ）的项目最佳的协调方式，然而就像<xref
+      linkend="svn.basic.vsn-models.copy-merge.sb-1"/>里说过的，有时候有些人需要<quote>锁定-修改-解锁</quote>模型来代替Subversion的标准模型，当一个文件由二进制数据组成，合并两个修改通常是困难的，Subversion 1.2和以后的版本提供了<firstterm>锁定</firstterm>特性，也就是别的版本控制系统常说的<quote>保留检出</quote>。
+      </para>
 
-    <para>Subversion's locking feature has two main goals:</para>
+    <para>Subversion的锁定特性有两个目标：</para>
 
     <itemizedlist>
-      <listitem><para><emphasis>Serializing access to a
-          resource</emphasis>.  Allow a user to grab an exclusive
-          right to change to a file in the repository.  If Harry
-          reserves the right to change <filename>foo.jpg</filename>,
-          then Sally should not be able to commit a change to it.</para>
+      <listitem><para><emphasis>顺序访问资源</emphasis>。允许用户得到一个排他的修改文件权，如果Harry保留了修改<filename>foo.jpg</filename>的权利，Sally将不可以提交这个文件的修改。
+     </para>
       </listitem>
-      <listitem><para><emphasis>Aiding communication</emphasis>.
-          Prevent users from wasting time on unmergeable changes.  If
-          Harry has reserved the right to change
-          <filename>foo.jpg</filename>, then it should be easy for
-          Sally to notice this fact and avoid working on the
-          file.</para>
+      <listitem><para><emphasis>辅助交流</emphasis>。防止用户进行不可合并的修改，如果Harry已经保留了修改<filename>foo.jpg</filename>的权利，然后Sally会很容易注意到这个事实而不会去修改这个文件。</para>
       </listitem>
     </itemizedlist>
 
-    <para>Subversion's locking feature is currently limited to files
-      only&mdash;it's not yet possible to reserve access to a whole
-      directory tree.</para>
+    <para>Subversion的锁定特性当前限制到文件&mdash;还没有可能限制整个目录树的访问。</para>
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.locking.creation">
-      <title>Creating locks</title>
+      <title>创建锁定</title>
       
-      <para>In the Subversion repository, a
-        <firstterm>lock</firstterm> is a piece of metadata which
-        grants exclusive access to one user to change a file.  This
-        user is said to be the <firstterm>lock owner</firstterm>.
-        Each lock also has a unique identifier, typically a long
-        string of characters, known as the <firstterm>lock
-        token</firstterm>.  The repository manages locks in a separate
-        table, and enforces locks during a commit operation.  If any
-        commit transaction attempts to modify or delete the file (or
-        delete a parent of the file), the repository will demand two
-        pieces of information:</para>
+      <para>在Subversion的版本库，一个<firstterm>锁</firstterm>是一份元数据，可以排它赋予某个用户修改权，这个用户被称作<firstterm>锁的拥有者</firstterm>。每个锁都有一个唯一标识，通常是一长串字符，叫做<firstterm>锁令牌</firstterm>。版本库在一个单独的表里管理锁，提交时强制锁定检查，如果操作会修改或删除文件（或者是删除文件父目录），版本库会要求两份信息：
+     </para>
       
       <orderedlist>
-        <listitem><para><emphasis role="bold">User
-          authentication</emphasis>.  The client performing the commit
-          must be authenticated as the lock owner.</para>
+        <listitem><para><emphasis role="bold">用户认证</emphasis>。执行提交的客户端必须认证是锁的拥有者。</para>
         </listitem>
-        <listitem><para><emphasis role="bold">Software
-          authorization</emphasis>.  The user's working copy must send
-          the lock token with the commit, proving that it knows
-          exactly which lock it's using.</para>
+        <listitem><para><emphasis role="bold">软件授权</emphasis>。用户的工作拷贝必须将锁令牌提交，证明它清楚地知道使用那个锁。
+        </para>
         </listitem>
       </orderedlist>
       
-      <para>An example is in order, to demonstrate.  Let's say that
-        Harry has decided to change a JPEG image.  To prevent other
-        people from committing changes to the file, he locks the file
-        in the repository using the <command>svn lock</command>
-        command:</para>
+      <para>一个例子是按照顺序。为了描述方便，假定Harry决定修改一个JPEG图像，为了防止其他用户提交这个文件的修改，他使用<command>svn lock</command>命令锁定了版本库的这个文件：</para>
 
       <screen>
 $ svn lock banana.jpg --message "Editing file for tomorrow's release."
@@ -982,65 +931,32 @@ Editing file for tomorrow's release.
 
 </screen>
 
-      <para>There are a number of new things demonstrated in the
-        previous example.  First, notice that Harry passed the
-        <option>--message</option> option to <command>svn
-        lock</command>.  Similar to <command>svn commit</command>,
-        the <command>svn lock</command> command can take comments
-        (either via
-        <option>--message (-m)</option> or <option>--file
-        (-F)</option>) to describe the reason for locking the file.
-        Unlike <command>svn commit</command>, however, <command>svn
-        lock</command> will not demand a message by launching your
-        preferred text editor.  Lock comments are optional, but still
-        recommended to aid communication.</para>
+      <para>前一个例子描述了许多新事物，第一，注意Harry在<command>svn
+        lock</command>中使用了<option>--message</option>选项，类似于<command>svn 
+        commit</command>，<command>svn lock</command>命令可以有描述锁定原因的注释（通过<option>--message 
+        (-m)</option>或<option>--file (-F)</option>）。然而不像<command>svn 
+        commit</command>，<command>svn
+        lock</command>不会自动强制启动你喜欢的编辑器，锁定注释是可选的，但是为了方便交流我们还是推荐使用。
+        </para>
 
-      <para>Second, the lock attempt succeeded.  This means that the
-        file wasn't already locked, and that Harry had the latest
-        version of the file.  If Harry's working copy of the file had
-        been out-of-date, the repository would have rejected the
-        request, forcing harry to <command>svn update</command> and
-        reattempt the locking command.</para>
+      <para>第二，锁定成功了。这意味着文件已经锁定了，Harry有了文件最新的版本，如果Harry的工作拷贝文件不是最新的，版本库会拒绝请求，强制Harry执行<command>svn update</command>并重新运行锁定命令。</para>
 
-      <para>Also notice that after creating the lock in the
-        repository, the working copy has cached information about the
-        lock&mdash;most importantly, the lock token.  The presence of
-        the lock token is critical.  It gives the working copy
-        authorization to make use of the lock later on.  The
-        <command>svn status</command> command shows a
-        <literal>K</literal> next to the file (short for locKed),
-        indicating that the lock token is present.</para>
+      <para>也要注意到在创建版本库的锁定之后，工作拷贝也缓存了锁定的信息&mdash;最重要的是锁定令牌。有锁定令牌是非常重要的，这给了工作拷贝权利利用这个锁的能力。<command>svn status</command>会在文件后面显示一个<literal>K</literal>（locKed的缩写），表明了拥有锁定令牌。
+     </para>
 
       <sidebar>
-        <title>Regarding lock tokens</title>
+        <title>关于锁定令牌</title>
 
-        <para>A lock token isn't an authentication token, so much as
-          an <emphasis>authorization</emphasis> token.  The token
-          isn't a protected secret.  In fact, a lock's unique token is
-          discoverable by anyone who runs <command>svn info
-          URL</command>.</para>
+        <para>一个锁定令牌不是一个认证令牌，也不是<emphasis>授权</emphasis>令牌。实际上，任何用户可以运行<command>svn info
+          URL</command>发现锁定唯一令牌。</para>
 
-        <para>A lock token is special only when it lives inside a
-          working copy.  It's proof that the lock was created in that
-          particular working copy, and not somewhere else by some
-          other client.  Merely authenticating as the lock owner isn't
-          enough to prevent accidents.</para>
+        <para>一个锁定令牌只有在工作拷贝中才有特别的意义，它是锁定建立在这个工作拷贝的证据，而不是其它用户在其他地方。仅仅检验锁定拥有者还不能防止事故。</para>
 
-        <para>For example: suppose you lock a file using a computer at
-         your office, perhaps as part of a changeset in progress.  It
-         should not be possible for a working copy (or alternate
-         Subversion client) on your home computer to accidentally
-         commit a change to that same file, just because you've
-         authenticated as the lock's owner.  In other words, the lock
-         token prevents one piece of Subversion-related software from
-         undermining the work of another.  (In our example, if you
-         really need to change the file from an alternate working
-         copy, you would need to break the lock and re-lock the
-         file.)</para>
+        <para>例如：你在办公室电脑上锁定了一个文件，或许修改正在进行中。很有可能在你的家用计算机上的一个工作拷贝（或别的Subversion客户端）里你又不小心修改了同一个文件，仅仅因为检验了你就是锁定的拥有者。换句话说，锁定令牌防止你通过一个Subversion相关软件的工作破坏另一个。（在我们的例子里，如果你真的需要在另一个工作拷贝修改这个文件，你必须打破锁定再重新锁定文件。）
+       </para>
       </sidebar>
 
-      <para>Now that Harry has locked <filename>banana.jpg</filename>,
-        Sally is unable to change or delete that file:</para>
+      <para>现在Harry已经锁定了<filename>banana.jpg</filename>，Sally不能修改或删除这个文件：</para>
 
       <screen>
 $ whoami
@@ -1058,10 +974,8 @@ svn: DELETE of
 
 </screen>
 
-      <para>But Harry, after touching up the banana's shade of yellow,
-        is able to commit his changes to the file.  That's because he
-        authenticates as the lock owner, and also because his working
-        copy holds the correct lock token:</para>
+      <para>但是，当完成了香蕉的黄色渐变，就可以提交文件的修改，因为认证为锁定的拥有者，也因为他的工作拷贝有正确的锁定令牌：
+     </para>
 
       <screen>
 $ whoami
@@ -1079,39 +993,17 @@ $ svn status
 $
 </screen>
 
-      <para>Notice that after the commit is finished, <command>svn
-          status</command> shows that the lock token is no longer
-          present in working copy.  This is the standard behavior
-          of <command>svn commit</command>: it walks the working copy
-          (or list of targets, if you provide such a list), and sends
-          all lock tokens it encounters to the server as part of the
-          commit transaction.  After the commit completes
-          successfully, all of the repository locks that were
-          mentioned are released&mdash;<emphasis>even on files that
-          weren't committed.</emphasis> The rationale here is to
-          discourage users from being sloppy about locking, or from
-          holding locks for too long.  For example, suppose Harry were
-          to haphazardly lock thirty files in a directory named
-          <filename>images</filename>, because he's unsure of which
-          files he needs to change.  He ends up making changes to only
-          four files.  When he runs <command>svn commit
-          images</command>, the process would still release all thirty
-          locks.</para>
+      <para>需要注意到提交之后，<command>svn
+          status</command>显示工作拷贝已经没有锁定令牌了，这是<command>svn commit</command>的标准行为方式：它会遍历工作拷贝（或者从目标列表，如果有列表的话），并且作为提交的一部分发送所有遇到的锁定令牌到服务器。当提交完全成功，前面用到的所有版本库锁定都会被释放&mdash;<emphasis>即使是没有提交的文件。</emphasis>这样的原因是不鼓励用户滥用锁定，或者是长时间的保持锁定。例如，假定Harry不小心锁定了<filename>images</filename>目录的30个文件，因为他不确定要修改什么文件，他最后只修改了四个文件，当他运行<command>svn commit
+          images</command>，会释放所有的30个锁定。
+          </para>
 
-      <para>This behavior of automatically releasing locks can be
-          overridden with the <option>--no-unlock</option> option
-          to <command>svn commit</command>.  This is best used for
-          those times when you want to commit changes, but still plan
-          to make more changes and thus need to retain existing locks.
-          This behavior is also semi-permanently tweakable, by setting
-          <literal>no-unlock = yes</literal> in your run-time
-          <filename>config</filename> file (see <xref
-          linkend="svn.advanced.confarea"/>.)</para>
+      <para>自动释放锁定的特性可以通过<command>svn commit</command>的<option>--no-unlock</option>选项关闭，当你要提交文件，同时期望继续修改而必须保留锁定时非常有用。这个特性也可以半永久性的设定，方法是设置运行中<filename>config</filename>文件（见<xref
+          linkend="svn.advanced.confarea"/>）的<literal>no-unlock = yes</literal>。
+          </para>
 
-      <para>Of course, locking a file doesn't oblige one to commit a
-        change to it.  The lock can be released at any time with a
-        simple
-        <command>svn unlock</command> command:</para>
+      <para>当然，锁定一个文件不会强制一个人要提交修改，任何时候都可以通过运行<command>svn unlock</command>命令释放锁定：
+      </para>
 
       <screen>
 $ svn unlock banana.c
@@ -1122,11 +1014,10 @@ $ svn unlock banana.c
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.locking.discovery">
-      <title>Discovering locks</title>
+      <title>发现锁定</title>
 
-      <para>When a commit fails due to someone else's locks, it's
-        fairly easy to learn about them.  The easiest of
-        these is <command>svn status --show-updates</command>:</para>
+      <para>最明显的方式就是因为锁定而不能提交一个文件，最简单的方式是<command>svn status --show-updates</command>：
+      </para>
 
       <screen>
 $ whoami
@@ -1139,16 +1030,8 @@ M    O         32   raisin.jpg
 Status against revision:     105
 </screen>
 
-      <para>In this example, Sally can see not only that her copy of
-        <filename>foo.h</filename> is out-of-date, but that one of the
-        two modified files she plans to commit is locked in the
-        repository.  The <literal>O</literal> symbol stands for
-        <quote>Other</quote>, meaning that a lock exists on the file,
-        and was created by somebody else.  If she were to attempt a
-        commit, the lock on <filename>raisin.jpg</filename> would
-        prevent it.  Sally is left wondering who made the lock, when,
-        and why.  Once again, <command>svn info</command> has the
-        answers:</para>
+      <para>在这个例子里，Sally可以见到不仅她的<filename>foo.h</filename>是过期的，而且发现两个计划要提交的文件被锁定了。<literal>O</literal>符号表示其他人所订了文件。如果她尝试提交，<filename>raisin.jpg</filename>的锁定会阻止她，Sally会纳闷谁锁定了文件，什么时候，为什么。再一次，<command>svn info</command>拥有答案：
+     </para>
 
       <screen>
 $ svn info http://svn.example.com/repos/project/raisin.jpg
@@ -1168,46 +1051,23 @@ Lock Comment (1 line):
 Need to make a quick tweak to this image.
 </screen>
 
-      <para>Just as <command>svn info</command> can be used to examine
-        objects in the working copy, it can also be used to examine
-        objects in the repository.  If the main argument to
-        <command>svn info</command> is a working copy path, then all
-        of the working copy's cached information is displayed; any
-        mention of a lock means that the working copy is holding a
-        lock token (if a file is locked by another user or in another
-        working copy, <command>svn info</command> on a working copy
-        path will show no lock information at all).  If the main
-        argument to <command>svn info</command> is a URL, then the
-        information reflects the latest version of an object in the
-        repository; any mention of a lock describes the current lock
-        on the object.</para>
+      <para>就像<command>svn info</command>可以检验工作拷贝的对象，它也可以检验版本库的对象，如果<command>svn info</command>的主要参数工作拷贝路径，所有工作拷贝的缓存信息都会显示，发现了锁定就意味着工作拷贝拥有锁定令牌（如果一个文件被另一个用户在另一个工作拷贝锁定，工作拷贝路径上运行<command>svn info</command>不会显示锁定信息）。如果<command>svn info</command>的主参数是URL，就会反映版本库中最新版本的对象信息，任何对锁定的提及描述了当前对象的锁定。
+      </para>
 
-      <para>So in this particular example, Sally can see that Harry
-        locked the file on February 16th to <quote>make a quick
-        tweak</quote>.  It being June, she suspects that he probably
-        forgot all about the lock.  She might phone Harry to complain
-        and ask him to release the lock.  If he's unavailable, she
-        might try to forcibly break the lock herself or ask an
-        administrator to do so.</para>
+      <para>所以在这个特定的例子里，Sally可以看到Harry在二月十六日为了<quote>做修改</quote>而锁定了这个文件，现在已经六月了，她怀疑他可能是忘记了这个锁定，她会打电话给Harry去询问他应该释放这个锁定，如果他不再，她就要自己强制解除这个锁定或者是找管理员去做。
+     </para>
 
     </sect2>
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.locking.break-steal">
-      <title>Breaking and stealing locks</title>
+      <title>解除和偷窃锁定</title>
 
-      <para>A repository lock isn't sacred; it can be released not
-        only by the person who created it, but by anyone at all.  When
-        somebody other than the original lock creator destroys a lock,
-        we refer to this as <firstterm>breaking</firstterm> the
-        lock.</para>
+      <para>版本库锁定并不是神圣不可侵犯的，不只是创建者可以释放锁定，任何人都可以。当有其他人期望消灭锁定时，我们称之为<firstterm>打破</firstterm>锁定。
+     </para>
 
-      <para>From the administrator's chair, it's simple to break
-        locks.  The <command>svnlook</command>
-        and <command>svnadmin</command> programs have the ability to
-        display and remove locks directly from the repository.  (For
-        more information about these tools, see
-        <xref linkend="svn.reposadmin.maint.tk"/>.)</para>
+      <para>从管理员的位子上很容易打破锁定，<command>svnlook</command>和<command>svnadmin</command>程序都有能力从版本库直接显示和删除锁定。（关于这些工具的信息可以看<xref linkend="svn.reposadmin.maint.tk"/>。）
+     </para>
 
       <screen>
 $ svnadmin lslocks /usr/local/svn/repos
@@ -1231,10 +1091,7 @@ $ svnadmin rmlocks /usr/local/svn/repos /project/raisin.jpg
 Removed lock on '/project/raisin.jpg'.
 </screen>
 
-      <para>The more interesting option is allowing users to break
-        each other's locks over the network.  To do this, one simply
-        needs to pass the <option>--force</option> to the unlock
-        command:</para>
+      <para>更有趣的选项是允许用户互相打破锁定，为此只需要使用unlock命令的<option>--force</option>选项：</para>
 
       <screen>
 $ whoami
@@ -1259,28 +1116,14 @@ $ svn unlock --force http://svn.example.com/repos/project/raisin.jpg
 'raisin.jpg' unlocked.
 </screen>
 
-      <para>Sally's initial attempt to unlock failed because she
-        ran <command>svn unlock</command> directly on her working copy
-        of the file, and no lock token was present.  To remove the
-        lock directly from the repository, she needs to pass a URL
-        to <command>svn unlock</command>.  Her first attempt to unlock
-        the URL fails, because she can't authenticate as the lock
-        owner (nor does she have the lock token).  But when she
-        passes <option>--force</option>, the authentication and
-        authorization requirements are ignored, and the remote lock is
-        broken.</para>
+      <para>Sally初始的unlock命令失败了，因为她直接在自己的工作拷贝上运行了<command>svn 
+      unlock</command>，而这里没有锁定令牌。为了直接从版本库删除锁定，她需要给<command>svn 
+      unlock</command>传递URL参数，她的这一次尝试又失败了，因为她不是锁定的拥有者（也没有锁定令牌）。当她使用了<option>--force</option>选项后，认证和授权的要求被忽略了，远程的锁定被打破了。
+     </para>
         
-      <para>Of course, simply breaking a lock may not be enough.  In
-        the running example, Sally may not only want to break Harry's
-        long-forgotten lock, but re-lock the file for her own use.
-        She can accomplish this by running <command>svn unlock
-        --force</command> and then <command>svn lock</command>
-        back-to-back, but there's a small chance that somebody else
-        might lock the file between the two commands.  The simpler thing
-        to is <firstterm>steal</firstterm> the lock, which involves
-        breaking and re-locking the file all in one atomic step.  To
-        do this, pass the <option>--force</option> option
-        to <command>svn lock</command>:</para>
+      <para>当然，简单的打破锁定也许还不够，在这个例子里，Sally不仅想要打破Harry遗忘的锁定，她也希望自己重新锁定。她可以通过运行<command>svn unlock
+        --force</command>紧接着<command>svn lock</command>，但是有可能有人在这两次命令之间锁定了文件，最简单的方式是<firstterm>窃取</firstterm>这个锁定，将打破和重新锁定变成一种原子操作，为此需要运行<command>svn lock</command>加<option>--force</option>选项：
+        </para>
 
         <screen>
 $ svn lock raisin.jpg
@@ -1290,15 +1133,9 @@ $ svn lock --force raisin.jpg
 'raisin.jpg' locked by user 'sally'.
 </screen>
 
-        <para>In any case, whether the lock is broken or stolen, Harry
-          may be in for a surprise.  Harry's working copy still
-          contains the original lock token, but that lock no longer
-          exists.  The lock token is said to
-          be <firstterm>defunct</firstterm>.  The lock represented by
-          the lock-token has either been broken (no longer in the
-          repository), or stolen (replaced with a different lock).
-          Either way, Harry can see this by asking <command>svn
-          status</command> to contact the repository:</para>
+        <para>在任何情况下，无论锁定被打破还是窃取，Harry都会感到惊讶。Harry的工作拷贝还保留有原来的锁定令牌，但是锁定已经不存在了，锁定令牌可以说已经<firstterm>死掉了</firstterm>。锁定令牌指代的锁定被打破（版本库中不再存在）或者是窃取了（被另一个锁定代替了），任何一种情况下，Harry都可以使用<command>svn
+          status</command>询问版本库：
+          </para>
 
         <screen>
 $ whoami
@@ -1318,90 +1155,46 @@ $ svn status
 $
 </screen>
 
-        <para>If the repository lock was broken, then <command>svn
-            status --show-updates</command> displays
-            a <literal>B</literal> (Broken) symbol next to the file.
-            If a new lock exists in place of the old one, then
-            a <literal>T</literal> (sTolen) symbol is shown.
-            Finally, <command>svn update</command> notices any defunct
-            lock tokens and removes them from the working copy.</para>
+        <para>如果版本库锁定被打破了，<command>svn
+            status --show-updates</command>会在文件旁边显示一个<literal>B</literal> 
+            (Broken)。如果有一个新的锁，就会显示一个<literal>T</literal> 
+            (sTolen)符号。最终，<command>svn update</command>会注意到所有死掉的锁定并且把它们从工作拷贝中删除掉。
+            </para>
 
         <sidebar>
-          <title>Locking Policies</title>
+          <title>锁定政策</title>
         
-          <para>Different systems have different notions of how strict
-            a lock should be.  Some folks argue that locks must be
-            strictly enforced at all costs, releasable only by the
-            original creator or administrator.  They argue that if
-            anyone can break a lock, then chaos breaks loose and the
-            whole point of locking is defeated.  The other side argues
-            that locks are first and foremost a communication tool.
-            If users are constantly breaking each others' locks, then
-            it represents a cultural failure within the team and the
-            problem falls outside the scope of software
-            enforcement.</para>
+          <para>不同的系统有不同的锁定限制程度的观念。有些人认为锁定必须不顾任何代价的严格执行，只有原始的创建者和管理员可以释放。他们认为如果有人打破了锁定，混乱就会放任，锁定就完全失去了意义。这些人认为锁定是第一个和最首要的交流工具，如果用户经常的打破别人的锁定，代表了团队的文化失败和软件之外的问题。
+         </para>
 
-          <para>Subversion defaults to the <quote>softer</quote>
-            approach, but still allows administrators to create
-            stricter enforcement policies through the use of hook
-            scripts.  In particular, the <filename>pre-lock</filename>
-            and <filename>pre-unlock</filename> hooks allow
-            administrators to decide when lock creation and lock
-            releases are allowed to happen.  Depending on whether or
-            not a lock already exists, these two hooks can decide
-            whether or not to allow a certain user to break or steal a
-            lock.  The <filename>post-lock</filename>
-            and <filename>post-unlock</filename> hooks are also
-            available, and can be used to send email after locking
-            actions.</para>
+          <para>Subversion缺省是比较<quote>宽松的</quote>方式，但也允许管理员创建钩子脚本来建立严格的控制策略。具体来说，<filename>pre-lock</filename>和<filename>pre-unlock</filename>钩子允许管理员决定什么时候创建和释放锁定。根据锁定是否已经存在，这两个钩子脚本可以决定是否允许特定用户打破或窃取锁定。也有<filename>post-lock</filename>和<filename>post-unlock</filename>钩子，可以用来发送锁定动作的通知邮件。
+         </para>
 
-          <para>To learn more about repository hooks, see
-            <xref linkend="svn.reposadmin.create.hooks"/>.</para>
+          <para>关于版本库钩子的更多信息可以看<xref 
+          linkend="svn.reposadmin.create.hooks"/>。</para>
         </sidebar>
 
     </sect2>
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.locking.lock-communication">
-      <title>Lock Communication</title>
+      <title>锁定交流</title>
 
-      <para>We've seen how <command>svn lock</command>
-        and <command>svn unlock</command> can be used to create,
-        release, break, and steal locks.  This satisfies the goal of
-        serializing commit access to a file.  But what about the
-        larger problem of preventing wasted time?</para>
+      <para>我们已经见到了如何利用<command>svn 
+      lock</command>和<command>svn unlock</command>来创建、释放、打破和窃取锁定，这就满足了顺序访问文件的要求，但是浪费时间这个大问题该如何呢？</para>
 
-      <para>For example, suppose Harry locks an image file and then
-        begins editing it.  Meanwhile, miles away, Sally wants to do
-        the same thing.  She doesn't think to run <command>svn status
-        --show-updates</command>, so she has no idea that Harry has
-        already locked the file.  She spends hours editing the file,
-        and when she tries to commit her change, she discovers that
-        either the file is locked or that she's out-of-date.
-        Regardless, her changes aren't mergeable with Harry's.  One of
-        these two people has to throw away their work, and a lot of
-        time has been wasted.</para>
+      <para>例如，假定Harry锁定了一个图片，并开始编辑。同时，几英里之外的Sally希望做同样的工作，她没想到运行<command>svn status
+        --show-updates</command>，她不知道Harry已经锁定了文件。她花费了数小时来修改文件，当她真被提交时发现文件已经被锁定或者是她的文件已经过期了。她的修改不能和Harry的合并，他们中的一人需要抛弃自己的工作，许多时间被浪费了。
+        </para>
       
-      <para>Subversion's solution to this problem is provide a
-        mechanism to remind users that a file ought to be locked
-        <emphasis>before</emphasis> the editing begins.</para>
+      <para>Subversion的策略是提供一种机制，能够提醒用户在开始编辑之前注意到文件可能已经锁定了。
+      </para>
 
-      <para>The mechanism is a special
-        property, <literal>svn:needs-lock</literal>.  If the property
-        is attached to a file (the value is irrelevant), then the file
-        will have read-only permissions.  When the user locks the file
-        and receives a lock token, the file becomes read-write.  When
-        the lock is released&mdash;either explicitly unlocked, or
-        released via commit&mdash;the file returns to read-only
-        again.</para>
+      <para>这个机制就是一种特殊的属性，<literal>svn:needs-lock</literal>。如果这个属性附加到一个文件上（属性值无关紧要），这个文件将只读，当用户锁定了文件，并且接受了锁定令牌，文件成了可读写。当锁定被释放&mdash;明确的解锁或提交后的释放&mdash;文件重新回到只读状态。
+      </para>
       
-      <para>The theory, then, is that if the image file has this
-        property attached, then Sally would immediately notice
-        something is strange when she opens the file for editing.  Her
-        application would be unable to save changes, or (better yet)
-        tell her that the file is read-only.  This reminds her to lock
-        the file before editing, whereby she discovers the
-        pre-existing lock:</para>
+      <para>根据这个原理，如果一个图像文件有这个属性，Sally就会立刻注意到打开的文件有些特别，她的程序将不能保存修改，或者（更好的情况）是告诉她文件只读，这提醒了她编辑之前需要锁定文件，这样她就发现了原来存在的锁定：
+     </para>
 
       <screen>
 $ /usr/local/bin/gimp raisin.jpg
@@ -1422,26 +1215,14 @@ Making some tweaks.  Locking for the next two hours.
 
 </screen>
 
-        <para>As a matter of <quote>best practice</quote>, both users
-          and administrators are encouraged to attach
-          the <literal>svn:needs-lock</literal> property to any file
-          which cannot be contextually merged.  It's the main
-          technique for encouraging good locking habits and preventing
-          wasted effort.</para>
+        <para>作为一个<quote>最佳实践</quote>，用户和管理员都应该给不能根据上下文的文件添加<literal>svn:needs-lock</literal>属性，这是鼓励好的锁定习惯和防止浪费的主要技术手段。
+        </para>
 
-        <para>Note that this property is a communication tool which
-          works independently from the locking system.  In other
-          words, any file can be locked, whether or not this property
-          is present.  And conversely, the presence of this property
-          doesn't make the repository require a lock when
-          committing.</para>
+        <para>需要注意到这个属性是依赖于锁定系统的交流工具，不管是否有这个属性，文件都可以锁定。相反的，无论有没有这个属性，并不会要求提交需要首先锁定文件。
+       </para>
 
-        <para>The system isn't flawless, either.  It's possible that
-          even when a file has the property, the read-only reminder
-          won't always work.  Sometimes applications misbehave and
-          <quote>hijack</quote> the read-only file, silently allowing
-          users to edit and save the file anyway.  Unfortunately,
-          there's not much Subversion can do about this.</para>
+        <para>这个系统并不是毫无瑕疵，即使有这个属性，只读提醒也有可能失效。有些程序<quote>偷偷的篡改了</quote>文件的只读属性，悄无声息的允许用户编辑和保存文件，不幸的是，Subversion对此无能为力。
+       </para>
 
     </sect2>
 
@@ -1485,42 +1266,35 @@ Making some tweaks.  Locking for the next two hours.
       </para>
 
     <sidebar>
-      <title>The "peg-revision" algorithm</title>
+      <title>"peg-revision"算法</title>
       
-      <para>When the commandline client sees a command of the
-        form:</para>
+      <para>当命令行客户端见到这样形式的命令：</para>
 
       <screen>
 $ svn <replaceable>command</replaceable> -r <replaceable>OPERATIVE-REV</replaceable> item@<replaceable>PEG-REV</replaceable>
 </screen>
       
-      <para>...it performs the following algorithm:</para>
+      <para>...它会执行下面的算法：</para>
 
       <itemizedlist>
         
         <listitem>
-          <para>Go to revision <replaceable>PEG-REV</replaceable>, and
-          find <replaceable>item</replaceable>.  This locates a unique
-          object in the repository.</para>
+          <para>来到修订版本<replaceable>PEG-REV</replaceable>，找到<replaceable>item</replaceable>，在版本库定位到一个唯一的对象。
+          </para>
         </listitem>
 
         <listitem>
-          <para>Trace the object's history backwards (through any
-            possible renames) to its ancestor in
-            revision <replaceable>OPERATIVE-REV</replaceable>.</para>
+          <para>追踪对象的历史背景（通过任何可能的改名）来到修订版本<replaceable>OPERATIVE-REV</replaceable>的祖先。</para>
         </listitem>
 
         <listitem>
-          <para>Perform the requested action on that ancestor,
-            wherever it is located, or whatever its name might
-            be.</para>
+          <para>对那个祖先执行请求的动作，无论它的位置，无论它是什么名字。</para>
         </listitem>
 
       </itemizedlist>
 
-      <para>Remember that even when you don't explicitly supply a
-        peg-revision, it's still present.  It defaults to BASE for
-        working copy items, and to HEAD for URLs.</para>
+      <para>记住，即使你不会明确的提供peg修订版本，它依然存在，缺省是工作拷贝条目的BASE和URL的HEAD。
+      </para>
         
     </sidebar>
 
@@ -1592,7 +1366,7 @@ Index: frabnaggilywort/IDEA
 +input validation and data verification mechanisms.
 </screen>
 
-    <para>幸运的是，几乎所有的人们不会面临如此复杂的情形，但是如果是，记住peg修订版本是帮助Subversion清除混淆的额外提示。</para>
+    <para>幸运的是，几乎所有的人不会面临如此复杂的情形，但是如果是，记住peg修订版本是帮助Subversion清除混淆的额外提示。</para>
 
   </sect1>
 
@@ -1645,32 +1419,15 @@ Fetching external item into calc/third-party/skins
     <para><command>svn status</command>命令也认识外部定义，会为外部定义的子目录显示<literal>X</literal>状态码，然后迭代这些子目录来显示外部项目的子目录状态信息。</para>
 
 <tip>
-      <para>You should strongly consider using explicit revision
-        numbers in all of your externals definitions.  Doing so means
-        that you get to decide when to pull down a different snapshot
-        of external information, and exactly which snapshot to pull.
-        Besides the common sense aspect of not being surprised by
-        changes to third-party repositories that you might not have
-        any control over, using explicit revision numbers also means
-        that as you backdate your working copy to a previous
-        revision, your externals definitions will also revert to the
-        way they looked in that previous revision, which in turn means
-        that the external working copies will be updated to match they
-        way <emphasis>they</emphasis> looked back when your repository was
-        at that previous revision.  For software projects, this could
-        be the difference between a successful and a failed build of
-        an older snapshot of your complex codebase.</para>
+      <para>你一定要要考虑在所有的外部定义中使用明确的修订版本，这样做意味着你已经决定了何时拖出外部信息不同的快照，和精确的拖出哪个快照。除了不会受到第三方版本库的意外修改的影响以外，当你的工作拷贝回溯到以前的版本库时，使用明确的修订版本号会让外部定义回到以前的那个修订版本，也意味着外部定义的工作拷贝更新会匹配以前修订版本的样子。对于软件项目，这可能是编译复杂代码基的老快照成功和失败的区别。
+     </para>
     </tip>
     <para>Subversion目前对外部定义的支持可能会引起误导，首先，一个外部定义只可以指向目录，而不是文件。第二，外部定义不可以指向相对路径（如<filename>../../skins/myskin</filename>）。第三，同过外部定义创建的工作拷贝与主工作拷贝没有连接，所以举个例子，如果你希望提交一个或多个外部定义的拷贝，你必须在这些工作拷贝显示的运行<command>svn commit</command>&mdash;对主工作拷贝的提交不会迭代到外部定义的部分。</para>
 
     <para>另外，因为定义本身使用绝对路径，移动和拷贝路径他们附着的路径不会影响他们作为外部的检出（尽管相对的本地目标子目录会这样，当然，根据重命名的目录）。这看起来有些迷惑&mdash;甚至让人沮丧&mdash;在特定情形。举个例子，如果你在<filename>/trunk</filename>开发线对一个目录使用外部定义，指向同一条线上的其他区域，然后使用<command>svn copy</command>把分支开发线拷贝到<filename>/branches/my-branch</filename>这个新位置，这个项目新分支的外部定义仍然指向<filename>/trunk</filename>版本化资源。另外，需要意识到如果你需要一个重新规划你的工作拷贝的父目录（使用<command>svn switch --relocate</command>），外部定义<emphasis>不</emphasis>会重新选择父目录。</para>
 
-    <para>Finally, there might be times when you would prefer that
-      <command>svn</command> subcommands would not recognize or
-      otherwise operate on the external working copies created as the
-      result of externals definition handling.  In those instances,
-      you can pass the <option>--ignore-externals</option> option to
-      the subcommand.</para>
+    <para>最后，你或许经常希望<command>svn</command>子命令不会识别或其它作为外部定义处理的结果的外部工作拷贝上的操作，在这种情况下，你可以对子命令使用<option>--ignore-externals</option>选项。
+   </para>
 
   </sect1>
 
