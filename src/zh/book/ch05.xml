@@ -219,7 +219,7 @@ $ svnadmin create /path/to/repos
     <para>这个命令在目录<filename>/path/to/repos</filename>创建了一个新的版本库。这个新的版本库会以修订版本版本0开始其生命周期，里面除了最上层的根目录(<filename>/</filename>)，什么都没有。刚开始，修订版本0有一个修订版本属性<literal>svn:date</literal>，设置为版本库创建的时间。</para>
 
     <para>在 Subversion 1.2中，版本库默认使用FSFS后端存储方式来创建（见<xref
-      linkend="svn.reposadmin.basics.backends"/>）。不管怎样，存储类型可以使用<option>--fs-type</option>参数明确说明。:</para>
+      linkend="svn.reposadmin.basics.backends"/>）。不管怎样，存储类型可以使用<option>--fs-type</option>参数明确说明：</para>
 
     <screen>
 $ svnadmin create --fs-type fsfs /path/to/repos
@@ -388,64 +388,32 @@ post-revprop-change.tmpl  pre-lock.tmpl             start-commit.tmpl
         <varlistentry>
           <term><filename>pre-lock</filename></term>
           <listitem>
-            <para>This hook runs whenever someone attempts to lock a
-              file.  It can be used to prevent locks altogether, or to
-              create a more complex policy specifying exactly which
-              users are allowed to lock particular paths.  If the hook
-              notices a pre-existing lock, then it can also decide
-              whether a user is allowed to <quote>steal</quote> the
-              existing lock.  The repository passes three arguments to
-              the hook: the path to the repository, the path being
-              locked, and the user attempting to perform the lock.  If
-              the program returns a non-zero exit value, the lock
-              action is aborted and anything printed to stderr is
-              marshalled back to the client.</para>
+            <para>这个钩子会在每次有人尝试锁定文件时执行，可以防止完全的锁定，或者用来制定控制哪些用户可以锁定特定路径的复杂策略，如果钩子发现已存在的钩子，也可以决定是否<quote>窃取</quote>这个钩子。版本库传递三个参数到钩子：到版本库的路径、锁定的路径和企图执行锁定的用户。如果程序返回非零值，锁定动作会退出，并且所有的标准输出返回到客户端。
+           </para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
           <term><filename>post-lock</filename></term>
           <listitem>
-            <para>This hook runs after a path is locked.  The locked
-              path is passed to the hook's stdin, and the hook also
-              receives two arguments:  the path to the repository, and
-              the user who performed the lock.  The hook is then free
-              to send email notification or record the event in any
-              way it chooses.  Because the lock already happened, the
-              output of the hook is ignored.</para>
+            <para>这个钩子在一个路径被锁定后执行，锁定的路径传递给钩子的标准输入，这个钩子也接受两个参数：到版本库的路径和企图执行锁定的用户。可以用这个钩子发送通知邮件来记录这种锁定事件，因为锁定已经发生，输出会被钩子忽略。
+           </para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
           <term><filename>pre-unlock</filename></term>
           <listitem>
-            <para>This hook runs whenever someone attempts to remove a
-              lock on a file.  It can be used to create policies that
-              specify which users are allowed to unlock particular
-              paths.  It's particularly important for determining
-              policies about lock breakage.  If user A locks a file,
-              is user B allowed to break the lock?  What if the lock
-              is more than a week old?  These sorts of things can be
-              decided and enforced by the hook.  The repository passes
-              three arguments to the hook: the path to the repository,
-              the path being unlocked, and the user attempting to
-              remove the lock.  If the program returns a non-zero exit
-              value, the unlock action is aborted and anything printed
-              to stderr is marshalled back to the client.</para>
+            <para>这个钩子在某人企图删除一个文件上的钩子时发生，可以用来制定哪些用户可以解除文件锁定的策略。制定破坏锁定的策略非常重要，如果一个用户A锁定了一个文件，允许用户B打开这个锁？如果这个锁已经一周了呢？这种事情可以通过钩子决定并执行。版本库传递三个参数到钩子：到版本库的路径、将要解锁的路径和企图解锁的用户。如果程序返回非零值，解锁操作退出并会将标准错误传输到客户端。
+           </para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
           <term><filename>post-unlock</filename></term>
           <listitem>
-            <para>This hook runs after a path is unlocked.  The
-              unlocked path is passed to the hook's stdin, and the
-              hook also receives two arguments: the path to the
-              repository, and the user who removed the lock.  The hook
-              is then free to send email notification or record the
-              event in any way it chooses.  Because the lock removal
-              already happened, the output of the hook is
-              ignored.</para>
+            <para>钩子在一个路径被解锁后执行，被解锁的路径会传递到钩子的标准输入，钩子也会得到两个参数：到版本库的路径和删除锁定的用户。可以用钩子发送记录这些事件的邮件。因为删除已经发生，钩子的输出被忽略。
+           </para>
           </listitem>
         </varlistentry>
       </variablelist>
@@ -856,8 +824,7 @@ Available subcommands:
           <varlistentry>
             <term><literal>rmlocks</literal></term>
             <listitem>
-              <para>Unconditionally remove locks from listed
-                paths.</para>
+              <para>无条件删除所列路径里的锁定。</para>
             </listitem>
           </varlistentry>
 
@@ -1360,24 +1327,8 @@ $ svnadmin load newrepos &lt; dumpfile
 
 </screen>
 
-      <para>The result of a load is new revisions added to a
-        repository&mdash;the same thing you get by making commits
-        against that repository from a regular Subversion client.  And
-        just as in a commit, you can use hook scripts to perform
-        actions before and after each of the commits made during a load
-        process.  By passing the <option>--use-pre-commit-hook</option> 
-        and <option>--use-post-commit-hook</option> options to
-        <command>svnadmin load</command>, you can instruct Subversion
-        to execute the pre-commit and post-commit hook scripts,
-        respectively, for each loaded revision.  You might use these,
-        for example, to ensure that loaded revisions pass through the
-        same validation steps that regular commits pass through.  Of
-        course, you should use these options with care&mdash;if your
-        post-commit hook sends emails to a mailing list for each new
-        commit, you might not want to spew hundreds or thousands of
-        commit emails in rapid succession at that list for each of the
-        loaded revisions!  You can read more about the use of hook 
-        scripts in <xref linkend="svn.reposadmin.create.hooks"/>.</para>
+      <para>load命令的结果就是添加一些新的修订版本&mdash;与使用普通Subversion客户端直接提交到版本库相同。正像一次简单的提交，你也可以使用钩子脚本在每次load的开始和结束执行一些操作。通过传递<option>--use-pre-commit-hook</option>和<option>--use-post-commit-hook</option>选项给<command>svnadmin load</command>，你可以告诉Subversion的对每一个加载修订版本执行pre-commit和post-commit钩子脚本，可以利用这个选项确保这种提交也能通过一般提交的检验。当然，你要小心使用这个选项，你一定不像接受一大堆提交邮件。你可以查看<xref linkend="svn.reposadmin.create.hooks"/>来得到更多相关信息。
+     </para>
 
       <para>既然<command>svnadmin</command>使用标准输入流和标准输出流作为转储和装载的输入和输出，那么更漂亮的用法是（管道两端可以是不同版本的<command>svnadmin</command>：</para>
 
@@ -1520,9 +1471,8 @@ $
       <para>在决定了如何用版本库组织项目以后，就该决定如何设置版本库的目录层次了。由于Subversion按普通的目录复制方式完成分支和标签操作（参见<xref
       linkend="svn.branchmerge"/>），Subversion社区建议为每一个项目建立一个<firstterm>项目根目录</firstterm>&mdash;项目的<quote>顶级</quote>目录&mdash;然后在根目录下建立三个子目录：<filename>trunk</filename>，保存项目的开发主线；<filename>branches</filename>，保存项目的各种开发分支；<filename>tags</filename>，保存项目的标签，也就是创建后永远不会修改的分支（可能会删除）。
         <footnote>
-          <para>The <filename>trunk</filename>, <filename>tags</filename>, 
-            and <filename>branches</filename> trio are sometimes referred
-            to as <quote>the TTB directories</quote>.</para>
+          <para>
+          <filename>trunk</filename>、<filename>tags</filename>和<filename>branches</filename>可以使用<quote>TTB目录</quote>来表示。</para>
         </footnote>
      </para>
 
