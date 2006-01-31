@@ -853,7 +853,7 @@ Cumulus clouds are appearing more frequently as summer approaches.
     <sect2 id="svn.advanced.props.auto">
       <title>自动属性设置</title>
 
-      <para>属性是Subversion一个强大的特性，成为本章和其它章讨论的许多Subversion特性的关键组成部分&mdash;文本区别和合并支持、关键字替换、新行的自动转换等等。但是为了从属性得到完全的利益，他们必须设置到正确的文件和目录。不幸的是，在日常工作中很容易忘记这一步工作，特别是当没有设置属性不会引起明显的错误时（至少相对与未能添加一个文件到版本控制这种操作），为了帮助你在需要添加属性的文件上添加属性，Subversion提供了一些简单但是有用的特性。</para>
+      <para>属性§是Subversion一个强大的特性，成为本章和其它章讨论的许多Subversion特性的关键组成部分&mdash;文本区别和合并支持、关键字替换、新行的自动转换等等。但是为了从属性得到完全的利益，他们必须设置到正确的文件和目录。不幸的是，在日常工作中很容易忘记这一步工作，特别是当没有设置属性不会引起明显的错误时（至少相对与未能添加一个文件到版本控制这种操作），为了帮助你在需要添加属性的文件上添加属性，Subversion提供了一些简单但是有用的特性。</para>
 
       <para>当你使用<command>svn add</command>或是<command>svn import</command>准备加入一个版本控制的文件时，Subversion会运行一个基本探测来检查文件是包括了可读还是不可读的内容，如果Subversion猜测错误，或者是你希望使用<literal>svn:mime-type</literal>属性更精确的设置&mdash;或许是<literal>image/png</literal>或者<literal>application/x-shockwave-flash</literal>&mdash;你可以一直删除或编辑那个属性。</para>
 
@@ -1659,7 +1659,7 @@ svn: Can't convert string from 'UTF-8' to native encoding:
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.advanced.externaldifftools">
-    <title>Using External Differencing Tools</title>
+    <title>使用外置区别工具</title>
 
     <para>The presence of <option>--diff-cmd</option> and
       <option>--diff3-cmd</option> options, and similarly named
@@ -1736,34 +1736,20 @@ svn: Can't convert string from 'UTF-8' to native encoding:
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.externaldifftools.diff">
-      <title>External diff</title>
+      <title>外置diff</title>
 
-      <para>Subversion calls external diff programs with parameters
-        suitable for the GNU diff utility, and expects only that the
-        external program return with a successful error code.  For
-        most alternative diff program, only the sixth and seventh
-        arguments, the paths of the files which represent the left and
-        right sides of the diff, respectively, are of interest.  Note
-        that Subversion runs the diff program once per modified file
-        covered by the Subversion operation, so if your program runs
-        in an asynchronous fashion (or <quote>backgrounded</quote>),
-        you might have several instances of it all running
-        simultaneously.  Finally, Subversion expects that your program
-        return an errorcode of 0 if your program detected differences,
-        or 1 if it did not&mdash;any other errorcode is considered a
-        fatal error.
+      <para>Subversion可以调用适合GNU参数的diff工具，并期望外置程序能够返回成功的错误代码。对于大多数可用的diff程序，只有第6、7参数，diff两边文件的路径。需要注意Subversion对于每个修改的文件都要以异步方式（或<quote>后台</quote>）运行diff程序，你会得到许多并行的实例。最后，Subversion期望你的程序在发现区别时返回错误代码0，没有区别则返回1&mdash;任何其他的返回值都被认为是严重错误。
         <footnote>
-          <para>The GNU diff manual page puts it this way: <quote>An
-            exit status of 0 means no differences were found, 1 means some
-            differences were found, and 2 means trouble.</quote></para>
+          <para>GNU的diff手册这样说的：<quote>返回0意味着没有区别，1是有有区别，其它值意味着出现问题。</quote>
+
+          </para>
         </footnote>
       </para>
 
-      <para><xref linkend="svn.advanced.externaldifftools.diff.ex-1"/>
-        and <xref linkend="svn.advanced.externaldifftools.diff.ex-2"/>
-        are templates for external diff tool wrappers in the Bourne
-        shell and Windows batch scripting languages,
-        respectively.</para>
+      <para><xref linkend="svn.advanced.externaldifftools.diff.ex-1"/>和<xref
+       linkend="svn.advanced.externaldifftools.diff.ex-2"/>分别是Bourne
+        shell和Windows批处理外置diff工具的包裹器模版。
+        </para>
 
       <example id="svn.advanced.externaldifftools.diff.ex-1">
         <title>diffwrap.sh</title>
@@ -1812,30 +1798,13 @@ REM Any other errorcode will be treated as fatal.
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.externaldifftools.diff3">
-      <title>External diff3</title>
+      <title>外置diff3</title>
 
-      <para>Subversion calls external merge programs with parameters
-        suitable for the GNU diff3 utility, expecting that the
-        external program return with a successful error code and that
-        the full file contents which result from the completed merge
-        operation are printed on the standard output stream (so that
-        Subversion can redirect them into the appropriate version
-        controlled file).  For most alternative merge programs, only
-        the ninth, tenth, and eleventh arguments, the paths of the
-        files which represent the <quote>mine</quote>,
-        <quote>older</quote>, and <quote>yours</quote> inputs,
-        respectively, are of interest.  Note that because Subversion
-        depends on the output of your merge program, you wrapper
-        script must not exit before that output has been delivered to
-        Subversion.  When it finally does exit, it should return an
-        errorcode of 0 if the merge was successful, or 1 if unresolved
-        conflicts remain in the output&mdash;any other errorcode is
-        considered a fatal error.</para>
+      <para>Subversion按照符合GNU的diff3的参数调用合并程序，期望外置程序会返回成功的错误代码，并且完整合并的文件结果打印到标准输出（这样Subversion可以重定向这些东西到适当的版本控制下的文件）。对于大多数可选的合并程序，只有第9、10和11参数，分别代表<quote>mine</quote>、<quote>older</quote>和<quote>yours</quote>的路径。需要注意，因为Subversion依赖于你的合并程序的输出，你的包裹脚本在输出发送到Subversion之前不要退出。当最终退出，如果合并成功返回0，如果有为解决的冲突则返回1&mdash;其它返回值都是严重错误。
+     </para>
 
-      <para><xref linkend="svn.advanced.externaldifftools.diff3.ex-1"/> 
-        and <xref linkend="svn.advanced.externaldifftools.diff3.ex-2"/> are
-        templates for external merge tool wrappers in the Bourne shell
-        and Windows batch scripting languages, respectively.</para>
+      <para><xref linkend="svn.advanced.externaldifftools.diff3.ex-1"/>和<xref linkend="svn.advanced.externaldifftools.diff3.ex-2"/>分别是Bourne
+        shell和Windows批处理外置diff工具的包裹器模版。</para>
 
       <example id="svn.advanced.externaldifftools.diff3.ex-1">
         <title>diff3wrap.sh</title>
