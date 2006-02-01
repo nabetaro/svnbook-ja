@@ -168,7 +168,7 @@ def obtain_statistics(author_list):
     For a list of nicks, returns a dictionary with the nicks as
     keys and the statistics as values. If a nick is not found in
     the statistics, its value is None. Otherwise, it is a tuple
-    with a text string date, the the number of days ago in floating
+    with a text string date, the number of days ago in floating
     point, and a boolean saying whether a commit was found or not
     in the statistics.
     """
