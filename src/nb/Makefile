@@ -95,7 +95,7 @@ sync:
 	@echo ======= START svn status =======
 	@svn status -q
 	@echo ======== END svn status ========
-	@echo -n If there are no local changes, press Enter...
+	@echo -n Press Enter to continue or CTRL-C to abort...
 	@read
 	@if [ "$(HEAD)" = "" ]; then \
 		svnversion . | tr -d M >HEADREV; \
