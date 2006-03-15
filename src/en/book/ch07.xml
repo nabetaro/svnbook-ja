@@ -1527,6 +1527,101 @@ Cumulus clouds are appearing more frequently as summer approaches.
           file will be re-substituted with information that
           reflects the most recent known commit to that file.</para>
 
+        <para>Subversion 1.2 introduced a new variant of the keyword
+          syntax which brought additional, useful&mdash;though perhaps
+          atypical&mdash;functionality.  You can now tell Subversion
+          to maintain a fixed length (in terms of the number of bytes
+          consumed) for the substituted keyword.  By using a
+          double-colon (<literal>::</literal>) after the keyword name,
+          followed by a number of space characters, you define that
+          fixed width.  When Subversion goes to substitute your
+          keyword for the keyword and its value, it will essentially
+          replace only those space characters, leaving the overall
+          width of the keyword field unchanged.  If the substituted
+          value is shorter than the defined field width, there will be
+          extra padding characters (spaces) at the end of the
+          substituted field; if it is too long, it is truncated with a
+          special hash (<literal>#</literal>) character just before
+          the final dollar sign terminator.</para>
+
+        <para>For example, say you have a document in which you have
+          some section of tabular data reflecting the document's
+          Subversion keywords.  Using the original Subversion keyword
+          substitution syntax, your file might look something
+          like:</para>
+
+        <screen>
+$Rev$:     Revision of last commit
+$Author$:  Author of last commit
+$Date$:    Date of last commit
+</screen>
+
+        <para>Now, that looks nice and tabular at the start of things.
+          But when you then commit that file (with keyword substitution
+          enabled, of course), you see:</para>
+
+        <screen>
+$Rev: 12 $:     Revision of last commit
+$Author: harry $:  Author of last commit
+$Date: 2006-03-15 02:33:03 -0500 (Wed, 15 Mar 2006) $:    Date of last commit
+</screen>
+
+        <para>The result is not so beautiful.  And you might be
+          tempted to then adjust the file after the substitution so
+          that it again looks tabular.  But that only holds as long as
+          the keyword values are the same width.  If the last
+          committed revision rolls into a new place value (say, from
+          99 to 100), or if another person with a longer username
+          commits the file, stuff gets all crooked again.  However, if
+          you are using Subversion 1.2 or better, you can use the new
+          fixed-length keyword syntax, define some field widths that
+          seem sane, and now your file might look like this:</para>
+
+        <screen>
+$Rev::               $:  Revision of last commit
+$Author::            $:  Author of last commit
+$Date::              $:  Date of last commit
+</screen>
+
+        <para>You commit this change to your file.  This time,
+          Subversion notices the new fixed-length keyword syntax, and
+          maintains the width of the fields as defined by the padding
+          you placed between the double-colon and the trailing dollar
+          sign.  After substitution, the width of the fields is
+          completely unchanged&mdash;the short values for
+          <literal>Rev</literal> and <literal>Author</literal> are
+          padded with spaces, and the long <literal>Date</literal>
+          field is truncated by a hash character:</para>
+
+        <screen>
+$Rev:: 13            $:  Revision of last commit
+$Author:: harry      $:  Author of last commit
+$Date:: 2006-03-15 0#$:  Date of last commit
+</screen>
+       
+        <para>The use of fixed-length keywords is especially handy
+          when performing substitutions into complex file formats that
+          themselves use fixed-length fields for data, or for which
+          the stored size of a given data field is overbearingly
+          difficult to modify from outside the format's native
+          application (such as for Microsoft Office documents).</para>
+
+        <warning>
+          <para>Be aware that because the width of a keyword field is
+            measure in bytes, the potential for corruption of
+            multi-byte values exists.  For example, a username which
+            contains some multi-byte UTF-8 characters might suffer
+            truncation in the middle of the string of bytes which make
+            up one of those characters.  The result will be a mere
+            truncation when viewed at the byte level, but will likely
+            appear as a string with an incorrect or garbled final
+            character when viewed as UTF-8 text.  It is conceivable
+            that certain applications, when asked to load the file,
+            would notice the broken UTF-8 text and deem the entire
+            file corrupt, refusing to operate on the file
+            altogether.</para> 
+        </warning>
+
       </sect3>
 
       <sect3 id="svn.advanced.props.special.eol-style">
