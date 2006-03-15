@@ -9,14 +9,22 @@
 
   <simplesect>
 
+    <!-- @ENGLISH {{{
     <para>A Subversion repository can be accessed simultaneously by
       clients running on the same machine on which the repository
       resides using the <literal>file:///</literal> method.  But the
       typical Subversion setup involves a single server machine being
       accessed from clients on computers all over the office&mdash;or,
       perhaps, all over the world.</para>
+    @ENGLISH }}} -->
+    <para>Одновременный доступ к хранилищу Subversion клиентами,
+      запущенными на том же компьютере, где расположено и хранилище,
+      возможен при использовании метода <literal>file:///</literal>.
+      Но, обычно, сервер Subversion устанавливается на отдельный
+      компьютер, к которому имеют доступ клиенты с компьютеров всего
+      офиса &mdash; или, возможно, всего мира.</para>
 
-
+    <!-- @ENGLISH {{{
     <para>This section describes how to get your Subversion repository
       exposed outside its host machine for use by remote clients.  We
       will cover Subversion's currently available server mechanisms,
@@ -24,6 +32,13 @@
       this section, you should be able to decide which networking
       setup is right for your needs, and understand how to enable such
       a setup on your host computer.</para>
+    @ENGLISH }}} -->
+    <para>Этот раздел расскажет, как предоставить доступ к хранилищу
+      Subversion удаленным клиентам. Мы опишем доступные на сегодняшний
+      день механизмы серверов Subversion, а так же обсудим вопросы
+      конфигурации и использования каждого из них. После прочтения этого
+      раздела вы сможете решить, какой тип сервера подходит вам, как его
+      установить и настроить на вашем комптьютере.</para>
 
   </simplesect>
 
@@ -32,8 +47,12 @@
   <!-- ================================================================= -->
   <sect1 id="svn.serverconfig.overview">
 
+    <!-- @ENGLISH {{{
     <title>Overview</title>
+    @ENGLISH }}} -->
+    <title>Обзор</title>
 
+    <!-- @ENGLISH {{{
     <para>Subversion was designed with an abstract network layer.
       This means that a repository can be programmatically accessed by
       any sort of server process, and the client <quote>repository
@@ -41,7 +60,18 @@
       speak relevant network protocols.  In theory, Subversion can use
       an infinite number of network implementations.  In practice,
       there are only two servers at the time of writing.</para>
+    @ENGLISH }}} -->
+    <para>Subversion был разработан с использованием абстрактного
+      сетевого уровня. Это означает, что на программном уровне для
+      доступа к хранилищу может быть использован любой тип сервера,
+      а клиентский API для <quote>доступа к хранилищу</quote> дает
+      программистам возможность создавать плагины, которые будут
+      взаимодействовать с соответствующим сетевым протоколом.
+      Теоретически, Subversion может использовать неограниченное
+      количество сетевых исполнений. Практически же, на данный момент
+      есть только два сервера.</para>
 
+    <!-- @ENGLISH {{{
     <para>Apache is an extremely popular webserver; using the
       <command>mod_dav_svn</command> module, Apache can access a
       repository and make it available to clients via the WebDAV/DeltaV
@@ -49,7 +79,17 @@
       <command>svnserve</command>: a small, standalone server
       program that speaks a custom protocol with clients.  Table 6-1
       presents a comparison of the two servers.</para>
+    @ENGLISH }}} -->
+    <para>Apache - наиболее популярный web-сервер; при использовании
+      модуля <command>mod_dav_svn</command> Apache получает возможность
+      доступа к хранилищу, а так же делает его доступным для клиентов,
+      используя протокол WebDAV/DeltaV, который является расширением
+      HTTP. В другом углу ринга - <command>svnserve</command> - небольшой,
+      самостоятельный сервер, использующий для общения с клиентами
+      собственный протокол. В таблице 6-1 дано сравнение этих двух
+      серверов.</para>
 
+    <!-- @ENGLISH {{{
     <para>Note that Subversion, as an open-source project, does not
       officially endorse any server as <quote>primary</quote> or
       <quote>official</quote>.  Neither network implementation is
@@ -62,86 +102,137 @@
       comparison of the two available Subversion servers&mdash;as an
       administrator, it's up to you to choose whatever works best for
       you and your users.</para>
-
+    @ENGLISH }}} -->
+    <para>Обратите внимание, что Subversion, как проект с открытым
+      исходным кодом, ни одному из серверов не дает статуса
+      <quote>основного</quote> или <quote>официального</quote>.
+      Ни одно из сетевых решений не является "третьесортным"; у каждого
+      сервера есть свои достоинства и недостатки. Фактически, можно
+      запустить параллельно разные сервера, каждый из которых будет
+      взаимодействовать с хранилищем по-своему, и ни один из них не будет
+      "первым" или "главным" (смотрите <xref
+      linkend="svn.serverconfig.multimethod"/>). <xref
+      linkend="svn.serverconfig.overview.tbl-1"/> представляет краткий
+      обзор и сравнение двух доступных Subversion-серверов &mdash; как для
+      администратора; это поможет вам выбрать сервер, наиболее подходящий
+      вам и вашим пользователям.</para>
 
     <table id="svn.serverconfig.overview.tbl-1">
+      <!-- @ENGLISH {{{
       <title>Network Server Comparison</title>
+      @ENGLISH }}} -->
+      <title>Сравнение серверов</title>
       <tgroup cols="3">
         <thead>
           <row>
+            <!-- @ENGLISH {{{
             <entry>Feature</entry>
+            @ENGLISH }}} -->
+            <entry>Возможность</entry>
             <entry>Apache + mod_dav_svn</entry>
             <entry>svnserve</entry>
           </row>
         </thead>
         <tbody>
           <row>
+            <!-- @ENGLISH {{{
             <entry>Authentication options</entry>
-
             <entry>HTTP(S) basic auth, X.509 certificates, LDAP, NTLM, or
               any other mechanism available to Apache httpd</entry>
-
             <entry>CRAM-MD5 or SSH</entry>
+            @ENGLISH }}} -->
+            <entry>Настройки установления личности</entry>
+            <entry>стандартное установление личности средствами HTTP(S),
+              сертификаты X.509, LDAP, NTLM, а также другие механизмы,
+              доступные для использования в Apache</entry>
+            <entry>CRAM-MD5 или SSH</entry>
           </row>
 
           <row>
+            <!-- @ENGLISH {{{
             <entry>User account options</entry>
-
             <entry>private 'users' file</entry>
-
             <entry>private 'users' file, or existing system (SSH)
               accounts</entry>
+            @ENGLISH }}} -->
+            <entry>Настройки пользовательских учетных записей</entry>
+            <entry>внутренний файл 'users'</entry>
+            <entry>внутренний файл 'users' или использование существующих
+              системных (SSH) учетных записей</entry>
           </row>
 
           <row>
+            <!-- @ENGLISH {{{
             <entry>Authorization options</entry>
-
             <entry>blanket read/write access, or per-directory
               read/write control</entry>
-
             <entry>blanket read/write access, or per-directory write
               (but not read) control using a pre-commit hook</entry>
+            @ENGLISH }}} -->
+            <entry>Настройки прав доступа</entry>
+            <entry>общий доступ для чтения/записи, или по-каталоговый
+              доступ для чтения/записи</entry>
+            <entry>общий доступ для чтения/записи, или по-каталоговый
+              доступ для записи (но не для чтения), используя pre-commit
+              hook</entry>
           </row>
 
           <row>
+            <!-- @ENGLISH {{{
             <entry>Encryption</entry>
-
             <entry>via optional SSL</entry>
-
             <entry>via optional SSH tunnel</entry>
+            @ENGLISH }}} -->
+            <entry>Шифрование</entry>
+            <entry>через SSL (опционально)</entry>
+            <entry>через SSH-туннель (опционально)</entry>
           </row>
 
           <row>
+            <!-- @ENGLISH {{{
             <entry>Interoperability</entry>
-
             <entry>partially usable by other WebDAV clients</entry>
-
             <entry>not interoperable</entry>
+            @ENGLISH }}} -->
+            <entry>Interoperability</entry>
+            <entry>частично, используя другие WevDAV-клиенты</entry>
+            <entry>не поддерживается.</entry>
           </row>
 
           <row>
+            <!-- @ENGLISH {{{
             <entry>Web viewing</entry>
-
             <entry>limited built-in support, or via 3rd-party tools
               such as ViewCVS</entry>
-
             <entry>via 3rd-party tools such as ViewCVS</entry>
+            @ENGLISH }}} -->
+            <entry>Просмотр через web</entry>
+            <entry>встроенная ограниченная поддержка, или используя
+              программы сторонних разработчиков, таких, как ViewCVS</entry>
+            <entry>используя программы сторонних разработчиков, таких,
+              как ViewCVS</entry>
           </row>
 
           <row>
+            <!-- @ENGLISH {{{
             <entry>Speed</entry>
-
             <entry>somewhat slower</entry>
-
             <entry>somewhat faster</entry>
+            @ENGLISH }}} -->
+            <entry>Скорость</entry>
+            <entry>более низкая</entry>
+            <entry>более высокая</entry>
           </row>
 
           <row>
+            <!-- @ENGLISH {{{
             <entry>Initial setup</entry>
-
             <entry>somewhat complex</entry>
-
             <entry>fairly simple</entry>
+            @ENGLISH }}} -->
+            <entry>Начальная установка</entry>
+            <entry>несколько сложная</entry>
+            <entry>достаточно простая</entry>
           </row>
 
         </tbody>
