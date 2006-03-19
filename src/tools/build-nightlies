@@ -3,10 +3,8 @@
 
 import sys
 import os
-import os.path
 import shutil
 import time
-import string
 
 if len(sys.argv) < 3:
     sys.stderr.write("""Usage: %s SRC-DIR TGT-DIR --dryrun
@@ -54,32 +52,37 @@ for locale in locales:
     tarball_base_name = 'svnbook-%s' % (locale)
     tarball_name = tarball_base_name + '.tar.gz'
     tarball_path = os.path.join(locale_dir, tarball_name)
-    try:
-        book_formats = [ 'html', 'html-chunk', 'pdf' ]
-        if locale in skip_pdf_locales:
-            book_formats.remove('pdf')
-        command = (['../tools/book-dist.py'] + map(lambda x: '--%s' % x,
-            book_formats) + ['--name="%s"' % tarball_base_name])
+    book_formats = [ 'html', 'html-chunk', 'pdf' ]
+    if locale in skip_pdf_locales:
+        book_formats.remove('pdf')
+
+    command = ([os.path.join('..', 'tools', 'book-dist.py')]
+            + map(lambda x: '--%s' % x, book_formats)
+            + ['--name="%s"' % tarball_base_name])
+    if DRYRUN:
+        print "Run: %s" % (" ".join(command))
+    else:
         os.chdir(locale_dir)
-        if DRYRUN:
-            print "Run: %s" % (" ".join(command))
-        else:
+        try:
             os.system(" ".join(command))
-        os.chdir(DROPSPOT)
-        if os.path.isdir(locale):
-            if DRYRUN:
-                print "Erase: %s/%s" % (DROPSPOT, locale)
-            else:
-                shutil.rmtree(locale)
+        finally:
+            os.chdir(cwd)
+
+    dropspot_locale_path = os.path.join(DROPSPOT, locale)
+    if os.path.isdir(dropspot_locale_path):
         if DRYRUN:
-            print "Unpack and remove: %s" % tarball_path
+            print "Erase: %s" % (dropspot_locale_path)
         else:
-            os.system('tar xfz %s' % (tarball_path))
-            os.rename(tarball_base_name, locale)
-            os.unlink(tarball_path)
-        built_locales.append(locale)
-    finally:
-        os.chdir(cwd)
+            shutil.rmtree(dropspot_locale_path)
+    if DRYRUN:
+        print "Unpack and remove: %s" % tarball_path
+    else:
+        command = ['tar', '-C', DROPSPOT, '-zxf', tarball_path]
+        os.system(" ".join(command))
+        os.rename(os.path.join(DROPSPOT, tarball_base_name),
+                dropspot_locale_path)
+        os.unlink(tarball_path)
+    built_locales.append(locale)
 
 # Write out index.html
 if DRYRUN:
@@ -106,7 +109,7 @@ for locale in built_locales:
     fp.write("""<dt>%s</dt>
 <dd>[<a href="%s/svn-book.html">single-page HTML</a>]</dd>
 <dd>[<a href="%s/index.html">multi-page HTML</a>]</dd>
-""" % (string.upper(locale), locale, locale))
+""" % (locale.upper(), locale, locale))
     if locale not in skip_pdf_locales:
         fp.write('<dd>[<a href="%s/svn-book.pdf">PDF</a>]</dd>\n' % locale)
 fp.write("""</dl>
