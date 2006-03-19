@@ -19,10 +19,12 @@ def usage(err_msg):
     stream.write("""Usage: %s OPTIONS
 
 Options:
-   --html:         Make the single-page HTML book
-   --html-chunk:   Make the chunked HTML book
-   --pdf:          Make the PDF book
-   --name:         The base name of the tarball, and top-level tar directory
+   --html:            Make the single-page HTML book
+   --html-chunk:      Make the chunked HTML book
+   --html-arch:       Make the single-page HTML book (in an archive)
+   --html-chunk-arch: Make the chunked HTML book (in an archive)
+   --pdf:             Make the PDF book
+   --name:            The base name of the tarball, and top-level tar directory
 """ % (os.path.basename(sys.argv[0])))
     sys.exit(err_msg and 1 or 0)
     
@@ -31,10 +33,11 @@ def main():
     try:
         optlist, args = getopt.getopt(sys.argv[1:], "h",
                                       ['help', 'html', 'html-chunk',
+                                       'html-arch', 'html-chunk-arch',
                                        'pdf', 'name='])
     except:
         usage("Invalid syntax")
-    html = html_chunk = pdf = 0
+    html = html_chunk = html_arch = html_chunk_arch = pdf = 0
     name = 'svnbook'
     targets = []
     for opt, arg in optlist:
@@ -44,6 +47,10 @@ def main():
             html = 1
         if opt == '--html-chunk':
             html_chunk = 1
+        if opt == '--html-arch':
+            html_arch = 1
+        if opt == '--html-chunk-arch':
+            html_chunk_arch = 1
         if opt == '--pdf':
             pdf = 1
         if opt == '--name':
@@ -54,6 +61,8 @@ def main():
         
     if html: targets.append('install-html')
     if html_chunk: targets.append('install-html-chunk')
+    if html_arch: targets.append('install-html-arch')
+    if html_chunk_arch: targets.append('install-html-chunk-arch')
     if pdf: targets.append('install-pdf')
 
     if len(targets) < 1:
