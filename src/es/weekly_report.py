@@ -21,6 +21,7 @@ SECTIONS = [
     "Ficheros huérfanos con traducción parcial:",
     "Ficheros en proceso de traducción:",
     "Ficheros que han completado al menos una traducción básica:",
+    "Ficheros en proceso de revisión:",
     "Ficheros revisados sin verificar el original:",
     "Ficheros revisados verificando el original:"]
 
@@ -58,7 +59,7 @@ def parse_file(input_lines):
                 # Add the nick/name relationship.
                 nick, name = line.split(None, 1)
                 commiters[nick] = name
-            elif section >= 3 and section <= 6:
+            elif section >= 3 and section <= len(SECTIONS):
                 # Add the file and authors.
                 filename, rest = line.split(":")
                 rest = [x.strip() for x in rest.strip().split(",")]
@@ -66,7 +67,7 @@ def parse_file(input_lines):
                     file_status[filename].append((section, rest))
                 else:
                     file_status[filename] = [(section, rest)]
-            
+
     return commiters, file_status
 
 
@@ -153,10 +154,8 @@ def main():
 
     show_commiter_info(commiters)
 
-    show_section_work(3, commiters, file_status)
-    show_section_work(4, commiters, file_status)
-    show_section_work(5, commiters, file_status)
-    show_section_work(6, commiters, file_status)
+    for f in range(3, len(SECTIONS) + 1):
+        show_section_work(f, commiters, file_status)
 
 
 if __name__ == "__main__":
