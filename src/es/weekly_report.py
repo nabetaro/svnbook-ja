@@ -13,6 +13,7 @@ not hearing you, la la la la la...
 """
 
 import author_statistics
+import locale
 import time
 
 
@@ -139,6 +140,7 @@ def main():
 
     Reads the file TRABAJO, parses it, and generates a report.
     """
+    locale.setlocale(locale.LC_ALL, "es_ES")
     file_input = file("TRABAJO", "rt")
     input_lines = file_input.readlines()
     file_input.close()
@@ -147,8 +149,8 @@ def main():
     # Use external module to find out commit statistics.
     author_statistics.obtain_information(commiters.keys())
 
-    date = time.strftime("día %d del mes %m del %Y", time.localtime())
-    print "Estado de la traducción, a %s\n" % date
+    date = time.strftime("día %d de %B del %Y", time.localtime())
+    print "Estado de la traducción, a %s.\n" % date
     print "%d cambios realizados hasta la fecha en el repositorio.\n" % (
         author_statistics.COMMIT_NUMBER)
 
