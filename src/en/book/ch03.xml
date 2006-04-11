@@ -1067,8 +1067,10 @@ R       xyz.c               # file is scheduled for replacement
           switch</command>) to a branch.</para>
 
         <para>The sixth column shows information about locks, which is
-          further explained in <xref
-          linkend="svn.advanced.locking"/>.</para>
+          further explained in <xref linkend="svn.advanced.locking"/>.
+          (These are not the same locks as the ones indicated by an
+          <computeroutput>L</computeroutput> in the third column;
+          see <xref linkend="svn.advanced.locking.meanings"/>.)</para>
         
         <para>If you pass a specific path to <command>svn
           status</command>, it gives you information about that item
@@ -2155,11 +2157,14 @@ $ svn update --revision 1729 # Updates an existing working copy to r1729
       <para>When Subversion modifies your working copy (or any
         information within <filename>.svn</filename>), it tries to do
         so as safely as possible.  Before changing the working copy,
-        Subversion writes its intentions to a log file.  Next it executes
-        the commands in the log file to apply the requested change.
-        Finally, Subversion removes the log file.  Architecturally, this
-        is similar to a journaled filesystem.  If a Subversion operation is
-        interrupted (if the process is killed, or if the machine
+        Subversion writes its intentions to a log file.  Next it
+        executes the commands in the log file to apply the requested
+        change, holding a lock on the relevant part of the working
+        copy while it works &mdash; to prevent othe Subversion clients
+        from accessing the working copy in mid-change.  Finally,
+        Subversion removes the log file.  Architecturally, this is
+        similar to a journaled filesystem.  If a Subversion operation
+        is interrupted (if the process is killed, or if the machine
         crashes, for example), the log files remain on disk.  By
         re-executing the log files, Subversion can complete the
         previously started operation, and your working copy can get
@@ -2167,9 +2172,9 @@ $ svn update --revision 1729 # Updates an existing working copy to r1729
 
       <para>And this is exactly what <command>svn cleanup</command>
         does: it searches your working copy and runs any leftover
-        logs, removing locks in the process.  If Subversion ever tells
-        you that some part of your working copy is
-        <quote>locked</quote>, then this is the command that you
+        logs, removing working copy locks in the process.
+        If Subversion ever tells you that some part of your working copy
+        is <quote>locked</quote>, then this is the command that you
         should run.  Also, <command>svn status</command> will display
         an <literal>L</literal> next to locked items:</para>
 
@@ -2182,6 +2187,13 @@ $ svn cleanup
 $ svn status
 M      somedir/foo.c
 </screen>
+
+      <para>Don't confuse these working copy locks with the ordinary
+        locks that Subversion users create when using
+        the <quote>lock-modify-unlock</quote> model of concurrent
+        version control; see
+        <xref linkend="svn.advanced.locking.meanings"/> for
+        clarification.</para>
 
     </sect2>
 
