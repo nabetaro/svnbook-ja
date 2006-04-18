@@ -318,17 +318,18 @@
       <para>Когда сервер получает запрос от клиента, он требует, чтобы
         клиент идентифицировал себя. Он отсылает запрос об установлении
         личности клиента, на что клиент реагирует предоставлением
-        <firstterm>credentials</firstterm> серверу. После окончания
-        процедуры установления личности сервер отсылает клиенту
-        информацию, которую тот запрашивал. Заметьте, что эта система
-        отличается от таких, как в CVS, где клиент вначале отсылает
-        credentials, а потом уже посылает запрос. В Subversion сервер
-        сам получает credentials, запрашивая его у клиента тогда, когда ему
-        нужно. Такой способ делает определенные операции более изящными.
+        <firstterm>идентификационной информации</firstterm> серверу.
+        После окончания процедуры установления личности сервер отсылает
+        клиенту информацию, которую тот запрашивал. Заметьте, что эта
+        система отличается от таких, как в CVS, где клиент вначале
+        отсылает идентификационную информацию, а потом уже посылает
+        запрос. В Subversion сервер сам получает идентификационную
+        информацию, запрашивая её у клиента тогда, когда ему нужно.
+        Такой способ делает определенные операции более изящными.
         К примеру, в случае, когда конфигурация сервера открывает доступ
         для чтения всем без ограничений, и клиент выполняет команду
         <command>svn checkout</command>, сервер не будет запрашивать
-        credentials для установления личности.</para>
+        идентификационную информацию для установления личности.</para>
 
       <!-- @ENGLISH {{{
       <para>If the client's network request writes new data to the
@@ -525,6 +526,7 @@ Username:  joe
 store-auth-creds = no
 </screen>
 
+      <!-- @ENGLISH {{{
       <para>Sometimes users will want to remove specific credentials
         from the disk cache.  To do this, you need to navigate into
         the <filename>auth/</filename> area and manually delete the
@@ -533,6 +535,14 @@ store-auth-creds = no
         values.  The <literal>svn:realmstring</literal> key describes
         the particular server realm that the file is associated
         with:</para>
+      @ENGLISH }}} -->
+      <para>Иногда требуется удалить идентификационную информацию из
+        кеша. Для этого необходимо вручную удалить соответствующий файл
+        из каталога <filename>auth/</filename>. Идентификационная
+        информация хранится в отдельных файлах; если вы просмотрите эти
+        файлы, вы увидите список ключей и их значений. Ключ
+        <literal>svn:realmstring</literal> описывает конкретную realm
+        сервера, с которой связан данный файл.</para>
 
       <screen>
 $ ls ~/.subversion/auth/svn.simple/
@@ -557,12 +567,16 @@ V 45
 END
 </screen>
 
+      <!-- @ENGLISH {{{
       <para>Once you have located the proper cache file, just delete
         it.</para>
+      @ENGLISH }}} -->
+      <para>Вы нашли требуемый файл? Теперь просто удалите его.</para>
 
+      <!-- @ENGLISH {{{
       <para>One last word about client authentication behavior: a bit
-        of explanation about the <option>--username</option> and
-        <option>--password</option> options is needed.  Many client
+        of explanation about the <option>--><!--username</option> and
+        <option>--><!--password</option> options is needed.  Many client
         subcommands accept these options; however it is important to
         understand using these options <emphasis>does not</emphasis>
         automatically send credentials to the server.  As discussed
@@ -572,17 +586,43 @@ END
         password are passed as options, they will
         <emphasis>only</emphasis> be presented to the server if the
         server requests them.
+      @ENGLISH }}} -->
+      <para>И последнее о некоторых особенностях идентификации клиента,
+        а именно небольшое разъяснение ключей <option>--username</option>
+        и <option>--password</option>. Многие подкомманды клиента
+        используют эти ключи, однако следует понимать, что использование
+        этих ключей <emphasis>не подразумевает</emphasis> автоматическую
+        отсылку идентификационной информации на сервер. Как объяснялось
+        раньше, сервер получает идентификационную информацию от клиента
+        только тогда, когда считает, что это необходимо; клиент не может
+        передать её серверу по своей инициативе. Когда имя пользователя
+        и пароль передаются в ключах, они будут отосланы серверу
+        <emphasis>только</emphasis> в том случае, если сервер запросит
+        их.
 
+         <!-- @ENGLISH {{{
          <footnote><para>Again, a common mistake is to misconfigure a
            server so that it never issues an authentication challenge.
-           When users pass <option>--username</option> and
-           <option>--password</option> options to the client,
+           When users pass <option>--><!--username</option> and
+           <option>--><!--password</option> options to the client,
            they're surprised to see that they're never used, i.e. new
            revisions still appear to have been committed
            anonymously!</para></footnote>
+         @ENGLISH }}} -->
+         <footnote><para>И опять-таки, частой ошибкой является 
+           неправильная конфигурация сервера, при которой сервер никогда
+           не посылает запрос об установлении личности. Когда
+           пользователи используют ключи <option>--username</option>
+           и <option>--password</option>, они могут быть неприятно
+           удивлены, увидев, что ключи не используются, что новые правки
+           зафиксированы анонимными пользователями.</para></footnote>
 
+        <!-- @ENGLISH {{{
         Typically, these options are used when:</para>
+        @ENGLISH }}} -->
+        Обычно эти ключи используются в следующих случаях:</para>
 
+      <!-- @ENGLISH {{{
       <itemizedlist>
         <listitem>
           <para>the user wants to authenticate as a different user
@@ -593,7 +633,18 @@ END
             credentials.</para>
         </listitem>
       </itemizedlist>
+      @ENGLISH }}} -->
 
+      <itemizedlist>
+        <listitem>
+          <para>пользователь не хочет использовать текущую учетную
+            запись, или</para>
+        </listitem>
+        <listitem>
+          <para>скрипт хочет пройти опознание личности, не используя
+            сохранённые идентификационные данные.</para>
+        </listitem>
+      </itemizedlist>
 
       <para>Here is a final summary that describes how a Subversion
         client behaves when it receives an authentication
