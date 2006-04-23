@@ -2465,27 +2465,31 @@ jane = r
       </listitem>
     </itemizedlist>
     
-    <para>The most common problem administrators run into is repository
-      ownership and permissions.  Does every process (or user) in the
-      previous list have the rights to read and write the Berkeley DB
-      files?  Assuming you have a Unix-like operating system, a
-      straightforward approach might be to place every potential
-      repository user into a new <literal>svn</literal> group, and
-      make the repository wholly owned by that group.  But even that's
-      not enough, because a process may write to the database files
-      using an unfriendly umask&mdash;one that prevents access by
-      other users.</para>
-    
-    <para>So the next step beyond setting up a common group for
-      repository users is to force every repository-accessing process
-      to use a sane umask.  For users accessing the repository
-      directly, you can make the <command>svn</command> program into a
-      wrapper script that first sets <command>umask 002</command> and
-      then runs the real <command>svn</command> client program.  You
-      can write a similar wrapper script for the
-      <command>svnserve</command> program, and add a <command>umask
-      002</command> command to Apache's own startup script,
-      <filename>apachectl</filename>.  For example:</para>
+    <para>El problema más común que se encuentran los administradores
+      es con la propiedad y permisos del repositorio. ¿Tiene cada
+      proceso (o usuario) en la lista anterior permisos para leer y
+      escribir los ficheros de la base de datos Berkeley? Asumiendo
+      que tiene un sistema operativo tipo Unix, una opción simple
+      sería colocar a cada usuario potencial del repositorio
+      en un nuevo grupo <literal>svn</literal>, y hacer que el
+      repositorio al completo esté poseído por este grupo. Pero
+      ni si quiera eso es suficiente, porque un proceso puede
+      escribir los ficheros de la base de datos usando una máscara
+      de permisos hostil&mdash;aquella que impida el acceso a
+      otros usuarios.</para>
+
+    <para>Así que el siguiente paso tras el establecimiento de
+      un grupo común para los usuarios del repositorio es forzar
+      a todos los procesos que acceden al repositorio a usar una
+      máscara de permisos aceptable. Para los usuarios que acceden
+      al repositorio directamente, puede envolver el programa
+      <command>svn</command> en un script cuyo primer paso sea
+      ejecutar <command>umask 002</command> y después ejecute
+      el programa cliente <command>svn</command> auténtico.
+      Puede escribir un script de envoltorio similar para el
+      programa <command>svnserve</command>, y añadir el comando
+      <command>umask 002</command> al propio fichero de arranque
+      de Apache, <filename>apachectl</filename>.  Por ejemplo:</para>
 
     <screen>
 $ cat /usr/local/bin/svn
@@ -2497,72 +2501,81 @@ umask 002
 
 </screen>
 
-    <para>Another common problem is often encountered on Unix-like
-      systems.  As a repository is used, BerkeleyDB occasionally
-      creates new logfiles to journal its actions.  Even if the
-      repository is wholly owned by the <command>svn</command> group,
-      these newly created files won't necessarily be owned by that
-      same group, which then creates more permissions problems for
-      your users.  A good workaround is to set the group SUID bit on
-      the repository's <filename>db</filename> directory.  This causes
-      all newly-created logfiles to have the same group owner as the
-      parent directory.</para>
+    <para>Hay otro problema común en sistemas tipo Unix.
+      A medida que se usa un repositorio, la base de datos Berkeley
+      ocasionalmente crea nuevos ficheros de registro para sus
+      transacciones. Incluso si el repositorio completo pertenece
+      al grupo <command>svn</command>, estos nuevos ficheros no
+      pertenecerán necesariamente al mismo grupo, lo cual crea
+      de nuevo problemas de permisos para sus usuarios. Un buen
+      método para corregir esto es activar el bit de grupo SUID
+      en el directorio <filename>db</filename> del repositorio.
+      Esto causa que todos los ficheros de registros creados tengan
+      el mismo grupo que el directorio padre..</para>
 
-    <para>Once you've jumped through these hoops, your repository
-      should be accessible by all the necessary processes.  It may
-      seem a bit messy and complicated, but the problems of having
-      multiple users sharing write-access to common files are classic
-      ones that are not often elegantly solved.</para>
+    <para>Una vez haya saltado por estos aros, su repositorio
+      debería ser accesible por todos los procesos necesarios. Puede
+      que parezca un poco lioso y complicado, pero los problemas
+      de tener múltiples usuarios compartiendo acceso de escritura
+      a ficheros comunes son clásicos, pocas veces solucionados de
+      manera elegante.</para>
     
-    <para>Fortunately, most repository administrators will never
-      <emphasis>need</emphasis> to have such a complex configuration.
-      Users who wish to access repositories that live on the same
-      machine are not limited to using <literal>file://</literal>
-      access URLs&mdash;they can typically contact the Apache HTTP
-      server or <command>svnserve</command> using
-      <literal>localhost</literal> for the server name in their
-      <literal>http://</literal> or <literal>svn://</literal> URLs.
-      And to maintain multiple server processes for your Subversion
-      repositories is likely to be more of a headache than necessary.
-      We recommend you choose the server that best meets your needs
-      and stick with it!</para>
+    <para>Afortunadamente, la mayoría de los administradores de
+      repositorios no tendrán nunca la <emphasis>necesidad
+      </emphasis> de tener configuraciones tan complejas.
+      Los usuarios que desean acceder a repositorios que residen
+      en la misma máquina no están limitados a usar el las URLs
+      de accesl <literal>file://</literal>&mdash;típicamente
+      pueden contactar con el servidor HTTP de Apache
+      o <command>svnserve</command> usando el nombre de
+      servidor <literal>localhost</literal> en sus URLs
+      <literal>http://</literal> o <literal>svn://</literal>.
+      Y mantener múltiples procesos servidores para sus repositorios
+      de Subversion es probablemente un dolo de cabeza más que
+      algo necesario. ¡Le recomendamos que escoja el servidor que
+      se ajuste mejor a sus necesidades y que se limite a él!</para>
 
     <sidebar>
-      <title>The svn+ssh:// server checklist</title>
+      <title>Lista de tareas para servidor svn+ssh://</title>
 
-      <para>It can be quite tricky to get a bunch of users with
-        existing SSH accounts to share a repository without
-        permissions problems.  If you're confused about all the things
-        that you (as an administrator) need to do on a Unix-like
-        system, here's a quick checklist that resummarizes some of
-        things discussed in this section:</para>
+      <para>Puede ser complicado hacer que un grupo de usuarios con
+        cuentas SSH existentes compartan un repositorio sin
+        problemas de permisos. Si se siente confuso respecto a
+        todas las cosas que usted (como administrador) necesita
+        realizar en un sistema tipo Unix, aquí tielen una lista
+        de tareas que resumen algunas de las cosas discutidas en
+        esta sección:</para>
 
       <itemizedlist>
         <listitem>
-          <para>All of your SSH users need to be able to read and
-            write to the repository.  Put all the SSH users into a
-            single group.  Make the repository wholly owned by that
-            group, and set the group permissions to read/write.</para>
+          <para>Todos sus usuarios SSH necesitan ser capaces de leer
+            y escribir en el repositorio. Ponga a todos los usuarios
+            SSH en un único grupo.  Haga que el propietario del
+            repositorio sea ese grupo, y active los permisos de
+            lectura/escritura para el mismo.</para>
         </listitem>
 
         <listitem>
-          <para>Your users need to use a sane umask when accessing the
-            repository.  Make sure that <command>svnserve</command>
-            (<filename>/usr/local/bin/svnserve</filename>, or wherever
-            it lives in <literal>$PATH</literal>) is actually a
-            wrapper script which sets <command>umask 002</command> and
-            executes the real <command>svnserve</command>
-            binary.  Take similar measures when using
-            <command>svnlook</command> and
-            <command>svnadmin</command>.  Either run them with a sane
-            umask, or wrap them as described above.</para>
+          <para>Sus usuarios deben usar una máscara de permisos
+            aceptable al acceder al repositorio. Asegúrese
+            de que <command>svnserve</command>
+            (<filename>/usr/local/bin/svnserve</filename>, o
+            donde quiera que esté en <literal>$PATH</literal>)
+            es en realidad un script envoltorio que ejecuta
+            <command>umask 002</command> y luego el binario
+            <command>svnserve</command> auténtico. Tome
+            medidas similares con <command>svnlook</command> y
+            <command>svnadmin</command>. Es decir, ejecútelos con
+            una máscara de permisos aceptable, o envuélvalos tal y
+            como se describe anteriormente.</para>
         </listitem>
 
         <listitem>
-          <para>When BerkeleyDB creates new logfiles, they need to be
-            owned by the group as well, so make sure you run
-            <command>chmod g+s</command> on the repository's
-            <filename>db</filename> directory.</para>
+          <para>Cuando la base de datos Berkeley crea nuevos
+            ficheros de registros, también necesitan pertenecer
+            al mismo grupo, así que asegúrese de que ejecuta
+            <command>chmod g+s</command> en el directorio
+            <filename>db</filename> del repositorio.</para>
         </listitem>
       </itemizedlist>
 
