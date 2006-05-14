@@ -61,17 +61,20 @@ locales.sort()
 cwd = os.getcwd()
 for locale in locales:
     locale_dir = os.path.join(BOOKSRC, locale)
-    tarball_base_name = 'svnbook-%s' % (locale)
-    tarball_name = tarball_base_name + '.tar.gz'
-    tarball_path = os.path.join(locale_dir, tarball_name)
+    temp_dir = os.path.join(locale_dir, '__TEMPINSTALL__')
     book_formats = [ 'html', 'html-chunk', 'html-arch', 'html-chunk-arch',
                      'pdf' ]
     if locale in skip_pdf_locales:
         book_formats.remove('pdf')
 
-    command = ([os.path.join('..', 'tools', 'book-dist.py')]
-            + map(lambda x: '--%s' % x, book_formats)
-            + ['--name="%s"' % tarball_base_name])
+    if os.path.isdir(temp_dir):
+        if DRYRUN:
+            print "Erase: %s" % (temp_dir)
+        else:
+            shutil.rmtree(temp_dir)
+
+    command = (['make', 'INSTALL_SUBDIR=__TEMPINSTALL__', 'clean']
+            + map(lambda x: 'install-%s' % x, book_formats))
     if DRYRUN:
         print "Run: %s" % (" ".join(command))
     else:
@@ -88,13 +91,9 @@ for locale in locales:
         else:
             shutil.rmtree(dropspot_locale_path)
     if DRYRUN:
-        print "Unpack and remove: %s" % tarball_path
+        print "Move into place: %s -> %s" % (temp_dir, dropspot_locale_path)
     else:
-        command = ['tar', '-C', DROPSPOT, '-zxf', tarball_path]
-        os.system(" ".join(command))
-        os.rename(os.path.join(DROPSPOT, tarball_base_name),
-                dropspot_locale_path)
-        os.unlink(tarball_path)
+        os.rename(temp_dir, dropspot_locale_path)
     built_locales.append(locale)
 
 # Timestamp
