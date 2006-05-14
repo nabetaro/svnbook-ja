@@ -160,7 +160,7 @@
           <listitem>
             <para>Like CVS and other version-control systems,
               DeltaV assumes that each resource has a potentially
-              infinite number of states. A client begins by placing
+              infinite number of states.  A client begins by placing
               a resource under version control using the new
               <literal>VERSION-CONTROL</literal> method.</para>
           </listitem>
@@ -176,7 +176,7 @@
               private area, then indicate they want to change
               specific resources by <quote>checking them out</quote>
               into the workspace, editing them, and <quote>checking
-                them in</quote> again. In HTTP terms, the sequence of
+              them in</quote> again.  In HTTP terms, the sequence of
               methods would be <literal>CHECKOUT</literal>,
               <literal>PUT</literal>,
               <literal>CHECKIN</literal>.</para>
@@ -194,7 +194,7 @@
               <literal>MKACTIVITY</literal> method.  The client then
               performs a <literal>CHECKOUT</literal> on each
               resource it wishes to change and sends
-              <literal>PUT</literal> requests. Finally, the client
+              <literal>PUT</literal> requests.  Finally, the client
               performs a <literal>CHECKIN</literal> resource, or
               sends a <literal>MERGE</literal> request to check in
               all resources at once.</para>
@@ -207,7 +207,7 @@
             <para>DeltaV allows you define flexible collections of
               resources called <quote>configurations</quote>, which
               don't necessarily correspond to particular
-              directories. A configuration can be made to point to
+              directories.  A configuration can be made to point to
               specific versions of files, and then a
               <quote>baseline</quote> snapshot can be made, much
               like a tag.</para>
@@ -221,7 +221,7 @@
               <literal>REPORT</literal>, which allows the client and
               server to perform customized data exchanges.  While
               DeltaV defines a number of standardized history reports
-              that a client can request, the the server is also free
+              that a client can request, the server is also free
               to define custom reports.  The client sends a
               <literal>REPORT</literal> request with a
               properly-labeled XML body full of custom data; assuming
@@ -332,11 +332,11 @@
       <literal>MKACTIVITY</literal>, <literal>CHECKOUT</literal>,
       <literal>PUT</literal>, <literal>CHECKIN</literal>.  But if the
       DeltaV server supports autoversioning, then write-requests from
-      basic WebDAV clients are accepted.  The server behaves *as if*
-      the client had issued the proper series of versioning requests,
+      basic WebDAV clients are accepted.  The server behaves as if the
+      client had issued the proper series of versioning requests,
       performing a commit under the hood.  In other words, it allows a
       DeltaV server to interoperate with ordinary WebDAV
-      clients.</para>
+      clients that don't understand versioning.</para>
 
     <para>Because so many operating systems already have integrated
       WebDAV clients, the use case for this feature borders on
@@ -378,16 +378,52 @@
       many applications auto-save every few minutes, resulting in even
       more commits.</para>
 
-    <para>If you have a post-commit hook program that sends email, for
-      example, you may want to disable email generation either
-      altogether, or on certain sections of the repository; it depends
-      on whether you think the influx of emails will still prove to be
-      valuable notifications or not.  Also, a smart post-commit hook
-      program can distinguish between a transaction created via
-      autoversioning and one created through a normal <command>svn
-      commit</command>.  The trick is to look for a revision property
+    <para>If you have a post-commit hook program that sends email, you
+      may want to disable email generation either altogether, or on
+      certain sections of the repository; it depends on whether you
+      think the influx of emails will still prove to be valuable
+      notifications or not.  Also, a smart post-commit hook program
+      can distinguish between a transaction created via autoversioning
+      and one created through a normal <command>svn commit</command>.
+      The trick is to look for a revision property
       named <literal>svn:autoversioned</literal>.  If present, the
       commit was made by a generic WebDAV client.</para>
+
+    <para>Another feature that may be a useful complement
+      for <literal>SVNAutoversioning</literal> comes from
+      Apache's <literal>mod_mime</literal> module.  If a generic
+      WebDAV client adds a new file to the repository, there's no
+      opportunity for the user to set the
+      the <literal>svn:mime-type</literal> property.  This might cause
+      the file to appear as <quote>generic</quote> icon when viewed
+      within a WebDAV shared folder, not having an association with
+      any application.  One remedy is to have a sysadmin (or other
+      Subversion-knowledgable person) check out a working copy and
+      manually set the <literal>svn:mime-type</literal> property on
+      necessary files. But there's potentially no end to such cleanup
+      tasks.  Instead, you can use
+      the <literal>ModMimeUsePathInfo</literal> directive in
+      your Subversion <literal>&lt;Location&gt;</literal>
+      block:</para>
+ 
+    <screen>
+&lt;Location /repos&gt;
+  DAV svn
+  SVNPath /path/to/repository
+  SVNAutoversioning on
+
+  ModMimeUsePathInfo on
+
+&lt;/Location&gt;
+</screen>
+
+    <para>This directive allows <literal>mod_mime</literal> to attempt
+      automatic deduction of the mime-type on new files that enter the
+      repository via autoversioning.  The module looks at the file's
+      named extension and possibly the contents as well; if the file
+      matches some common patterns, then the the
+      file's <literal>svn;mime-type</literal> property will be set
+      automatically.</para>
 
   </sect1>
 
@@ -473,7 +509,7 @@
               URLs</entry>
           </row>
           <row>
-            <entry>Microsoft Webfolders</entry>
+            <entry>Microsoft Web Folders</entry>
             <entry>File-explorer WebDAV extensions</entry>
             <entry>GUI file explorer program able to perform tree
               operations on a WebDAV share</entry>
@@ -524,7 +560,7 @@
           the Mac OS X, they do not appear to support WebDAV directly
           on that platform.  In fact, on Mac OS X, the
           <guimenu>File-&gt;Open</guimenu> dialog box doesn't allow
-          one to type a path or URL at all.  It's likely that the the
+          one to type a path or URL at all.  It's likely that the
           WebDAV features were deliberately left out of Macintosh
           versions of these programs, since OS X already provides such
           excellent low-level filesystem support for WebDAV.</para>
@@ -601,23 +637,23 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
         explorer interface.</para>
 
       <sect3 id="svn.webdav.clients.file-explorer-extensions.windows">
-        <title>Microsoft Webfolders</title> 
+        <title>Microsoft Web Folders</title> 
   
         <para>Microsoft was one of the original backers of the WebDAV
           specification, and first started shipping a client in Windows
-          98, known as <quote>Webfolders</quote>.  This client was also
+          98, known as <quote>Web Folders</quote>.  This client was also
           shipped in Windows NT4 and 2000.</para>
   
-        <para>The original Webfolders client was an extension to
+        <para>The original Web Folders client was an extension to
           Explorer, the main GUI program used to browse filesystems.  It
           works well enough.  In Windows 98, the feature might need to
-          be explicitly installed if Webfolders aren't already visible
+          be explicitly installed if Web Folders aren't already visible
           inside <quote>My Computer</quote>.  In Windows 2000, simply
           add a new <quote>network place</quote>, enter the URL, and the
           WebDAV share will pop up for browsing.</para>
   
         <para>With the release of Windows XP, Microsoft started shipping
-          a new implementation of Webfolders, known as the <quote>WebDAV
+          a new implementation of Web Folders, known as the <quote>WebDAV
           mini-redirector</quote>.  The new implementation is a
           filesystem-level client, allowing WebDAV shares to be mounted
           as drive letters.  Unfortunately, this implementation is
@@ -630,11 +666,11 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
           problems are severe and documented in numerous places around
           the web, to the frustration of many users.  Even Greg Stein,
           the original author of Apache's WebDAV module, recommends
-          against trying to use XP Webfolders against an Apache
+          against trying to use XP Web Folders against an Apache
           server.</para>
   
         <para>It turns out that the original
-          <quote>Explorer-only</quote> Webfolders implementation isn't
+          <quote>Explorer-only</quote> Web Folders implementation isn't
           dead in XP, it's just buried.  It's still possible to find it
           by using this technique:</para>
   
@@ -667,10 +703,19 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
           patchlevels of Windows XP.  In our tests, only the previous
           algorithm seems to work consistently on every system.  The
           general consensus of the WebDAV community is that you should
-          avoid the new Webfolders implementation and use the old one
+          avoid the new Web Folders implementation and use the old one
           instead, and that if you need real a real filesystem-level
           client for Windows XP, then use a third-party program like
           WebDrive or NetDrive.</para>
+
+        <para>A final tip: if you're attempting to use XP Web Folders,
+          make sure you have the absolute latest version from
+          Microsoft.  For example, Microsoft released a bug-fixed
+          version in January 2005, available at
+          <ulink url="http://support.microsoft.com/?kbid=892211"/>.
+          In particular, this release is known to fix a bug whereby
+          browsing a DAV share shows an unexpected infinite
+          recursion.</para>
 
       </sect3>
 
@@ -754,7 +799,7 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
           files first appeared in Subversion 1.2.</para>
   
         <para>One more word of warning: OS X's WebDAV client can
-          sometimes be overly sensitive to HTTP redirects. If OS X is
+          sometimes be overly sensitive to HTTP redirects.  If OS X is
           unable to mount the repository at all, you may need to enable
           the BrowserMatch directive in the Apache server's
           <filename>httpd.conf</filename>:</para>
@@ -770,7 +815,7 @@ BrowserMatch "^WebDAVFS/1.[012]" redirect-carefully
   
         <para>Linux davfs2 is a filesystem module for the Linux kernel,
           whose development is located at <ulink
-          url="http://dav.sourceforge.net/"/>. Once installed, a WebDAV
+          url="http://dav.sourceforge.net/"/>.  Once installed, a WebDAV
           network share can be mounted with the usual Linux mount
           command:</para>
   

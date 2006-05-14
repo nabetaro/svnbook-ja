@@ -119,7 +119,8 @@ def main():
       return get_list()
     elif o == '--dry-run':
       dry_run = True
-  cmd = string.Template('svn $a -r $r1:$r2 https://svn.red-bean.com/svnbook/trunk/src/en/book/$t')
+  cmd = string.Template('svn $a -r $r1:$r2 \
+      http://svn.red-bean.com/svnbook/trunk/src/en/book/$t')
   for fname in sync_list:
     last = get_last(fname)
     base = get_base(fname)
@@ -129,15 +130,15 @@ def main():
     if len(diff) != 0:
       os.system(cmd.substitute(a='log', r1=last, r2=base, t=fname))
       f = file('../'+fname+'.diff', 'w'); f.write(diff); f.close()
-      if not dry_run:
-        os.system(cmd.substitute(a='merge', r1=last, r2=base, t=fname))
+      c = cmd.substitute(a='merge', r1=last, r2=base, t=fname)
+      if dry_run:
+        c += ' --dry-run'
+      os.system(c)
     if not dry_run:
       set_last(fname, str(base))
 
 if __name__ == "__main__":
   main()
 
-"""
- vim: tabstop=2 shiftwidth=2 expandtab smarttab
-"""
+# vim: tabstop=2 shiftwidth=2 expandtab smarttab
 

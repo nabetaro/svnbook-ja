@@ -146,13 +146,13 @@
       this.</para>
 
     <para>The client itself also highlights modularity in the
-      Subversion design.  While Subversion currently comes with only a
-      command-line client program, there are already a few other
-      programs being developed by third parties to act as GUIs for
-      Subversion.  Again, these GUIs use the same APIs that the stock
-      command-line client does.  Subversion's libsvn_client library is
-      the one-stop shop for most of the functionality necessary for
-      designing a working Subversion client (see <xref
+      Subversion design.  While Subversion itself comes with only a
+      command-line client program, there are several third party
+      programs which provide various forms of client GUI.  These GUIs
+      use the same APIs that the stock command-line client does.
+      Subversion's libsvn_client library is the one-stop shop for most
+      of the functionality necessary for designing a working
+      Subversion client (see <xref
       linkend="svn.developer.layerlib.client"/>).</para>
 
     <!-- =============================================================== -->
@@ -581,12 +581,12 @@ The following repository access (RA) modules are available:
           this in the WebDAV section of this chapter, but in short,
           WebDAV and DeltaV are extensions to the standard HTTP 1.1
           protocol that enable sharing and versioning of files over
-          the web.  Apache 2.0 comes with mod_dav, an Apache module
-          that understands the DAV extensions to HTTP.  Subversion
-          itself supplies mod_dav_svn, though, which is another Apache
-          module that works in conjunction with (really, as a back-end
-          to) mod_dav to provide Subversion's specific implementations
-          of WebDAV and DeltaV.</para>
+          the web.  Apache 2.0 and later versions come with mod_dav,
+          an Apache module that understands the DAV extensions to
+          HTTP.  Subversion itself supplies mod_dav_svn, though, which
+          is another Apache module that works in conjunction with
+          (really, as a back-end to) mod_dav to provide Subversion's
+          specific implementations of WebDAV and DeltaV.</para>
 
         <para>When communicating with a repository over HTTP, the RA
           loader library chooses libsvn_ra_dav as the proper access
@@ -1034,9 +1034,14 @@ if __name__ == "__main__":
                          % (os.path.basename(sys.argv[0])))
         sys.exit(1)
 
+    # Canonicalize (enough for Subversion, at least) the repository path.
+    repos_path = os.path.normpath(sys.argv[1])
+    if repos_path == '.': 
+        repos_path = ''
+
     # Call the app-wrapper, which takes care of APR initialization/shutdown
     # and the creation and cleanup of our top-level memory pool.
-    svn.core.run_app(crawl_youngest, os.path.normpath(sys.argv[1]))
+    svn.core.run_app(crawl_youngest, repos_path)
 </programlisting>
       </example>
 
@@ -1152,9 +1157,14 @@ if __name__ == '__main__':
     if len(args) != 1:
         usage_and_exit(2)
 
+    # Canonicalize (enough for Subversion, at least) the working copy path.
+    wc_path = os.path.normpath(args[0])
+    if wc_path == '.': 
+        wc_path = ''
+
     # Call the app-wrapper, which takes care of APR initialization/shutdown
     # and the creation and cleanup of our top-level memory pool.
-    svn.core.run_app(do_status, os.path.normpath(args[0]), verbose)
+    svn.core.run_app(do_status, wc_path, verbose)
 </programlisting>
       </example>
 
@@ -1162,7 +1172,7 @@ if __name__ == '__main__':
         the level of attention given to the core Subversion modules.
         However, there have been significant efforts towards creating
         functional bindings for Python, Perl, and Ruby.  To some extent,
-        the work done preparing the SWIG interface files for the these
+        the work done preparing the SWIG interface files for these
         languages is reusable in efforts to generate bindings for other
         languages supported by SWIG (which includes versions of C#,
         Guile, Java, MzScheme, OCaml, PHP, Tcl, and others).
@@ -1398,7 +1408,7 @@ if __name__ == '__main__':
 
     <para>A number of operating system file browsers are already able
       to mount networked directories using WebDAV.  On Win32, the
-      Windows Explorer can browse what it calls WebFolders (which are
+      Windows Explorer can browse what it calls Web Folders (which are
       just WebDAV-ready network locations) as if they were regular
       shared folders.  Mac OS X also has this capability, as do the
       Nautilus and Konqueror browsers (under GNOME and KDE,
