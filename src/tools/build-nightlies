@@ -6,6 +6,15 @@ import os
 import shutil
 import time
 
+def format_duration(seconds):
+    seconds = int(seconds)
+    hours = seconds / 3600
+    minutes = seconds % 3600 / 60
+    seconds = seconds % 60
+    return ((hours and "%dh " % hours or "")
+            + (minutes and "%dm " % minutes or "")
+            + "%ds" % seconds)
+    
 if len(sys.argv) < 3:
     sys.stderr.write("""Usage: %s SRC-DIR TGT-DIR --dryrun
 
@@ -26,6 +35,9 @@ if DRYRUN:
     print "SVN-Update: %s" % BOOKSRC
 else:
     os.system('svn up -q ' + BOOKSRC)
+
+# Timestamp
+build_begin_time = time.time()
 
 # Find translations
 locales = []
@@ -85,6 +97,9 @@ for locale in locales:
         os.unlink(tarball_path)
     built_locales.append(locale)
 
+# Timestamp
+build_end_time = time.time()
+
 # Write out index.html
 if DRYRUN:
     print "Write index.html:"
@@ -92,22 +107,27 @@ if DRYRUN:
 else:
     fp = open(os.path.join(DROPSPOT, 'index.html'), 'w')
 
-fp.write("""<html>
+fp.write("""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
 <head>
-<title>Version Control with Subversion Nightlies</title>
-<style>
+<title>Version Control with Subversion - Nightly Builds</title>
+<style type="text/css">
 h1, h2, h3 { margin: 0 }
+dl { margin-left: 3em }
 </style>
 </head>
 <body>
 <h1><i>Version Control with Subversion</i></h1>
 <h2>Automated Nightly Book Builds</h2>
-<h3>Last Build Time: %s GMT</h3>
-<ul>
+<h3>Last Build Completed At: %s GMT</h3>
+<h3>Last Build Duration: %s</h3>
 <dl>
-""" % time.asctime(time.gmtime(time.time())))
+""" % (time.asctime(time.gmtime(build_end_time)),
+    format_duration(build_end_time - build_begin_time)))
 for locale in built_locales:
-    fp.write("""<dt>%s</dt>
+    fp.write("""
+<dt>%s</dt>
 <dd>[<a href="%s/svn-book.html">single-page HTML (read online)</a>]</dd>
 <dd>[<a href="%s/index.html">multi-page HTML (read online)</a>]</dd>
 <dd>[<a href="%s/svn-book-html.tar.bz2"
@@ -117,8 +137,8 @@ for locale in built_locales:
 """ % (locale.upper(), locale, locale, locale, locale))
     if locale not in skip_pdf_locales:
         fp.write('<dd>[<a href="%s/svn-book.pdf">PDF</a>]</dd>\n' % locale)
-fp.write("""</dl>
-</ul>
+fp.write("""
+</dl>
 </body>
 </html>
 """)
