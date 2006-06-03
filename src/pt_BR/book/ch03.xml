@@ -8,7 +8,7 @@
       perform almost all the tasks you need to use Subversion in a
       normal day's work.  You'll start with an initial checkout of
       your code, and walk through making changes and examining those
-      changes. You'll also see how to bring changes made by others
+      changes.  You'll also see how to bring changes made by others
       into your working copy, examine them, and work through any
       conflicts that might arise.</para>
 
@@ -323,23 +323,22 @@ Checked out revision 2499.
       <para>Subversion tries hard not to limit the type of data you
         can place under version control.  The contents of files and
         property values are stored and transmitted as binary data, and
-        the <xref linkend="svn.advanced.props.special.mime-type"/>
+        <xref linkend="svn.advanced.props.special.mime-type"/>
         tells you how to give Subversion a hint that
         <quote>textual</quote> operations don't make sense for a
         particular file.  There are a few places, however, where
         Subversion places restrictions on information it
         stores.</para>
 
-      <para>Subversion handles text internally as UTF-8 encoded
-        Unicode.  As a result, certain items which are inherently
-        <quote>textual</quote>, such as property names, path names,
-        and log messages, can only contain legal UTF-8 characters.  It
-        also provides a minimum requirement for use of the
-        <literal>svn:mime-type</literal> property&mdash;if a file's
-        contents aren't compatible with UTF-8, you should mark it as a
-        binary file.  Otherwise, Subversion will attempt to merge
-        differences using UTF-8, which is likely to leave garbage in
-        the file.</para>
+      <para>Subversion internally handles certain bits of
+        data&mdash;for example, property names, path names, and log
+        messages&mdash;as UTF-8 encoded Unicode.  This is not to say
+        that all your interactions with Subversion must involve UTF-8,
+        though.  As a general rule, Subversion clients will gracefully
+        and transparently handle conversions between UTF-8 and the
+        encoding system in use on your computer, if such a conversion
+        can meaningfully be done (which is the case for most common
+        encodings in use today).</para>
 
       <para>In addition, path names are used as XML attribute values
         in WebDAV exchanges, as well in as some of Subversion's
@@ -453,10 +452,11 @@ Checked out revision 2499.
   <sect1 id="svn.tour.cycle">
     <title>Basic Work Cycle</title>
 
-    <para>Subversion has numerous features, options, bells and whistles, but on
-      a day-to-day basis, odds are that you will only use a few of them. In
-      this section we'll run through the most common things that you might
-      find yourself doing with Subversion in the course of a day's work.</para>
+    <para>Subversion has numerous features, options, bells and
+      whistles, but on a day-to-day basis, odds are that you will only
+      use a few of them.  In this section we'll run through the most
+      common things that you might find yourself doing with Subversion
+      in the course of a day's work.</para>
     
     <para>The typical work cycle looks like this:</para>
 
@@ -629,7 +629,7 @@ Updated to revision 2.
       <title>Make Changes to Your Working Copy</title>
       
       <para>Now you can get to work and make changes in your
-        working copy. It's usually most convenient to decide on a
+        working copy.  It's usually most convenient to decide on a
         particular change (or set of changes) to make, such as writing
         a new feature, fixing a bug, etc.  The Subversion commands
         that you will use here are <command>svn add</command>,
@@ -769,11 +769,11 @@ Updated to revision 2.
         
         <para>Earlier in this chapter, we said that you have to commit
           any changes that you make in order for the repository to
-          reflect these changes. That's not entirely true&mdash;there
+          reflect these changes.  That's not entirely true&mdash;there
           <emphasis>are</emphasis> some use cases that immediately
           commit tree changes to the repository.  This only happens
           when a subcommand is operating directly on a URL, rather
-          than on a working-copy path. In particular, specific uses
+          than on a working-copy path.  In particular, specific uses
           of <command>svn mkdir</command>, <command>svn
           copy</command>, <command>svn move</command>, and
           <command>svn delete</command> can work with URLs.</para>
@@ -798,7 +798,7 @@ Updated to revision 2.
         them to the repository, but before you do so, it's usually a
         good idea to take a look at exactly what you've changed.  By
         examining your changes before you commit, you can make a
-        more accurate log message. You may also discover that
+        more accurate log message.  You may also discover that
         you've inadvertently changed a file, and this gives you a
         chance to revert those changes before committing.
         Additionally, this is a good opportunity to review and
@@ -1066,8 +1066,10 @@ R       xyz.c               # file is scheduled for replacement
           switch</command>) to a branch.</para>
 
         <para>The sixth column shows information about locks, which is
-          further explained in <xref
-          linkend="svn.advanced.locking"/>.</para>
+          further explained in <xref linkend="svn.advanced.locking"/>.
+          (These are not the same locks as the ones indicated by an
+          <computeroutput>L</computeroutput> in the third column;
+          see <xref linkend="svn.advanced.locking.meanings"/>.)</para>
         
         <para>If you pass a specific path to <command>svn
           status</command>, it gives you information about that item
@@ -1878,7 +1880,7 @@ Frozzled the sub-space winch.
       <para>
         <command>svn log</command> also takes a <option>--quiet</option>
         (<option>-q</option>) switch, which suppresses the body of the
-        log message. When combined with <option>--verbose</option>, it
+        log message.  When combined with <option>--verbose</option>, it
         gives just the names of the changed files.</para>
 
       <sidebar>
@@ -2154,11 +2156,14 @@ $ svn update --revision 1729 # Updates an existing working copy to r1729
       <para>When Subversion modifies your working copy (or any
         information within <filename>.svn</filename>), it tries to do
         so as safely as possible.  Before changing the working copy,
-        Subversion writes its intentions to a log file. Next it executes
-        the commands in the log file to apply the requested change.
-        Finally, Subversion removes the log file. Architecturally, this
-        is similar to a journaled filesystem.  If a Subversion operation is
-        interrupted (if the process is killed, or if the machine
+        Subversion writes its intentions to a log file.  Next it
+        executes the commands in the log file to apply the requested
+        change, holding a lock on the relevant part of the working
+        copy while it works &mdash; to prevent other Subversion clients
+        from accessing the working copy in mid-change.  Finally,
+        Subversion removes the log file.  Architecturally, this is
+        similar to a journaled filesystem.  If a Subversion operation
+        is interrupted (if the process is killed, or if the machine
         crashes, for example), the log files remain on disk.  By
         re-executing the log files, Subversion can complete the
         previously started operation, and your working copy can get
@@ -2166,9 +2171,9 @@ $ svn update --revision 1729 # Updates an existing working copy to r1729
 
       <para>And this is exactly what <command>svn cleanup</command>
         does: it searches your working copy and runs any leftover
-        logs, removing locks in the process.  If Subversion ever tells
-        you that some part of your working copy is
-        <quote>locked</quote>, then this is the command that you
+        logs, removing working copy locks in the process.
+        If Subversion ever tells you that some part of your working copy
+        is <quote>locked</quote>, then this is the command that you
         should run.  Also, <command>svn status</command> will display
         an <literal>L</literal> next to locked items:</para>
 
@@ -2181,6 +2186,13 @@ $ svn cleanup
 $ svn status
 M      somedir/foo.c
 </screen>
+
+      <para>Don't confuse these working copy locks with the ordinary
+        locks that Subversion users create when using
+        the <quote>lock-modify-unlock</quote> model of concurrent
+        version control; see
+        <xref linkend="svn.advanced.locking.meanings"/> for
+        clarification.</para>
 
     </sect2>
 
@@ -2234,7 +2246,7 @@ subdir/
       <para>Now we've covered most of the Subversion client commands.
         Notable exceptions are those dealing with branching and
         merging (see <xref linkend="svn.branchmerge"/>) and properties (see
-        <xref linkend="svn.advanced.props"/>). However, you may want to
+        <xref linkend="svn.advanced.props"/>).  However, you may want to
         take a moment to skim through <xref linkend="svn.ref"/> to
         get an idea of all the many different commands that Subversion
         has&mdash;and how you can use them to make your work
