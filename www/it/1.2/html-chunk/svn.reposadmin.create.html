@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Repository Creation and Configuration</title><link rel="stylesheet" href="styles.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.70.1" /><link rel="start" href="index.html" title="Controllo di Versione con Subversion" /><link rel="up" href="svn.reposadmin.html" title="Capitolo 5. Repository Administration" /><link rel="prev" href="svn.reposadmin.html" title="Capitolo 5. Repository Administration" /><link rel="next" href="svn.reposadmin.maint.html" title="Repository Maintenance" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Repository Creation and Configuration</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="svn.reposadmin.html">Indietro</a> </td><th width="60%" align="center">Capitolo 5. Repository Administration</th><td width="20%" align="right"> <a accesskey="n" href="svn.reposadmin.maint.html">Avanti</a></td></tr></table><hr /></div><div class="sect1" lang="it" xml:lang="it"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="svn.reposadmin.create"></a>Repository Creation and Configuration</h2></div></div></div><p>Creating a Subversion repository is an incredibly simple
+      task.  The <span><strong class="command">svnadmin</strong></span> utility, provided with
+      Subversion, has a subcommand for doing just that.  To create a
+      new repository, just run:</p><pre class="screen">
+$ svnadmin create /path/to/repos
+</pre><p>This creates a new repository in the directory
+      <code class="filename">/path/to/repos</code>.  This new repository begins
+      life at revision 0, which is defined to consist of nothing but
+      the top-level root (<code class="filename">/</code>) filesystem
+      directory.  Initially, revision 0 also has a single revision
+      property, <code class="literal">svn:date</code>, set to the time at which
+      the repository was created.</p><p>In Subversion 1.2, a repository is created with an FSFS
+      back-end by default (see <a href="svn.reposadmin.html#svn.reposadmin.basics.backends" title="Repository Data Stores">la sezione chiamata «Repository Data Stores»</a>).  The back-end can
+      be explicitly chosen with the <code class="option">--fs-type</code>
+      argument:</p><pre class="screen">
+$ svnadmin create --fs-type fsfs /path/to/repos
+$ svnadmin create --fs-type bdb /path/to/other/repos
+</pre><div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Avvertimento</h3><p>Do not create a Berkeley DB repository on a network
+        share—it <span class="emphasis"><em>cannot</em></span> exist on a remote
+        filesystem such as NFS, AFS, or Windows SMB.  Berkeley DB
+        requires that the underlying filesystem implement strict POSIX
+        locking semantics, and more importantly, the ability to map
+        files directly into process memory.  Almost no network
+        filesystems provide these features.  If you attempt to use
+        Berkeley DB on a network share, the results are
+        unpredictable—you may see mysterious errors right away,
+        or it may be months before you discover that your repository
+        database is subtly corrupted.</p><p>If you need multiple computers to access the repository,
+        you create an FSFS repository on the network share, not a
+        Berkeley DB repository.  Or better yet, set up a real server
+        process (such as Apache or <span><strong class="command">svnserve</strong></span>), store
+        the repository on a local filesystem which the server can
+        access, and make the repository available over a network.
+        <a href="svn.serverconfig.html" title="Capitolo 6. Server Configuration">Capitolo 6, <i>Server Configuration</i></a> covers this process in
+        detail.</p></div><p>You may have noticed that the path argument to
+      <span><strong class="command">svnadmin</strong></span> was just a regular filesystem path
+      and not a URL like the <span><strong class="command">svn</strong></span> client program
+      uses when referring to repositories.  Both
+      <span><strong class="command">svnadmin</strong></span> and <span><strong class="command">svnlook</strong></span> are
+      considered server-side utilities—they are used on the
+      machine where the repository resides to examine or modify
+      aspects of the repository, and are in fact unable to perform
+      tasks across a network.  A common mistake made by Subversion
+      newcomers is trying to pass URLs (even «<span class="quote">local</span>»
+      <code class="literal">file:</code> ones) to these two programs.</p><p>So, after you've run the <span><strong class="command">svnadmin create</strong></span>
+      command, you have a shiny new Subversion repository in its own
+      directory.  Let's take a peek at what is actually created inside
+      that subdirectory.</p><pre class="screen">
+$ ls repos
+conf/  dav/  db/  format  hooks/  locks/  README.txt
+</pre><p>With the exception of the <code class="filename">README.txt</code> and
+      <code class="filename">format</code> files,
+      the repository directory is a collection of subdirectories.  As
+      in other areas of the Subversion design, modularity is given
+      high regard, and hierarchical organization is preferred to
+      cluttered chaos.  Here is a brief description of all of
+      the items you see in your new repository directory:</p><div class="variablelist"><dl><dt><span class="term">conf</span></dt><dd><p>A directory containing repository configuration files.</p></dd><dt><span class="term">dav</span></dt><dd><p>A directory provided to Apache and mod_dav_svn for
+            their private housekeeping data.</p></dd><dt><span class="term">db</span></dt><dd><p>Where all of your versioned data resides.  This
+            directory is either a Berkeley DB environment (full of DB
+            tables and other things), or is an FSFS environment
+            containing revision files.</p></dd><dt><span class="term">format</span></dt><dd><p>A file whose contents are a single integer value that
+            dictates the version number of the repository layout.</p></dd><dt><span class="term">hooks</span></dt><dd><p>A directory full of hook script templates (and hook
+            scripts themselves, once you've installed some).</p></dd><dt><span class="term">locks</span></dt><dd><p>A directory for Subversion's repository locking
+            data, used for tracking accessors to the repository.</p></dd><dt><span class="term">README.txt</span></dt><dd><p>A file which merely informs its readers that they
+            are looking at a Subversion repository.</p></dd></dl></div><p>In general, you shouldn't tamper with your repository
+      «<span class="quote">by hand</span>».  The <span><strong class="command">svnadmin</strong></span> tool
+      should be sufficient for any changes necessary to your
+      repository, or you can look to third-party tools (such as
+      Berkeley DB's tool suite) for tweaking relevant subsections of
+      the repository.  Some exceptions exist, though, and we'll cover
+      those here.</p><div class="sect2" lang="it" xml:lang="it"><div class="titlepage"><div><div><h3 class="title"><a id="svn.reposadmin.create.hooks"></a>Hook Scripts</h3></div></div></div><p>A <em class="firstterm">hook</em> is a program triggered by
+        some repository event, such as the creation of a new revision
+        or the modification of an unversioned property.  Each hook is
+        handed enough information to tell what that event is, what
+        target(s) it's operating on, and the username of the person
+        who triggered the event.  Depending on the hook's output or
+        return status, the hook program may continue the action, stop
+        it, or suspend it in some way.</p><p>The <code class="filename">hooks</code> subdirectory is, by
+        default, filled with templates for various repository
+        hooks.</p><pre class="screen">
+$ ls repos/hooks/
+post-commit.tmpl          post-unlock.tmpl          pre-revprop-change.tmpl
+post-lock.tmpl            pre-commit.tmpl           pre-unlock.tmpl
+post-revprop-change.tmpl  pre-lock.tmpl             start-commit.tmpl
+</pre><p>There is one template for each hook that the Subversion
+        repository implements, and by examining the contents of those
+        template scripts, you can see what triggers each such script
+        to run and what data is passed to that script.  Also present
+        in many of these templates are examples of how one might use
+        that script, in conjunction with other Subversion-supplied
+        programs, to perform common useful tasks.  To actually install
+        a working hook, you need only place some executable program or
+        script into the <code class="filename">repos/hooks</code> directory
+        which can be executed as the name (like
+        <span><strong class="command">start-commit</strong></span> or
+        <span><strong class="command">post-commit</strong></span>) of the hook.</p><p>On Unix platforms, this means supplying a script or
+        program (which could be a shell script, a Python program, a
+        compiled C binary, or any number of other things) named
+        exactly like the name of the hook.  Of course, the template
+        files are present for more than just informational
+        purposes—the easiest way to install a hook on Unix
+        platforms is to simply copy the appropriate template file to a
+        new file that lacks the <code class="literal">.tmpl</code> extension,
+        customize the hook's contents, and ensure that the script is
+        executable.  Windows, however, uses file extensions to
+        determine whether or not a program is executable, so you would
+        need to supply a program whose basename is the name of the
+        hook, and whose extension is one of the special extensions
+        recognized by Windows for executable programs, such as
+        <code class="filename">.exe</code> or <code class="filename">.com</code> for
+        programs, and <code class="filename">.bat</code> for batch
+        files.</p><div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Suggerimento</h3><p>For security reasons, the Subversion repository executes
+        hook scripts with an empty environment—that is, no
+        environment variables are set at all, not even
+        <code class="literal">$PATH</code> or <code class="literal">%PATH%</code>.
+        Because of this, a lot of administrators are baffled when
+        their hook script runs fine by hand, but doesn't work when run
+        by Subversion.  Be sure to explicitly set environment
+        variables in your hook and/or use absolute paths to
+        programs.</p></div><p>There are nine hooks implemented by the Subversion
+        repository:</p><div class="variablelist"><dl><dt><span class="term"><code class="filename">start-commit</code></span></dt><dd><p>This is run before the commit transaction is even
+              created.  It is typically used to decide if the user has
+              commit privileges at all.  The repository passes two
+              arguments to this program: the path to the repository,
+              and username which is attempting the commit.  If the
+              program returns a non-zero exit value, the commit is
+              stopped before the transaction is even created.  If the
+              hook program writes data to stderr, it will be
+              marshalled back to the client.</p></dd><dt><span class="term"><code class="filename">pre-commit</code></span></dt><dd><p>This is run when the transaction is complete, but
+              before it is committed.  Typically, this hook is used to
+              protect against commits that are disallowed due to
+              content or location (for example, your site might
+              require that all commits to a certain branch include a
+              ticket number from the bug tracker, or that the incoming
+              log message is non-empty).  The repository passes two
+              arguments to this program: the path to the repository,
+              and the name of the transaction being committed.  If the
+              program returns a non-zero exit value, the commit is
+              aborted and the transaction is removed.  If the hook
+              program writes data to stderr, it will be marshalled
+              back to the client.</p><p>The Subversion distribution includes some access
+              control scripts (located in the
+              <code class="filename">tools/hook-scripts</code> directory of the
+              Subversion source tree) that can be called from
+              <span><strong class="command">pre-commit</strong></span> to implement fine-grained
+              write-access control.  Another option is to use the
+              <span><strong class="command">mod_authz_svn</strong></span> Apache httpd module,
+              which provides both read and write access control on
+              individual directories (see <a href="svn.serverconfig.httpd.html#svn.serverconfig.httpd.authz.perdir" title="Per-Directory Access Control">la sezione chiamata «Per-Directory Access Control»</a>).  In a future version
+              of Subversion, we plan to implement access control lists
+              (ACLs) directly in the filesystem.</p></dd><dt><span class="term"><code class="filename">post-commit</code></span></dt><dd><p>This is run after the transaction is committed, and
+              a new revision is created.  Most people use this hook to
+              send out descriptive emails about the commit or to make
+              a backup of the repository.  The repository passes two
+              arguments to this program: the path to the repository,
+              and the new revision number that was created.  The exit
+              code of the program is ignored.</p><p>The Subversion distribution includes
+              <span><strong class="command">mailer.py</strong></span> and
+              <span><strong class="command">commit-email.pl</strong></span> scripts (located in
+              the <code class="filename">tools/hook-scripts/</code> directory
+              of the Subversion source tree) that can be used to send
+              email with (and/or append to a log file) a description
+              of a given commit.  This mail contains a list of the
+              paths that were changed, the log message attached to the
+              commit, the author and date of the commit, as well as a
+              GNU diff-style display of the changes made to the
+              various versioned files as part of the commit.</p><p>Another useful tool provided by Subversion is the
+              <span><strong class="command">hot-backup.py</strong></span> script (located in the
+              <code class="filename">tools/backup/</code> directory of the
+              Subversion source tree).  This script performs hot
+              backups of your Subversion repository (a feature
+              supported by the Berkeley DB database back-end), and can
+              be used to make a per-commit snapshot of your repository
+              for archival or emergency recovery purposes.</p></dd><dt><span class="term"><code class="filename">pre-revprop-change</code></span></dt><dd><p>Because Subversion's revision properties are not
+              versioned, making modifications to such a property (for
+              example, the <code class="literal">svn:log</code> commit message
+              property) will overwrite the previous value of that
+              property forever.  Since data can be potentially lost
+              here, Subversion supplies this hook (and its
+              counterpart, <code class="filename">post-revprop-change</code>)
+              so that repository administrators can keep records of
+              changes to these items using some external means if
+              they so desire.  As a precaution against losing
+              unversioned property data, Subversion clients will not
+              be allowed to remotely modify revision properties at all
+              unless this hook is implemented for your repository.</p><p>This hook runs just before such a modification is
+              made to the repository.  The repository passes four
+              arguments to this hook: the path to the repository, the
+              revision on which the to-be-modified property exists, the
+              authenticated username of the person making the change,
+              and the name of the property itself.</p></dd><dt><span class="term"><code class="filename">post-revprop-change</code></span></dt><dd><p>As mentioned earlier, this hook is the counterpart
+              of the <code class="filename">pre-revprop-change</code> hook.  In
+              fact, for the sake of paranoia this script will not run
+              unless the <code class="filename">pre-revprop-change</code> hook
+              exists.  When both of these hooks are present, the
+              <code class="filename">post-revprop-change</code> hook runs just
+              after a revision property has been changed, and is
+              typically used to send an email containing the new value
+              of the changed property.  The repository passes four
+              arguments to this hook: the path to the repository, the
+              revision on which the property exists, the authenticated
+              username of the person making the change, and the name of
+              the property itself.</p><p>The Subversion distribution includes a
+              <span><strong class="command">propchange-email.pl</strong></span> script (located
+              in the <code class="filename">tools/hook-scripts/</code>
+              directory of the Subversion source tree) that can be
+              used to send email with (and/or append to a log file)
+              the details of a revision property change.  This mail
+              contains the revision and name of the changed property,
+              the user who made the change, and the new property
+              value.</p></dd><dt><span class="term"><code class="filename">pre-lock</code></span></dt><dd><p>This hook runs whenever someone attempts to lock a
+              file.  It can be used to prevent locks altogether, or to
+              create a more complex policy specifying exactly which
+              users are allowed to lock particular paths.  If the hook
+              notices a pre-existing lock, then it can also decide
+              whether a user is allowed to «<span class="quote">steal</span>» the
+              existing lock.  The repository passes three arguments to
+              the hook: the path to the repository, the path being
+              locked, and the user attempting to perform the lock.  If
+              the program returns a non-zero exit value, the lock
+              action is aborted and anything printed to stderr is
+              marshalled back to the client.</p></dd><dt><span class="term"><code class="filename">post-lock</code></span></dt><dd><p>This hook runs after a path is locked.  The locked
+              path is passed to the hook's stdin, and the hook also
+              receives two arguments:  the path to the repository, and
+              the user who performed the lock.  The hook is then free
+              to send email notification or record the event in any
+              way it chooses.  Because the lock already happened, the
+              output of the hook is ignored.</p></dd><dt><span class="term"><code class="filename">pre-unlock</code></span></dt><dd><p>This hook runs whenever someone attempts to remove a
+              lock on a file.  It can be used to create policies that
+              specify which users are allowed to unlock particular
+              paths.  It's particularly important for determining
+              policies about lock breakage.  If user A locks a file,
+              is user B allowed to break the lock?  What if the lock
+              is more than a week old?  These sorts of things can be
+              decided and enforced by the hook.  The repository passes
+              three arguments to the hook: the path to the repository,
+              the path being unlocked, and the user attempting to
+              remove the lock.  If the program returns a non-zero exit
+              value, the unlock action is aborted and anything printed
+              to stderr is marshalled back to the client.</p></dd><dt><span class="term"><code class="filename">post-unlock</code></span></dt><dd><p>This hook runs after a path is unlocked.  The
+              unlocked path is passed to the hook's stdin, and the
+              hook also receives two arguments: the path to the
+              repository, and the user who removed the lock.  The hook
+              is then free to send email notification or record the
+              event in any way it chooses.  Because the lock removal
+              already happened, the output of the hook is
+              ignored.</p></dd></dl></div><div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Avvertimento</h3><p>Do not attempt to modify the transaction using hook
+          scripts.  A common example of this would be to automatically
+          set properties such as <code class="literal">svn:eol-style</code> or
+          <code class="literal">svn:mime-type</code> during the commit.  While
+          this might seem like a good idea, it causes problems.  The
+          main problem is that the client does not know about the
+          change made by the hook script, and there is no way to
+          inform the client that it is out-of-date.  This
+          inconsistency can lead to surprising and unexpected
+          behavior.</p><p>Instead of attempting to modify the transaction, it is
+          much better to <span class="emphasis"><em>check</em></span> the transaction in
+          the <code class="filename">pre-commit</code> hook and reject the
+          commit if it does not meet the desired requirements.</p></div><p>Subversion will attempt to execute hooks as the same user
+        who owns the process which is accessing the Subversion
+        repository.  In most cases, the repository is being accessed
+        via Apache HTTP server and mod_dav_svn, so this user is the
+        same user that Apache runs as.  The hooks themselves will need
+        to be configured with OS-level permissions that allow that
+        user to execute them.  Also, this means that any file or
+        programs (including the Subversion repository itself) accessed
+        directly or indirectly by the hook will be accessed as the
+        same user.  In other words, be alert to potential
+        permission-related problems that could prevent the hook from
+        performing the tasks you've written it to perform.</p></div><div class="sect2" lang="it" xml:lang="it"><div class="titlepage"><div><div><h3 class="title"><a id="svn.reposadmin.create.bdb"></a>Berkeley DB Configuration</h3></div></div></div><p>A Berkeley DB environment is an encapsulation of one or
+        more databases, log files, region files and configuration
+        files.  The Berkeley DB environment has its own set of default
+        configuration values for things like the number of database locks
+        allowed to be taken out at any given time, or the maximum size
+        of the journaling log files, etc.  Subversion's filesystem
+        code additionally chooses default values for some of the
+        Berkeley DB configuration options.  However, sometimes your
+        particular repository, with its unique collection of data and
+        access patterns, might require a different set of
+        configuration option values.</p><p>The folks at Sleepycat (the producers of Berkeley DB)
+        understand that different databases have different
+        requirements, and so they have provided a mechanism for
+        overriding at runtime many of the configuration values for the
+        Berkeley DB environment.  Berkeley checks for the presence of
+        a file named <code class="filename">DB_CONFIG</code> in each
+        environment directory, and parses the options found in that
+        file for use with that particular Berkeley environment.</p><p>The Berkeley configuration file for your repository is
+        located in the <code class="filename">db</code> environment directory,
+        at <code class="filename">repos/db/DB_CONFIG</code>.  Subversion itself
+        creates this file when it creates the rest of the repository.
+        The file initially contains some default options, as well as
+        pointers to the Berkeley DB online documentation so you can
+        read about what those options do.  Of course, you are free to
+        add any of the supported Berkeley DB options to your
+        <code class="filename">DB_CONFIG</code> file.  Just be aware that while
+        Subversion never attempts to read or interpret the contents of
+        the file, and makes no use of the option settings in it,
+        you'll want to avoid any configuration changes that may cause
+        Berkeley DB to behave in a fashion that is unexpected by the
+        rest of the Subversion code.  Also, changes made to
+        <code class="filename">DB_CONFIG</code> won't take effect until you
+        recover the database environment (using <span><strong class="command">svnadmin
+        recover</strong></span>).</p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="svn.reposadmin.html">Indietro</a> </td><td width="20%" align="center"><a accesskey="u" href="svn.reposadmin.html">Risali</a></td><td width="40%" align="right"> <a accesskey="n" href="svn.reposadmin.maint.html">Avanti</a></td></tr><tr><td width="40%" align="left" valign="top">Capitolo 5. Repository Administration </td><td width="20%" align="center"><a accesskey="h" href="index.html">Partenza</a></td><td width="40%" align="right" valign="top"> Repository Maintenance</td></tr></table></div></body></html>

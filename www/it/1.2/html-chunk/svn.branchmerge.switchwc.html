@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Switching a Working Copy</title><link rel="stylesheet" href="styles.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.70.1" /><link rel="start" href="index.html" title="Controllo di Versione con Subversion" /><link rel="up" href="svn.branchmerge.html" title="Capitolo 4. Branching and Merging" /><link rel="prev" href="svn.branchmerge.commonuses.html" title="Common Use-Cases" /><link rel="next" href="svn.branchmerge.tags.html" title="Tags" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Switching a Working Copy</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="svn.branchmerge.commonuses.html">Indietro</a> </td><th width="60%" align="center">Capitolo 4. Branching and Merging</th><td width="20%" align="right"> <a accesskey="n" href="svn.branchmerge.tags.html">Avanti</a></td></tr></table><hr /></div><div class="sect1" lang="it" xml:lang="it"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="svn.branchmerge.switchwc"></a>Switching a Working Copy</h2></div></div></div><p>The <span><strong class="command">svn switch</strong></span> command transforms an
+      existing working copy into a different branch.  While this
+      command isn't strictly necessary for working with branches, it
+      provides a nice shortcut to users.  In our earlier example,
+      after creating your private branch, you checked out a fresh
+      working copy of the new repository directory.  Instead, you can
+      simply ask Subversion to change your working copy of
+      <code class="filename">/calc/trunk</code> to mirror the new branch
+      location:</p><pre class="screen">
+$ cd calc
+
+$ svn info | grep URL
+URL: http://svn.example.com/repos/calc/trunk
+
+$ svn switch http://svn.example.com/repos/calc/branches/my-calc-branch
+U   integer.c
+U   button.c
+U   Makefile
+Updated to revision 341.
+
+$ svn info | grep URL
+URL: http://svn.example.com/repos/calc/branches/my-calc-branch
+</pre><p>After «<span class="quote">switching</span>» to the branch, your working
+      copy is no different than what you would get from doing a fresh
+      checkout of the directory.  And it's usually more efficient to
+      use this command, because often branches only differ by a small
+      degree.  The server sends only the minimal set of changes
+      necessary to make your working copy reflect the branch
+      directory.</p><p>The <span><strong class="command">svn switch</strong></span> command also takes a
+      <code class="option">--revision</code> (<code class="option">-r</code>) option, so you
+      need not always move your working copy to the «<span class="quote">tip</span>»
+      of the branch.</p><p>Of course, most projects are more complicated than our
+      <code class="filename">calc</code> example, containing multiple
+      subdirectories.  Subversion users often follow a specific
+      algorithm when using branches:</p><div class="orderedlist"><ol type="1"><li><p>Copy the project's entire «<span class="quote">trunk</span>» to a
+            new branch directory.</p></li><li><p>Switch only <span class="emphasis"><em>part</em></span> of the trunk
+            working copy to mirror the branch.</p></li></ol></div><p>In other words, if a user knows that the branch-work only
+      needs to happen on a specific subdirectory, they use
+      <span><strong class="command">svn switch</strong></span> to move only that subdirectory to
+      the branch.  (Or sometimes users will switch just a single
+      working file to the branch!)  That way, they can continue to
+      receive normal «<span class="quote">trunk</span>» updates to most of their
+      working copy, but the switched portions will remain immune
+      (unless someone commits a change to their branch).  This feature
+      adds a whole new dimension to the concept of a «<span class="quote">mixed
+      working copy</span>»—not only can working copies contain a
+      mixture of working revisions, but a mixture of repository
+      locations as well.</p><p>If your working copy contains a number of switched subtrees
+      from different repository locations, it continues to function as
+      normal.  When you update, you'll receive patches to each subtree
+      as appropriate.  When you commit, your local changes will still
+      be applied as a single, atomic change to the repository.</p><p>Note that while it's okay for your working copy to reflect a
+      mixture of repository locations, these locations must all be
+      within the <span class="emphasis"><em>same</em></span> repository.  Subversion
+      repositories aren't yet able to communicate with one another;
+      that's a feature planned beyond Subversion
+      1.0.<sup>[<a id="id4818650" href="#ftn.id4818650">14</a>]</sup></p><div class="sidebar"><p class="title"><b>Switches and Updates</b></p><p>Have you noticed that the output of <span><strong class="command">svn
+        switch</strong></span> and <span><strong class="command">svn update</strong></span> look the
+        same?  The <code class="literal">switch</code> command is actually a
+        superset of the update command.</p><p>When you run <span><strong class="command">svn update</strong></span>, you're asking
+        the repository to compare two trees.  The repository does so,
+        and then sends a description of the differences back to the
+        client.  The only difference between <span><strong class="command">svn
+        switch</strong></span> and <span><strong class="command">svn update</strong></span> is that the
+        <code class="literal">update</code> command always compares two identical
+        paths.</p><p>That is, if your working copy is a mirror of
+        <code class="filename">/calc/trunk</code>, then <span><strong class="command">svn
+        update</strong></span> will automatically compare your working copy
+        of <code class="filename">/calc/trunk</code> to
+        <code class="filename">/calc/trunk</code> in the
+        <code class="literal">HEAD</code> revision.  If you're switching your
+        working copy to a branch, then <span><strong class="command">svn switch</strong></span>
+        will compare your working copy of
+        <code class="filename">/calc/trunk</code> to some
+        <span class="emphasis"><em>other</em></span> branch-directory in the
+        <code class="literal">HEAD</code> revision.</p><p>In other words, an update moves your working copy through
+        time.  A switch moves your working copy through time
+        <span class="emphasis"><em>and</em></span> space.</p></div><p>Because <span><strong class="command">svn switch</strong></span> is essentially a
+      variant of <span><strong class="command">svn update</strong></span>, it shares the same
+      behaviors; any local modifications in your working copy are
+      preserved when new data arrives from the repository.  This
+      allows you to perform all sorts of clever tricks.</p><p>For example, suppose you have a working copy of
+      <code class="filename">/calc/trunk</code> and make a number of changes to
+      it.  Then you suddenly realize that you meant to make the
+      changes to a branch instead.  No problem!  When you <span><strong class="command">svn
+      switch</strong></span> your working copy to the branch, the local
+      changes will remain.  You can then test and commit them to the
+      branch.</p><div class="footnotes"><br /><hr width="100" align="left" /><div class="footnote"><p><sup>[<a id="ftn.id4818650" href="#id4818650">14</a>] </sup>You <span class="emphasis"><em>can</em></span>, however, use
+      <span><strong class="command">svn switch</strong></span> with the
+      <code class="option">--relocate</code> switch if the URL of your server
+      changes and you don't want to abandon an existing working copy.
+      See the <span><strong class="command">svn switch</strong></span> section in <a href="svn.ref.html" title="Capitolo 9. Subversion Complete Reference">Capitolo 9, <i>Subversion Complete Reference</i></a> for more information and an example.</p></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="svn.branchmerge.commonuses.html">Indietro</a> </td><td width="20%" align="center"><a accesskey="u" href="svn.branchmerge.html">Risali</a></td><td width="40%" align="right"> <a accesskey="n" href="svn.branchmerge.tags.html">Avanti</a></td></tr><tr><td width="40%" align="left" valign="top">Common Use-Cases </td><td width="20%" align="center"><a accesskey="h" href="index.html">Partenza</a></td><td width="40%" align="right" valign="top"> Tags</td></tr></table></div></body></html>

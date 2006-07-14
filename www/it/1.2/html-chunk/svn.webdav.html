@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Appendice B. WebDAV and Autoversioning</title><link rel="stylesheet" href="styles.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.70.1" /><link rel="start" href="index.html" title="Controllo di Versione con Subversion" /><link rel="up" href="index.html" title="Controllo di Versione con Subversion" /><link rel="prev" href="svn.forcvs.convert.html" title="Converting a Repository from CVS to Subversion" /><link rel="next" href="svn.webdav.svn-and-deltav.html" title="Subversion and DeltaV" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Appendice B. WebDAV and Autoversioning</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="svn.forcvs.convert.html">Indietro</a> </td><th width="60%" align="center"> </th><td width="20%" align="right"> <a accesskey="n" href="svn.webdav.svn-and-deltav.html">Avanti</a></td></tr></table><hr /></div><div class="appendix" lang="it" xml:lang="it"><div class="titlepage"><div><div><h2 class="title"><a id="svn.webdav"></a>Appendice B. WebDAV and Autoversioning</h2></div></div></div><div class="toc"><p><b>Sommario</b></p><dl><dt><span class="sect1"><a href="svn.webdav.html#svn.webdav.basic">Basic WebDAV Concepts</a></span></dt><dd><dl><dt><span class="sect2"><a href="svn.webdav.html#svn.webdav.basic.original">Original WebDAV</a></span></dt><dt><span class="sect2"><a href="svn.webdav.html#svn.webdav.basic.deltav">DeltaV Extensions</a></span></dt></dl></dd><dt><span class="sect1"><a href="svn.webdav.svn-and-deltav.html">Subversion and DeltaV</a></span></dt><dt><span class="sect1"><a href="svn.webdav.autoversioning.html">Autoversioning</a></span></dt><dt><span class="sect1"><a href="svn.webdav.clients.html">Client Interoperability</a></span></dt><dd><dl><dt><span class="sect2"><a href="svn.webdav.clients.html#svn.webdav.clients.standalone">Standalone WebDAV applications</a></span></dt><dd><dl><dt><span class="sect3"><a href="svn.webdav.clients.html#svn.webdav.clients.standalone.windows">Microsoft Office, Dreamweaver, Photoshop</a></span></dt><dt><span class="sect3"><a href="svn.webdav.clients.html#svn.webdav.clients.standalone.free">Cadaver, DAV Explorer</a></span></dt></dl></dd><dt><span class="sect2"><a href="svn.webdav.clients.html#svn.webdav.clients.file-explorer-extensions">File-explorer WebDAV extensions</a></span></dt><dd><dl><dt><span class="sect3"><a href="svn.webdav.clients.html#svn.webdav.clients.file-explorer-extensions.windows">Microsoft Web Folders</a></span></dt><dt><span class="sect3"><a href="svn.webdav.clients.html#svn.webdav.clients.file-explorer-extensions.linux-de">Nautilus, Konqueror</a></span></dt></dl></dd><dt><span class="sect2"><a href="svn.webdav.clients.html#svn.webdav.clients.fs-impl">WebDAV filesystem implementation</a></span></dt><dd><dl><dt><span class="sect3"><a href="svn.webdav.clients.html#svn.webdav.clients.fs-impl.windows">WebDrive, NetDrive</a></span></dt><dt><span class="sect3"><a href="svn.webdav.clients.html#svn.webdav.clients.fs-impl.macosx">Mac OS X</a></span></dt><dt><span class="sect3"><a href="svn.webdav.clients.html#svn.webdav.clients.fs-impl.linux">Linux davfs2</a></span></dt></dl></dd></dl></dd></dl></div><div class="simplesect" lang="it" xml:lang="it"><div class="titlepage"></div><p>WebDAV is an extension to HTTP, and is growing more and more
+      popular as a standard for file-sharing.  Today's operating
+      systems are becoming extremely Web-aware, and many now have
+      built-in support for mounting «<span class="quote">shares</span>» exported by
+      WebDAV servers.</p><p>If you use Apache/mod_dav_svn as your Subversion network
+      server, then to some extent, you are also running a WebDAV
+      server.  This appendix gives some background on the nature of
+      this protocol, how Subversion uses it, and how well Subversion
+      interoperates with other software that is WebDAV-aware.</p></div><div class="sect1" lang="it" xml:lang="it"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="svn.webdav.basic"></a>Basic WebDAV Concepts</h2></div></div></div><p>This section provides a very brief, very general overview to
+      the ideas behind WebDAV.  It should lay the foundation for
+      understanding WebDAV compatibility issues between clients and
+      servers.</p><div class="sect2" lang="it" xml:lang="it"><div class="titlepage"><div><div><h3 class="title"><a id="svn.webdav.basic.original"></a>Original WebDAV</h3></div></div></div><p>RFC 2518 defines a set of concepts and accompanying
+        extension methods to HTTP 1.1 that make the web into a more
+        universal read/write medium.  The basic idea is that a
+        WebDAV-compliant web server can act like a generic file
+        server; clients can mount shared folders that behave much like
+        NFS or SMB filesystems.</p><p>The tragedy, though, is that the RFC 2518 WebDAV
+        specification does not provide any sort of model for version
+        control, despite the «<span class="quote">V</span>» in DAV.  Basic WebDAV
+        clients and servers assume only one version of each file or
+        directory exists, and can be repeatedly overwritten.</p><p>Here are the concepts and terms introduced in basic
+        WebDAV:</p><div class="variablelist"><dl><dt><span class="term">Resources</span></dt><dd><p> WebDAV lingo refers to any server-side object
+              (that can be described with a URI) as a
+              <em class="firstterm">resource</em>.</p></dd><dt><span class="term">New write methods</span></dt><dd><p>Beyond the standard HTTP <code class="literal">PUT</code>
+              method (which creates or overwrites a web resource),
+              WebDAV defines new <code class="literal">COPY</code> and
+              <code class="literal">MOVE</code> methods for duplicating or
+              rearranging resources.</p></dd><dt><span class="term">Collections</span></dt><dd><p>A <em class="firstterm">collection</em> is the WebDAV
+              term for a grouping of resources.  In most cases, it
+              is analogous to a directory.  Whereas file resources
+              can be written or created with a
+              <code class="literal">PUT</code> method, collection resources
+              are created with the new <code class="literal">MKCOL</code>
+              method.</p></dd><dt><span class="term">Properties</span></dt><dd><p>This is the same idea present in
+              Subversion—metadata attached to files and
+              collections.  A client can list or retrieve properties
+              attached to a resource with the new
+              <code class="literal">PROPFIND</code> method, and can change
+              them with the <code class="literal">PROPPATCH</code> method.
+              Some properties are wholly created and controlled by
+              users (e.g. a property called «<span class="quote">color</span>»),
+              and others are wholly created and controlled by the
+              WebDAV server (e.g. a property that contains the last
+              modification time of a file).  The former kind are
+              called <em class="firstterm">dead properties</em>, and the
+              latter kind are called <em class="firstterm">live
+                properties</em>.</p></dd><dt><span class="term">Locking</span></dt><dd><p>A WebDAV server may decide to offer a locking
+              feature to clients—this part of the
+              specification is optional, although most WebDAV
+              servers do offer the feature.  If present, then
+              clients can use the new <code class="literal">LOCK</code> and
+              <code class="literal">UNLOCK</code> methods to mediate access to
+              a resource.  In most cases these methods are used to
+              create exclusive write locks (as discussed in <a href="svn.basic.vsn-models.html#svn.basic.vsn-models.lock-unlock" title="The Lock-Modify-Unlock Solution">la sezione chiamata «The Lock-Modify-Unlock Solution»</a>), although shared write
+              locks are also possible in some server
+              implementations.</p></dd><dt><span class="term">Access control</span></dt><dd><p>A more recent specification (RFC 3744) defines a
+              system for defining access control lists (ACLs) on
+              WebDAV resources.  Some clients and servers have begun
+              to implement this feature.</p></dd></dl></div></div><div class="sect2" lang="it" xml:lang="it"><div class="titlepage"><div><div><h3 class="title"><a id="svn.webdav.basic.deltav"></a>DeltaV Extensions</h3></div></div></div><p>Because RFC 2518 left out versioning concepts, another
+        committee was left with the responsibility of writing RFC
+        3253, which adds versioning to WebDAV,
+        a.k.a. «<span class="quote">DeltaV</span>».  WebDAV/DeltaV clients and
+        servers are often called just «<span class="quote">DeltaV</span>» programs,
+        since DeltaV implies the existence of basic WebDAV.</p><p>DeltaV introduces a whole slew of new acronyms, but don't
+        be intimidated.  The ideas are fairly straightforward:</p><div class="variablelist"><dl><dt><span class="term">Per-resource versioning</span></dt><dd><p>Like CVS and other version-control systems,
+              DeltaV assumes that each resource has a potentially
+              infinite number of states.  A client begins by placing
+              a resource under version control using the new
+              <code class="literal">VERSION-CONTROL</code> method.</p></dd><dt><span class="term">Server-side working-copy model</span></dt><dd><p>Some DeltaV servers support the ability to create
+              a virtual workspace on the server, where all of your
+              work is performed.  Clients use the
+              <code class="literal">MKWORKSPACE</code> method to create a
+              private area, then indicate they want to change
+              specific resources by «<span class="quote">checking them out</span>»
+              into the workspace, editing them, and «<span class="quote">checking
+              them in</span>» again.  In HTTP terms, the sequence of
+              methods would be <code class="literal">CHECKOUT</code>,
+              <code class="literal">PUT</code>,
+              <code class="literal">CHECKIN</code>.</p></dd><dt><span class="term">Client-side working-copy model</span></dt><dd><p>Some DeltaV servers also support the idea that the
+              client may have a private working copy on local disk.
+              When the client wants to commit changes to the server,
+              it begins by creating a temporary server transaction
+              (called an <em class="firstterm">activity</em>) with the
+              <code class="literal">MKACTIVITY</code> method.  The client then
+              performs a <code class="literal">CHECKOUT</code> on each
+              resource it wishes to change and sends
+              <code class="literal">PUT</code> requests.  Finally, the client
+              performs a <code class="literal">CHECKIN</code> resource, or
+              sends a <code class="literal">MERGE</code> request to check in
+              all resources at once.</p></dd><dt><span class="term">Configurations</span></dt><dd><p>DeltaV allows you define flexible collections of
+              resources called «<span class="quote">configurations</span>», which
+              don't necessarily correspond to particular
+              directories.  A configuration can be made to point to
+              specific versions of files, and then a
+              «<span class="quote">baseline</span>» snapshot can be made, much
+              like a tag.</p></dd><dt><span class="term">Extensibility</span></dt><dd><p>DeltaV defines a new method,
+              <code class="literal">REPORT</code>, which allows the client and
+              server to perform customized data exchanges.  While
+              DeltaV defines a number of standardized history reports
+              that a client can request, the server is also free
+              to define custom reports.  The client sends a
+              <code class="literal">REPORT</code> request with a
+              properly-labeled XML body full of custom data; assuming
+              the server understands the specific report-type, it
+              responds with an equally custom XML body.  This
+              technique is very similar to XML-RPC.</p></dd></dl></div></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="svn.forcvs.convert.html">Indietro</a> </td><td width="20%" align="center"> </td><td width="40%" align="right"> <a accesskey="n" href="svn.webdav.svn-and-deltav.html">Avanti</a></td></tr><tr><td width="40%" align="left" valign="top">Converting a Repository from CVS to Subversion </td><td width="20%" align="center"><a accesskey="h" href="index.html">Partenza</a></td><td width="40%" align="right" valign="top"> Subversion and DeltaV</td></tr></table></div></body></html>

@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Peg and Operative Revisions</title><link rel="stylesheet" href="styles.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.70.1" /><link rel="start" href="index.html" title="Controllo di Versione con Subversion" /><link rel="up" href="svn.advanced.html" title="Capitolo 7. Advanced Topics" /><link rel="prev" href="svn.advanced.locking.html" title="Locking" /><link rel="next" href="svn.advanced.externals.html" title="Externals Definitions" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Peg and Operative Revisions</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="svn.advanced.locking.html">Indietro</a> </td><th width="60%" align="center">Capitolo 7. Advanced Topics</th><td width="20%" align="right"> <a accesskey="n" href="svn.advanced.externals.html">Avanti</a></td></tr></table><hr /></div><div class="sect1" lang="it" xml:lang="it"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="svn.advanced.pegrevs"></a>Peg and Operative Revisions</h2></div></div></div><p>We make use of the ability to copy, move, rename, and
+      completely replace files and directories on our computers all
+      that time.  And your version control system shouldn't get in the
+      way of your doing these things with your version controlled
+      files and directories, either.  Subversion's file management
+      support is quite liberating, affording almost as much
+      flexibility for versioned files that you'd expect when
+      manipulating your unversioned ones.  But that flexibility means
+      that across the lifetime of your repository, a given versioned
+      resource might have many paths, and a given path might represent
+      several entirely different versioned resources.  And this
+      introduces a certain level of complexity to your interactions
+      with those paths and resources.</p><p>Subversion is pretty smart about noticing when an object's
+      version history includes such «<span class="quote">changes of address</span>».
+      For example, if you ask for all the logs of a particular file
+      that was renamed last week, Subversion happily provides all
+      those logs—the revision in which the rename itself
+      happened, plus the logs of relevant revisions both before and
+      after that rename.  So, most of the time, you don't even have to
+      think about such things.  But occasionally, Subversion needs
+      your help to clear up ambiguities.</p><p>The simplest example of this occurs when a directory or file
+      is deleted from version control, and then a new directory or
+      file is created with the same name and added to version control.
+      Clearly the thing you deleted and the thing you later added
+      aren't the same thing, they merely happen to have had the same
+      path, which we'll call <code class="filename">/trunk/object</code>.
+      What, then, does it mean to ask Subversion about the history of
+      <code class="filename">/trunk/object</code>?  Are you asking about the
+      thing currently at that location, or the old thing you deleted
+      from that location?  Are you asking about the operations that
+      have happened to all the objects that have lived at that path?
+      Clearly, Subversion needs a hint about what you are really
+      asking.</p><p>And thanks to moves, versioned resource history can get far
+      more twisted than that, even.  For example, you might have a
+      directory named <code class="filename">concept</code>, containing some
+      nascent software project you've been toying with.  Eventually,
+      though, that project matures to the point that the idea seems to
+      actually have some wings, so you do the unthinkable and decide
+      to give the project a name.
+      <sup>[<a id="id4854906" href="#ftn.id4854906">39</a>]</sup>
+      Let's say you called your software Frabnaggilywort.  At this
+      point, it makes sense to rename the directory to reflect the
+      project's new name, so <code class="filename">concept</code> is renamed
+      to <code class="filename">frabnaggilywort</code>.  Life goes on,
+      Frabnaggilywort releases a 1.0 version, and is downloaded and
+      used daily by hordes of people aiming to improve their
+      lives.</p><p>It's a nice story, really, but it doesn't end there.
+      Entrepreneur that you are, you've already got another think in
+      the tank.  So you make a new directory,
+      <code class="filename">concept</code>, and the cycle begins again.  In
+      fact, the cycle begins again many times over the years, each
+      time starting with that old <code class="filename">concept</code>
+      directory, then sometimes seeing that directory renamed as the
+      idea cures, sometimes seeing it deleted when you scrap the idea.
+      Or, to get really sick, maybe you rename
+      <code class="filename">concept</code> to something else for a while, but
+      later rename the thing back to <code class="filename">concept</code> for
+      some reason.</p><p>When scenarios like these occur, attempting to instruct
+      Subversion to work with these re-used paths can be a little like
+      instructing a motorist in Chicago's West Suburbs to drive east
+      down Roosevelt Road and turn left onto Main Street.  In a mere
+      twenty minutes, you can cross «<span class="quote">Main Street</span>» in
+      Wheaton, Glen Ellyn, and Lombard.  And no, they aren't the same
+      street.  Our motorist—and our Subversion—need a
+      little more detail in order to do the right thing.</p><p>In version 1.1, Subversion introduced a way for you to tell
+      it exactly which Main Street you meant.  It's called the
+      <em class="firstterm">peg revision</em>, and it is a revision
+      provided to Subversion for the sole purpose of identifying a
+      unique line of history.  Because at most one versioned resource
+      may occupy a path at any given time—or, more precisely, in
+      any one revision—the combination of a path and a peg
+      revision is all that is needed to refer to a specific line of
+      history.  Peg revisions are specified to the Subversion
+      command-line client using <em class="firstterm">at syntax</em>, so
+      called because the syntax involves appending an «<span class="quote">at
+      sign</span>» (<code class="literal">@</code>) and the peg revision to the
+      end of the path with which the revision is associated.</p><p>But what of the <code class="option">--revision (-r)</code> of which
+      we've spoken so much in this book?  That revision (or set of
+      revisions) is called the <em class="firstterm">operative
+      revision</em> (or <em class="firstterm">operative revision
+      range</em>).  Once a particular line of history has been
+      identified using a path and peg revision, Subversion performs
+      the requested operation using the operative revision(s).  To map
+      this to our Chicagoland streets analogy, if we are told to go to
+      606 N. Main Street in Wheaton,
+      <sup>[<a id="id4855076" href="#ftn.id4855076">40</a>]</sup>
+      we can think of «<span class="quote">Main Street</span>» as our path and
+      «<span class="quote">Wheaton</span>» as our peg revision.  These two pieces of
+      information identify a unique path which can travelled (north or
+      south on Main Street), and will keep us from travelling up and
+      down the wrong Main Street in search of our destination.  Now we
+      throw in «<span class="quote">606 N.</span>» as our operative revision, of
+      sorts, and we know <span class="emphasis"><em>exactly</em></span> where to
+      go.</p><div class="sidebar"><p class="title"><b>The "peg-revision" algorithm</b></p><p>When the commandline client sees a command of the
+        form:</p><pre class="screen">
+$ svn <em class="replaceable"><code>command</code></em> -r <em class="replaceable"><code>OPERATIVE-REV</code></em> item@<em class="replaceable"><code>PEG-REV</code></em>
+</pre><p>...it performs the following algorithm:</p><div class="itemizedlist"><ul type="disc"><li><p>Go to revision <em class="replaceable"><code>PEG-REV</code></em>, and
+          find <em class="replaceable"><code>item</code></em>.  This locates a unique
+          object in the repository.</p></li><li><p>Trace the object's history backwards (through any
+            possible renames) to its ancestor in
+            revision <em class="replaceable"><code>OPERATIVE-REV</code></em>.</p></li><li><p>Perform the requested action on that ancestor,
+            wherever it is located, or whatever its name might
+            be.</p></li></ul></div><p>Remember that even when you don't explicitly supply a
+        peg-revision, it's still present.  It defaults to BASE for
+        working copy items, and to HEAD for URLs.</p></div><p>Say that long ago we created our repository, and in revision 1
+      added our first <code class="filename">concept</code> directory, plus an
+      <code class="filename">IDEA</code> file in that directory talking about
+      the concept.  After several revisions in which real code was
+      added and tweaked, we, in revision 20, renamed this directory to
+      <code class="filename">frabnaggilywort</code>.  By revision 27, we had a
+      new concept, a new <code class="filename">concept</code> directory to
+      hold it, and a new <code class="filename">IDEA</code> file to describe
+      it.  And then five years and twenty thousand revisions flew by,
+      just like they would in any good romance story.</p><p>Now, years later, we wonder what the
+      <code class="filename">IDEA</code> file looked like back in revision 1.
+      But Subversion needs to know if we are asking about how the
+      <span class="emphasis"><em>current</em></span> file looked back in revision 1, or
+      are we asking for the contents of whatever file lived at
+      <code class="filename">concepts/IDEA</code> in revision 1?  Certainly
+      those questions have different answers, and because of peg
+      revisions, you can ask either of them.  To find out how the
+      current <code class="filename">IDEA</code> file looked in that old
+      revision, you run:</p><pre class="screen">
+$ svn cat -r 1 concept/IDEA 
+subversion/libsvn_client/ra.c:775: (apr_err=20014)
+svn: Unable to find repository location for 'concept/IDEA' in revision 1
+</pre><p>Of course, in this example, the current
+      <code class="filename">IDEA</code> file didn't exist yet in revision 1,
+      so Subversion gives an error.  The command above is shorthand
+      for a longer notation which explicitly lists a peg revision.
+      The expanded notation is:</p><pre class="screen">
+$ svn cat -r 1 concept/IDEA@BASE
+subversion/libsvn_client/ra.c:775: (apr_err=20014)
+svn: Unable to find repository location for 'concept/IDEA' in revision 1
+</pre><p>And when executed, it has the expected results.  Peg revisions
+      generally default to a value of <code class="literal">BASE</code> (the
+      revision currently present in the working copy) when applied to
+      working copy paths, and of <code class="literal">HEAD</code> when applied
+      to URLs.</p><p>Let's ask the other question, then—in revision 1, what
+      were the contents of whatever file occupied the address
+      <code class="filename">concepts/IDEA</code> at the time?  We'll use an
+      explicit peg revision to help us out.</p><pre class="screen">
+$ svn cat concept/IDEA@1
+The idea behind this project is to come up with a piece of software
+that can frab a naggily wort.  Frabbing naggily worts is tricky
+business, and doing it incorrectly can have serious ramifications, so
+we need to employ over-the-top input validation and data verification
+mechanisms.
+</pre><p>This appears to be the right output.  The text even mentions
+      frabbing naggily worts, so this is almost certainly the file
+      which describes the software now called Frabnaggilywort.  In
+      fact, we can verify this using the combination of an explicit
+      peg revision and explicit operative revision.  We know that in
+      <code class="literal">HEAD</code>, the Frabnaggilywort project is located
+      in the <code class="filename">frabnaggilywort</code> directory.  So we
+      specify that we want to see how the line of history identified
+      in <code class="literal">HEAD</code> as the path
+      <code class="filename">frabnaggilywort/IDEA</code> looked in revision
+      1.</p><pre class="screen">
+$ svn cat -r 1 frabnaggilywort/IDEA@HEAD
+The idea behind this project is to come up with a piece of software
+that can frab a naggily wort.  Frabbing naggily worts is tricky
+business, and doing it incorrectly can have serious ramifications, so
+we need to employ over-the-top input validation and data verification
+mechanisms.
+</pre><p>And the peg and operative revisions need not be so trivial,
+      either.  For example, say <code class="filename">frabnaggilywort</code>
+      had been deleted from <code class="literal">HEAD</code>, but we know it
+      existed in revision 20, and we want to see the diffs for its
+      <code class="filename">IDEA</code> file between revisions 4 and 10.  We
+      can use the peg revision 20 in conjunction with the URL that
+      would have held Frabnaggilywort's <code class="filename">IDEA</code> file
+      in revision 20, and then use 4 and 10 as our operative revision
+      range.</p><pre class="screen">
+$ svn diff -r 4:10 http://svn.red-bean.com/projects/frabnaggilywort/IDEA@20
+Index: frabnaggilywort/IDEA
+===================================================================
+--- frabnaggilywort/IDEA	(revision 4)
++++ frabnaggilywort/IDEA	(revision 10)
+@@ -1,5 +1,5 @@
+-The idea behind this project is to come up with a piece of software
+-that can frab a naggily wort.  Frabbing naggily worts is tricky
+-business, and doing it incorrectly can have serious ramifications, so
+-we need to employ over-the-top input validation and data verification
+-mechanisms.
++The idea behind this project is to come up with a piece of
++client-server software that can remotely frab a naggily wort.
++Frabbing naggily worts is tricky business, and doing it incorrectly
++can have serious ramifications, so we need to employ over-the-top
++input validation and data verification mechanisms.
+</pre><p>Fortunately, most folks aren't faced with such complex
+      situations.  But when you are, remember that peg revisions are
+      that extra hint Subversion needs to clear up ambiguity.</p><div class="footnotes"><br /><hr width="100" align="left" /><div class="footnote"><p><sup>[<a id="ftn.id4854906" href="#id4854906">39</a>] </sup>«<span class="quote">You're not supposed to name it.  Once you name it,
+          you start getting attached to it.</span>» — Mike
+          Wazowski</p></div><div class="footnote"><p><sup>[<a id="ftn.id4855076" href="#id4855076">40</a>] </sup>606 N. Main Street, Wheaton, Illinois, is the home of
+          the Wheaton History Center.  Get it—«<span class="quote">History
+          Center</span>»?  It seemed appropriate….</p></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="svn.advanced.locking.html">Indietro</a> </td><td width="20%" align="center"><a accesskey="u" href="svn.advanced.html">Risali</a></td><td width="40%" align="right"> <a accesskey="n" href="svn.advanced.externals.html">Avanti</a></td></tr><tr><td width="40%" align="left" valign="top">Locking </td><td width="20%" align="center"><a accesskey="h" href="index.html">Partenza</a></td><td width="40%" align="right" valign="top"> Externals Definitions</td></tr></table></div></body></html>

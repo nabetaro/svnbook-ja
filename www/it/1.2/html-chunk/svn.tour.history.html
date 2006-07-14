@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Examining History</title><link rel="stylesheet" href="styles.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.70.1" /><link rel="start" href="index.html" title="Controllo di Versione con Subversion" /><link rel="up" href="svn.tour.html" title="Capitolo 3. Visita guidata" /><link rel="prev" href="svn.tour.cycle.html" title="Basic Work Cycle" /><link rel="next" href="svn.tour.other.html" title="Other Useful Commands" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Examining History</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="svn.tour.cycle.html">Indietro</a> </td><th width="60%" align="center">Capitolo 3. Visita guidata</th><td width="20%" align="right"> <a accesskey="n" href="svn.tour.other.html">Avanti</a></td></tr></table><hr /></div><div class="sect1" lang="it" xml:lang="it"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="svn.tour.history"></a>Examining History</h2></div></div></div><p>As we mentioned earlier, the repository is like a time
+      machine.  It keeps a record of every change ever committed,
+      and allows you to explore this history by examining previous
+      versions of files and directories as well as the metadata that
+      accompanies them.  With a single Subversion command, you can
+      check out the repository (or restore an existing working copy)
+      exactly as it was at any date or revision number in the past.
+      However, sometimes you just want to <span class="emphasis"><em>peer
+      into</em></span> the past instead of <span class="emphasis"><em>going
+      into</em></span> the past.</p><p>There are several commands that can provide you with
+      historical data from the repository:</p><div class="variablelist"><dl><dt><span class="term"><span><strong class="command">svn log</strong></span></span></dt><dd><p>Shows you broad information: log messages with date
+              and author information attached to revisions, and which
+              paths changed in each revision.</p></dd><dt><span class="term"><span><strong class="command">svn diff</strong></span></span></dt><dd><p>Shows you the specific details of how a file changed
+              over time.</p></dd><dt><span class="term"><span><strong class="command">svn cat</strong></span></span></dt><dd><p>This is used to retrieve any file as it existed in a
+              particular revision number and display it on your
+              screen.</p></dd><dt><span class="term"><span><strong class="command">svn list</strong></span></span></dt><dd><p>Displays the files in a directory for any given
+              revision.</p></dd></dl></div><div class="sect2" lang="it" xml:lang="it"><div class="titlepage"><div><div><h3 class="title"><a id="svn.tour.history.log"></a><span><strong class="command">svn log</strong></span></h3></div></div></div><p>To find information about the history of a file or
+        directory, use the <span><strong class="command">svn log</strong></span>
+        command. <span><strong class="command">svn log</strong></span> will provide you with a
+        record of who made changes to a file or directory, at what
+        revision it changed, the time and date of that revision, and,
+        if it was provided, the log message that accompanied the
+        commit.</p><pre class="screen">
+$ svn log
+------------------------------------------------------------------------
+r3 | sally | Mon, 15 Jul 2002 18:03:46 -0500 | 1 line
+
+Added include lines and corrected # of cheese slices.
+------------------------------------------------------------------------
+r2 | harry | Mon, 15 Jul 2002 17:47:57 -0500 | 1 line
+
+Added main() methods.
+------------------------------------------------------------------------
+r1 | sally | Mon, 15 Jul 2002 17:40:08 -0500 | 1 line
+
+Initial import
+------------------------------------------------------------------------
+</pre><p>Note that the log messages are printed in
+        <span class="emphasis"><em>reverse chronological order</em></span> by default.
+        If you wish to see a different range of revisions in a
+        particular order, or just a single revision, pass the
+        <code class="option">--revision</code> (<code class="option">-r</code>)
+        switch:</p><pre class="screen">
+$ svn log --revision 5:19    # shows logs 5 through 19 in chronological order
+
+$ svn log -r 19:5            # shows logs 5 through 19 in reverse order
+
+$ svn log -r 8               # shows log for revision 8
+</pre><p>You can also examine the log history of a single file or
+        directory.  For example:</p><pre class="screen">
+$ svn log foo.c
+…
+$ svn log http://foo.com/svn/trunk/code/foo.c
+…
+</pre><p>These will display log messages <span class="emphasis"><em>only</em></span>
+        for those revisions in which the working file (or URL)
+        changed.</p><p>If you want even more information about a file or
+        directory, <span><strong class="command">svn log</strong></span> also takes a
+        <code class="option">--verbose</code> (<code class="option">-v</code>) switch.
+        Because Subversion allows you to move and copy files and
+        directories, it is important to be able to track path changes
+        in the filesystem, so in verbose mode, <span><strong class="command">svn
+        log</strong></span> will include a list of changed paths in a
+        revision in its output:</p><pre class="screen">
+$ svn log -r 8 -v
+------------------------------------------------------------------------
+r8 | sally | 2002-07-14 08:15:29 -0500 | 1 line
+Changed paths:
+M /trunk/code/foo.c
+M /trunk/code/bar.h
+A /trunk/code/doc/README
+
+Frozzled the sub-space winch.
+
+------------------------------------------------------------------------
+</pre><p>
+        <span><strong class="command">svn log</strong></span> also takes a <code class="option">--quiet</code>
+        (<code class="option">-q</code>) switch, which suppresses the body of the
+        log message.  When combined with <code class="option">--verbose</code>, it
+        gives just the names of the changed files.</p><div class="sidebar"><p class="title"><b>Why Does <span><strong class="command">svn log</strong></span> Give Me an Empty
+          Response?</b></p><p>After working with Subversion for a bit, most users will
+          come across something like this:</p><pre class="screen">
+$ svn log -r 2
+------------------------------------------------------------------------
+$
+</pre><p>At first glance, this seems like an error.  But recall
+          that while revisions are repository-wide, <span><strong class="command">svn
+          log</strong></span> operates on a path in the repository.  If you
+          supply no path, Subversion uses the current working
+          directory as the default target.  As a result, if you're
+          operating in a subdirectory of your working copy and attempt
+          to see the log of a revision in which neither that directory
+          nor any of its children was changed, Subversion will show you
+          an empty log.  If you want to see what changed in that
+          revision, try pointing <span><strong class="command">svn log</strong></span> directly at
+          the top-most URL of your repository, as in <span><strong class="command">svn log -r 2
+          http://svn.collab.net/repos/svn</strong></span>.</p></div></div><div class="sect2" lang="it" xml:lang="it"><div class="titlepage"><div><div><h3 class="title"><a id="svn.tour.history.diff"></a><span><strong class="command">svn diff</strong></span></h3></div></div></div><p>We've already seen <span><strong class="command">svn diff</strong></span>
+        before—it displays file differences in unified diff
+        format; it was used to show the local modifications made to
+        our working copy before committing to the repository.</p><p>In fact, it turns out that there are
+        <span class="emphasis"><em>three</em></span> distinct uses of <span><strong class="command">svn
+        diff</strong></span>:</p><div class="itemizedlist"><ul type="disc"><li><p>Examine local changes</p></li><li><p>Compare your working copy to the repository</p></li><li><p>Compare repository to repository</p></li></ul></div><div class="sect3" lang="it" xml:lang="it"><div class="titlepage"><div><div><h4 class="title"><a id="svn.tour.history.diff.local"></a>Examining Local Changes</h4></div></div></div><p>As we've seen, invoking <span><strong class="command">svn diff</strong></span> with
+          no switches will compare your working files to the cached
+          «<span class="quote">pristine</span>» copies in
+          the <code class="filename">.svn</code> area:</p><pre class="screen">
+$ svn diff
+Index: rules.txt
+===================================================================
+--- rules.txt	(revision 3)
++++ rules.txt	(working copy)
+@@ -1,4 +1,5 @@
+ Be kind to others
+ Freedom = Responsibility
+ Everything in moderation
+-Chew with your mouth open
++Chew with your mouth closed
++Listen when others are speaking
+$
+</pre></div><div class="sect3" lang="it" xml:lang="it"><div class="titlepage"><div><div><h4 class="title"><a id="svn.tour.history.diff.wcrepos"></a>Comparing Working Copy to Repository</h4></div></div></div><p>If a single <code class="option">--revision</code>
+          (<code class="option">-r</code>) number is passed, then your
+          working copy is compared to the specified revision in the
+          repository.</p><pre class="screen">
+$ svn diff --revision 3 rules.txt 
+Index: rules.txt
+===================================================================
+--- rules.txt	(revision 3)
++++ rules.txt	(working copy)
+@@ -1,4 +1,5 @@
+ Be kind to others
+ Freedom = Responsibility
+ Everything in moderation
+-Chew with your mouth open
++Chew with your mouth closed
++Listen when others are speaking
+$
+</pre></div><div class="sect3" lang="it" xml:lang="it"><div class="titlepage"><div><div><h4 class="title"><a id="svn.tour.history.diff.reposrepos"></a>Comparing Repository to Repository</h4></div></div></div><p>If two revision numbers, separated by a colon, are
+          passed via <code class="option">--revision</code>
+          (<code class="option">-r</code>), then the two revisions are directly
+          compared.</p><pre class="screen">
+$ svn diff --revision 2:3 rules.txt 
+Index: rules.txt
+===================================================================
+--- rules.txt	(revision 2)
++++ rules.txt	(revision 3)
+@@ -1,4 +1,4 @@
+ Be kind to others
+-Freedom = Chocolate Ice Cream
++Freedom = Responsibility
+ Everything in moderation
+ Chew with your mouth open
+$
+</pre><p>Not only can you use <span><strong class="command">svn diff</strong></span> to
+          compare files in your working copy to the repository, but if
+          you supply a URL argument, you can examine the differences
+          between items in the repository without even having a
+          working copy.  This is especially useful if you wish to
+          inspect changes in a file when you don't have a working copy
+          on your local machine:</p><pre class="screen">
+$ svn diff --revision 4:5 http://svn.red-bean.com/repos/example/trunk/text/rules.txt
+…
+$
+</pre></div></div><div class="sect2" lang="it" xml:lang="it"><div class="titlepage"><div><div><h3 class="title"><a id="svn.tour.history.cat"></a><span><strong class="command">svn cat</strong></span></h3></div></div></div><p>If you want to examine an earlier version of a file and
+        not necessarily the differences between two files, you can use
+        <span><strong class="command">svn cat</strong></span>:</p><pre class="screen">
+$ svn cat --revision 2 rules.txt 
+Be kind to others
+Freedom = Chocolate Ice Cream
+Everything in moderation
+Chew with your mouth open
+$
+</pre><p>You can also redirect the output directly into a
+        file:</p><pre class="screen">
+$ svn cat --revision 2 rules.txt &gt; rules.txt.v2
+$
+</pre><p>You're probably wondering why we don't just use
+        <span><strong class="command">svn update --revision</strong></span> to update the file to
+        the older revision.  There are a few reasons why we might
+        prefer to use <span><strong class="command">svn cat</strong></span>.</p><p>First, you may want to see the differences between two
+        revisions of a file using an external diff program (perhaps a
+        graphical one, or perhaps your file is in such a format that
+        the output of unified diff is nonsensical).  In this case,
+        you'll need to grab a copy of the old revision, redirect it to
+        a file, and pass both that and the file in your working copy
+        to your external diff program.</p><p>Sometimes it's easier to look at an older version of a
+        file in its entirety as opposed to just the differences
+        between it and another revision.</p></div><div class="sect2" lang="it" xml:lang="it"><div class="titlepage"><div><div><h3 class="title"><a id="svn.tour.history.list"></a><span><strong class="command">svn list</strong></span></h3></div></div></div><p>The <span><strong class="command">svn list</strong></span> command shows you what
+        files are in a repository directory without actually
+        downloading the files to your local machine:</p><pre class="screen">
+$ svn list http://svn.collab.net/repos/svn
+README
+branches/
+clients/
+tags/
+trunk/
+</pre><p>If you want a more detailed listing, pass the
+        <code class="option">--verbose</code> (<code class="option">-v</code>) flag to get
+        output like this:</p><pre class="screen">
+$ svn list --verbose http://svn.collab.net/repos/svn
+   2755 harry          1331 Jul 28 02:07 README
+   2773 sally               Jul 29 15:07 branches/
+   2769 sally               Jul 29 12:07 clients/
+   2698 harry               Jul 24 18:07 tags/
+   2785 sally               Jul 29 19:07 trunk/
+</pre><p>The columns tell you the revision at which the file or
+        directory was last modified, the user who modified it, the size
+        if it is a file, the date it was last modified, and the item's
+        name.</p></div><div class="sect2" lang="it" xml:lang="it"><div class="titlepage"><div><div><h3 class="title"><a id="svn.tour.history.finalword"></a>A Final Word on History</h3></div></div></div><p>In addition to all of the above commands, you can use
+        <span><strong class="command">svn update</strong></span> and <span><strong class="command">svn
+        checkout</strong></span> with the <code class="option">--revision</code> switch
+        to take an entire working copy «<span class="quote">back in time</span>»
+        <sup>[<a id="id4808162" href="#ftn.id4808162">9</a>]</sup>:</p><pre class="screen">
+$ svn checkout --revision 1729 # Checks out a new working copy at r1729
+…
+$ svn update --revision 1729 # Updates an existing working copy to r1729
+…
+</pre></div><div class="footnotes"><br /><hr width="100" align="left" /><div class="footnote"><p><sup>[<a id="ftn.id4808162" href="#id4808162">9</a>] </sup>See?  We told you that Subversion was a time
+        machine.</p></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="svn.tour.cycle.html">Indietro</a> </td><td width="20%" align="center"><a accesskey="u" href="svn.tour.html">Risali</a></td><td width="40%" align="right"> <a accesskey="n" href="svn.tour.other.html">Avanti</a></td></tr><tr><td width="40%" align="left" valign="top">Basic Work Cycle </td><td width="20%" align="center"><a accesskey="h" href="index.html">Partenza</a></td><td width="40%" align="right" valign="top"> Other Useful Commands</td></tr></table></div></body></html>

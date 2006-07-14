@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Versioning Models</title><link rel="stylesheet" href="styles.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.70.1" /><link rel="start" href="index.html" title="Controllo di Versione con Subversion" /><link rel="up" href="svn.basic.html" title="Capitolo 2. Basic Concepts" /><link rel="prev" href="svn.basic.html" title="Capitolo 2. Basic Concepts" /><link rel="next" href="svn.basic.in-action.html" title="Subversion in Action" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Versioning Models</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="svn.basic.html">Indietro</a> </td><th width="60%" align="center">Capitolo 2. Basic Concepts</th><td width="20%" align="right"> <a accesskey="n" href="svn.basic.in-action.html">Avanti</a></td></tr></table><hr /></div><div class="sect1" lang="it" xml:lang="it"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="svn.basic.vsn-models"></a>Versioning Models</h2></div></div></div><p>The core mission of a version control system is to enable
+      collaborative editing and sharing of data.  But different
+      systems use different strategies to achieve this.</p><div class="sect2" lang="it" xml:lang="it"><div class="titlepage"><div><div><h3 class="title"><a id="svn.basic.vsn-models.problem-sharing"></a>The Problem of File-Sharing</h3></div></div></div><p>All version control systems have to solve the same
+        fundamental problem: how will the system allow users to share
+        information, but prevent them from accidentally stepping on
+        each other's feet?  It's all too easy for users to
+        accidentally overwrite each other's changes in the
+        repository.</p><p>Consider the scenario shown in <a href="svn.basic.vsn-models.html#svn.basic.vsn-models.problem-sharing.dia-1" title="Figura 2.2. The problem to avoid">Figura 2.2, «The problem to avoid»</a>.
+        Suppose we have two co-workers, Harry and Sally.  They each
+        decide to edit the same repository file at the same time.  If
+        Harry saves his changes to the repository first, then it's
+        possible that (a few moments later) Sally could accidentally
+        overwrite them with her own new version of the file.  While
+        Harry's version of the file won't be lost forever (because the
+        system remembers every change), any changes Harry made
+        <span class="emphasis"><em>won't</em></span> be present in Sally's newer version
+        of the file, because she never saw Harry's changes to begin
+        with.  Harry's work is still effectively lost—or at
+        least missing from the latest version of the file—and
+        probably by accident.  This is definitely a situation we want
+        to avoid!</p><div class="figure"><a id="svn.basic.vsn-models.problem-sharing.dia-1"></a><p class="title"><b>Figura 2.2. The problem to avoid</b></p><div class="figure-contents"><div><img src="images/ch02dia2.png" alt="The problem to avoid" /></div></div></div><br class="figure-break" /></div><div class="sect2" lang="it" xml:lang="it"><div class="titlepage"><div><div><h3 class="title"><a id="svn.basic.vsn-models.lock-unlock"></a>The Lock-Modify-Unlock Solution</h3></div></div></div><p>Many version control systems use a
+        <em class="firstterm">lock-modify-unlock</em> model to address the
+        problem of many authors clobbering each other's work.  In this
+        model, the repository allows only one person to change a file
+        at a time.  This exclusivity policy is managed using locks.
+        Harry must «<span class="quote">lock</span>» a file before he can begin
+        making changes to it.  If Harry has locked a file, then Sally
+        cannot also lock it, and therefore cannot make any changes to
+        that file.  All she can do is read the file, and wait for
+        Harry to finish his changes and release his lock.  After Harry
+        unlocks the file, Sally can take her turn by locking and
+        editing the file.  <a href="svn.basic.vsn-models.html#svn.basic.vsn-models.lock-unlock.dia-1" title="Figura 2.3. The lock-modify-unlock solution">Figura 2.3, «The lock-modify-unlock solution»</a>
+        demonstrates this simple solution.</p><div class="figure"><a id="svn.basic.vsn-models.lock-unlock.dia-1"></a><p class="title"><b>Figura 2.3. The lock-modify-unlock solution</b></p><div class="figure-contents"><div><img src="images/ch02dia3.png" alt="The lock-modify-unlock solution" /></div></div></div><br class="figure-break" /><p>The problem with the lock-modify-unlock model is that it's
+        a bit restrictive, and often becomes a roadblock for
+        users:</p><div class="itemizedlist"><ul type="disc"><li><p><span class="emphasis"><em>Locking may cause administrative
+            problems.</em></span>
+
+            Sometimes Harry will lock a file and then forget about it.
+            Meanwhile, because Sally is still waiting to edit the file,
+            her hands are tied.  And then Harry goes on vacation.  Now
+            Sally has to get an administrator to release Harry's lock.
+            The situation ends up causing a lot of unnecessary delay
+            and wasted time.</p></li><li><p><span class="emphasis"><em>Locking may cause unnecessary
+            serialization.</em></span>
+
+            What if Harry is editing the beginning of a text file,
+            and Sally simply wants to edit the end of the same file?
+            These changes don't overlap at all.  They could easily
+            edit the file simultaneously, and no great harm would
+            come, assuming the changes were properly merged together.
+            There's no need for them to take turns in this
+            situation.</p></li><li><p><span class="emphasis"><em>Locking may create a false sense of
+            security.</em></span>
+
+            Pretend that Harry locks and edits file A, while
+            Sally simultaneously locks and edits file B.  But suppose
+            that A and B depend on one another, and the changes made
+            to each are semantically incompatible.  Suddenly A and B
+            don't work together anymore.  The locking system was
+            powerless to prevent the problem—yet it somehow
+            provided a false sense of security.  It's easy for Harry and
+            Sally to imagine that by locking files, each is beginning a
+            safe, insulated task, and thus not bother
+            discussing their incompatible changes early
+            on.</p></li></ul></div></div><div class="sect2" lang="it" xml:lang="it"><div class="titlepage"><div><div><h3 class="title"><a id="svn.basic.vsn-models.copy-merge"></a>The Copy-Modify-Merge Solution</h3></div></div></div><p>Subversion, CVS, and other version control systems use a
+        <em class="firstterm">copy-modify-merge</em> model as an
+        alternative to locking.  In this model, each user's client
+        contacts the project repository and creates a personal
+        <em class="firstterm">working copy</em>—a local reflection
+        of the repository's files and directories.  Users then work in
+        parallel, modifying their private copies.  Finally, the
+        private copies are merged together into a new, final version.
+        The version control system often assists with the merging, but
+        ultimately a human being is responsible for making it happen
+        correctly.</p><p>Here's an example.  Say that Harry and Sally each create
+        working copies of the same project, copied from the
+        repository.  They work concurrently, and make changes to the
+        same file A within their copies.  Sally saves her changes to
+        the repository first.  When Harry attempts to save his changes
+        later, the repository informs him that his file A is
+        <em class="firstterm">out-of-date</em>.  In other words, that file
+        A in the repository has somehow changed since he last copied
+        it.  So Harry asks his client to <em class="firstterm">merge</em>
+        any new changes from the repository into his working copy of
+        file A.  Chances are that Sally's changes don't overlap with
+        his own; so once he has both sets of changes integrated, he
+        saves his working copy back to the repository.  <a href="svn.basic.vsn-models.html#svn.basic.vsn-models.copy-merge.dia-1" title="Figura 2.4. The copy-modify-merge solution">Figura 2.4, «The copy-modify-merge solution»</a> and <a href="svn.basic.vsn-models.html#svn.basic.vsn-models.copy-merge.dia-2" title="Figura 2.5. The copy-modify-merge solution (continued)">Figura 2.5, «The copy-modify-merge solution (continued)»</a>
+        show this process.</p><div class="figure"><a id="svn.basic.vsn-models.copy-merge.dia-1"></a><p class="title"><b>Figura 2.4. The copy-modify-merge solution</b></p><div class="figure-contents"><div><img src="images/ch02dia4.png" alt="The copy-modify-merge solution" /></div></div></div><br class="figure-break" /><div class="figure"><a id="svn.basic.vsn-models.copy-merge.dia-2"></a><p class="title"><b>Figura 2.5. The copy-modify-merge solution (continued)</b></p><div class="figure-contents"><div><img src="images/ch02dia5.png" alt="The copy-modify-merge solution (continued)" /></div></div></div><br class="figure-break" /><p>But what if Sally's changes <span class="emphasis"><em>do</em></span> overlap
+        with Harry's changes?  What then?  This situation is called a
+        <em class="firstterm">conflict</em>, and it's usually not much of
+        a problem.  When Harry asks his client to merge the latest
+        repository changes into his working copy, his copy of file A
+        is somehow flagged as being in a state of conflict: he'll be
+        able to see both sets of conflicting changes, and manually
+        choose between them.  Note that software can't automatically
+        resolve conflicts; only humans are capable of understanding
+        and making the necessary intelligent choices.  Once Harry has
+        manually resolved the overlapping changes—perhaps after
+        a discussion with Sally—he can safely save the
+        merged file back to the repository.</p><p>The copy-modify-merge model may sound a bit chaotic, but
+        in practice, it runs extremely smoothly.  Users can work in
+        parallel, never waiting for one another.  When they work on
+        the same files, it turns out that most of their concurrent
+        changes don't overlap at all; conflicts are infrequent.  And
+        the amount of time it takes to resolve conflicts is far less
+        than the time lost by a locking system.</p><p>In the end, it all comes down to one critical factor: user
+        communication.  When users communicate poorly, both syntactic
+        and semantic conflicts increase.  No system can force users to
+        communicate perfectly, and no system can detect semantic
+        conflicts.  So there's no point in being lulled into a false
+        promise that a locking system will somehow prevent conflicts;
+        in practice, locking seems to inhibit productivity more than
+        anything else.</p><div class="sidebar"><a id="svn.basic.vsn-models.copy-merge.sb-1"></a><p class="title"><b>When Locking is Necessary</b></p><p>While the lock-modify-unlock model is considered
+          generally harmful to collaboration, there are still times
+          when locking is appropriate.</p><p>The copy-modify-merge model is based on the assumption
+          that files are contextually mergeable: that is, that the
+          majority of the files in the repository are line-based text
+          files (such as program source code).  But for files with
+          binary formats, such as artwork or sound, it's often
+          impossible to merge conflicting changes.  In these
+          situations, it really is necessary to users to take strict
+          turns when changing the file.  Without serialized access,
+          somebody ends up wasting time on changes that are ultimately
+          discarded.</p><p>While CVS and Subversion are still primarily
+          copy-modify-merge systems, they both recognize the need to
+          lock an occasional file and provide mechanisms for this.
+          See <a href="svn.advanced.locking.html" title="Locking">la sezione chiamata «Locking»</a>.</p></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="svn.basic.html">Indietro</a> </td><td width="20%" align="center"><a accesskey="u" href="svn.basic.html">Risali</a></td><td width="40%" align="right"> <a accesskey="n" href="svn.basic.in-action.html">Avanti</a></td></tr><tr><td width="40%" align="left" valign="top">Capitolo 2. Basic Concepts </td><td width="20%" align="center"><a accesskey="h" href="index.html">Partenza</a></td><td width="40%" align="right" valign="top"> Subversion in Action</td></tr></table></div></body></html>

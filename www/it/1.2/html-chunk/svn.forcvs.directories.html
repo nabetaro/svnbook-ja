@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Directory Versions</title><link rel="stylesheet" href="styles.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.70.1" /><link rel="start" href="index.html" title="Controllo di Versione con Subversion" /><link rel="up" href="svn.forcvs.html" title="Appendice A. Subversion for CVS Users" /><link rel="prev" href="svn.forcvs.html" title="Appendice A. Subversion for CVS Users" /><link rel="next" href="svn.forcvs.disconnected.html" title="More Disconnected Operations" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Directory Versions</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="svn.forcvs.html">Indietro</a> </td><th width="60%" align="center">Appendice A. Subversion for CVS Users</th><td width="20%" align="right"> <a accesskey="n" href="svn.forcvs.disconnected.html">Avanti</a></td></tr></table><hr /></div><div class="sect1" lang="it" xml:lang="it"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="svn.forcvs.directories"></a>Directory Versions</h2></div></div></div><p>Subversion tracks tree structures, not just file contents.
+      It's one of the biggest reasons Subversion was written to
+      replace CVS.</p><p>Here's what this means to you, as a former CVS user:</p><div class="itemizedlist"><ul type="disc"><li><p>The <span><strong class="command">svn add</strong></span> and <span><strong class="command">svn
+          delete</strong></span> commands work on directories now, just as
+          they work on files.  So do <span><strong class="command">svn copy</strong></span> and
+          <span><strong class="command">svn move</strong></span>.  However, these commands do
+          <span class="emphasis"><em>not</em></span> cause any kind of immediate change
+          in the repository.  Instead, the working items are simply
+          «<span class="quote">scheduled</span>» for addition or deletion.  No
+          repository changes happen until you run <span><strong class="command">svn
+          commit</strong></span>.</p></li><li><p>Directories aren't dumb containers anymore; they have
+          revision numbers like files.  (Or more properly, it's
+          correct to talk about «<span class="quote">directory
+          <code class="filename">foo/</code> in revision 5</span>».)</p></li></ul></div><p>Let's talk more about that last point.  Directory versioning
+      is a hard problem; because we want to allow mixed-revision
+      working copies, there are some limitations on how far we can
+      abuse this model.</p><p>From a theoretical point of view, we define «<span class="quote">revision
+      5 of directory <code class="filename">foo</code></span>» to mean a
+      specific collection of directory-entries and properties.  Now
+      suppose we start adding and removing files from
+      <code class="filename">foo</code>, and then commit.  It would be a lie
+      to say that we still have revision 5 of
+      <code class="filename">foo</code>.  However, if we bumped
+      <code class="filename">foo</code>'s revision number after the commit,
+      that would be a lie too; there may be other changes to
+      <code class="filename">foo</code> we haven't yet received, because we
+      haven't updated yet.</p><p>Subversion deals with this problem by quietly tracking
+      committed adds and deletes in the <code class="filename">.svn</code>
+      area.  When you eventually run <span><strong class="command">svn update</strong></span>,
+      all accounts are settled with the repository, and the
+      directory's new revision number is set correctly.
+      <span class="emphasis"><em>Therefore, only after an update is it truly safe to
+      say that you have a «<span class="quote">perfect</span>» revision of a
+      directory.</em></span> Most of the time, your working copy will
+      contain «<span class="quote">imperfect</span>» directory revisions.</p><p>Similarly, a problem arises if you attempt to commit
+      property changes on a directory.  Normally, the commit would
+      bump the working directory's local revision number.  But again,
+      that would be a lie, because there may be adds or deletes that
+      the directory doesn't yet have, because no update has happened.
+      <span class="emphasis"><em>Therefore, you are not allowed to commit
+      property-changes on a directory unless the directory is
+      up-to-date.</em></span></p><p>For more discussion about the limitations of directory
+      versioning, see <a href="svn.basic.in-action.html#svn.basic.in-action.mixedrevs" title="Copie di lavoro con revisioni miste">la sezione chiamata «Copie di lavoro con revisioni miste»</a>.</p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="svn.forcvs.html">Indietro</a> </td><td width="20%" align="center"><a accesskey="u" href="svn.forcvs.html">Risali</a></td><td width="40%" align="right"> <a accesskey="n" href="svn.forcvs.disconnected.html">Avanti</a></td></tr><tr><td width="40%" align="left" valign="top">Appendice A. Subversion for CVS Users </td><td width="20%" align="center"><a accesskey="h" href="index.html">Partenza</a></td><td width="40%" align="right" valign="top"> More Disconnected Operations</td></tr></table></div></body></html>

@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Capitolo 5. Repository Administration</title><link rel="stylesheet" href="styles.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.70.1" /><link rel="start" href="index.html" title="Controllo di Versione con Subversion" /><link rel="up" href="index.html" title="Controllo di Versione con Subversion" /><link rel="prev" href="svn.branchmerge.summary.html" title="Summary" /><link rel="next" href="svn.reposadmin.create.html" title="Repository Creation and Configuration" /></head><body><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Capitolo 5. Repository Administration</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="svn.branchmerge.summary.html">Indietro</a> </td><th width="60%" align="center"> </th><td width="20%" align="right"> <a accesskey="n" href="svn.reposadmin.create.html">Avanti</a></td></tr></table><hr /></div><div class="chapter" lang="it" xml:lang="it"><div class="titlepage"><div><div><h2 class="title"><a id="svn.reposadmin"></a>Capitolo 5. Repository Administration</h2></div></div></div><div class="toc"><p><b>Sommario</b></p><dl><dt><span class="sect1"><a href="svn.reposadmin.html#svn.reposadmin.basics">Repository Basics</a></span></dt><dd><dl><dt><span class="sect2"><a href="svn.reposadmin.html#svn.reposadmin.basics.txnsrevs">Understanding Transactions and Revisions</a></span></dt><dt><span class="sect2"><a href="svn.reposadmin.html#svn.reposadmin.basics.revprops">Unversioned Properties</a></span></dt><dt><span class="sect2"><a href="svn.reposadmin.html#svn.reposadmin.basics.backends">Repository Data Stores</a></span></dt><dd><dl><dt><span class="sect3"><a href="svn.reposadmin.html#svn.reposadmin.basics.backends.bdb">Berkeley DB</a></span></dt><dt><span class="sect3"><a href="svn.reposadmin.html#svn.reposadmin.basics.backends.fsfs">FSFS</a></span></dt></dl></dd></dl></dd><dt><span class="sect1"><a href="svn.reposadmin.create.html">Repository Creation and Configuration</a></span></dt><dd><dl><dt><span class="sect2"><a href="svn.reposadmin.create.html#svn.reposadmin.create.hooks">Hook Scripts</a></span></dt><dt><span class="sect2"><a href="svn.reposadmin.create.html#svn.reposadmin.create.bdb">Berkeley DB Configuration</a></span></dt></dl></dd><dt><span class="sect1"><a href="svn.reposadmin.maint.html">Repository Maintenance</a></span></dt><dd><dl><dt><span class="sect2"><a href="svn.reposadmin.maint.html#svn.reposadmin.maint.tk">An Administrator's Toolkit</a></span></dt><dd><dl><dt><span class="sect3"><a href="svn.reposadmin.maint.html#svn.reposadmin.maint.tk.svnlook">svnlook</a></span></dt><dt><span class="sect3"><a href="svn.reposadmin.maint.html#svn.reposadmin.maint.tk.svnadmin">svnadmin</a></span></dt><dt><span class="sect3"><a href="svn.reposadmin.maint.html#svn.reposadmin.maint.tk.svndumpfilter">svndumpfilter</a></span></dt><dt><span class="sect3"><a href="svn.reposadmin.maint.html#svn.reposadmin.maint.tk.bdbutil">Berkeley DB Utilities</a></span></dt></dl></dd><dt><span class="sect2"><a href="svn.reposadmin.maint.html#svn.reposadmin.maint.cleanup">Repository Cleanup</a></span></dt><dt><span class="sect2"><a href="svn.reposadmin.maint.html#svn.reposadmin.maint.diskspace">Managing Disk Space</a></span></dt><dt><span class="sect2"><a href="svn.reposadmin.maint.html#svn.reposadmin.maint.recovery">Repository Recovery</a></span></dt><dt><span class="sect2"><a href="svn.reposadmin.maint.html#svn.reposadmin.maint.migrate">Migrating a Repository</a></span></dt><dt><span class="sect2"><a href="svn.reposadmin.maint.html#svn.reposadmin.maint.backup">Repository Backup</a></span></dt></dl></dd><dt><span class="sect1"><a href="svn.reposadmin.projects.html">Adding Projects</a></span></dt><dd><dl><dt><span class="sect2"><a href="svn.reposadmin.projects.html#svn.reposadmin.projects.chooselayout">Choosing a Repository Layout</a></span></dt><dt><span class="sect2"><a href="svn.reposadmin.projects.html#svn.reposadmin.projects.import">Creating the Layout, and Importing Initial Data</a></span></dt></dl></dd><dt><span class="sect1"><a href="svn.reposadmin.summary.html">Summary</a></span></dt></dl></div><div class="simplesect" lang="it" xml:lang="it"><div class="titlepage"></div><p>The Subversion repository is the central storehouse of
+      versioned data for any number of projects.  As such, it becomes
+      an obvious candidate for all the love and attention an
+      administrator can offer.  While the repository is generally a
+      low-maintenance item, it is important to understand how to
+      properly configure and care for it so that potential problems
+      are avoided, and actual problems are safely resolved.</p><p>In this chapter, we'll discuss how to create and configure
+      a Subversion repository.  We'll also talk about repository
+      maintenance, including the use of the <span><strong class="command">svnlook</strong></span>
+      and <span><strong class="command">svnadmin</strong></span> tools (which are provided with
+      Subversion).  We'll address some common questions and mistakes,
+      and give some suggestions on how to arrange the data in the
+      repository.</p><p>If you plan to access a Subversion repository only in the
+      role of a user whose data is under version control (that is, via
+      a Subversion client), you can skip this chapter altogether.
+      However, if you are, or wish to become, a Subversion repository
+      administrator,
+      <sup>[<a id="id4824273" href="#ftn.id4824273">15</a>]</sup>
+      you should definitely pay attention to this chapter.</p></div><div class="sect1" lang="it" xml:lang="it"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="svn.reposadmin.basics"></a>Repository Basics</h2></div></div></div><p>Before jumping into the broader topic of repository
+      administration, let's further define what a repository is.  How
+      does it look?  How does it feel?  Does it take its tea hot or
+      iced, sweetened, and with lemon?  As an administrator, you'll be
+      expected to understand the composition of a repository both from
+      a logical perspective—dealing with how data is represented
+      inside the repository—and from a physical nuts-and-bolts
+      perspective—how a repository looks and acts with respect
+      to non-Subversion tools.  The following section covers some of
+      these basic concepts at a very high level.</p><div class="sect2" lang="it" xml:lang="it"><div class="titlepage"><div><div><h3 class="title"><a id="svn.reposadmin.basics.txnsrevs"></a>Understanding Transactions and Revisions</h3></div></div></div><p>Conceptually speaking, a Subversion repository is a
+        sequence of directory trees.  Each tree is a snapshot of how
+        the files and directories versioned in your repository looked
+        at some point in time.  These snapshots are created as a
+        result of client operations, and are called revisions.</p><p>Every revision begins life as a transaction tree.  When
+        doing a commit, a client builds a Subversion transaction that
+        mirrors their local changes (plus any additional changes that
+        might have been made to the repository since the beginning of
+        the client's commit process), and then instructs the
+        repository to store that tree as the next snapshot in the
+        sequence.  If the commit succeeds, the transaction is
+        effectively promoted into a new revision tree, and is assigned
+        a new revision number.  If the commit fails for some reason,
+        the transaction is destroyed and the client is informed of the
+        failure.</p><p>Updates work in a similar way.  The client builds a
+        temporary transaction tree that mirrors the state of the
+        working copy.  The repository then compares that transaction
+        tree with the revision tree at the requested revision (usually
+        the most recent, or «<span class="quote">youngest</span>» tree), and sends
+        back information that informs the client about what changes
+        are needed to transform their working copy into a replica of
+        that revision tree.  After the update completes, the temporary
+        transaction is deleted.</p><p>The use of transaction trees is the only way to make
+        permanent changes to a repository's versioned filesystem.
+        However, it's important to understand that the lifetime of a
+        transaction is completely flexible.  In the case of updates,
+        transactions are temporary trees that are immediately
+        destroyed.  In the case of commits, transactions are
+        transformed into permanent revisions (or removed if the commit
+        fails).  In the case of an error or bug, it's possible that a
+        transaction can be accidentally left lying around in the
+        repository (not really affecting anything, but still taking up
+        space).</p><p>In theory, someday whole workflow applications might
+        revolve around more fine-grained control of transaction
+        lifetime.  It is feasible to imagine a system whereby each
+        transaction slated to become a revision is left in stasis well
+        after the client finishes describing its changes to
+        repository.  This would enable each new commit to be reviewed
+        by someone else, perhaps a manager or engineering QA team, who
+        can choose to promote the transaction into a revision, or
+        abort it.</p></div><div class="sect2" lang="it" xml:lang="it"><div class="titlepage"><div><div><h3 class="title"><a id="svn.reposadmin.basics.revprops"></a>Unversioned Properties</h3></div></div></div><p>Transactions and revisions in the Subversion repository
+        can have properties attached to them.  These properties are
+        generic key-to-value mappings, and are generally used to store
+        information about the tree to which they are attached.  The
+        names and values of these properties are stored in the
+        repository's filesystem, along with the rest of your tree
+        data.</p><p>Revision and transaction properties are useful for
+        associating information with a tree that is not strictly
+        related to the files and directories in that tree—the
+        kind of information that isn't managed by client working
+        copies.  For example, when a new commit transaction is created
+        in the repository, Subversion adds a property to that
+        transaction named <code class="literal">svn:date</code>—a
+        datestamp representing the time that the transaction was
+        created.  By the time the commit process is finished, and the
+        transaction is promoted to a permanent revision, the tree has
+        also been given a property to store the username of the
+        revision's author (<code class="literal">svn:author</code>) and a
+        property to store the log message attached to that revision
+        (<code class="literal">svn:log</code>).</p><p>Revision and transaction properties are
+        <em class="firstterm">unversioned properties</em>—as they
+        are modified, their previous values are permanently discarded.
+        Also, while revision trees themselves are immutable, the
+        properties attached to those trees are not.  You can add,
+        remove, and modify revision properties at any time in the
+        future.  If you commit a new revision and later realize that
+        you had some misinformation or spelling error in your log
+        message, you can simply replace the value of the
+        <code class="literal">svn:log</code> property with a new, corrected log
+        message.</p></div><div class="sect2" lang="it" xml:lang="it"><div class="titlepage"><div><div><h3 class="title"><a id="svn.reposadmin.basics.backends"></a>Repository Data Stores</h3></div></div></div><p>As of Subversion 1.1, there are two options for storing
+        data in a Subversion repository.  One type of repository
+        stores everything in a Berkeley DB database; the other kind
+        stores data in ordinary flat files, using a custom
+        format.  Because Subversion developers often refer to a
+        repository as «<span class="quote">the (versioned) filesystem</span>», they have
+        adopted the habit of referring to the latter type of repository as
+        <em class="firstterm">FSFS</em>
+        <sup>[<a id="id4824146" href="#ftn.id4824146">16</a>]</sup>
+        —a versioned
+        filesystem implementation that uses the native OS filesystem
+        to store data.</p><p>When a repository is created, an administrator must decide
+        whether it will use Berkeley DB or FSFS.  There are advantages
+        and disadvantages to each, which we'll describe in a bit.
+        Neither back-end is more «<span class="quote">official</span>» than another,
+        and programs which access the repository are insulated from
+        this implementation detail.  Programs have no idea how a
+        repository is storing data; they only see revision and
+        transaction trees through the repository API.</p><p><a href="svn.reposadmin.html#svn.reposadmin.basics.backends.tbl-1" title="Tabella 5.1. Repository Data Store Comparison">Tabella 5.1, «Repository Data Store Comparison»</a>
+        gives a comparative overview of Berkeley DB and FSFS
+        repositories.  The next sections go into detail.</p><div class="table"><a id="svn.reposadmin.basics.backends.tbl-1"></a><p class="title"><b>Tabella 5.1. Repository Data Store Comparison</b></p><div class="table-contents"><table summary="Repository Data Store Comparison" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>Feature</th><th>Berkeley DB</th><th>FSFS</th></tr></thead><tbody><tr><td>Sensitivity to interruptions</td><td>very;  crashes and permission problems can leave the
+                database «<span class="quote">wedged</span>», requiring journaled
+                recovery procedures.</td><td>quite insensitive.</td></tr><tr><td>Usable from a read-only mount</td><td>no</td><td>yes</td></tr><tr><td>Platform-independent storage</td><td>no</td><td>yes</td></tr><tr><td>Usable over network filesystems</td><td>no</td><td>yes</td></tr><tr><td>Repository size</td><td>slightly larger</td><td>slightly smaller</td></tr><tr><td>Scalability: number of revision trees</td><td>database;  no problems</td><td>some older native filesystems don't scale well with
+                thousands of entries in a single directory.</td></tr><tr><td>Scalability: directories with many files</td><td>slower</td><td>faster</td></tr><tr><td>Speed:  checking out latest code</td><td>faster</td><td>slower</td></tr><tr><td>Speed:  large commits</td><td>slower, but work is spread throughout commit</td><td>faster, but finalization delay may cause client
+                timeouts</td></tr><tr><td>Group permissions handling</td><td>sensitive to user umask problems;  best if accessed
+                by only one user.</td><td>works around umask problems</td></tr><tr><td>Code maturity</td><td>in use since 2001</td><td>in use since 2004</td></tr></tbody></table></div></div><br class="table-break" /><div class="sect3" lang="it" xml:lang="it"><div class="titlepage"><div><div><h4 class="title"><a id="svn.reposadmin.basics.backends.bdb"></a>Berkeley DB</h4></div></div></div><p>When the initial design phase of Subversion was in
+          progress, the developers decided to use Berkeley DB for a
+          variety of reasons, including its open-source license,
+          transaction support, reliability, performance, API
+          simplicity, thread-safety, support for cursors, and so
+          on.</p><p>Berkeley DB provides real transaction
+          support—perhaps its most powerful feature.  Multiple
+          processes accessing your Subversion repositories don't have
+          to worry about accidentally clobbering each other's data.
+          The isolation provided by the transaction system is such
+          that for any given operation, the Subversion repository code
+          sees a static view of the database—not a database that
+          is constantly changing at the hand of some other
+          process—and can make decisions based on that view.  If
+          the decision made happens to conflict with what another
+          process is doing, the entire operation is rolled back as if
+          it never happened, and Subversion gracefully retries the
+          operation against a new, updated (and yet still static) view
+          of the database.</p><p>Another great feature of Berkeley DB is <em class="firstterm">hot
+          backups</em>—the ability to backup the database
+          environment without taking it «<span class="quote">offline</span>».  We'll
+          discuss how to backup your repository in <a href="svn.reposadmin.maint.html#svn.reposadmin.maint.backup" title="Repository Backup">la sezione chiamata «Repository Backup»</a>, but the benefits of being
+          able to make fully functional copies of your repositories
+          without any downtime should be obvious.</p><p>Berkeley DB is also a very reliable database system.
+          Subversion uses Berkeley DB's logging facilities, which
+          means that the database first writes to on-disk log files a
+          description of any modifications it is about to make, and
+          then makes the modification itself.  This is to ensure that
+          if anything goes wrong, the database system can back up to
+          a previous <em class="firstterm">checkpoint</em>—a
+          location in the log files known not to be corrupt—and
+          replay transactions until the data is restored to a usable
+          state.  See <a href="svn.reposadmin.maint.html#svn.reposadmin.maint.diskspace" title="Managing Disk Space">la sezione chiamata «Managing Disk Space»</a> for more
+          about Berkeley DB log files.</p><p>But every rose has its thorn, and so we must note some
+          known limitations of Berkeley DB.  First, Berkeley DB
+          environments are not portable.  You cannot simply copy a
+          Subversion repository that was created on a Unix system onto
+          a Windows system and expect it to work.  While much of the
+          Berkeley DB database format is architecture independent,
+          there are other aspects of the environment that are not.
+          Secondly, Subversion uses Berkeley DB in a way that will not
+          operate on Windows 95/98 systems—if you need to house
+          a repository on a Windows machine, stick with Windows 2000
+          or Windows XP.  Also, you should never keep a Berkeley DB
+          repository on a network share.  While Berkeley DB promises
+          to behave correctly on network shares that meet a particular
+          set of specifications, almost no known shares actually meet
+          all those specifications.</p><p>Finally, because Berkeley DB is a library linked
+          directly into Subversion, it's more sensitive to
+          interruptions than a typical relational database system.
+          Most SQL systems, for example, have a dedicated server
+          process that mediates all access to tables.  If a program
+          accessing the database crashes for some reason, the database
+          daemon notices the lost connection and cleans up any mess
+          left behind.  And because the database daemon is the only
+          process accessing the tables, applications don't need to
+          worry about permission conflicts.  These things are not the
+          case with Berkeley DB, however.  Subversion (and programs
+          using Subversion libraries) access the database tables
+          directly, which means that a program crash can leave the
+          database in a temporarily inconsistent, inaccessible state.
+          When this happens, an administrator needs to ask Berkeley DB
+          to restore to a checkpoint, which is a bit of an annoyance.
+          Other things can cause a repository to «<span class="quote">wedge</span>»
+          besides crashed processes, such as programs conflicting over
+          ownership and permissions on the database files.  So while a
+          Berkeley DB repository is quite fast and scalable, it's best
+          used by a single server process running as one
+          user—such as Apache's <span><strong class="command">httpd</strong></span> or
+          <span><strong class="command">svnserve</strong></span> (see <a href="svn.serverconfig.html" title="Capitolo 6. Server Configuration">Capitolo 6, <i>Server Configuration</i></a>)—rather than accessing it as
+          many different users via <code class="literal">file:///</code> or
+          <code class="literal">svn+ssh://</code> URLs.  If using a Berkeley DB
+          repository directly as multiple users, be sure to read <a href="svn.serverconfig.multimethod.html" title="Supporting Multiple Repository Access Methods">la sezione chiamata «Supporting Multiple Repository Access Methods»</a>.</p></div><div class="sect3" lang="it" xml:lang="it"><div class="titlepage"><div><div><h4 class="title"><a id="svn.reposadmin.basics.backends.fsfs"></a>FSFS</h4></div></div></div><p>In mid-2004, a second type of repository storage system
+          came into being: one which doesn't use a database at all.
+          An FSFS repository stores a revision tree in a single file,
+          and so all of a repository's revisions can be found in a
+          single subdirectory full of numbered files.  Transactions
+          are created in separate subdirectories.  When complete, a
+          single transaction file is created and moved to the
+          revisions directory, thus guaranteeing that commits are
+          atomic.  And because a revision file is permanent and
+          unchanging, the repository also can be backed up while
+          «<span class="quote">hot</span>», just like a Berkeley DB repository.</p><p>The revision-file format represents a revision's
+          directory structure, file contents, and deltas against files
+          in other revision trees.  Unlike a Berkeley DB database,
+          this storage format is portable across different operating
+          systems and isn't sensitive to CPU architecture.  Because
+          there's no journaling or shared-memory files being used, the
+          repository can be safely accessed over a network filesystem
+          and examined in a read-only environment.  The lack of
+          database overhead also means that the overall repository
+          size is a bit smaller.</p><p>FSFS has different performance characteristics too.
+          When committing a directory with a huge number of files, FSFS
+          uses an O(N) algorithm to append entries, while Berkeley DB
+          uses an O(N^2) algorithm to rewrite the whole directory.  On
+          the other hand, FSFS writes the latest version of a file as
+          a delta against an earlier version, which means that
+          checking out the latest tree is a bit slower than fetching
+          the fulltexts stored in a Berkeley DB HEAD revision.  FSFS
+          also has a longer delay when finalizing a commit, which
+          could in extreme cases cause clients to time out when
+          waiting for a response.</p><p>The most important distinction, however, is FSFS's
+          inability to be «<span class="quote">wedged</span>» when something goes
+          wrong.  If a process using a Berkeley DB database runs into
+          a permissions problem or suddenly crashes, the database is
+          left unusable until an administrator recovers it.  If the
+          same scenarios happen to a process using an FSFS repository,
+          the repository isn't affected at all.  At worst, some
+          transaction data is left behind.</p><p>The only real argument against FSFS is its relative
+          immaturity compared to Berkeley DB.  It hasn't been used or
+          stress-tested nearly as much, and so a lot of these
+          assertions about speed and scalability are just that:
+          assertions, based on good guesses.  In theory, it promises a
+          lower barrier to entry for new administrators and is less
+          susceptible to problems.  In practice, only time will
+          tell.</p></div></div></div><div class="footnotes"><br /><hr width="100" align="left" /><div class="footnote"><p><sup>[<a id="ftn.id4824273" href="#id4824273">15</a>] </sup>This may sound really prestigious and lofty, but we're
+          just talking about anyone who is interested in that
+          mysterious realm beyond the working copy where everyone's
+          data hangs out.</p></div><div class="footnote"><p><sup>[<a id="ftn.id4824146" href="#id4824146">16</a>] </sup>Pronounced «<span class="quote">fuzz-fuzz</span>», if Jack
+            Repenning has anything to say about it.</p></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="svn.branchmerge.summary.html">Indietro</a> </td><td width="20%" align="center"> </td><td width="40%" align="right"> <a accesskey="n" href="svn.reposadmin.create.html">Avanti</a></td></tr><tr><td width="40%" align="left" valign="top">Summary </td><td width="20%" align="center"><a accesskey="h" href="index.html">Partenza</a></td><td width="40%" align="right" valign="top"> Repository Creation and Configuration</td></tr></table></div></body></html>
