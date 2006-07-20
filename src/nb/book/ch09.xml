@@ -910,9 +910,9 @@ Updated to revision 3.
           <title>Description</title>
 
           <para>Recursively clean up the working copy, removing
-            locks resuming unfinished operations.  If you ever get a
-            <quote>working copy locked</quote> error, run this
-            command to remove stale locks and get your working copy
+            working copy locks and resuming unfinished operations.
+            If you ever get a <quote>working copy locked</quote> error,
+            run this command to remove stale locks and get your working copy
             into a usable state again.</para>
 
           <para>If, for some reason, an <command>svn update</command>
@@ -3397,7 +3397,10 @@ $ svn status
             <varlistentry>
               <term>'R'</term>
               <listitem>
-                <para>Item has been replaced in your working copy.</para>
+                <para>Item has been replaced in your working copy.
+                This means the file was scheduled for deletion, and
+                then a new file with the same name was scheduled for
+                addition in its place.</para>
               </listitem>
             </varlistentry>
 
@@ -3485,7 +3488,8 @@ $ svn status
           </variablelist>
 
           <para>The third column is populated only if the
-            working copy directory is locked.</para>
+            working copy directory is locked. (See
+            <xref linkend="svn.tour.other.cleanup"/>.)</para>
 
           <variablelist>
             
@@ -3992,7 +3996,9 @@ $ svn unlock http://svn.red-bean.com/repos/test/tree.jpg
             synchronizes the working copy to the revision given by the
             <option>--revision</option> switch.  As part of the
             synchronization, <command>svn update</command> also
-            removes any stale locks found in the working copy.</para>
+            removes any stale locks (see <xref
+            linkend="svn.tour.other.cleanup"/>) found in the
+            working copy.</para>
 
           <para>For each updated item a line will start with a
             character reporting the action taken.  These characters
@@ -4748,9 +4754,10 @@ The latest repos revision is 34.
 </screen>
 
           <para>Recovering the database requires an exclusive lock on
-            the repository.  If another process is accessing the
-            repository, then <command>svnadmin recover</command> will
-            error:</para>
+            the repository. (This is a <quote>database lock</quote>;
+            see <xref linkend="svn.advanced.locking.meanings"/>.)
+            If another process is accessing the repository,
+            then <command>svnadmin recover</command> will error:</para>
           <screen>
 $ svnadmin recover /usr/local/svn/repos
 svn: Failed to get exclusive repository access; perhaps another process
@@ -6237,6 +6244,204 @@ exported</screen>
 
         </variablelist>
       </refsect1>
+    </refentry>
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.ref.properties">
+
+    <title><command>Subversion properties</command></title>
+
+
+    <refentry id="svn.ref.svnprops">
+      <refnamediv>
+
+        <refname>Subversion-defined properties</refname> <refpurpose>
+        properties defined by Subversion to control behavior.</refpurpose>
+
+      </refnamediv>
+
+      <refsect1 id="svn.ref.svnprops.desc">
+        <title>Description</title>
+
+        <para>Subversion allows users to invent arbitrarily-named
+          versioned properties on files and directories, as well as
+          unversioned properties on revisions.  The only restriction
+          is on properties prefixed with <quote>svn:</quote>.
+          Properties in that namespace are reserved for Subversion's
+          own use.  While these properties may be set by users to
+          control Subversion's behavior, users may not invent new
+          <quote>svn:</quote> properties.</para>
+
+      </refsect1>
+
+      <refsect1 id="svn.ref.properties.versioned-props">
+        <title>Versioned Properties</title>
+
+        <variablelist>
+
+          <varlistentry>
+            <term><literal>svn:executable</literal></term>
+            <listitem>
+
+              <para>If present on a file, the client will make the
+                file executable in Unix-hosted working copies.  See
+                <xref
+                linkend="svn.advanced.props.special.executable"/>.</para>
+
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><literal>svn:mime-type</literal></term>
+            <listitem>
+
+              <para>If present on a file, the value indicates the
+                file's mime-type.  This allows the client to decide
+                whether line-based contextual merging is safe to
+                perform during updates, and can also affect how the
+                file behaves when fetched via web browser.  See
+                <xref
+                linkend="svn.advanced.props.special.mime-type"/>. </para>
+
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><literal>svn:ignore</literal></term>
+            <listitem>
+
+              <para>If present on a directory, the value is a list of
+                unversioned file patterns to be ignored
+                by <command>svn status</command> and other
+                subcommands.  See
+                <xref
+                linkend="svn.advanced.props.special.ignore"/></para>
+
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><literal>svn:keywords</literal></term>
+            <listitem>
+
+              <para>If present on a file, the value tells the client
+                how to expand particular keywords within the file.
+                See
+                <xref
+                linkend="svn.advanced.props.special.keywords"/>.</para>
+
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><literal>svn:eol-style</literal></term>
+            <listitem>
+
+              <para>If present on a file, the value tells the client
+                how to manipulate the file's line-endings in the
+                working copy.  See
+                <xref
+                linkend="svn.advanced.props.special.eol-style"/>.</para>
+
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><literal>svn:externals</literal></term>
+            <listitem>
+
+              <para>If present on a directory, the value is a
+                multi-line list of other paths and URLs the client
+                should check out.  See
+                <xref
+                linkend="svn.advanced.props.special.externals"/>.</para>
+
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><literal>svn:special</literal></term>
+            <listitem>
+
+              <para>If present on a file, indicates that the file is
+                not an ordinary file, but a symbolic link or other
+                special object.  See
+                <xref
+                linkend="svn.advanced.props.special.special"/>.</para>
+
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><literal>svn:needs-lock</literal></term>
+            <listitem>
+
+              <para>If present on a file, tells the client to make the
+                file read-only in the working copy, as a reminder that
+                the file should be locked before editing begins.  See
+                <xref
+                linkend="svn.advanced.locking.lock-communication"/>.</para>
+
+            </listitem>
+          </varlistentry>
+
+        </variablelist>
+      </refsect1>
+
+      <refsect1 id="svn.ref.properties.unversioned-props">
+        <title>Unversioned Properties</title>
+
+        <variablelist>
+
+          <varlistentry>
+            <term><literal>svn:author</literal></term>
+            <listitem>
+
+              <para>If present, contains the authenticated username of
+                the person who created the revision.  (If not present,
+                then the revision was committed anonymously.)</para>
+
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><literal>svn:date</literal></term>
+            <listitem>
+
+              <para>Contains the UTC time the revision was created, in
+                ISO format.  The value comes from the server
+                machine's clock.</para>
+
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><literal>svn:log</literal></term>
+            <listitem>
+
+              <para>Contains the log message describing the
+                revision.</para>
+
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><literal>svn:autoversioned</literal></term>
+            <listitem>
+
+              <para>If present, the revision was created via the
+                autoversioning feature.  See
+                <xref linkend="svn.webdav.autoversioning"/>.</para>
+
+            </listitem>
+          </varlistentry>
+
+        </variablelist>
+      </refsect1>
+
     </refentry>
   </sect1>
 

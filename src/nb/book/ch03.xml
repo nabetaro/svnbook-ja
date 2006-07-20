@@ -633,7 +633,7 @@ Sjekket ut revisjon 2499.
       <para>Subversion tries hard not to limit the type of data you
         can place under version control.  The contents of files and
         property values are stored and transmitted as binary data, and
-        the <xref linkend="svn.advanced.props.special.mime-type"/>
+        <xref linkend="svn.advanced.props.special.mime-type"/>
         tells you how to give Subversion a hint that
         <quote>textual</quote> operations don't make sense for a
         particular file.  There are a few places, however, where
@@ -651,28 +651,26 @@ Sjekket ut revisjon 2499.
         hvordan informasjonen kan lagres.</para>
 
       <!-- @ENGLISH {{{
-      <para>Subversion handles text internally as UTF-8 encoded
-        Unicode.  As a result, certain items which are inherently
-        <quote>textual</quote>, such as property names, path names,
-        and log messages, can only contain legal UTF-8 characters.  It
-        also provides a minimum requirement for use of the
-        <literal>svn:mime-type</literal> property&mdash;if a file's
-        contents aren't compatible with UTF-8, you should mark it as a
-        binary file.  Otherwise, Subversion will attempt to merge
-        differences using UTF-8, which is likely to leave garbage in
-        the file.</para>
+      <para>Subversion internally handles certain bits of
+        data&mdash;for example, property names, path names, and log
+        messages&mdash;as UTF-8 encoded Unicode.  This is not to say
+        that all your interactions with Subversion must involve UTF-8,
+        though.  As a general rule, Subversion clients will gracefully
+        and transparently handle conversions between UTF-8 and the
+        encoding system in use on your computer, if such a conversion
+        can meaningfully be done (which is the case for most common
+        encodings in use today).</para>
       @ENGLISH }}} -->
-      <para>Internt behandler Subversion tekst som UTF-8-kodet Unicode.
-        Som et resultat av dette kan enkelte elementer som er 
-        <quote>tekstbaserte</quote>, som for eksempel loggmeldinger og 
-        navn på egenskaper og filstier, kun inneholde lovlige tegn i 
-        UTF-8.
-        Det medfører også et minimumskrav for bruken av 
-        <literal>svn:mime-type</literal>-egenskapen – hvis filinnholdet 
-        ikke er kompatibelt med UTF-8, bør du merke den som en binær 
-        fil.
-        Hvis ikke, vil Subversion prøve å flette inn forskjeller ved å 
-        bruke UTF-8, noe som kan etterlate skrot i fila.</para>
+      <para>Internt behandler Subversion visse typer data – som for 
+        eksempel egenskapsnavn, filstier og loggmeldinger – som 
+        UTF-8-kodet Unicode.
+        Men dette betyr ikke at all omgangen din med Subversion må 
+        involvere UTF-8.
+        Som en generell regel vil Subversionklienter ta seg av 
+        konvertering mellom UTF-8 og ditt lokale tegnsett på maskinen 
+        uten at du merker noe som helst, hvis dette kan gjøres på en 
+        skikkelig måte (som er tilfellet med de fleste vanlige 
+        tegnkodinger i bruk i dag).</para>
 
       <!-- @ENGLISH {{{
       <para>In addition, path names are used as XML attribute values
@@ -2037,12 +2035,16 @@ R       xyz.c               # filen er klargjort for erstatning
 
         <!-- @ENGLISH {{{
         <para>The sixth column shows information about locks, which is
-          further explained in <xref
-          linkend="svn.advanced.locking"/>.</para>
+          further explained in <xref linkend="svn.advanced.locking"/>.
+          (These are not the same locks as the ones indicated by an
+          <computeroutput>L</computeroutput> in the third column;
+          see <xref linkend="svn.advanced.locking.meanings"/>.)</para>
         @ENGLISH }}} -->
         <para>Den sjette kolonnen viser informasjon om låser, som er 
-          nærmere forklart i <xref 
-          linkend="svn.advanced.locking"/>.</para>
+          nærmere forklart i <xref linkend="svn.advanced.locking"/>.
+          (Dette er ikke de samme låsene som de som vises som en 
+          <computeroutput>L</computeroutput> i den tredje kolonnen; se 
+          <xref linkend="svn.advanced.locking.meanings"/>.)</para>
         
         <!-- @ENGLISH {{{
         <para>If you pass a specific path to <command>svn
@@ -4118,11 +4120,14 @@ $ svn update --revision 1729 # Oppdaterer en eksisterende arbeidskopi
       <para>When Subversion modifies your working copy (or any
         information within <filename>.svn</filename>), it tries to do
         so as safely as possible.  Before changing the working copy,
-        Subversion writes its intentions to a log file.  Next it executes
-        the commands in the log file to apply the requested change.
-        Finally, Subversion removes the log file.  Architecturally, this
-        is similar to a journaled filesystem.  If a Subversion operation is
-        interrupted (if the process is killed, or if the machine
+        Subversion writes its intentions to a log file.  Next it
+        executes the commands in the log file to apply the requested
+        change, holding a lock on the relevant part of the working
+        copy while it works &mdash; to prevent othe Subversion clients
+        from accessing the working copy in mid-change.  Finally,
+        Subversion removes the log file.  Architecturally, this is
+        similar to a journaled filesystem.  If a Subversion operation
+        is interrupted (if the process is killed, or if the machine
         crashes, for example), the log files remain on disk.  By
         re-executing the log files, Subversion can complete the
         previously started operation, and your working copy can get
@@ -4134,7 +4139,10 @@ $ svn update --revision 1729 # Oppdaterer en eksisterende arbeidskopi
         Før arbeidskopien blir forandret, skriver Subversion det som 
         skal utføres til en loggfil.
         Deretter kjører programmet kommandoene i loggfilen for å utføre 
-        forandringen det blir bedt om.
+        forandringen det blir bedt om mens det setter opp en lås på den 
+        relevante delen av arbeidskopien mens det arbeider – dette er 
+        for å hindre andre Subversionklienter fra å aksessere 
+        arbeidskopien midt under forandringer.
         Til slutt fjerner Subversion loggfilen.
         Arkitekturmessig er dette likt et journalfilsystem.
         Hvis en Subversionoperasjon blir avbrutt (hvis prosessen blir 
@@ -4147,16 +4155,16 @@ $ svn update --revision 1729 # Oppdaterer en eksisterende arbeidskopi
       <!-- @ENGLISH {{{
       <para>And this is exactly what <command>svn cleanup</command>
         does: it searches your working copy and runs any leftover
-        logs, removing locks in the process.  If Subversion ever tells
-        you that some part of your working copy is
-        <quote>locked</quote>, then this is the command that you
+        logs, removing working copy locks in the process.
+        If Subversion ever tells you that some part of your working copy
+        is <quote>locked</quote>, then this is the command that you
         should run.  Also, <command>svn status</command> will display
         an <literal>L</literal> next to locked items:</para>
       @ENGLISH }}} -->
       <para>Og dette er nøyaktig hva <command>svn cleanup</command> 
         gjør:
         Den leter gjennom arbeidskopien og kjører alle etterlatte logger 
-        mens den fjerner låser under prosessen.
+        mens den fjerner låser i arbeidskopien under prosessen.
         Hvis Subversion noen ganger forteller deg at en del av 
         arbeidskopien er <quote>låst</quote> 
         (<foreignphrase>locked</foreignphrase>), er dette kommandoen du 
@@ -4174,6 +4182,20 @@ $ svn cleanup
 $ svn status
 M      somedir/foo.c
 </screen>
+
+      <!-- @ENGLISH {{{
+      <para>Don't confuse these working copy locks with the ordinary
+        locks that Subversion users create when using
+        the <quote>lock-modify-unlock</quote> model of concurrent
+        version control; see
+        <xref linkend="svn.advanced.locking.meanings"/> for
+        clarification.</para>
+      @ENGLISH }}} -->
+      <para>Du må ikke forveksle disse arbeidskopilåsene med de vanlige 
+        låsene som Subversionbrukere oppretter når de bruker 
+        <quote>lås-modifiser-lås opp</quote>-versjonskontrollmodellen; 
+        se <xref linkend="svn.advanced.locking.meanings"/> mer 
+        forklaring på dette.</para>
 
     </sect2>
 

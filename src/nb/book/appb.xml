@@ -327,11 +327,11 @@
       <literal>MKACTIVITY</literal>, <literal>CHECKOUT</literal>,
       <literal>PUT</literal>, <literal>CHECKIN</literal>.  But if the
       DeltaV server supports autoversioning, then write-requests from
-      basic WebDAV clients are accepted.  The server behaves *as if*
-      the client had issued the proper series of versioning requests,
+      basic WebDAV clients are accepted.  The server behaves as if the
+      client had issued the proper series of versioning requests,
       performing a commit under the hood.  In other words, it allows a
       DeltaV server to interoperate with ordinary WebDAV
-      clients.</para>
+      clients that don't understand versioning.</para>
 
     <para>Because so many operating systems already have integrated
       WebDAV clients, the use case for this feature borders on
@@ -373,16 +373,52 @@
       many applications auto-save every few minutes, resulting in even
       more commits.</para>
 
-    <para>If you have a post-commit hook program that sends email, for
-      example, you may want to disable email generation either
-      altogether, or on certain sections of the repository; it depends
-      on whether you think the influx of emails will still prove to be
-      valuable notifications or not.  Also, a smart post-commit hook
-      program can distinguish between a transaction created via
-      autoversioning and one created through a normal <command>svn
-      commit</command>.  The trick is to look for a revision property
+    <para>If you have a post-commit hook program that sends email, you
+      may want to disable email generation either altogether, or on
+      certain sections of the repository; it depends on whether you
+      think the influx of emails will still prove to be valuable
+      notifications or not.  Also, a smart post-commit hook program
+      can distinguish between a transaction created via autoversioning
+      and one created through a normal <command>svn commit</command>.
+      The trick is to look for a revision property
       named <literal>svn:autoversioned</literal>.  If present, the
       commit was made by a generic WebDAV client.</para>
+
+    <para>Another feature that may be a useful complement
+      for <literal>SVNAutoversioning</literal> comes from
+      Apache's <literal>mod_mime</literal> module.  If a generic
+      WebDAV client adds a new file to the repository, there's no
+      opportunity for the user to set the
+      the <literal>svn:mime-type</literal> property.  This might cause
+      the file to appear as <quote>generic</quote> icon when viewed
+      within a WebDAV shared folder, not having an association with
+      any application.  One remedy is to have a sysadmin (or other
+      Subversion-knowledgable person) check out a working copy and
+      manually set the <literal>svn:mime-type</literal> property on
+      necessary files. But there's potentially no end to such cleanup
+      tasks.  Instead, you can use
+      the <literal>ModMimeUsePathInfo</literal> directive in
+      your Subversion <literal>&lt;Location&gt;</literal>
+      block:</para>
+ 
+    <screen>
+&lt;Location /repos&gt;
+  DAV svn
+  SVNPath /path/to/repository
+  SVNAutoversioning on
+
+  ModMimeUsePathInfo on
+
+&lt;/Location&gt;
+</screen>
+
+    <para>This directive allows <literal>mod_mime</literal> to attempt
+      automatic deduction of the mime-type on new files that enter the
+      repository via autoversioning.  The module looks at the file's
+      named extension and possibly the contents as well; if the file
+      matches some common patterns, then the the
+      file's <literal>svn;mime-type</literal> property will be set
+      automatically.</para>
 
   </sect1>
 
@@ -666,6 +702,15 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
           instead, and that if you need real a real filesystem-level
           client for Windows XP, then use a third-party program like
           WebDrive or NetDrive.</para>
+
+        <para>A final tip: if you're attempting to use XP Web Folders,
+          make sure you have the absolute latest version from
+          Microsoft.  For example, Microsoft released a bug-fixed
+          version in January 2005, available at
+          <ulink url="http://support.microsoft.com/?kbid=892211"/>.
+          In particular, this release is known to fix a bug whereby
+          browsing a DAV share shows an unexpected infinite
+          recursion.</para>
 
       </sect3>
 
