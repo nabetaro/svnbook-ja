@@ -5,7 +5,8 @@ default: all-html
 
 include ../tools/Makefile.base
 
-BOOK_ASPELL_FILES = appa appb book foreword ch00 ch01 ch03 ch04 ch06 ch07 ch08 ch09
+BOOK_ASPELL_FILES = appa appb book foreword ch00 ch01 ch02 ch03 ch04 \
+	ch06 ch07 ch08 ch09
 OTHER_ASPELL_FILES = COORDINADOR glosario_traduccion LEAME TODO TRABAJO
 
 aspell_add_words:
