@@ -20,33 +20,28 @@ version:
 	  mv $(VERSION_SOURCE).tmp $(VERSION_SOURCE); \
 	fi
 
+# This is a proposal from svn-it group: If you want to build the book with only
+# <para lang="it"> you simply have to set the variable LANG_FILTER.  Of course
+# this approach can be shared with any other translation group if needing of
+# preserving original <para> text is felt.
+# Here is an example of invocation from the command line:
+#   cd src/it 
+#   export LANG_FILTER=1
+#   make html
+
 html: $(HTML_TARGET)
 $(HTML_TARGET): $(ALL_SOURCE) $(VERSION_SOURCE) $(STYLESHEET) $(IMAGES)
 	$(ENSURE_XSL)
-#----- start it contrib ------
-#
-# This is a proposal from svn-it group: if you want to build html with only <para lang="it">
-# you simply have to set the variable LANG_FILTER=IT.
-# Of course this approach can be shared with any other translation group if
-# needing of preserving orginal <para> text is felt.
-# Follows an example of invocation from the command line:
-# cd src/it 
-# export LANG_FILTER=IT
-# make all-html
-#
-	$(IF_LANG_FILTER) \
-		echo "Building HTML filtering on <para lang=$(LANG_FILTER)>" ; \
-		$(XSLTPROC) $(HTML_XSLTPROC_OPTS) --output $(XML_LANG_TARGET) \
-		$(TOOLS_DIR)/xsl/profiling/profile.xsl $(XML_SOURCE) ; \
-		$(XSLTPROC) --output $(HTML_TARGET) \
-		$(TOOLS_DIR)/html-stylesheet.xsl $(XML_LANG_TARGET) ; \
-		rm $(XML_LANG_TARGET) \
+	if test -n "$(LANG_FILTER)"; then \
+	  $(XSLTPROC) $(HTML_XSLTPROC_OPTS) \
+	    --stringparam profile.lang it \
+	    $(TOOLS_DIR)/xsl/profiling/profile.xsl $(XML_SOURCE) | \
+	    $(XSLTPROC) $(HTML_XSLTPROC_OPTS) --output $(HTML_TARGET) \
+	    $(TOOLS_DIR)/html-stylesheet.xsl -; \
 	else \
-		echo "Building HTML without any filter." ; \
-		$(XSLTPROC) $(HTML_XSLTPROC_OPTS) --output $(HTML_TARGET) \
-		$(TOOLS_DIR)/html-stylesheet.xsl $(XML_SOURCE) \
-	$(ENDIF) \
-#----- end it contrib ------
+	  $(XSLTPROC) $(HTML_XSLTPROC_OPTS) --output $(HTML_TARGET) \
+	    $(TOOLS_DIR)/html-stylesheet.xsl $(XML_SOURCE); \
+	fi
 
 # The trailing slash on the xsltproc --output option is essential to
 # output pages into the directory
@@ -55,7 +50,9 @@ $(HTML_CHUNK_TARGET): $(ALL_SOURCE) $(VERSION_SOURCE) $(STYLESHEET) $(IMAGES)
 	mkdir -p $(HTML_CHUNK_DIR)
 	$(IFIMAGES) mkdir -p $(HTML_CHUNK_DIR)/images $(ENDIF)
 	$(ENSURE_XSL)
-	$(XSLTPROC) $(HTML_XSLTPROC_OPTS) --output $(HTML_CHUNK_DIR)/ $(TOOLS_DIR)/chunk-stylesheet.xsl $(XML_SOURCE)
+	$(XSLTPROC) $(HTML_XSLTPROC_OPTS) \
+           --output $(HTML_CHUNK_DIR)/ \
+	   $(TOOLS_DIR)/chunk-stylesheet.xsl $(XML_SOURCE)
 	cp $(STYLESHEET) $(HTML_CHUNK_DIR)
 	$(IFIMAGES) cp $(IMAGES) $(HTML_CHUNK_DIR)/images $(ENDIF)
 
