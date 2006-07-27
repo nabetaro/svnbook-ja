@@ -103,73 +103,75 @@
     
     <!-- =============================================================== -->
     <sect2 id="svn.basic.vsn-models.lock-unlock">
-      <title>Solução de Bloquear-Modificar-Desbloquear</title>
+      <title>A Solução Travar-Modificar-Destravar</title>
       
-      <para>Muitos sistemas de controle de versão usam o modelo de
-        <firstterm>bloquear-modificar-desbloquear</firstterm>  destinado
+      <para>Muitos sistemas de controle de versão usam o modelo
+        <firstterm>travar-modificar-destravar</firstterm>
+        (<firstterm>lock-modify-unlock</firstterm>, em inglês) destinado
         a evitar o problema de autores terem seus trabalhos sobrescritos
-        por terceiros. Nesse modelo, o repositório permite um
-        arquivo ser editado apenas por uma pessoa de cada vez. Essa
-        ação de exclusividade é conseguida através de bloqueios. Harry deve
-        <quote>bloquear</quote> um arquivo antes de começar a alterá-lo.
-        Se Harry está com este arquivo bloqueado, então Sally não poderá
-        bloqueá-lo, e nem alterá-lo. Tudo o que ela pode fazer é ler o
-        arquivo, e esperar que Harry termine sua edição e o desbloqueie.
-        Depois que Harry liberou o arquivo, Sally pode bloquear e
+        por terceiros. Nesse modelo, o repositório permite um arquivo
+        ser editado apenas por uma pessoa de cada vez. Essa ação de
+        exclusividade é conseguida através de travas. Harry deve
+        <quote>travar</quote> um arquivo antes de começar a alterá-lo.
+        Se Harry está com este arquivo travado, então Sally não poderá
+        travá-lo, e nem alterá-lo. Tudo o que ela pode fazer é ler o
+        arquivo, e esperar que Harry termine sua edição e o destrave.
+        Depois que Harry liberou o arquivo, Sally pode travar e
         alterar o mesmo. <xref
         linkend="svn.basic.vsn-models.lock-unlock.dia-1"/>
         demonstra esta simples solução.</para>
       
       <figure id="svn.basic.vsn-models.lock-unlock.dia-1">
-        <title>Solução de bloquear-modificar-desbloquear</title>
+        <title>A Solução travar-modificar-destravar</title>
         <graphic fileref="images/ch02dia3.png"/>
       </figure>
       
-      <para>The problem with the lock-modify-unlock model is that it's
-        a bit restrictive, and often becomes a roadblock for
-        users:</para>
+      <para>O problema do modelo travar-modificar-destravar
+        é ser muito restritivo, o que acaba sendo uma barreira para os
+        usuários:</para>
 
       <itemizedlist>
         <listitem>
-          <para><emphasis>Locking may cause administrative
-            problems.</emphasis>
+          <para><emphasis>A trava pode causar problemas administrativos.
+            </emphasis>
 
-            Sometimes Harry will lock a file and then forget about it.
-            Meanwhile, because Sally is still waiting to edit the file,
-            her hands are tied.  And then Harry goes on vacation.  Now
-            Sally has to get an administrator to release Harry's lock.
-            The situation ends up causing a lot of unnecessary delay
-            and wasted time.</para>
+            Às vezes, Harry travará um arquivo e se esquecerá disso.
+            Enquanto isso, Sally está esperando para editá-lo, de mãos
+            atadas. E então Harry sai de férias. Agora Sally tem que
+            procurar um administrador do sistema para liberar o arquivo
+            travado por Harry. A situação acaba causando atraso desnecessário
+            e perda de tempo.</para>
         </listitem>
         
         <listitem>
-          <para><emphasis>Locking may cause unnecessary
-            serialization.</emphasis>
+          <!-- TODO: Colocar nota de rodapé esclarecendo o que é sistematização neste contexto. -->
+          <para><emphasis>A trava pode causar sistematização
+            desnecessária.</emphasis>
 
-            What if Harry is editing the beginning of a text file,
-            and Sally simply wants to edit the end of the same file?
-            These changes don't overlap at all.  They could easily
-            edit the file simultaneously, and no great harm would
-            come, assuming the changes were properly merged together.
-            There's no need for them to take turns in this
-            situation.</para>
+            E se Harry estiver editando o começo de um texto e Sally
+            simplesmente deseja alterar o final do mesmo arquivo? Essas
+            mudanças não se sobrepõem. Eles poderiam facilmente
+            alterá-lo simultaneamente e nenhum grande dano aconteceria,
+            assumindo que as mudanças foram corretamente fundidas. Não
+            há necessidade alguma de cada um esperar a sua vez de alterar
+            o arquivo nessa situação.</para>
         </listitem>
-    
-        <listitem>
-          <para><emphasis>Locking may create a false sense of
-            security.</emphasis>
 
-            Pretend that Harry locks and edits file A, while
-            Sally simultaneously locks and edits file B.  But suppose
-            that A and B depend on one another, and the changes made
-            to each are semantically incompatible.  Suddenly A and B
-            don't work together anymore.  The locking system was
-            powerless to prevent the problem&mdash;yet it somehow
-            provided a false sense of security.  It's easy for Harry and
-            Sally to imagine that by locking files, each is beginning a
-            safe, insulated task, and thus not bother
-            discussing their incompatible changes early
-            on.</para>
+        <listitem>
+          <para><emphasis>A trava pode causar um falso senso de
+            segurança</emphasis>
+
+            Imagine Harry travando e editando o arquivo A, enquanto
+            simultaneamente Sally trava e edita o arquivo B. Também
+            suponha que os arquivos A e B são dependentes entre si e que
+            as mudanças feitas a cada um deles são semanticamente
+            imcompatíveis. De repente, A e B não mais funcionam juntos.
+            O sistema de travamento não foi capaz de impedir o problema
+            &mdash;contudo, forneceu, de algum modo, um falso senso de
+            segurança. É fácil para Harry e Sally imaginarem que,
+            travando os arquivos, estarão a salvo, cada um com sua
+            tarefa isolada e não se preocupando em discutir suas
+            alterações incompatíveis antecipadamente.</para>
         </listitem>
       </itemizedlist>
 
@@ -177,99 +179,109 @@
 
     <!-- =============================================================== -->
     <sect2 id="svn.basic.vsn-models.copy-merge">
-      <title>The Copy-Modify-Merge Solution</title>
+      <title>A Solução Copiar-Modificar-Fundir</title>
       
-      <para>Subversion, CVS, and other version control systems use a
-        <firstterm>copy-modify-merge</firstterm> model as an
-        alternative to locking.  In this model, each user's client
-        contacts the project repository and creates a personal
-        <firstterm>working copy</firstterm>&mdash;a local reflection
-        of the repository's files and directories.  Users then work in
-        parallel, modifying their private copies.  Finally, the
-        private copies are merged together into a new, final version.
-        The version control system often assists with the merging, but
-        ultimately a human being is responsible for making it happen
-        correctly.</para>
+      <para>Subversion, CVS e outros sistemas de controle de versão usam
+        o modelo <firstterm>Copiar-Modificar-Fundir</firstterm>
+        (<firstterm>copy-modify-merge</firstterm>, em inglês) como uma
+        alternativa ao sistema detravamento. Nesse modelo, cada cliente
+        de usuário contata o repositório e cria uma <firstterm>cópia de
+        trabalho</firstterm> (<firstterm>working copy</firstterm>, em
+        inglês) pessoal&mdash;uma réplica local dos arquivos e
+        diretórios do repositório. Os usuários trabalham então em
+        paralelo, modificando suas cópias particulares. Finalmente, as
+        cópias particulares são fundidas em uma nova versão final. O sistema
+        de controle de versão frequentemente auxilia na fusão, mas o ser
+        humano é o responsável de fazê-la funcionar corretamente.</para>
       
-      <para>Here's an example.  Say that Harry and Sally each create
-        working copies of the same project, copied from the
-        repository.  They work concurrently, and make changes to the
-        same file A within their copies.  Sally saves her changes to
-        the repository first.  When Harry attempts to save his changes
-        later, the repository informs him that his file A is
-        <firstterm>out-of-date</firstterm>.  In other words, that file
-        A in the repository has somehow changed since he last copied
-        it.  So Harry asks his client to <firstterm>merge</firstterm>
-        any new changes from the repository into his working copy of
-        file A.  Chances are that Sally's changes don't overlap with
-        his own; so once he has both sets of changes integrated, he
-        saves his working copy back to the repository.  <xref
-        linkend="svn.basic.vsn-models.copy-merge.dia-1"/> and <xref linkend="svn.basic.vsn-models.copy-merge.dia-2"/>
-        show this process.</para>
+      <para>Aqui está um exemplo. Diga para Harry e Sally
+        criarem cópias de trabalho do mesmo projeto, trazidas do
+        repositório. Ambos trabalham simultaneamente e fazem mudanças no
+        mesmo arquivo A em suas cópias. Sally envia suas mudanças ao
+        repositório primeiro. Quando Harry tenta salvar mais tarde as
+        suas, é informado que o arquivo A está <firstterm>
+        desatualizado</firstterm> (<firstterm>out-of-date</firstterm>,
+        em inglês). Ou seja, o arquivo A no repositório foi de alguma
+        forma alterado desde quando foi copiado. Assim, Harry solicita ao
+        seu cliente para <firstterm>fundir</firstterm> (<firstterm>merge
+        </firstterm>, em inglês) todas as novas mudanças no repositório
+        em sua cópia de trabalho do arquivo A. Grandes são as chances de
+        as alterações de Sally não sobreporem as de Harry; uma vez que
+        ambos os conjuntos de mudanças estão integrados, ele salva sua cópia de
+        trabalho no repositório. <xref
+        linkend="svn.basic.vsn-models.copy-merge.dia-1"/> e 
+        <xref linkend="svn.basic.vsn-models.copy-merge.dia-2"/>
+        demonstra esse processo.</para>
 
       <figure id="svn.basic.vsn-models.copy-merge.dia-1">
-        <title>The copy-modify-merge solution</title>
+        <title>A solução copiar-modificar-fundir</title>
         <graphic fileref="images/ch02dia4.png"/>
       </figure>
       
       <figure id="svn.basic.vsn-models.copy-merge.dia-2">
-        <title>The copy-modify-merge solution (continued)</title>
+        <title>A solução copiar-modificar-fundir
+        (continuação)</title>
         <graphic fileref="images/ch02dia5.png"/>
       </figure>
 
-      <para>But what if Sally's changes <emphasis>do</emphasis> overlap
-        with Harry's changes?  What then?  This situation is called a
-        <firstterm>conflict</firstterm>, and it's usually not much of
-        a problem.  When Harry asks his client to merge the latest
-        repository changes into his working copy, his copy of file A
-        is somehow flagged as being in a state of conflict: he'll be
-        able to see both sets of conflicting changes, and manually
-        choose between them.  Note that software can't automatically
-        resolve conflicts; only humans are capable of understanding
-        and making the necessary intelligent choices.  Once Harry has
-        manually resolved the overlapping changes&mdash;perhaps after
-        a discussion with Sally&mdash;he can safely save the
-        merged file back to the repository.</para>
+      <para>Mas e se as mudanças de Sally <emphasis>sobrepuserem
+        </emphasis> as de Harry? E então? Essa situação é chamada de
+        <firstterm>conflito</firstterm> (<firstterm>conflict
+        </firstterm>, em inglês) e geralmente não é um muito
+        problemática. Quando Harry pede ao seu cliente para fundir as
+        últimas alterações do repositório em sua cópia de trabalho, sua
+        cópia do arquivo A é de algum modo marcada como em estado de
+        conflito: ele poderá ver ambos os conjuntos de mudanças conflitantes
+        e escolher manualmente entre eles. Note que o <foreignphrase>software
+        </foreignphrase> não pode resolver automaticamente os conflitos;
+        apenas os seres humanos são capazes de compreender e de fazerem
+        as escolhas necessárias com inteligência. Uma vez que Harry
+        resolveu manualmente as sobreposições&mdash;talvez após uma
+        conversa com Sally&mdash;pôde salvar com segurança o arquivo
+        fundido no repositório.</para>
 
-      <para>The copy-modify-merge model may sound a bit chaotic, but
-        in practice, it runs extremely smoothly.  Users can work in
-        parallel, never waiting for one another.  When they work on
-        the same files, it turns out that most of their concurrent
-        changes don't overlap at all; conflicts are infrequent.  And
-        the amount of time it takes to resolve conflicts is far less
-        than the time lost by a locking system.</para>
+      <para>O modelo copiar-modificar-fundir pode
+        parecer um tanto confuso, mas na prática funciona extremamente
+        bem. Os usuários podem trabalhar em paralelo, não tendo que
+        esperar um pelo outro. Quando trabalham com os mesmos
+        arquivos, a maioria das mudanças não se sobrepõem de modo algum; conflitos
+        são infrequentes. E o tempo gasto para resolver conflitos é bem
+        menor que o tempo perdido em um sistema de travamento.</para>
 
-      <para>In the end, it all comes down to one critical factor: user
-        communication.  When users communicate poorly, both syntactic
-        and semantic conflicts increase.  No system can force users to
-        communicate perfectly, and no system can detect semantic
-        conflicts.  So there's no point in being lulled into a false
-        promise that a locking system will somehow prevent conflicts;
-        in practice, locking seems to inhibit productivity more than
-        anything else.</para>
+      <para>No final, tudo gira em torno de um fator crítico:
+        comunicação entre usuários. Quando os usuários se comunicam mal,
+        os conflitos sintáticos e semânticos são mais frequentes. Nenhum
+        sistema pode forçar seus usuários a se comunicarem bem, e nem
+        detectar conflitos semânticos. Sendo assim, não há sentido algum
+        em deixar-se iludir por uma falsa promessa de que um sistema
+        baseado em travas possa impedir de algum modo os conflitos; na
+        prática, travar parece inibir a produtividade mais do que
+        qualquer outra coisa.</para>
       
       <sidebar id="svn.basic.vsn-models.copy-merge.sb-1">
-        <title>When Locking is Necessary</title>
+        <title>Quando o Travamento é Necesário</title>
         
-        <para>While the lock-modify-unlock model is considered
-          generally harmful to collaboration, there are still times
-          when locking is appropriate.</para>
+        <para>Mesmo o modelo travar-modificar-destravar
+          sendo considerado geralmente prejudicial ao trabalho
+          colaborativo, há momentos em que ele é apropriado.</para>
 
-        <para>The copy-modify-merge model is based on the assumption
-          that files are contextually mergeable: that is, that the
-          majority of the files in the repository are line-based text
-          files (such as program source code).  But for files with
-          binary formats, such as artwork or sound, it's often
-          impossible to merge conflicting changes.  In these
-          situations, it really is necessary to users to take strict
-          turns when changing the file.  Without serialized access,
-          somebody ends up wasting time on changes that are ultimately
-          discarded.</para>
+        <para>O modelo <emphasis>copy-modify-merge</emphasis> é baseado
+          na suposição de que os arquivos são contextualmente passíveis
+          de fusão: isso é, que a maioria dos arquivos no repositório
+          são do tipo texto puro (como os códigos-fonte de programas).
+          Mas em arquivos de formato binário, como os de arte-final e
+          de som, é frequentemente impossível fundir mudanças conflitantes.
+          Nesses casos, é realmente necessário que os usuários estritamente
+          esperem cada um a sua vez de alterar o arquivo.
+          <!-- TODO: Colocar nota de rodapé esclarecendo o que é sistematização neste contexto. -->
+          Sem um acesso sistematizado, alguém acaba por desperdiçar
+          tempo em mudanças que serão finalmente rejeitadas.</para>
 
-        <para>While CVS and Subversion are still primarily
-          copy-modify-merge systems, they both recognize the need to
-          lock an occasional file and provide mechanisms for this.
-          See <xref linkend="svn.advanced.locking"/>.</para>
+        <para>Mesmo CVS e Subversion sendo principalmente sistemas do
+          tipo copiar-modificar-fundir, ambos reconhecem
+          a necessidade de se travar um arquivo ocasionalmente e
+          oferecem mecanismos para isso. Veja <xref 
+          linkend="svn.advanced.locking"/>.</para>
 
       </sidebar>
 
