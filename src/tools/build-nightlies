@@ -5,6 +5,11 @@ import sys
 import os
 import shutil
 import time
+import popen2
+
+SKIP_LOCALES = ('de',)
+SKIP_PDF_LOCALES = ('ru', 'zh')
+
 
 def format_duration(seconds):
     seconds = int(seconds)
@@ -23,12 +28,9 @@ them, and exploding those distributions into TGT-DIR.
 """ % (os.path.basename(sys.argv[0])))
     sys.exit(1)
 
-BOOKSRC = sys.argv[1]
-DROPSPOT = sys.argv[2]
+BOOKSRC = os.path.abspath(sys.argv[1])
+DROPSPOT = os.path.abspath(sys.argv[2])
 DRYRUN = (len(sys.argv) > 3)
-
-skip_locales = ('de',)
-skip_pdf_locales = ('ru', 'zh')
 
 # Update the working copy
 if DRYRUN:
@@ -52,7 +54,7 @@ for kid in kids:
         locales.append(kid)
 
 # Build the locales
-for i in skip_locales:
+for i in SKIP_LOCALES:
     try:
         locales.remove(i)
     except ValueError:
@@ -60,41 +62,55 @@ for i in skip_locales:
 locales.sort()
 cwd = os.getcwd()
 for locale in locales:
+    # Calculate some paths
     locale_dir = os.path.join(BOOKSRC, locale)
     temp_dir = os.path.join(locale_dir, '__TEMPINSTALL__')
-    book_formats = [ 'html', 'html-chunk', 'html-arch', 'html-chunk-arch',
-                     'pdf' ]
-    if locale in skip_pdf_locales:
+    build_log = os.path.join(DROPSPOT, 'nightly-build.%s.log' % (locale))
+    dropspot_locale_path = os.path.join(DROPSPOT, locale)
+
+    # Figger out which book formats to build
+    book_formats = ['html',
+                    'html-chunk',
+                    'html-arch',
+                    'html-chunk-arch',
+                    'pdf',
+                    ]
+    if locale in SKIP_PDF_LOCALES:
         book_formats.remove('pdf')
 
+    # Build
+    make_cmd = (['make', 'INSTALL_SUBDIR=__TEMPINSTALL__', 'clean']
+                + map(lambda x: 'install-%s' % x, book_formats))
     if os.path.isdir(temp_dir):
         if DRYRUN:
             print "Erase: %s" % (temp_dir)
         else:
             shutil.rmtree(temp_dir)
-
-    command = (['make', 'INSTALL_SUBDIR=__TEMPINSTALL__', 'clean']
-            + map(lambda x: 'install-%s' % x, book_formats))
-    if DRYRUN:
-        print "Run: %s" % (" ".join(command))
-    else:
-        os.chdir(locale_dir)
-        try:
-            os.system(" ".join(command))
-        finally:
-            os.chdir(cwd)
-
-    dropspot_locale_path = os.path.join(DROPSPOT, locale)
-    if os.path.isdir(dropspot_locale_path):
+    os.chdir(locale_dir)
+    try:
+        cmd = " ".join(make_cmd)
         if DRYRUN:
-            print "Erase: %s" % (dropspot_locale_path)
+            print "Run: %s" % (cmd)
         else:
-            shutil.rmtree(dropspot_locale_path)
-    if DRYRUN:
-        print "Move into place: %s -> %s" % (temp_dir, dropspot_locale_path)
-    else:
-        os.rename(temp_dir, dropspot_locale_path)
-    built_locales.append(locale)
+            outerrfp, infp = popen2.popen4(cmd, mode='r')
+            open(build_log, 'w').write(outerrfp.read())
+    finally:
+        os.chdir(cwd)
+
+    # Move stuff into place.  Ignore any errors.
+    try:
+        if os.path.isdir(dropspot_locale_path):
+            if DRYRUN:
+                print "Erase: %s" % (dropspot_locale_path)
+            else:
+                shutil.rmtree(dropspot_locale_path)
+        if DRYRUN:
+            print "Move into place: %s -> %s" % (temp_dir, dropspot_locale_path)
+        else:
+            os.rename(temp_dir, dropspot_locale_path)
+        built_locales.append(locale)
+    except:
+        pass
 
 # Timestamp
 build_end_time = time.time()
@@ -124,18 +140,22 @@ dl { margin-left: 3em }
 <dl>
 """ % (time.asctime(time.gmtime(build_end_time)),
     format_duration(build_end_time - build_begin_time)))
-for locale in built_locales:
-    fp.write("""
-<dt>%s</dt>
+for locale in locales:
+    fp.write("<dt>%s</dt>" % (locale.upper()))
+    if locale in built_locales:
+        fp.write("""
 <dd>[<a href="%s/svn-book.html">single-page HTML (read online)</a>]</dd>
 <dd>[<a href="%s/index.html">multi-page HTML (read online)</a>]</dd>
-<dd>[<a href="%s/svn-book-html.tar.bz2"
- >single-page HTML (in .tar.bz2)</a>]</dd>
-<dd>[<a href="%s/svn-book-html-chunk.tar.bz2"
- >multi-page HTML (in .tar.bz2)</a>]</dd>
-""" % (locale.upper(), locale, locale, locale, locale))
-    if locale not in skip_pdf_locales:
-        fp.write('<dd>[<a href="%s/svn-book.pdf">PDF</a>]</dd>\n' % locale)
+<dd>[<a href="%s/svn-book-html.tar.bz2">single-page HTML (in .tar.bz2)</a>]</dd>
+<dd>[<a href="%s/svn-book-html-chunk.tar.bz2">multi-page HTML (in .tar.bz2)</a>]</dd>
+""" % (locale, locale, locale, locale))
+        if locale not in SKIP_PDF_LOCALES:
+            fp.write('<dd>[<a href="%s/svn-book.pdf">PDF</a>]</dd>\n' % locale)
+    else:
+        fp.write("""
+<dd><em>Uh-oh!  No nightly build for this locale.
+        (See <a href="nightly-build.%s.log">build log</a>.)</em></dd>
+""" % (locale))
 fp.write("""
 </dl>
 </body>
