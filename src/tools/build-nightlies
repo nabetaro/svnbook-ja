@@ -79,7 +79,7 @@ for locale in locales:
         book_formats.remove('pdf')
 
     # Build
-    make_cmd = (['make', 'INSTALL_SUBDIR=__TEMPINSTALL__', 'clean']
+    make_cmd = (['make', 'INSTALL_SUBDIR=__TEMPINSTALL__', 'clean', 'valid']
                 + map(lambda x: 'install-%s' % x, book_formats))
     if os.path.isdir(temp_dir):
         if DRYRUN:
@@ -93,7 +93,11 @@ for locale in locales:
             print "Run: %s" % (cmd)
         else:
             outerrfp, infp = popen2.popen4(cmd, mode='r')
-            open(build_log, 'w').write(outerrfp.read())
+            logfp = open(build_log, 'w', 1)
+            while 1:
+                data = outerrfp.readline()
+                if not data: break
+                logfp.write(data)
     finally:
         os.chdir(cwd)
 
