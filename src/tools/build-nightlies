@@ -9,6 +9,10 @@ import popen2
 
 SKIP_LOCALES = ('de',)
 SKIP_PDF_LOCALES = ('ru', 'zh')
+MAIL_DESTINATION = "svnbook-dev@red-bean.com"
+MAIL_SENDER = "svnbook-build-daemon@red-bean.com"
+MAIL_SENDER_NAME = "Svnbook Build Daemon"
+DROPSPOT_URL = "http://svnbook.red-bean.com/nightly"
 
 
 def format_duration(seconds):
@@ -20,6 +24,20 @@ def format_duration(seconds):
             + (minutes and "%dm " % minutes or "")
             + "%ds" % seconds)
     
+
+def sendmail(subject, body):
+    outerrfp, infp = popen2.popen4(
+            ['sendmail', '-f', MAIL_SENDER, MAIL_DESTINATION])
+
+    infp.write("Subject: %s\n" % subject)
+    infp.write("To: %s\n" % MAIL_DESTINATION)
+    infp.write("From: %s <%s>\n" % (MAIL_SENDER_NAME, MAIL_SENDER))
+    infp.write("\n")
+    infp.write(body)
+    infp.close()
+    sys.stderr.write(outerrfp.read())
+
+
 if len(sys.argv) < 3:
     sys.stderr.write("""Usage: %s SRC-DIR TGT-DIR --dryrun
 
@@ -114,7 +132,17 @@ for locale in locales:
             os.rename(temp_dir, dropspot_locale_path)
         built_locales.append(locale)
     except:
-        pass
+        if DRYRUN:
+            print "Send failure email: %s" % (locale)
+        else:
+            sendmail("Nightly Build Failure Alert: '%s'" % locale,
+                    "The nightly svnbook build for the '%s' locale\n"
+                    "has failed.  Please investigate.\n"
+                    "\n"
+                    "%s/nightly-build.%s.log\n"
+                    "\n"
+                    "-- The Svnbook Build Daemon.\n"
+                    % (locale, DROPSPOT_URL, locale))
 
 # Timestamp
 build_end_time = time.time()
