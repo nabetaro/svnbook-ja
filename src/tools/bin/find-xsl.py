@@ -18,6 +18,8 @@ candidate_xsldirs = (
     '/usr/local/share/xsl/docbook',
     # Gentoo
     '/usr/share/sgml/docbook/xsl-stylesheets-*',
+    # Mac OS X + fink
+    '/sw/share/xml/xsl/docbook-xsl',
     # Please add your OS's location here if not listed!
     )
 #######################################################
