@@ -789,7 +789,7 @@ collabnet = svn.collab.net
             <listitem>
               <!-- @ENGLISH {{{
               <para>This setting is the same as
-                <literal>store-passwords</literal>, except that
+                <literal>store-passwords</literal>, except that it
                 enables or disables disk-caching of
                 <emphasis>all</emphasis> authentication information:
                 usernames, passwords, server certificates, and any
@@ -831,29 +831,76 @@ collabnet = svn.collab.net
                 user wishes to edit, and the edits take place right
                 in the editor program (see <xref
                 linkend="svn.advanced.props" />).  This option's default
-                value is empty.  If the option is not set, Subversion
-                will fall back to checking the environment variables
-                <literal>SVN_EDITOR</literal>,
-                <literal>VISUAL</literal>, and
-                <literal>EDITOR</literal> (in that order) for an
-                editor command.</para>
+                value is empty.  The order of priority for determining the
+                editor command is:</para>
+              <orderedlist>
+                <listitem>
+                  <para>Command-line option <literal>-&#64738;-editor-cmd</literal></para>
+                </listitem>
+                <listitem>
+                  <para>Environment variable <literal>SVN_EDITOR</literal></para>
+                </listitem>
+                <listitem>
+                  <para>Configuration option <literal>editor-cmd</literal></para>
+                </listitem>
+                <listitem>
+                  <para>Environment variable <literal>VISUAL</literal></para>
+                </listitem>
+                <listitem>
+                  <para>Environment variable <literal>EDITOR</literal></para>
+                </listitem>
+                <listitem>
+                  <para>Possibly, a default value built in to Subversion
+                    (not present in the official builds)</para>
+                </listitem>
+              </orderedlist>
+              <para>The value of any of these options or variables is
+                (unlike <literal>diff-cmd</literal>) the beginning of a
+                command line to be executed by the shell.  Subversion
+                appends a space and the pathname of the temporary file to be
+                edited.  The editor should modify the temporary file and
+                return a zero exit code to indicate success.</para>
               @ENGLISH }}} -->
               <para>Определяет программу, которую будет использовать
                 Subversion для ввода лог сообщений, в тех случаях, когда
                 <command>svn commit</command> используется без параметров
-                 <option>--message</option> (<option>-m</option>) или
-                 <option>--file</option> (<option>-F</option>). Эта же
-                 программа используется с командой <command>svn
-                 propedit</command> &mdash; вызывается временный файл,
-                 содержащий текущее значение редактируемого пользователем
-                 свойства и редактирование выполняется прямо в
-                 программе-редакторе (см. <xref
-                 linkend="svn.advanced.props" />). По умолчанию значение
-                 этого свойства не установлено. Если этот параметр не задан,
-                 для определения редактора Subversion возвращается к проверке
-                 переменных среды <literal>SVN_EDITOR</literal>,
-                 <literal>VISUAL</literal> и <literal>EDITOR</literal>
-                 (именно в такой последовательности).</para>
+                <option>--message</option> (<option>-m</option>) или
+                <option>--file</option> (<option>-F</option>). Эта же
+                программа используется с командой <command>svn
+                propedit</command> &mdash; вызывается временный файл,
+                содержащий текущее значение редактируемого пользователем
+                свойства и редактирование выполняется прямо в
+                программе-редакторе (см. <xref
+                linkend="svn.advanced.props" />). По умолчанию значение
+                этого свойства не установлено. Порядок определения
+                используемого редактора следующий:</para>
+              <orderedlist>
+                <listitem>
+                  <para>Command-line option <literal>--editor-cmd</literal></para>
+                </listitem>
+                <listitem>
+                  <para>Environment variable <literal>SVN_EDITOR</literal></para>
+                </listitem>
+                <listitem>
+                  <para>Configuration option <literal>editor-cmd</literal></para>
+                </listitem>
+                <listitem>
+                  <para>Environment variable <literal>VISUAL</literal></para>
+                </listitem>
+                <listitem>
+                  <para>Environment variable <literal>EDITOR</literal></para>
+                </listitem>
+                <listitem>
+                  <para>Possibly, a default value built in to Subversion
+                    (not present in the official builds)</para>
+                </listitem>
+              </orderedlist>
+              <para>The value of any of these options or variables is
+                (unlike <literal>diff-cmd</literal>) the beginning of a
+                command line to be executed by the shell.  Subversion
+                appends a space and the pathname of the temporary file to be
+                edited.  The editor should modify the temporary file and
+                return a zero exit code to indicate success.</para>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -972,11 +1019,13 @@ collabnet = svn.collab.net
 
               <para>As well as <command>svn status</command>, the
                 <command>svn add</command> and <command>svn import</command>
-                commands also ignore files that match the list.
-                You can override this option for a single instance
-                of any of these commands by using
-                the <option>-&#64738;-no-ignore</option> command-line flag.
-                For information on more fine-grained control of
+                commands also ignore files that match the list
+                when they are scanning a directory.  You can override this
+                behaviour for a single instance of any of these commands
+                by explicitly specifying the file name, or by using
+                the <option>-&#64738;-no-ignore</option> command-line flag.</para>
+
+              <para>For information on more fine-grained control of
                 ignored items, see <xref linkend="svn.advanced.props.special.ignore"
                 />.</para>
               @ENGLISH }}} -->
@@ -997,10 +1046,10 @@ collabnet = svn.collab.net
 
               <para>Также как и <command>svn status</command>, команды
                 <command>svn add</command> и <command>svn import</command>
-                тоже игнорируют файлы, подходящие к этому списку. Можно
-                переопределить этот параметр, используя флаг командной строки
-                <option>--no-ignore</option>. Подробнее о более точном
-                контроле игнорирования см. <xref
+                при просмотре директорий тоже игнорируют файлы, подходящие
+                к этому списку. Можно переопределить этот параметр, используя
+                флаг командной строки <option>--no-ignore</option>. Более
+                подробнее о контроле игнорирования см. <xref
                 linkend="svn.advanced.props.special.ignore" />.</para>
             </listitem>
           </varlistentry>
@@ -1033,8 +1082,8 @@ collabnet = svn.collab.net
               <para>This variable sets the default character set
                 encoding for commit log messages.  It's a permanent
                 form of the <option>-&#64738;-encoding</option> option (see
-                <xref linkend="svn.ref.svn.sw"/>.)  The Subversion
-                repository stores log messages in UTF8, and assumes
+                <xref linkend="svn.ref.svn.sw"/>).  The Subversion
+                repository stores log messages in UTF-8, and assumes
                 that your log message is written using your operating
                 system's native locale.  You should specify a
                 different encoding if your commit messages are written
@@ -1578,7 +1627,7 @@ $
 
       <screen>
 $ svn propdel license calc/button.c
-property 'license' deleted from ''.
+property 'license' deleted from 'calc/button.c'.
 $ svn proplist --verbose calc/button.c
 Properties on 'calc/button.c':
   copyright : (c) 2003 Red-Bean Software
@@ -2380,6 +2429,101 @@ Cumulus clouds are appearing more frequently as summer approaches.
           file will be re-substituted with information that
           reflects the most recent known commit to that file.</para>
 
+        <para>Subversion 1.2 introduced a new variant of the keyword
+          syntax which brought additional, useful&mdash;though perhaps
+          atypical&mdash;functionality.  You can now tell Subversion
+          to maintain a fixed length (in terms of the number of bytes
+          consumed) for the substituted keyword.  By using a
+          double-colon (<literal>::</literal>) after the keyword name,
+          followed by a number of space characters, you define that
+          fixed width.  When Subversion goes to substitute your
+          keyword for the keyword and its value, it will essentially
+          replace only those space characters, leaving the overall
+          width of the keyword field unchanged.  If the substituted
+          value is shorter than the defined field width, there will be
+          extra padding characters (spaces) at the end of the
+          substituted field; if it is too long, it is truncated with a
+          special hash (<literal>#</literal>) character just before
+          the final dollar sign terminator.</para>
+
+        <para>For example, say you have a document in which you have
+          some section of tabular data reflecting the document's
+          Subversion keywords.  Using the original Subversion keyword
+          substitution syntax, your file might look something
+          like:</para>
+
+        <screen>
+$Rev$:     Revision of last commit
+$Author$:  Author of last commit
+$Date$:    Date of last commit
+</screen>
+
+        <para>Now, that looks nice and tabular at the start of things.
+          But when you then commit that file (with keyword substitution
+          enabled, of course), you see:</para>
+
+        <screen>
+$Rev: 12 $:     Revision of last commit
+$Author: harry $:  Author of last commit
+$Date: 2006-03-15 02:33:03 -0500 (Wed, 15 Mar 2006) $:    Date of last commit
+</screen>
+
+        <para>The result is not so beautiful.  And you might be
+          tempted to then adjust the file after the substitution so
+          that it again looks tabular.  But that only holds as long as
+          the keyword values are the same width.  If the last
+          committed revision rolls into a new place value (say, from
+          99 to 100), or if another person with a longer username
+          commits the file, stuff gets all crooked again.  However, if
+          you are using Subversion 1.2 or better, you can use the new
+          fixed-length keyword syntax, define some field widths that
+          seem sane, and now your file might look like this:</para>
+
+        <screen>
+$Rev::               $:  Revision of last commit
+$Author::            $:  Author of last commit
+$Date::              $:  Date of last commit
+</screen>
+
+        <para>You commit this change to your file.  This time,
+          Subversion notices the new fixed-length keyword syntax, and
+          maintains the width of the fields as defined by the padding
+          you placed between the double-colon and the trailing dollar
+          sign.  After substitution, the width of the fields is
+          completely unchanged&mdash;the short values for
+          <literal>Rev</literal> and <literal>Author</literal> are
+          padded with spaces, and the long <literal>Date</literal>
+          field is truncated by a hash character:</para>
+
+        <screen>
+$Rev:: 13            $:  Revision of last commit
+$Author:: harry      $:  Author of last commit
+$Date:: 2006-03-15 0#$:  Date of last commit
+</screen>
+       
+        <para>The use of fixed-length keywords is especially handy
+          when performing substitutions into complex file formats that
+          themselves use fixed-length fields for data, or for which
+          the stored size of a given data field is overbearingly
+          difficult to modify from outside the format's native
+          application (such as for Microsoft Office documents).</para>
+
+        <warning>
+          <para>Be aware that because the width of a keyword field is
+            measured in bytes, the potential for corruption of
+            multi-byte values exists.  For example, a username which
+            contains some multi-byte UTF-8 characters might suffer
+            truncation in the middle of the string of bytes which make
+            up one of those characters.  The result will be a mere
+            truncation when viewed at the byte level, but will likely
+            appear as a string with an incorrect or garbled final
+            character when viewed as UTF-8 text.  It is conceivable
+            that certain applications, when asked to load the file,
+            would notice the broken UTF-8 text and deem the entire
+            file corrupt, refusing to operate on the file
+            altogether.</para> 
+        </warning>
+
       </sect3>
 
       <sect3 id="svn.advanced.props.special.eol-style">
@@ -2395,7 +2539,7 @@ Cumulus clouds are appearing more frequently as summer approaches.
         <para>This means that by default, Subversion doesn't pay any
           attention to the type of <firstterm>end-of-line (EOL)
           markers</firstterm> used in your files.  Unfortunately,
-          different operating system use different tokens to represent
+          different operating systems use different tokens to represent
           the end of a line of text in a file.  For example, the usual
           line ending token used by software on the Windows platform
           is a pair of ASCII control characters&mdash;carriage return
@@ -2891,7 +3035,7 @@ $
           This behavior is also semi-permanently tweakable, by setting
           <literal>no-unlock = yes</literal> in your run-time
           <filename>config</filename> file (see <xref
-          linkend="svn.advanced.confarea"/>.)</para>
+          linkend="svn.advanced.confarea"/>).</para>
 
       <para>Of course, locking a file doesn't oblige one to commit a
         change to it.  The lock can be released at any time with a
@@ -3239,18 +3383,19 @@ Making some tweaks.  Locking for the next two hours.
   <sect1 id="svn.advanced.pegrevs">
     <title>Peg and Operative Revisions</title>
 
-    <para>The ability to copy, move, and rename files and directories;
-      to be able to create an object, then delete it and then add a
-      new one at the same path&mdash;those are operations which we
-      perform on files and directories on our computers all the time,
-      and operations we tend to take for granted.  And Subversion
-      would like you to think they are granted.  Subversion's file
-      management support is quite liberating, affording almost as much
+    <para>We make use of the ability to copy, move, rename, and
+      completely replace files and directories on our computers all
+      that time.  And your version control system shouldn't get in the
+      way of your doing these things with your version controlled
+      files and directories, either.  Subversion's file management
+      support is quite liberating, affording almost as much
       flexibility for versioned files that you'd expect when
       manipulating your unversioned ones.  But that flexibility means
       that across the lifetime of your repository, a given versioned
       resource might have many paths, and a given path might represent
-      several entirely different versioned resources.</para>
+      several entirely different versioned resources.  And this
+      introduces a certain level of complexity to your interactions
+      with those paths and resources.</para>
 
     <para>Subversion is pretty smart about noticing when an object's
       version history includes such <quote>changes of address</quote>.
@@ -3365,7 +3510,7 @@ Making some tweaks.  Locking for the next two hours.
 $ svn <replaceable>command</replaceable> -r <replaceable>OPERATIVE-REV</replaceable> item@<replaceable>PEG-REV</replaceable>
 </screen>
 
-      <para>...it performs the following algorithm:</para>
+      <para>&hellip;it performs the following algorithm:</para>
 
       <itemizedlist>
 
@@ -3435,7 +3580,7 @@ subversion/libsvn_client/ra.c:775: (apr_err=20014)
 svn: Unable to find repository location for 'concept/IDEA' in revision 1
 </screen>
 
-    <para>And when executed, has the expected results.  Peg revisions
+    <para>And when executed, it has the expected results.  Peg revisions
       generally default to a value of <literal>BASE</literal> (the
       revision currently present in the working copy) when applied to
       working copy paths, and of <literal>HEAD</literal> when applied
@@ -4286,8 +4431,8 @@ svn: Can't convert string from 'UTF-8' to native encoding:
         in an asynchronous fashion (or <quote>backgrounded</quote>),
         you might have several instances of it all running
         simultaneously.  Finally, Subversion expects that your program
-        return an errorcode of 0 if your program detected differences,
-        or 1 if it did not&mdash;any other errorcode is considered a
+        return an errorcode of 1 if your program detected differences,
+        or 0 if it did not&mdash;any other errorcode is considered a
         fatal error.
         <footnote>
           <para>The GNU diff manual page puts it this way: <quote>An
