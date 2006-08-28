@@ -2260,93 +2260,98 @@ $
         borrará los ficheros de registro sin usar de Berkeley de
         su repositorio activo actual.</para>
 
-      <para>Even if you also have an incremental backup, you might want to run
-        this program on a regular basis.  For example, you might
-        consider adding <command>hot-backup.py</command> to a program
-        scheduler (such as <command>cron</command> on Unix systems).
-        Or, if you prefer fine-grained backup solutions, you could
-        have your post-commit hook script call
-        <command>hot-backup.py</command> (see <xref
-        linkend="svn-ch-5-sect-2.1" />), which will then cause a new
-        backup of your repository to occur with every new revision
-        created.  Simply add the following to the
-        <filename>hooks/post-commit</filename> script in your live
-        repository directory:</para>
+      <para>Incluso si también dispone de una copia de seguridad
+        incremental, quizás quiera ejecutar también este programa
+        de manera habitual. Por ejemplo, podría considerar
+        añadir <command>hot-backup.py</command> a un programa de
+        planificación (como por ejemplo <command>cron</command>
+        en sistemas Unix). O, si prefiere soluciones de copias de
+        seguridad con alta granularidad, podría hacer que su gancho
+        post-commit llame <command>hot-backup.py</command> (vea <xref
+        linkend="svn-ch-5-sect-2.1" />), lo cual provocará una nueva copia
+        de seguridad de su repositorio con cada nueva versión. Simplemente
+        añada el script <filename>hooks/post-commit</filename> a su
+        directorio activo del repositorio:</para>
 
       <programlisting>
 (cd /path/to/hook/scripts; ./hot-backup.py ${REPOS} /path/to/backups &amp;)
 </programlisting>
 
-      <para>The resulting backup is a fully functional Subversion
-        repository, able to be dropped in as a replacement for your
-        live repository should something go horribly wrong.</para>
+      <para>La copia de seguridad resultante es un repositorio de
+        Subversion completamente funcional, capaz de reemplazas su
+        repositorio activo en caso de que algo vaya muy mal.</para>
 
-      <para>There are benefits to both types of backup methods.  The
-        easiest is by far the full backup, which will always result in
-        a perfect working replica of your repository.  This again
-        means that should something bad happen to your live
-        repository, you can restore from the backup with a simple
-        recursive directory copy.  Unfortunately, if you are
-        maintaining multiple backups of your repository, these full
-        copies will each eat up just as much disk space as your live
-        repository.</para>
+      <para>Ambos métodos de copias de seguridad son beneficiosos. La
+        copia de seguridad completa es de lejos la más sencilla,
+        la que siempre resultará ser una réplica de su repositorio
+        perfectamente funcional. Le recordamos que esto significa que si
+        algo malo le ocurre a su repositorio activo, puede recuperar
+        su copia de seguridad con un simple copiado recursivo de
+        directorios. Desafortunadamente, si está manteniendo múltiples
+        copias de seguridad de su repositorio, estas copias completas
+        acabarán ocupando la misma cantidad de espacio de disco que su
+        repositorio activo.</para>
 
-      <para>Incremental backups using the repository dump format are
-        excellent to have on hand if the database schema changes
-        between successive versions of Subversion itself.  Since a
-        full repository dump and load are generally required to
-        upgrade your repository to the new schema, it's very
-        convenient to already have half of that process (the dump
-        part) finished.  Unfortunately, the creation of&mdash;and
-        restoration from&mdash;incremental backups takes longer, as
-        each commit is effectively replayed into either the dumpfile
-        or the repository.</para>
+      <para>Las copias de seguridad incrementales usando el formato de
+        volcado del repositorio son excelentes para tener a mano si el
+        esquema de la base de datos cambia entre sucesivas versiones del
+        propio Subversion. Dado que para actualizar su repositorio al
+        nuevo esquema es necesario que haga un volcado y carga completa
+        del repositorio, es muy conveniente tener la mitad de ese
+        proceso (la parte del volcado) realizada.  Desafortunadamente,
+        la creación&mdash;y recuperación&mdash;de copias de seguridad
+        incrementales tarda mucho más, dado que cada revisión es
+        reproducida en el fichero de volcado o el repositorio.</para>
 
-      <para>In either backup scenario, repository administrators need
-        to be aware of how modifications to unversioned revision
-        properties affect their backups.  Since these changes do not
-        themselves generate new revisions, they will not trigger
-        post-commit hooks, and may not even trigger the
-        pre-revprop-change and post-revprop-change hooks.
+      <para>En ambos escenarios, los administradores del repositorio
+        necesitan estar atentos a cómo las modificaciones de propiedades
+        de revisión no versionadas afectan a sus copias de seguridad. Dado
+        que estos cambios no generan por sí mismos nuevas revisiones,
+        no activarán ganchos post-commit, y quizás ni siquiera los
+        ganchos pre-revprop-change y post-revprop-change.
         <footnote>
-          <para><command>svnadmin setlog</command> can be called in a
-            way that bypasses the hook interface altogether.</para>
-        </footnote>  
-        And since you can change revision properties without respect
-        to chronological order&mdash;you can change any revision's
-        properties at any time&mdash;an incremental backup of the
-        latest few revisions might not catch a property modification
-        to a revision that was included as part of a previous 
-        backup.</para>
-
-      <para>Generally speaking, only the truly paranoid would need to
-        backup their entire repository, say, every time a commit
-        occurred.  However, assuming that a given repository has some
-        other redundancy mechanism in place with relatively fine
-        granularity (like per-commit emails), a hot backup of the
-        database might be something that a repository administrator
-        would want to include as part of a system-wide nightly backup.
-        For most repositories, archived commit emails alone provide
-        sufficient redundancy as restoration sources, at least for the
-        most recent few commits.  But it's your data&mdash;protect it
-        as much as you'd like.</para>
-            
-      <para>Often, the best approach to repository backups is a
-        diversified one.  You can leverage combinations of full and
-        incremental backups, plus archives of commit emails.  The
-        Subversion developers, for example, back up the Subversion
-        source code repository after every new revision is created,
-        and keep an archive of all the commit and property change
-        notification emails.  Your solution might be similar, but
-        should be catered to your needs and that delicate balance of
-        convenience with paranoia.  And while all of this might not
-        save your hardware from the iron fist of Fate,
-        <footnote>
-          <para>You know&mdash;the collective term for all of her
-            <quote>fickle fingers</quote>.</para>
+          <para><command>svnadmin setlog</command> puede ser invocado
+            de un modo que evita por completo el mecanismo de
+            ganchos.</para>
         </footnote>
-        it should certainly help you recover from those trying 
-        times.</para>
+        Y dado que puede cambiar las propiedade de revisión sin respetar
+        su orden cronológico&mdash;puede cambiar cualquier propiedad
+        de revisión en cualquier momento&mdash;una copia de seguridad
+        incremental de las últimas pocas revisiones quizás no capture
+        la modificación de una propiedad de revisión que fue incluida
+        como parte de una copia de seguridad anterior.</para>
+
+      <para>Hablando de manera general, sólo los realmente paranóicos
+        necesitarían hacer una copia de seguridad de su repositorio
+        completo, digamos que, cada vez que se realiza un cambio. No
+        obstante, asumiendo que un repositorio determinado tiene
+        funcionando otros mecanismos de redundancia con relativa
+        granularidad (como correos electrónicos por modificación), una
+        copia de seguridad en caliente de la base de datos sería algo que
+        un administrador de repositorio querría incluir como parte de una
+        copia de seguridad de sistema nocturna. Para la mayoría de los
+        repositorios, los correos archivados con cambios son suficiente
+        fuente de redundancia, al menos para los últimos cambios. Pero
+        son sus datos&mdash;protéjalos tanto como desee.</para>
+
+      <para>A menudo, la mejor estrategia para realizar copias de seguridad es
+        aquella que diversifique. Puede aprovechar combinaciones de copias
+        de seguridad completas e incrementales, y adicionalmente archivos
+        de correo con los cambios. Los desarrolladores de Subversion,
+        por ejemplo, realizan una copia de seguridad del repositorio de
+        código fuente tras cada nueva revisión, y mantienen un archivo
+        de todas las notificaciones por correo electrónico de cambios y
+        modificaciones de propiedades.  Su solución podría ser similar,
+        pero debería estar orientada a las necesidades y ese delicado
+        balance entre la conveniencia y la paranoia.  Y aunque nada
+        de todo esto le ayude a salvar su hardware del puño de hierro
+        del Destino,
+        <footnote>
+          <para>Ya sabe&mdash;el término genérico para sus 
+            <quote>erráticos dedos</quote>.</para>
+        </footnote>
+        ciertamente debería ayudarle a recuperarse tras uno de esos
+        momentos.</para>
 
     </sect2>
   </sect1>
@@ -2356,31 +2361,32 @@ $
   <!-- *** SECTION 6:  ADDING PROJECTS                                 *** -->
   <!-- ******************************************************************* -->
   <sect1 id="svn-ch-5-sect-6">
-    <title>Adding Projects</title>
+    <title>Añadiendo proyectos</title>
 
-    <para>Once your repository is created and configured, all that
-      remains is to begin using it.  If you have a collection of
-      existing data that is ready to be placed under version control,
-      you will more than likely want to use the <command>svn</command>
-      client program's <literal>import</literal> subcommand to
-      accomplish that.  Before doing this, though, you should
-      carefully consider your long-term plans for the repository.  In
-      this section, we will offer some advice on how to plan the
-      layout of your repository, and how to get your data arranged in
-      that layout.</para>
+    <para>Una vez haya creado y configurado su repositorio, todo lo que
+      queda es comenzar a usarlo. Si tiene una colección de datos
+      existentes listos para ser puestos bajo control de versiones, es
+      muy probable que desee usar el subcomando <literal>import</literal>
+      del programa cliente <command>svn</command>.  No obstante, antes
+      de hacer esto debería considerar con cuidado los planes a largo
+      plazo de su repositorio. En esta sección le ofreceremos algunos
+      consejos sobre la planificación del esquema de su repositorio,
+      y cómo reorganizar sus datos de acuerdo con éste.</para>
 
     <!-- ***************************************************************** -->
     <sect2 id="svn-ch-5-sect-6.1">
-      <title>Choosing a Repository Layout</title>
+      <title>Escogiendo el esquema de repositorio</title>
 
-      <para>While Subversion allows you to move around versioned files
-        and directories without any loss of information, doing so can
-        still disrupt the workflow of those who access the repository
-        often and come to expect things to be at certain locations.
-        Try to peer into the future a bit; plan ahead before placing
-        your data under version control.  By <quote>laying out</quote>
-        the contents of your repositories in an effective manner the
-        first time, you can prevent a load of future headaches.</para>
+      <para>Aunque Subversion le permite desplazar los ficheros y
+        directorios versionados sin pérdida de información de
+        cualquier tipo, al hacerlo puede entorpecer el flujo
+        de trabajo de aquellos quienes acceden al repositorio
+        con frecuencia y esperan encontrar algunas cosas en
+        ubicaciones determinadas.  Intente asomarse un poco al
+        futuro; planifique antes de poner sus datos bajo control
+        de versiones. Al <quote>organizar</quote> el contenido de
+        sus repositorios de una manera efectiva la primera vez,
+        podrá evitar un montón de futuros dolores de cabeza.</para>
 
       <para>There are a few things to consider when setting up
         Subversion repositories.  Let's assume that as repository
