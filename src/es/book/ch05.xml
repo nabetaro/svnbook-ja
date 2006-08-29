@@ -15,22 +15,19 @@
       y para solucionar los problemas actuales de forma segura.</para>
 
     <para>En este capítulo, explicaremos cómo crear y configurar
-      un repositorio Subversion, y cómo publicarlo para acceder a él
-      por red. También hablaremos acerca del mantenimiento del
-      repositorio, incluyendo el uso de las herramientas
-      <command>svnlook</command> y <command>svnadmin</command>
-      ( que están disponibles junto con Subversion ). 
-      Trataremos también algunas preguntas y errores comunes,
-      y haremos sugerencias sobre la forma de 
-      <!--TODO: arrange how to arrange the data in ... -->
-      arreglar los datos en el repositorio.</para>
+      un repositorio Subversion, y cómo publicarlo para acceder a él por
+      red. También hablaremos acerca del mantenimiento del repositorio,
+      incluyendo el uso de las herramientas <command>svnlook</command>
+      y <command>svnadmin</command> ( que están disponibles junto con
+      Subversion ).  Trataremos también algunas preguntas y errores
+      comunes, y haremos sugerencias sobre la forma de organizar los
+      datos en el repositorio.</para>
 
     <para>Si planea acceder al repositorio Subversion sólo desde el
-      punto de vista de un usuario cuyos datos están bajo control
-      de versiones ( es decir, un cliente Subversion ), puede saltarse
-      este capítulo en conjunto.
-      Sin embargo, si vd. es, o quiere convertirse en un administrador
-      de repositorios Subversion,
+      punto de vista de un usuario cuyos datos están bajo control de
+      versiones (es decir, un cliente Subversion), puede saltarse este
+      capítulo en conjunto.  Sin embargo, si vd. es, o quiere convertirse
+      en un administrador de repositorios Subversion,
       <footnote>
         <para>Puede sonar realmente prestigioso y <!--TODO: lofty: alto?
         This may sound really prestigious and lofty -->, pero sólo
@@ -50,7 +47,7 @@
     <title>Cuestiones básicas acerca de el repositorio</title>
 
     <para>Antes de entrar en el tema principal de la administración
-      del repositorio, vamos a definir con más detalla qué es un repositorio.
+      del repositorio, vamos a definir con más detalle qué es un repositorio.
       ¿Qué pinta tiene? ¿Cómo se siente? ¿Se toma el té caliente o helado,
       dulce, y con limón? Como administrador, necesitará entender la
       composición de un repositorio desde una perspectiva lógica&mdash;
@@ -64,7 +61,7 @@
     <!-- ***************************************************************** -->
     <sect2 id="svn-ch-5-sect-1.1">
       <title>Entendiendo las Transacciones y Revisiones</title>
-        
+
       <para>Hablando conceptualmente, un repositorio Subversion es
         una secuencia de árboles de directorios. Cada árbol es una
   <!--TODO:snapshot=¿fotografía?-->fotografía de cómo eran 
@@ -2388,59 +2385,62 @@ $
         sus repositorios de una manera efectiva la primera vez,
         podrá evitar un montón de futuros dolores de cabeza.</para>
 
-      <para>There are a few things to consider when setting up
-        Subversion repositories.  Let's assume that as repository
-        administrator, you will be responsible for supporting the
-        version control system for several projects.  The first
-        decision is whether to use a single repository for multiple
-        projects, or to give each project its own repository, or some
-        compromise of these two.</para>
+      <para>Hay algunas cosas que deberá considerar al configurar
+        repositorios con Subversion.  Asumamos que como administrador
+        de repositorio será responsable de dar soporte del sistema de
+        control de versiones a varios proyectos. La primera decisión
+        consiste en decidir si usará un único repositorio para múltiples
+        proyectos, o le dará un repositorio a cada proyecto, o una mezcla
+        de cambos.</para>
 
-     <para>There are benefits to using a single repository for
-       multiple projects, most obviously the lack of duplicated
-       maintenance.  A single repository means that there is one set
-       of hook scripts, one thing to routinely backup, one thing to
-       dump and load if Subversion releases an incompatible new
-       version, and so on.  Also, you can move data between
-       projects easily, and without losing any historical versioning
-       information.</para>
 
-     <para>The downside of using a single repository is that different
-       projects may have different commit mailing lists or different
-       authentication and authorization requirements.  Also, remember
-       that Subversion uses repository-global revision numbers.  Some
-       folks don't like the fact that even though no changes have been
-       made to their project lately, the youngest revision number for
-       the repository keeps climbing because other projects are
-       actively adding new revisions.</para>
+      <para>Hay múltiples beneficios en el uso de un único repositorio
+        para múltiples projectos, siendo el más obvio evitar duplicar el
+        trabajo de mantenimiento.  Tener un único repositorio significa
+        que sólo hay un conjunto de scripts de enganche, un elemento del
+        que hacer rutinariamente copias de seguridad, un único volcado y
+        recarga si Subversion lanza alguna nueva versión incompatible,
+        y así con todo. Además, puede mover datos entre proyectos
+        muy fácilmente, y sin perder ninguna información histórica de
+        versionado.</para>
 
-     <para>A middle-ground approach can be taken, too.  For example,
-       projects can be grouped by how well they relate to each other.
-       You might have a few repositories with a handful of projects in
-       each repository.  That way, projects that are likely to want to
-       share data can do so easily, and as new revisions are added to
-       the repository, at least the developers know that those new
-       revisions are at least remotely related to everyone who uses
-       that repository.</para>
+      <para>Las desventajas de usar un único repositorio son que los
+        diferentes proyectos pueden tener diferentes listas de correo
+        que reciben notificaciones de los cambios realizados o diferentes
+        requisitos de autenticación y autorización. Además, recuerde que
+        Subversion usa números de revisión globales por repositorio. Hay
+        gente a la que no le gusta el hecho de que incluso sin haber
+        realizado cambios recientes en sus proyectos, el número de la
+        revisión más reciente sigue subiendo porque otros proyectos
+        siguen añadiendo revisiones de manera activa.</para>
 
-     <para>After deciding how to organize your projects with respect
-       to repositories, you'll probably want to think about directory
-       hierarchies in the repositories themselves.  Because Subversion
-       uses regular directory copies for branching and tagging (see
-       <xref linkend="svn-ch-4"/>), the Subversion community
-       recommends that you choose a repository location for each
-       <firstterm>project root</firstterm>&mdash;the
-       <quote>top-most</quote> directory which contains data related
-       to that project&mdash;and then create three subdirectories
-       beneath that root: <filename>trunk</filename>, meaning the
-       directory under which the main project development occurs;
-       <filename>branches</filename>, which is a directory in which to
-       create various named branches of the main development line;
-       <filename>tags</filename>, which is a directory of branches
-       that are created, and perhaps destroyed, but never
-       changed.</para>
+      <para>También puede diseñar una solución híbrida. Por ejemplo,
+        los proyectos pueden ser agrupados en función de las relaciones
+        que tengan entre ellos. Quizás tenga varios repositorios con un
+        puñado de projectos en cada uno. De ese modo, los proyectos más
+        propensos a compartir sus datos pueden hacerlo de manera sencilla, y
+        a medida que se añaden revisiones al repositorio, al menos los
+        desarrolladores del mismo saben que están relacionadas remotamente
+        con todo aquél que usa ese repositorio.</para>
 
-     <para>For example, your repository might look like:</para>
+      <para>Tras decidir cómo desea organizar sus proyectos con respecto
+        a los repositorios, probablemente querrá decidir las jerarquías
+        de los directorios almacenados en ellos. Dado que Subversion
+        usa copias de directorio normales para hacer ramas y etiquetas
+        (vea <xref linkend="svn-ch-4"/>), la comunidad de Subversion
+        recomienda que elija una ubicación en el repositorio para cada
+        <firstterm>raíz de proyecto</firstterm>&mdash; el directorio
+        <quote>superior</quote> que contiene todos los datos relacionados
+        con el mismo&mdash;y crée tres nuevos subdirectorios en esa
+        raíz: <filename>trunk</filename>, que sería el directorio
+        bajo el cual se lleva el desarrollo principal del proyecto;
+        <filename>branches</filename>, que sería el directorio que
+        alojaría las diferentes ramas con nombre de la línea principal
+        de desarrollo; <filename>tags</filename>, que es el directorio
+        donde las ramas son creadas, y quizás destruidas, pero nunca
+        modificadas.</para>
+
+      <para>Por ejemplo, su repositorio podría tener este aspecto:</para>
 
      <screen>
 /
@@ -2459,15 +2459,15 @@ $
    &hellip;
 </screen>
 
-      <para>Note that it doesn't matter where in your repository each
-        project root is.  If you have only one project per repository,
-        the logical place to put each project root is at the root of
-        that project's respective repository.  If you have multiple
-        projects, you might want to arrange them in groups inside the
-        repository, perhaps putting projects with similar goals or
-        shared code in the same subdirectory, or maybe just grouping
-        them alphabetically.  Such an arrangement might look
-        like:</para>
+      <para>Tenga en cuenta que no importa dónde está la raíz de cada
+        proyecto en su repositorio. Si sólo tiene un proyecto por
+        repositorio, el lugar lógico para poner la raíz de cada proyecto
+        es en la raíz del repositorio respectivo.  Si tiene múltiples
+        proyectos, quizás desée organizarlos en grupos dentro del
+        repositorio, quizás ubicando proyectos con fines similares o
+        código compartido en el mismo subdirectorio, o quizás simplemente
+        prefiera agruparlos alfabéticamente. Tal esquema podría tener
+        el siguiente aspecto:</para>
 
       <screen>
 /
@@ -2489,33 +2489,31 @@ $
       &hellip;
 </screen>
 
-      <para>Lay out your repository in whatever way you see fit.
-        Subversion does not expect or enforce a layout schema&mdash;in
-        its eyes, a directory is a directory is a directory.
-        Ultimately, you should choose the repository arrangement that
-        meets the needs of the people who work on the projects that
-        live there.</para>
+      <para>Despliegue su repositorio de la manera que crea más
+        conveniente.  Subversion no espera ni obliga un esquema de
+        directorios concreto&mdash;a sus ojos, un directorio es un
+        directorio es un directorio. Por último, debería elegir la
+        organización del repositorio de manera que satisfaga las
+        necesidades de aquellos que trabajen en los proyectos ahí
+        alojados.</para>
 
     </sect2>
 
     <!-- ***************************************************************** -->
     <sect2 id="svn-ch-5-sect-6.2">
-      <title>Creating the Layout, and Importing Initial Data</title>
-          
-      <para>After deciding how to arrange the projects in your
-        repository, you'll probably want to actually populate the
-        repository with that layout and with initial project data.
-        There are a couple of ways to do this in Subversion.  You
-        could use the <command>svn mkdir</command> command (see <xref
-        linkend="svn-ch-9"/>) to create each directory in your
-        skeletal repository layout, one-by-one.  A quicker way to
-        accomplish the same task is to use the <command>svn
-        import</command> command (see <xref
-        linkend="svn-ch-3-sect-7.3"/>).  By first creating the layout
-        in a temporary location on your drive, you can import the
-        whole layout tree into the repository in a single
-        commit:</para>
-            
+      <title>Creando el esquema, importando los datos iniciales</title>
+
+      <para>Tras decidir cómo organizar los proyectos de su repositorio,
+        probablemente quiera poblarlo con ese esquema y los datos
+        iniciales de los proyectos.  Hay varios modos de hacer esto en
+        Subversion. Podría usar el comando <command>svn mkdir</command>
+        (vea <xref linkend="svn-ch-9"/>) para crear cada directorio en
+        su esquema esquelético, uno tras otro. Una forma más rápida
+        de realizar esta misma tarea es usar el comando <command>svn
+        import</command> (vea <xref linkend="svn-ch-3-sect-7.3"/>).
+        Al crear el esquema en una ubicación temporal de su disco,
+        puede importarlo por completo en un único cambio:</para>
+
       <screen>
 $ mkdir tmpdir
 $ cd tmpdir
@@ -2544,8 +2542,8 @@ $ rm -rf tmpdir
 $
 </screen>
 
-      <para>You can verify the results of the import by running the
-        <command>svn list</command> command:</para>
+      <para>Puede comprobar los resultados de la operación de importado
+        ejecutando el comando <command>svn list</command>:</para>
 
       <screen>
 $ svn list --verbose file:///path/to/repos
@@ -2555,18 +2553,17 @@ $ svn list --verbose file:///path/to/repos
 $
 </screen>
 
-      <para>Once you have your skeletal layout in place, you can begin
-        importing actual project data into your repository, if any
-        such data exists yet.  Once again, there are several ways to
-        do this.  You could use the <command>svn import</command>
-        command.  You could checkout a working copy from your new
-        repository, move and arrange project data inside the working
-        copy, and use the <command>svn add</command> and <command>svn
-        commit</command> commands.  But once we start talking about
-        such things, we're no longer discussing repository
-        administration.  If you aren't already familiar with the
-        <command>svn</command> client program, see <xref
-        linkend="svn-ch-3"/>.</para>
+      <para>Una vez tenga la estructura de su esquema en lugar, puede
+        comenzar a importar los del projecto en su repositorio, si
+        es que tales datos existen. De nuevo, hay varios métodos
+        para hacer esto.  Puede usar el comando <command>svn
+        import</command>. Podría obtener una copia de trabajo local
+        de su reciente repositorio, mover y organizar los datos de su
+        proyecto dentro, y usar los comandos <command>svn add</command>
+        y <command>svn commit</command>. Pero una vez comenzamos a hablar
+        de tales cosas, ya no estamos discutiendo la administración del
+        repositorio.  Si no está familiarizado con el programa cliente
+        <command>svn</command>, vea <xref linkend="svn-ch-3"/>.</para>
 
     </sect2>
   </sect1>
@@ -2575,24 +2572,24 @@ $
   <!-- *** SECTION 7:  SUMMARY                                         *** -->
   <!-- ******************************************************************* -->
   <sect1 id="svn-ch-5-sect-7">
-    <title>Summary</title>
+    <title>Sumario</title>
 
-    <para>By now you should have a basic understanding of how to
-      create, configure, and maintain Subversion repositories.  We've
-      introduced you to the various tools that will assist you with
-      this task.  Throughout the chapter, we've noted common
-      administration pitfalls, and suggestions for avoiding
-      them.</para>
+    <para>A estas alturas debería tener un conocimiento básico sobre
+      cómo crear, configurar, y mantener repositorios de Subversion. Le
+      hemos introducido a varias herramientas que le asistirán con estas
+      tareas. A lo largo del capítulo hemos avisado sobre los posibles
+      problemas, y proporcionado sugerencias para evitarlos.</para>
 
-    <para>All that remains is for you to decide what exciting data to
-      store in your repository, and finally, how to make it available
-      over a network.  The next chapter is all about networking.</para>
+    <para>Todo lo que queda es decidir qué datos excitantes
+      almacenará en su repositorio, y finalmente, cómo hacerlos
+      disponibles por red. El siguiente capítulo está dedicado a
+      todo lo relacionado con la red.</para>
 
   </sect1>
 </chapter>
 
 <!--
-local variables: 
+local variables:
 sgml-parent-document: ("book.xml" "chapter")
 end:
 -->
