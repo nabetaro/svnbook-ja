@@ -98,7 +98,7 @@
     <para>模块化的另一个好处是我们有能力去构造一个全新的，能够完全实现相同API功能的库，以替换整个给定的模块，而又不会影响基础代码。在某种意义上，Subversion已经这样做了。libsvn_ra_dav、libsvn_ra_local和libsvn_ra_svn all都实现了相同的接口，三者均与版本库层进行通讯&mdash;libsvn_ra_dav和libsvn_ra_svn通过网络，而libsvn_ra_local则是直接连接，libsvn_fs_base和libsvn_fs_fs是另外两个例子。
    </para>
 
-    <para>客户端设计本身就给模块化设计理念增色不少，Subversion目前只是附带了一个命令行方式的客户端，但已经出现了一些由第三方开发的GUI客户端程序，这些GUI客户端程序全都使用了与原装命令行客户端程序相同的API。为了开发一个实用的Subversion客户端程序，对于绝大部分功能，仅使用Subversion的libsvn_client库就够了（见<xref
+    <para>客户端设计本身就给模块化设计理念增色不少，Subversion本身只是附带了一个命令行方式的客户端，但已经出现了一些由第三方开发的不同GUI的客户端，这些GUI客户端程序全都使用了与原装命令行客户端程序相同的API。为了开发一个实用的Subversion客户端程序，对于绝大部分功能，仅使用Subversion的libsvn_client库就够了（见<xref
       linkend="svn.developer.layerlib.client"/>）。</para>
 
     <!-- =============================================================== -->
@@ -333,7 +333,7 @@ The following repository access (RA) modules are available:
   
         <para>Subversion的主要网络服务器是Apache HTTP服务器，Apache是久经考验的用来认真使用的开源服务器，它可以支撑很大的网络压力并且可以运行在多种平台。Apache服务器支持多种认证协议，而且可以通过模块扩展使用其它协议。它也支持流水线和缓存之类的网络优化。通过将Apache作为服务器，Subversion轻易得到这些特性。而且因为许多防火墙已经允许HTTP通过，系统管理员通常不会改变防火墙设置来允许Subversion工作。</para>
   
-        <para>Subversion使用HTTP和WebDAV（和DeltaV）来与Apache服务器通讯，你可以在本章的WebDAV读到更多信息，但简而言之，WebDAV和DeltaV是标准HTTP 1.1协议的扩展，允许在web上对文件进行分享和版本操作。Apache 2.0版随着一个mod_dav，一个Apache理解HTTP DAV扩展的模块，Subversion本身提供了mod_dav_svn，尽管，这是另一个Apache模块，它与mod_dav结合（实际上mod_dav_svn是作为后端支持）使用来提供Subversion对WebDAV和DeltaV的实现。</para>
+        <para>Subversion使用HTTP和WebDAV（和DeltaV）来与Apache服务器通讯，你可以在本章的WebDAV读到更多信息，但简而言之，WebDAV和DeltaV是标准HTTP 1.1协议的扩展，允许在web上对文件进行分享和版本操作。Apache的2.0及以后的版本都包含一个mod_dav，一个Apache理解HTTP DAV扩展的模块，Subversion本身提供了mod_dav_svn，尽管，这是另一个Apache模块，它与mod_dav结合（实际上mod_dav_svn是作为后端支持）使用来提供Subversion对WebDAV和DeltaV的实现。</para>
 
         <para>当与版本库通过HTTP通讯时，RA加载器库选择libsvn_ra_dav作为正确的访问模块，Subversion客户端调用原始的RA接口，libsvn_ra_dav把这些调用（包含了大量Subversion操作）影射为一系列HTTP/WebDAV请求。使用Neon库，libsvn_ra_dav把这些请求传递到Apache服务器，Apache接受到这些请求（就像平时web服务器常做的那样处理原始的HTTP请求），注意到这些请求的URL已经配置为DAV的位置（使用<filename>httpd.conf</filename>的<literal>&lt;Location&gt;</literal>指示），并且会使用自己的mod_dav模块来处理。当正确的配置了mod_dav使之知道了使用mod_dav_svn来处理所有文件系统相关的要求，而不是使用默认的Apache自带的原始mod_dav_fs来处理。所以最终客户端是与mod_dav_svn通讯，直接与Subversion版本库层绑定。</para>
   
@@ -545,10 +545,15 @@ if __name__ == "__main__":
         sys.stderr.write("Usage: %s REPOS_PATH\n"
                          % (os.path.basename(sys.argv[0])))
         sys.exit(1)
+        
+    # Canonicalize (enough for Subversion, at least) the repository path.
+    repos_path = os.path.normpath(sys.argv[1])
+    if repos_path == '.': 
+        repos_path = ''
 
     # Call the app-wrapper, which takes care of APR initialization/shutdown
     # and the creation and cleanup of our top-level memory pool.
-    svn.core.run_app(crawl_youngest, os.path.normpath(sys.argv[1]))
+    svn.core.run_app(crawl_youngest, repos_path)
 
 </programlisting>
       </example>
@@ -665,10 +670,15 @@ if __name__ == '__main__':
             verbose = 1
     if len(args) != 1:
         usage_and_exit(2)
+        
+    # Canonicalize (enough for Subversion, at least) the working copy path.
+    wc_path = os.path.normpath(args[0])
+    if wc_path == '.': 
+        wc_path = ''
             
     # Call the app-wrapper, which takes care of APR initialization/shutdown
     # and the creation and cleanup of our top-level memory pool.
-    svn.core.run_app(do_status, os.path.normpath(args[0]), verbose)
+    svn.core.run_app(do_status, wc_path, verbose)
 </programlisting>
       </example>
 

@@ -74,14 +74,14 @@ Committed revision 3.
         <varlistentry>
           <term>HEAD</term>
           <listitem>
-            <para>版本库中最新的版本。</para>
+            <para>版本库中最新的（或者是<quote>最年轻的</quote>）版本。</para>
           </listitem>
         </varlistentry>
         
         <varlistentry>
           <term>BASE</term>
           <listitem>
-            <para>工作拷贝中的<quote>原始</quote>修订版本。</para>
+            <para>工作拷贝中一个条目的修订版本号，如果这个版本在本地修改了，则<quote>BASE版本</quote>就是这个条目在本地未修改的版本。</para>
           </listitem>
         </varlistentry>
         
@@ -222,7 +222,7 @@ Checked out revision 2499.
       linkend="svn.advanced.props.special.mime-type"/>给Subversion提示以说明对于特定文件<quote>文本化的</quote>操作是没有意义的，也有一些地方，Subversion对存放信息的有限制。
       </para>
 
-      <para>Subversion内部处理文本是UTF-8编码的，结果就是有些条目天生是<quote>文本的</quote>，例如属性名称、路径名称和日志信息只能存放合法的UTF-8字符。它也提供了使用<literal>svn:mime-type</literal>属性的最小需求&mdash;如果一个文件的内容不符合UTF-8，你一定要把它标记为二进制文件，否则，Subversion会尝试使用UTF-8合并区别，这很可能在文件中留下垃圾。
+      <para>Subversion内部使用二进制处理数据&mdash;例如，属性名称，路径名和日志信息&mdash;UTF-8编码的Unicode，这并不意味着与Subversion的交互必须完全使用UTF-8。作为一个惯例，Subversion的客户端能够透明的转化UTF-8和你所使用系统的编码，前提是可以进行有意义的转换（当然是大多数目前常见的编码）。
       </para>
 
       <para>此外，路径名称在WebDAV交换中会作为XML属性值，就像Subversion的管理文件。这意味着路径名称只能包含合法的XML（1.0）字符，Subversion也会禁止路径名称中出现TAB、CR或LF字符，所以它们才不会在区别程序或如<xref
@@ -668,7 +668,7 @@ R       xyz.c               # 这个文件预定要被替换
           switch</command>）。</para>
         
         <para>第六列显示了锁定的信息，将会在<xref
-          linkend="svn.advanced.locking"/>详细说明。
+          linkend="svn.advanced.locking"/>详细说明。（这与第三列中的<computeroutput>L</computeroutput>并不是同一个东西，见<xref linkend="svn.advanced.locking.meanings"/>。）
         </para>
           
         <para>如果你传递一个路径给<command>svn
@@ -1438,9 +1438,9 @@ $ svn update --revision 1729 # Updates an existing working copy to r1729
     <sect2 id="svn.tour.other.cleanup">
       <title><command>svn cleanup</command></title>
 
-      <para>当Subversion改变你的工作拷贝（或是<filename>.svn</filename>中的任何信息），它会尽可能的小心，在修改任何事情之前，它把意图写到日志文件中去，然后执行log文件中的命令，然后删掉日志文件，这与分类帐的文件系统架构类似。如果Subversion的操作中断了（举个例子：进程被杀死了，机器死掉了），日志文件会保存在硬盘上，通过重新执行日志文件，Subversion可以完成上一次开始的操作，你的工作拷贝可以回到一致的状态。</para>
+      <para>当Subversion改变你的工作拷贝（或是<filename>.svn</filename>中的任何信息），它会尽可能的小心，在修改任何事情之前，它把意图写到日志文件中去，然后执行log文件中的命令，并且执行过程中在工作拷贝的相关部分保存一个锁&mdash; 防止Subversion客户端在变更过程中访问工作拷贝。然后删掉日志文件，这与记帐试的文件系统架构类似。如果Subversion的操作中断了（举个例子：进程被杀死了，机器死掉了），日志文件会保存在硬盘上，通过重新执行日志文件，Subversion可以完成上一次开始的操作，你的工作拷贝可以回到一致的状态。</para>
 
-      <para>这就是<command>svn cleanup</command>所作的：它查找工作拷贝中的所有遗留的日志文件，删除进程中的锁。如果Subversion告诉你工作拷贝中的一部分已经<quote>锁定</quote>了，你就需要运行这个命令了。同样，<command>svn status</command>将会使用<literal>L</literal> 显示锁定的项目：</para>
+      <para>这就是<command>svn cleanup</command>所作的：它查找工作拷贝中的所有遗留的日志文件，删除进程中工作拷贝的锁。如果Subversion告诉你工作拷贝中的一部分已经<quote>锁定</quote>了，你就需要运行这个命令了。同样，<command>svn status</command>将会使用<literal>L</literal> 显示锁定的项目：</para>
 
       <screen>
 $ svn status
@@ -1484,6 +1484,8 @@ subdir/
 
       <para>注意，在导入之后，原来的目录树并<emphasis>没有</emphasis>转化成工作拷贝，为了开始工作，你还是需要运行<command>svn
         checkout</command>导出一个工作拷贝。</para>
+        
+        <para>不要将工作拷贝中的锁与并行版本控制的<quote>锁定-修改-解锁</quote>模型中用户使用的锁混淆；为了清楚的认识可以看一下<xref linkend="svn.advanced.locking.meanings"/>。</para>
 
     </sect2>
 

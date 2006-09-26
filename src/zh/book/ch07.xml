@@ -248,7 +248,31 @@ collabnet = svn.collab.net
           <varlistentry>
             <term><literal>editor-cmd</literal></term>
             <listitem>
-              <para>Subversion在提交操作时用来询问用户日志信息的程序，例如使用<command>svn commit</command>而没有指定<option>--message</option>（<option>-m</option>）或者<option>--file</option>（<option>-F</option>）选项。这个程序也会与<command>svn propedit</command>一起使用&mdash;一个临时文件跳出来包含已经存在的用户希望编辑的属性，然后用户可以对这个属性进行编辑（见<xref linkend="svn.advanced.props" />），这个选项的缺省值为空，如果这个选项没有设置，Subversion会依次检查环境变量<literal>SVN_EDITOR</literal>、<literal>VISUAL</literal>和<literal>EDITOR</literal>（这个顺序）来找到一个编辑器命令。</para>
+              <para>Subversion在提交操作时用来询问用户日志信息的程序，例如使用<command>svn commit</command>而没有指定<option>--message</option>（<option>-m</option>）或者<option>--file</option>（<option>-F</option>）选项。这个程序也会与<command>svn propedit</command>一起使用&mdash;一个临时文件跳出来包含已经存在的用户希望编辑的属性，然后用户可以对这个属性进行编辑（见<xref linkend="svn.advanced.props" />），这个选项的缺省值为空，检测编辑器的顺序如下：
+              </para>
+              <orderedlist>
+                <listitem>
+                  <para>命令行选项<literal>--editor-cmd</literal></para>
+                </listitem>
+                <listitem>
+                  <para>环境变量<literal>SVN_EDITOR</literal></para>
+                </listitem>
+                <listitem>
+                  <para>配置选项<literal>editor-cmd</literal></para>
+                </listitem>
+                <listitem>
+                  <para>环境变量<literal>VISUAL</literal></para>
+                </listitem>
+                <listitem>
+                  <para>环境变量<literal>EDITOR</literal></para>
+                </listitem>
+                <listitem>
+                  <para>也有可能Subversion会有一个内置的缺省值（官方编译版本不是如此）
+                  </para>
+                </listitem>
+              </orderedlist>
+              <para>所有这些选项和变量（不像<literal>diff-cmd</literal>）的值的开头都是shell中要执行的命令行，Subversion会追加一个空格和一个需要编辑的临时文件，编辑器必须修改临时文件，并且返回一个0来表明成功。
+              </para>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -301,7 +325,7 @@ collabnet = svn.collab.net
           <varlistentry>
             <term><literal>log-encoding</literal></term>
             <listitem>
-              <para>这个变量设置提交日志缺省的字符集，是<option>--encoding</option>选项（见<xref linkend="svn.ref.svn.sw"/>）的永久形式，Subversion版本库保存了一些UTF8的日志信息，并且假定你的日志信息是用操作系统的本地编码，如果你提交的信息使用别的编码方式，你一定要指定不同的编码。</para>
+              <para>这个变量设置提交日志缺省的字符集，是<option>--encoding</option>选项（见<xref linkend="svn.ref.svn.sw"/>）的永久形式，Subversion版本库保存了一些UTF-8的日志信息，并且假定你的日志信息是用操作系统的本地编码，如果你提交的信息使用别的编码方式，你一定要指定不同的编码。</para>
             </listitem>
           </varlistentry>
 
@@ -448,7 +472,7 @@ $
 
       <screen>
 $ svn propdel license calc/button.c
-property 'license' deleted from ''.
+property 'license' deleted from 'calc/button.c'.
 $ svn proplist --verbose calc/button.c
 Properties on 'calc/button.c':
   copyright : (c) 2003 Red-Bean Software
@@ -761,7 +785,100 @@ Cumulus clouds are appearing more frequently as summer approaches.
         
         <para>如果有其他人提交了<filename>weather.txt</filename>的修改，你的此文件的拷贝还会显示同样的替换关键字值&mdash;直到你更新你的工作拷贝，此时你的<filename>weather.txt</filename>重的关键字将会被替换来反映最新的提交信息。
        </para>
+<para>Subversion 1.2 introduced a new variant of the keyword
+          syntax which brought additional, useful&mdash;though perhaps
+          atypical&mdash;functionality.  You can now tell Subversion
+          to maintain a fixed length (in terms of the number of bytes
+          consumed) for the substituted keyword.  By using a
+          double-colon (<literal>::</literal>) after the keyword name,
+          followed by a number of space characters, you define that
+          fixed width.  When Subversion goes to substitute your
+          keyword for the keyword and its value, it will essentially
+          replace only those space characters, leaving the overall
+          width of the keyword field unchanged.  If the substituted
+          value is shorter than the defined field width, there will be
+          extra padding characters (spaces) at the end of the
+          substituted field; if it is too long, it is truncated with a
+          special hash (<literal>#</literal>) character just before
+          the final dollar sign terminator.</para>
 
+        <para>For example, say you have a document in which you have
+          some section of tabular data reflecting the document's
+          Subversion keywords.  Using the original Subversion keyword
+          substitution syntax, your file might look something
+          like:</para>
+
+        <screen>
+$Rev$:     Revision of last commit
+$Author$:  Author of last commit
+$Date$:    Date of last commit
+</screen>
+
+        <para>Now, that looks nice and tabular at the start of things.
+          But when you then commit that file (with keyword substitution
+          enabled, of course), you see:</para>
+
+        <screen>
+$Rev: 12 $:     Revision of last commit
+$Author: harry $:  Author of last commit
+$Date: 2006-03-15 02:33:03 -0500 (Wed, 15 Mar 2006) $:    Date of last commit
+</screen>
+
+        <para>The result is not so beautiful.  And you might be
+          tempted to then adjust the file after the substitution so
+          that it again looks tabular.  But that only holds as long as
+          the keyword values are the same width.  If the last
+          committed revision rolls into a new place value (say, from
+          99 to 100), or if another person with a longer username
+          commits the file, stuff gets all crooked again.  However, if
+          you are using Subversion 1.2 or better, you can use the new
+          fixed-length keyword syntax, define some field widths that
+          seem sane, and now your file might look like this:</para>
+
+        <screen>
+$Rev::               $:  Revision of last commit
+$Author::            $:  Author of last commit
+$Date::              $:  Date of last commit
+</screen>
+
+        <para>You commit this change to your file.  This time,
+          Subversion notices the new fixed-length keyword syntax, and
+          maintains the width of the fields as defined by the padding
+          you placed between the double-colon and the trailing dollar
+          sign.  After substitution, the width of the fields is
+          completely unchanged&mdash;the short values for
+          <literal>Rev</literal> and <literal>Author</literal> are
+          padded with spaces, and the long <literal>Date</literal>
+          field is truncated by a hash character:</para>
+
+        <screen>
+$Rev:: 13            $:  Revision of last commit
+$Author:: harry      $:  Author of last commit
+$Date:: 2006-03-15 0#$:  Date of last commit
+</screen>
+       
+        <para>The use of fixed-length keywords is especially handy
+          when performing substitutions into complex file formats that
+          themselves use fixed-length fields for data, or for which
+          the stored size of a given data field is overbearingly
+          difficult to modify from outside the format's native
+          application (such as for Microsoft Office documents).</para>
+
+        <warning>
+          <para>Be aware that because the width of a keyword field is
+            measured in bytes, the potential for corruption of
+            multi-byte values exists.  For example, a username which
+            contains some multi-byte UTF-8 characters might suffer
+            truncation in the middle of the string of bytes which make
+            up one of those characters.  The result will be a mere
+            truncation when viewed at the byte level, but will likely
+            appear as a string with an incorrect or garbled final
+            character when viewed as UTF-8 text.  It is conceivable
+            that certain applications, when asked to load the file,
+            would notice the broken UTF-8 text and deem the entire
+            file corrupt, refusing to operate on the file
+            altogether.</para> 
+        </warning>
       </sect3>
 
       <sect3 id="svn.advanced.props.special.eol-style">
@@ -885,6 +1002,45 @@ Cumulus clouds are appearing more frequently as summer approaches.
 
     <para>Subversion的锁定特性当前限制到文件&mdash;还没有可能限制整个目录树的访问。</para>
 
+<sidebar id="svn.advanced.locking.meanings">
+      <title>Three meanings of <quote>lock</quote></title>
+
+      <para>In this section, and almost everywhere in this book, the
+        words <quote>lock</quote> and <quote>locking</quote> describe
+        a mechanism for mutual exclusion between users to avoid
+        clashing commits. Unfortunately, there are two other sorts
+        of <quote>lock</quote> with which Subversion, and therefore
+        this book, sometimes needs to be concerned.</para>
+
+      <itemizedlist>
+
+        <listitem><para><firstterm>Working copy locks</firstterm>,
+          used internally by Subversion to prevent clashes between
+          multiple Subversion clients operating on the same working
+          copy. This is the sort of lock indicated by
+          an <computeroutput>L</computeroutput> in the third column
+          of <command>svn status</command> output, and removed by
+          the <command>svn cleanup</command> command, as described in
+          <xref linkend="svn.tour.other.cleanup"/>.</para>
+        </listitem>
+
+        <listitem><para><firstterm>Database locks</firstterm>, used
+          internally by the Berkeley DB backend to prevent clashes
+          between multiple programs trying to access the
+          database. This is the sort of lock whose unwanted
+          persistence after an error can cause a repository to
+          be <quote>wedged</quote>, as described in
+          <xref linkend="svn.reposadmin.maint.recovery"/>.</para>
+        </listitem>
+
+      </itemizedlist>
+
+      <para>You can generally forget about these other sorts of lock,
+        until something goes wrong that requires you to care about
+        them. In this book, <quote>lock</quote> means the first sort
+        unless the contrary is either clear from context or explicitly
+        stated.</para>
+    </sidebar>
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.locking.creation">
       <title>创建锁定</title>
@@ -1235,7 +1391,14 @@ Making some tweaks.  Locking for the next two hours.
   <sect1 id="svn.advanced.pegrevs">
     <title>Peg和实施修订版本</title>
 
-    <para>文件和目录的拷贝、移动和改名能力可以让我们可以删除一个对象，然后在同样的路径添加一个新的&mdash;这是我们在电脑上对文件和目录经常作的操作，我们认为这些操作都是理所当然的。Subversion很乐意你认为这些操作已经赋予给你，Subversion的文件管理操作是这样的解放，提供了几乎和普通文件一样的操作版本化文件的灵活性，但是灵活意味着在整个版本库的生命周期中，一个给定的版本化的资源可能会出现在许多不同的路径，一个给定的路径会展示给我们许多完全不同的版本化资源。</para>
+    <para>The ability to copy, move, and rename files and directories;
+      to be able to create an object, then delete it and then add a
+      new one at the same path&mdash;those are operations which we
+      perform on files and directories on our computers all the time,
+      and operations we tend to take for granted.  And Subversion
+      would like you to think they are granted. ，Subversion的文件管理操作是这样的开放，提供了几乎和普通文件一样的操作版本化文件的灵活性，但是灵活意味着在整个版本库的生命周期中，一个给定的版本化的资源可能会出现在许多不同的路径，一个给定的路径会展示给我们许多完全不同的版本化资源。And this
+      introduces a certain level of complexity to your interactions
+      with those paths and resources.</para>
 
     <para>Subversion可以非常聪明的注意到一个对象的版本历史变化包括一个<quote>地址改变</quote>，举个例子，如果你询问一个曾经上周改过名的文件的所有的日志信息，Subversion会很高兴提供所有的日志&mdash;重命名发生的修订版本，外加相关版本之前和之后的修订版本日志，所以大多数时间里，你不需要考虑这些事情，但是偶尔，Subversion会需要你的帮助来清除混淆。</para>
 
