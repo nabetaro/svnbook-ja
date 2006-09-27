@@ -785,28 +785,11 @@ Cumulus clouds are appearing more frequently as summer approaches.
         
         <para>如果有其他人提交了<filename>weather.txt</filename>的修改，你的此文件的拷贝还会显示同样的替换关键字值&mdash;直到你更新你的工作拷贝，此时你的<filename>weather.txt</filename>重的关键字将会被替换来反映最新的提交信息。
        </para>
-<para>Subversion 1.2 introduced a new variant of the keyword
-          syntax which brought additional, useful&mdash;though perhaps
-          atypical&mdash;functionality.  You can now tell Subversion
-          to maintain a fixed length (in terms of the number of bytes
-          consumed) for the substituted keyword.  By using a
-          double-colon (<literal>::</literal>) after the keyword name,
-          followed by a number of space characters, you define that
-          fixed width.  When Subversion goes to substitute your
-          keyword for the keyword and its value, it will essentially
-          replace only those space characters, leaving the overall
-          width of the keyword field unchanged.  If the substituted
-          value is shorter than the defined field width, there will be
-          extra padding characters (spaces) at the end of the
-          substituted field; if it is too long, it is truncated with a
-          special hash (<literal>#</literal>) character just before
-          the final dollar sign terminator.</para>
+<para>Subversion 1.2引入了另一种关键字的语法，提供了额外和有用的，尽管是非典型的功能。你现在可以告诉Subversion为替代的关键字维护一个固定长度（从消耗字节的观点），通过在关键字名后使用双冒号（<literal>::</literal>），然后紧跟一组空格，你就定义了固定宽度。当Subversion使用替代值代替你的关键字，只会替换这些空白字符，保持关键字字段长度保持不变，如果替代值比定义的字段短，会有替代字段后保留空格；如果替代值太长，就会在最后的美元符号终止符前用井号（<literal>#</literal>）截断。
+</para>
 
-        <para>For example, say you have a document in which you have
-          some section of tabular data reflecting the document's
-          Subversion keywords.  Using the original Subversion keyword
-          substitution syntax, your file might look something
-          like:</para>
+        <para>例如，你有一篇文档，其中一段是一些反映Subversion关键字的表格数据，使用原始的Subversion关键字替换语法，你的文件或许像这样：
+       </para>
 
         <screen>
 $Rev$:     Revision of last commit
@@ -814,9 +797,8 @@ $Author$:  Author of last commit
 $Date$:    Date of last commit
 </screen>
 
-        <para>Now, that looks nice and tabular at the start of things.
-          But when you then commit that file (with keyword substitution
-          enabled, of course), you see:</para>
+        <para>现在，表格看起来佷漂亮，但是当你提交文件（当然，关键字替换功能已打开），你会看到：
+        </para>
 
         <screen>
 $Rev: 12 $:     Revision of last commit
@@ -824,16 +806,8 @@ $Author: harry $:  Author of last commit
 $Date: 2006-03-15 02:33:03 -0500 (Wed, 15 Mar 2006) $:    Date of last commit
 </screen>
 
-        <para>The result is not so beautiful.  And you might be
-          tempted to then adjust the file after the substitution so
-          that it again looks tabular.  But that only holds as long as
-          the keyword values are the same width.  If the last
-          committed revision rolls into a new place value (say, from
-          99 to 100), or if another person with a longer username
-          commits the file, stuff gets all crooked again.  However, if
-          you are using Subversion 1.2 or better, you can use the new
-          fixed-length keyword syntax, define some field widths that
-          seem sane, and now your file might look like this:</para>
+        <para>结果并不漂亮，你可能会尝试重新调整文件使之更像一个列表。只有关键字的长度是相同的时候才能保证保持样式，如果进入另一个修订版本（如从99到100），或者是另一个有较长用户名的人提交了文件，表格又会变形。然而，如果你使用Subversion 1.2，你可以使用新的固定长度的关键字语法，定义合适的字段宽度，然后你的文件可能如此：
+       </para>
 
         <screen>
 $Rev::               $:  Revision of last commit
@@ -841,15 +815,8 @@ $Author::            $:  Author of last commit
 $Date::              $:  Date of last commit
 </screen>
 
-        <para>You commit this change to your file.  This time,
-          Subversion notices the new fixed-length keyword syntax, and
-          maintains the width of the fields as defined by the padding
-          you placed between the double-colon and the trailing dollar
-          sign.  After substitution, the width of the fields is
-          completely unchanged&mdash;the short values for
-          <literal>Rev</literal> and <literal>Author</literal> are
-          padded with spaces, and the long <literal>Date</literal>
-          field is truncated by a hash character:</para>
+        <para>你提交这个文件的修改，这一次Subversion注意到了新的固定长度的关键字语法，根据你在双冒号之间指定的空格长度调整格式，并且紧跟一个美元符号。经过替换，字段的长度没有发生变化&mdash;<literal>Rev</literal>和<literal>Author</literal>多了一些空格，而较长的<literal>Date</literal>字段被一个井号截断：
+       </para>
 
         <screen>
 $Rev:: 13            $:  Revision of last commit
@@ -857,27 +824,12 @@ $Author:: harry      $:  Author of last commit
 $Date:: 2006-03-15 0#$:  Date of last commit
 </screen>
        
-        <para>The use of fixed-length keywords is especially handy
-          when performing substitutions into complex file formats that
-          themselves use fixed-length fields for data, or for which
-          the stored size of a given data field is overbearingly
-          difficult to modify from outside the format's native
-          application (such as for Microsoft Office documents).</para>
+        <para>固定长度关键字在执行复杂文件格式的替换中非常易用，也可以处理那些很难通过其他程序（例如Microsoft Office文档）进行修改的文件。
+        </para>
 
         <warning>
-          <para>Be aware that because the width of a keyword field is
-            measured in bytes, the potential for corruption of
-            multi-byte values exists.  For example, a username which
-            contains some multi-byte UTF-8 characters might suffer
-            truncation in the middle of the string of bytes which make
-            up one of those characters.  The result will be a mere
-            truncation when viewed at the byte level, but will likely
-            appear as a string with an incorrect or garbled final
-            character when viewed as UTF-8 text.  It is conceivable
-            that certain applications, when asked to load the file,
-            would notice the broken UTF-8 text and deem the entire
-            file corrupt, refusing to operate on the file
-            altogether.</para> 
+          <para>需要意识到，因为关键字字段的长度是以字节为单位，可能会破坏多字节值，例如一个用户名包含多字节的UTF-8字符，可能会遭遇从某个字符中间截断的情况，从字节角度看仅仅是一种截断，但是从UTF-8字符串角度看可能是错误和曲解的，当载入文件时，破坏的UTF-8文本可能导致整个文件的破坏，整个文件无法操作。
+          </para> 
         </warning>
       </sect3>
 
@@ -1003,43 +955,26 @@ $Date:: 2006-03-15 0#$:  Date of last commit
     <para>Subversion的锁定特性当前限制到文件&mdash;还没有可能限制整个目录树的访问。</para>
 
 <sidebar id="svn.advanced.locking.meanings">
-      <title>Three meanings of <quote>lock</quote></title>
+      <title><quote>锁定</quote>的三种含义</title>
 
-      <para>In this section, and almost everywhere in this book, the
-        words <quote>lock</quote> and <quote>locking</quote> describe
-        a mechanism for mutual exclusion between users to avoid
-        clashing commits. Unfortunately, there are two other sorts
-        of <quote>lock</quote> with which Subversion, and therefore
-        this book, sometimes needs to be concerned.</para>
+      <para>在本小节，和几乎本书的每一个地方<quote>lock</quote>和<quote>locking</quote>描述了一种避免用户之间冲突提交的排他机制，但是佷不幸，Subversion中还有另外两种锁，因此需要在本书格外关心。
+     </para>
 
       <itemizedlist>
 
-        <listitem><para><firstterm>Working copy locks</firstterm>,
-          used internally by Subversion to prevent clashes between
-          multiple Subversion clients operating on the same working
-          copy. This is the sort of lock indicated by
-          an <computeroutput>L</computeroutput> in the third column
-          of <command>svn status</command> output, and removed by
-          the <command>svn cleanup</command> command, as described in
-          <xref linkend="svn.tour.other.cleanup"/>.</para>
+        <listitem><para><firstterm>工作拷贝锁</firstterm>，Subversion内部用来防止不同客户端同时操作同一份工作拷贝的锁，这种锁使用<command>svn status</command>输出中第三列出现的<computeroutput>L</computeroutput>表示，可以使用<command>svn cleanup</command>删除（<xref 
+       linkend="svn.tour.other.cleanup"/>有介绍）。</para>
         </listitem>
 
-        <listitem><para><firstterm>Database locks</firstterm>, used
-          internally by the Berkeley DB backend to prevent clashes
-          between multiple programs trying to access the
-          database. This is the sort of lock whose unwanted
-          persistence after an error can cause a repository to
-          be <quote>wedged</quote>, as described in
-          <xref linkend="svn.reposadmin.maint.recovery"/>.</para>
+        <listitem><para><firstterm>数据库锁</firstterm>，在Berkeley DB后端内部使用，防止多个程序访问数据库发生冲突，一个导致版本库<quote>楔住</quote>的错误发生后产生（<xref 
+        linkend="svn.reposadmin.maint.recovery"/>有描述）。
+        </para>
         </listitem>
 
       </itemizedlist>
 
-      <para>You can generally forget about these other sorts of lock,
-        until something goes wrong that requires you to care about
-        them. In this book, <quote>lock</quote> means the first sort
-        unless the contrary is either clear from context or explicitly
-        stated.</para>
+      <para>在发生问题之前你可以忘记上面两种锁，在本书，<quote>锁定</quote>意味着第一种锁，除非是清除不合理的上下文或明确的状态。
+     </para>
     </sidebar>
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.locking.creation">
@@ -1391,14 +1326,8 @@ Making some tweaks.  Locking for the next two hours.
   <sect1 id="svn.advanced.pegrevs">
     <title>Peg和实施修订版本</title>
 
-    <para>The ability to copy, move, and rename files and directories;
-      to be able to create an object, then delete it and then add a
-      new one at the same path&mdash;those are operations which we
-      perform on files and directories on our computers all the time,
-      and operations we tend to take for granted.  And Subversion
-      would like you to think they are granted. ，Subversion的文件管理操作是这样的开放，提供了几乎和普通文件一样的操作版本化文件的灵活性，但是灵活意味着在整个版本库的生命周期中，一个给定的版本化的资源可能会出现在许多不同的路径，一个给定的路径会展示给我们许多完全不同的版本化资源。And this
-      introduces a certain level of complexity to your interactions
-      with those paths and resources.</para>
+    <para>文件和目录的拷贝、改名和移动能力使你可以创建一个项目，然后删除它，然后在同一个位置添加一个新的&mdash;这是在我们的计算机中经常发生的操作，我们认为这些功能都是必然有的，Subversion很高兴你也是这么认为的，Subversion的文件管理操作是这样的开放，提供了几乎和普通文件一样的操作版本化文件的灵活性，但是灵活意味着在整个版本库的生命周期中，一个给定的版本化的资源可能会出现在许多不同的路径，一个给定的路径会展示给我们许多完全不同的版本化资源。当然这些功能也增加了你与这些路径和资源交互的难度。
+   </para>
 
     <para>Subversion可以非常聪明的注意到一个对象的版本历史变化包括一个<quote>地址改变</quote>，举个例子，如果你询问一个曾经上周改过名的文件的所有的日志信息，Subversion会很高兴提供所有的日志&mdash;重命名发生的修订版本，外加相关版本之前和之后的修订版本日志，所以大多数时间里，你不需要考虑这些事情，但是偶尔，Subversion会需要你的帮助来清除混淆。</para>
 
@@ -1824,77 +1753,24 @@ svn: Can't convert string from 'UTF-8' to native encoding:
   <sect1 id="svn.advanced.externaldifftools">
     <title>使用外置区别工具</title>
 
-    <para>The presence of <option>--diff-cmd</option> and
-      <option>--diff3-cmd</option> options, and similarly named
-      runtime configuration parameters (see <xref
-      linkend="svn.advanced.confarea.opts.config"/>), can lead to a
-      false notion of how easy it is to use external differencing (or
-      <quote>diff</quote>) and merge tools with Subversion.  While
-      Subversion can use most of popular such tools available, the
-      effort invested in setting this up often turns out to be
-      non-trivial.</para>
+    <para>选项<option>--diff-cmd</option>和<option>--diff3-cmd</option>的形式相似，也有类似名称的运行配置参数（见<xref
+      linkend="svn.advanced.confarea.opts.config"/>），这会导致一个错误的观念，也就是在Subversion中使用外置的比较（或<quote>diff</quote>）和合并工具会非常的容易，虽然Subversion可以使用大多数类似的工具，但是设置这些工具绝非易事。
+     </para>
 
-    <para>The interface between Subversion and external diff and merge
-      tools harkens back to a time when Subversion's only contextual
-      differencing capabilities were built around invocations of the
-      GNU diffutils toolchain, specifically the
-      <command>diff</command> and <command>diff3</command> utilities.
-      To get the kind of behavior Subversion needed, it called these
-      utilities with more than a handful of options and parameters,
-      most of which were quite specific to the utilities.  Some time
-      later, Subversion grew its own internal differencing library,
-      and as a failover mechanism,
-      <footnote>
-        <para>Subversion developers are good, but even the best make
-          mistakes.</para>
-      </footnote>
-      the <option>--diff-cmd</option> and <option>--diff3-cmd</option>
-      options were added to the Subversion command-line client so
-      users could more easily indicate that they preferred to use the
-      GNU diff and diff3 utilities instead of the newfangled internal
-      diff library.  If those options were used, Subversion would
-      simply ignore the internal diff library, and fall back to
-      running those external programs, lengthy argument lists and all.
-      And that's where things remain today.</para>
+    <para>Subversion和外置比较和合并工具的接口可以追溯到很久以前，当时Subversion的唯一文本比较能力是建立在GNU的工具链之上，特别是<command>diff</command>和<command>diff3</command>工具，为了得到Subversion需要的方式，它使用非常复杂的选项和参数调用这些工具，而这些选项和参数都是工具特定的，渐渐的，Subversion发展了自己的比较区别库作为备份机制。<footnote><para>Subversion的开发者很好，但最好的也会发生错误。</para></footnote>
+   <option>--diff-cmd</option>和<option>--diff3-cmd</option>选项是添加到Subversion的命令行客户端，所以用户可以更加容易的指明他们最喜欢的使用的GNU diff和diff3工具，而不是新奇的内置比较库，如果使用了这些选项，Subversion会忽略内置的比较库，转而使用外置程序，使用冗长的参数列表。现在还是这样。
+   </para>
 
-    <para>It didn't take long for folks to realize that having such
-      easy configuration mechanisms for specifying that Subversion
-      should use the external GNU diff and diff3 utilities located at
-      a particular place on the system could be applied toward the use
-      of other diff and merge tools, too.  After all, Subversion
-      didn't actually verify that the things it was being told to run
-      were members of the GNU diffutils toolchain.  But the only
-      configurable aspect of using those external tools is their
-      location on the system&mdash;not the option set, parameter
-      order, etc.  Subversion continues throwing all those GNU utility
-      options at your external diff tool regardless of whether or not
-      that program can understand those options.  And that's where
-      things get unintuitive for most users.</para>
+    <para>人们很快意识到使用简单的配置机制必须使Subversion使用位于特定位置的GNU diff和diff3工具，毕竟，Subversion并不验证其被告之要执行的程序是否是GNU的工具链的比较工具。唯一可以配置的方面是外置工具在系统的位置&mdash;而不是选项集，参数顺序等等。Subversion一直将这些GNU工具选项发给你的外置比较工具，而不管程序是否可以理解那些选项，那不是所有用户直觉的方式。
+    </para>
 
-    <para>The key to using external diff and merge tools (other than
-      GNU diff and diff3, of course) with Subversion is to use wrapper
-      scripts which convert the input from Subversion into something
-      that your differencing tool can understand, and then to convert
-      the output of your tool back into a format which Subversion
-      expects&mdash;the format that the GNU tools would have used.
-      The following sections cover the specifics of those
-      expectations.</para>
+    <para>使用外置比较和合并工具的关键是使用包裹脚本将Subversion的输出转化为你的脚本程序可以理解的形式，然后将这些比较工具的输出转化为你的Subversion期望的格式&mdash;GNU工具可能使用的格式，下面的小节覆盖了那些期望格式的细节。
+   </para>
 
     <note>
-      <para>The decision on when to fire off a contextual diff or
-        merge as part of a larger Subversion operation is made
-        entirely by Subversion, and is affected by, among other
-        things, whether or not the files being operated on are
-        human-readable as determined by their
-        <literal>svn:mime-type</literal> property.  This means, for
-        example, that even if you had the niftiest Microsoft
-        Word-aware differencing or merging tool in the Universe, it
-        would never be invoked by Subversion so long as your versioned
-        Word documents had a configured MIME type that denoted that
-        they were not human-readable (such as
-        <literal>application/msword</literal>).  For more about MIME
-        type settings, see <xref
-        linkend="svn.advanced.props.special.mime-type"/></para>
+      <para>何时启动文本比较或合并的决定完全是Subversion的决定，而这个决定是根据文件的<literal>svn:mime-type</literal>属性作出的，这意味着，例如，即使你有一个可以识别Microsoft Word格式的比较或合并工具，当你对一个Word文件设置为非人工可读（例如<literal>application/msword</literal>）时，依然不会调用这个识别Word的工具。关于MIME
+        type的设定，可以见<xref
+        linkend="svn.advanced.props.special.mime-type"/>。</para>
     </note>
 
     <!-- =============================================================== -->
