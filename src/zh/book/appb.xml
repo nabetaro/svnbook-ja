@@ -196,7 +196,7 @@
     <para>因为Subversion客户端不是完整的DeltaV客户端，Subversion服务器也不是完整的DeltaV服务器，但仍有值得高兴的交互特性：叫做自动版本化。
    </para>
 
-    <para>自动版本化是DeltaV标准中的可选特性，一个典型的DeltaV服务器会拒绝一个对版本控制之下文件的<literal>PUT</literal>操作，为了修改一个版本控制下的文件，服务器只会接受一系列正确的版本请求：例如<literal>MKACTIVITY</literal>、<literal>CHECKOUT</literal>、<literal>PUT</literal>和<literal>CHECKIN</literal>。但是如果DeltaV服务器支持自动版本化，服务器可以在后台假装客户端执行了一些列正确的版本请求，也就是说，DeltaV服务器可以与一个普通的WebDAV客户端交互。
+    <para>自动版本化是DeltaV标准中的可选特性，一个典型的DeltaV服务器会拒绝一个对版本控制之下文件的<literal>PUT</literal>操作，为了修改一个版本控制下的文件，服务器只会接受一系列正确的版本请求：例如<literal>MKACTIVITY</literal>、<literal>CHECKOUT</literal>、<literal>PUT</literal>和<literal>CHECKIN</literal>。但是如果DeltaV服务器支持自动版本化，服务器可以在后台假装客户端执行了一些列正确的版本请求，也就是说，DeltaV服务器可以与一个对版本化一无所知的普通WebDAV客户端交互。
    </para>
 
     <para>因为有许多操作系统已经集成了WebDAV客户端，这个特性的用例可能是这样的：假设一个办公室有许多使用Microsoft Windows或Mac OS的普通用户，每个用户<quote>装载</quote>了一个Subversion版本库，看起来就是普通的网络共享文件夹。他们像普通目录一样的操作这个目录：打开文件、编辑它们，保存它们。同时，服务器自动的版本化所有的东西，任何管理员（或有知识的用户）可以一直使用Subversion客户端来查询历史来检索旧版本的数据。
@@ -222,6 +222,41 @@
       commit</command>产生的事务。技巧就是检查修订版本的<literal>svn:autoversioned</literal>属性，如果有，则提交来自一个原始的WebDAV客户端。
      </para>
 
+<para>Another feature that may be a useful complement
+      for <literal>SVNAutoversioning</literal> comes from
+      Apache's <literal>mod_mime</literal> module.  If a generic
+      WebDAV client adds a new file to the repository, there's no
+      opportunity for the user to set the
+      the <literal>svn:mime-type</literal> property.  This might cause
+      the file to appear as <quote>generic</quote> icon when viewed
+      within a WebDAV shared folder, not having an association with
+      any application.  One remedy is to have a sysadmin (or other
+      Subversion-knowledgable person) check out a working copy and
+      manually set the <literal>svn:mime-type</literal> property on
+      necessary files. But there's potentially no end to such cleanup
+      tasks.  Instead, you can use
+      the <literal>ModMimeUsePathInfo</literal> directive in
+      your Subversion <literal>&lt;Location&gt;</literal>
+      block:</para>
+ 
+    <screen>
+&lt;Location /repos&gt;
+  DAV svn
+  SVNPath /path/to/repository
+  SVNAutoversioning on
+
+  ModMimeUsePathInfo on
+
+&lt;/Location&gt;
+</screen>
+
+    <para>This directive allows <literal>mod_mime</literal> to attempt
+      automatic deduction of the mime-type on new files that enter the
+      repository via autoversioning.  The module looks at the file's
+      named extension and possibly the contents as well; if the file
+      matches some common patterns, then the the
+      file's <literal>svn;mime-type</literal> property will be set
+      automatically.</para>
   </sect1>
 
   <!-- ================================================================= -->
@@ -411,6 +446,14 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
         <para>有各种解决问题的方法，但好像没有一种能够在各版本和各级别的Windows XP中有效。在我们的测试里，只有上面这种策略在各种系统中有效。WebDAV社区一致认为避免使用新的网络文件夹实现，而使用旧的，如果你希望在Windows XP使用真实的文件系统级的客户端，请使用第三方的程序，例如WebDrive或NetDrive。
         </para>
 
+       <para>A final tip: if you're attempting to use XP Web Folders,
+          make sure you have the absolute latest version from
+          Microsoft.  For example, Microsoft released a bug-fixed
+          version in January 2005, available at
+          <ulink url="http://support.microsoft.com/?kbid=892211"/>.
+          In particular, this release is known to fix a bug whereby
+          browsing a DAV share shows an unexpected infinite
+          recursion.</para>
       </sect3>
 
       <sect3 id="svn.webdav.clients.file-explorer-extensions.linux-de">

@@ -138,46 +138,57 @@
     <para>对于Subversion，我们通过修改<command>svn status</command>的输出使之同时满足阅读和解析的需要来努力消除这种混乱，同样，<command>svn update</command>只会打印将要更新的文件信息，而<emphasis>不是</emphasis>本地修改。
     </para>
 
+  <sect2 id="svn.forcvs.status-vs-update.status">
+    <title>Status</title>
     <para><command>svn status</command>打印所有本地修改的文件，缺省情况下，不会联系版本库，然而这个命令接受一些选项，如下是一些最常用的：
     </para>
 
-    <variablelist>
-      <varlistentry>
-        <term><option>-u</option></term>
-        <listitem>
-          <para>联系版本库来确定，然后显示，过时的信息。
-          </para>
-        </listitem>
-      </varlistentry>
-      
-      <varlistentry>
-        <term><option>-v</option></term>
-        <listitem>
-          <para>显示<emphasis>所有</emphasis>版本控制之下的条目。</para>
-        </listitem>
-      </varlistentry>
+   <para><command>svn status</command> prints all files that have
+        local modifications.  By default, the repository is not
+        contacted.  While this subcommand accepts a fair number of
+        options, the following are the most commonly used ones:</para>
 
-      <varlistentry>
-        <term><option>-N</option></term>
-        <listitem>
-          <para>非递归运行（不传递到子目录）。</para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
+      <variablelist>
+        <varlistentry>
+          <term><option>-u</option></term>
+          <listitem>
+            <para>Contact the repository to determine, and then display,
+              out-of-dateness information.</para>
+          </listitem>
+        </varlistentry>
 
-    <para><command>status</command>命令有两种输出格式，缺省是<quote>简短</quote>格式，本地修改看起来是这样：
-    </para>
+        <varlistentry>
+          <term><option>-v</option></term>
+          <listitem>
+            <para>Show <emphasis>all</emphasis> entries under
+              version control.</para>
+          </listitem>
+        </varlistentry>
 
-    <screen>
+        <varlistentry>
+          <term><option>-N</option></term>
+          <listitem>
+            <para>Run non-recursively (do not descend into
+              subdirectories).</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <para>The <command>status</command> command has two output
+        formats.  In the default <quote>short</quote> format, local
+        modifications look like this:</para>
+
+      <screen>
 $ svn status
 M      foo.c
 M      bar/baz.c
 </screen>
 
-    <para>如果你指定<option>--show-updates</option>（<option>-u</option>），输出会使用比较长的格式：
-    </para>
+      <para>If you specify the <option>--show-updates</option>
+        (<option>-u</option>) switch, a longer output format is
+        used:</para>
 
-    <screen>
+      <screen>
 $ svn status -u
 M            1047   foo.c
        *     1045   faces.html
@@ -186,40 +197,61 @@ M            1050   bar/baz.c
 Status against revision:   1066
 </screen>
 
-    <para>在这个例子里，有两个新列，如果文件或目录已经过期了，第二列会显示星号。第三列显示工作拷贝项目的修订版本号，在上面的例子里，星号表示<filename>faces.html</filename>会在更新时更新，而<filename>bloo.png</filename>是在版本库新加的文件。（<filename>bloo.png</filename>前面的空格表示它不曾存在于工作拷贝。）
-    </para>
+      <para>In this case, two new columns appear.  The second column
+        contains an asterisk if the file or directory is out-of-date.
+        The third column shows the working-copy's revision number of the
+        item.  In the example above, the asterisk indicates that
+        <filename>faces.html</filename> would be patched if we updated,
+        and that <filename>bloo.png</filename> is a newly added file in
+        the repository.  (The absence of any revision number next to
+        <filename>bloo.png</filename> means that it doesn't yet exist in
+        the working copy.)</para>
 
-    <!-- ###TODO describe -v here as well as -uv. -u and -v use
-         different <quote>long</quote> formats and need to be
-         documented separately. Moreover, as you can combine -u and
-         -v, it needs to be explained what each of them does. As -u is
-         much more important than -v, and the example following that
-         paragraph *is* about -u, not -v, my patch concentrated on
-         that. -->
+      <!-- ###TODO describe -v here as well as -uv. -u and -v use
+           different <quote>long</quote> formats and need to be
+           documented separately.  Moreover, as you can combine -u and
+           -v, it needs to be explained what each of them does.  As -u is
+           much more important than -v, and the example following that
+           paragraph *is* about -u, not -v, my patch concentrated on
+           that. -->
 
-    <para>最后，你会想看一个常见状态码的快速总结：</para>
+      <para>Lastly, here's a quick summary of the most common status codes that
+        you may see:</para>
 
-    <screen>
-A    资源预定要添加
-D    资源预定要删除
-M    资源有本地修改
-C    资源发生冲突（修改不能完全在版本库和
-     工作拷贝之间合并）
-X    资源在工作拷贝之外（来自其他版本库，
-     见<xref linkend="svn.advanced.props.special.externals" />）
-?    资源不在版本控制之下
-!    资源丢失或者不完整（被Subversion以外的工具删除）
+      <screen>
+A    Resource is scheduled for Addition
+D    Resource is scheduled for Deletion
+M    Resource has local Modifications
+C    Resource has Conflicts (changes have not been completely merged
+       between the repository and working copy version)
+X    Resource is eXternal to this working copy (may come from another
+       repository).  See <xref linkend="svn.advanced.props.special.externals" />
+?    Resource is not under version control
+!    Resource is missing or incomplete (removed by another tool than
+       Subversion)
 </screen>
 
-    <!-- ###TODO:  This paragraph should be moved elsewhere.  We are
-                   talking about status codes here, and not update.
-                   Although CVS uses update as a form of status... -->
-    <para>Subversion合并了CVS的<literal>P</literal>和<literal>U</literal>代码为<literal>U</literal>，当一个合并或冲突发生，Subversion只会简单得打印<literal>G</literal>或<literal>C</literal>，而不是一段完整的描述语句。
-    </para>
+      <para>For a more detailed discussion of <command>svn
+        status</command>, see <xref linkend="svn.tour.cycle.examine.status" />.</para>
 
-    <para>关于<command>svn
-      status</command>的详细讨论见<xref linkend="svn.tour.cycle.examine.status" />。
-    </para>
+    </sect2>
+
+    <sect2 id="svn.forcvs.status-vs-update.update">
+      <title>Update</title>
+
+      <para><command>svn update</command> updates your working copy,
+        and only prints information about files that it updates.</para>
+
+      <para>Subversion has combined the CVS <literal>P</literal> and
+        <literal>U</literal> codes into just <literal>U</literal>.  When
+        a merge or conflict occurs, Subversion simply prints
+        <literal>G</literal> or <literal>C</literal>, rather than a
+        whole sentence about it.</para>
+
+      <para>For a more detailed discussion of <command>svn
+        update</command>, see <xref linkend="svn.tour.cycle.update" />.</para>
+
+    </sect2>
 
 
   </sect1>
@@ -339,7 +371,7 @@ X    资源在工作拷贝之外（来自其他版本库，
     <para>或许让CVS用户熟悉Subversion最好的办法就是让他们的项目继续在新系统下工作，这可以简单得通过平淡的把CVS版本库的导出数据导入到Subversion完成，或者是更加完全的方案，不仅仅包括最新数据快照，还包括所有的历史，从一个系统到另一个系统。这是一个非常困难的问题，包括推导保持原子性的修改集，转化两个系统完全不同的分支政策。但是我们还是有许多工具声称至少部分具备了的转化已存在的CVS版本库为Subversion版本库的能力。
     </para>
 
-    <para>其中一个工具是cvs2svn（<ulink url="http://cvs2svn.tigris.org/"/>），是一个Python脚本，最初是Subversion自己的开发社区的成员编写的。其他的如Chia-liang Kao的Subversion的VCP工具（<ulink url="http://svn.clkao.org/revml/branches/svn-perl/"/>）转化器插件，还有Lev Serebryakov的RefineCVS（<ulink url="http://lev.serebryakov.spb.ru/refinecvs/"/>）。这些工具具备不同程度的完成性，也许会具备完全不同的处理CVS历史的方法。无论你决定使用哪个工具，确定要执行尽可能多的验证来确定你可以接受转化结果&mdash;毕竟，你曾经努力创建这些历史！
+    <para>其中一个工具是cvs2svn（<ulink url="http://cvs2svn.tigris.org/"/>），是一个Python脚本，最初是Subversion自己的开发社区的成员编写的。其他的如Lev Serebryakov的RefineCVS（<ulink url="http://lev.serebryakov.spb.ru/refinecvs/"/>）。这些工具具备不同程度的完成性，也许会具备完全不同的处理CVS历史的方法。无论你决定使用哪个工具，确定要执行尽可能多的验证来确定你可以接受转化结果&mdash;毕竟，你曾经努力创建这些历史！
       </para>
 
     <para>关于最新的转化工具链接列表，可以访问Subversion的网站（<ulink url="http://subversion.tigris.org/project_links.html"/>）。
