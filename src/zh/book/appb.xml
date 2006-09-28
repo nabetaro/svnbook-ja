@@ -156,10 +156,10 @@
    Office，Dreamweaver和Photoshop。在服务器方面，Apache从1998年就开始支持WebDAV，并被认为是一个事实上的开源标准，也有许多商业的WebDAV服务器，例如Microsoft的IIS。
    </para>
 
-    <para>不幸的是，DeltaV没有这样的成功，很难寻找到任何DeltaV客户端和服务器。只有一些不太出名的商业产品，因此很难测试交互性，不清楚为什么DeltaV还这样停滞，一些人说规范太复杂了，还有些人认为景观DeltaV的特性有很大的吸引力（即使最新的技术用户也喜欢使用网络文件共享），版本控制特性对大多数用户还不是这样有趣和必须。最后，有些人认为DeltaV海这样不流行主要是因为一直没有开源的服务器产品实现它。
+    <para>不幸的是，DeltaV没有这样的成功，很难寻找到任何DeltaV客户端和服务器。只有一些不太出名的商业产品，因此很难测试交互性，不清楚为什么DeltaV还这样停滞，一些人说规范太复杂了，还有些人认为尽管DeltaV的特性有很大的吸引力（即使最新的技术用户也喜欢使用网络文件共享），版本控制特性对大多数用户还不是这样有趣和必须。最后，有些人认为DeltaV还这样不流行主要是因为一直没有开源的服务器产品实现它。
    </para>
    
-    <para>当Subversion还在设计阶段时，使用Apache的httpd作为主要网络服务器就是一个很好的想法，已经有了支持WebDAV服务的模块。DeltaV有一个很新的规范，希望就是Subversion服务器模块最终能够成为一个开源的DeltaV参考实现，但非常不幸，DeltaV得版本模型过于详细，与Subversion的模型并不匹配，有些概念可以对应起来，有些则不能。
+    <para>当Subversion还在设计阶段时，使用Apache的httpd作为主要网络服务器就是一个很好的想法，已经有了支持WebDAV服务的模块。DeltaV有一个很新的规范，希望就是Subversion服务器模块最终能够成为一个开源的DeltaV参考实现，但非常不幸，DeltaV得版本模型过于详细，与Subversion的模型并不匹配，虽然有些概念可以对应起来，但有些则不能。
    </para>
 
     <para>结果就是</para>
@@ -222,22 +222,8 @@
       commit</command>产生的事务。技巧就是检查修订版本的<literal>svn:autoversioned</literal>属性，如果有，则提交来自一个原始的WebDAV客户端。
      </para>
 
-<para>Another feature that may be a useful complement
-      for <literal>SVNAutoversioning</literal> comes from
-      Apache's <literal>mod_mime</literal> module.  If a generic
-      WebDAV client adds a new file to the repository, there's no
-      opportunity for the user to set the
-      the <literal>svn:mime-type</literal> property.  This might cause
-      the file to appear as <quote>generic</quote> icon when viewed
-      within a WebDAV shared folder, not having an association with
-      any application.  One remedy is to have a sysadmin (or other
-      Subversion-knowledgable person) check out a working copy and
-      manually set the <literal>svn:mime-type</literal> property on
-      necessary files. But there's potentially no end to such cleanup
-      tasks.  Instead, you can use
-      the <literal>ModMimeUsePathInfo</literal> directive in
-      your Subversion <literal>&lt;Location&gt;</literal>
-      block:</para>
+<para>另一个作为<literal>SVNAutoversioning</literal>特性补充的特性来自Apache的<literal>mod_mime</literal>模块，如果一个原始的WebDAV客户端在版本库添加了一个新文件，用户就没有机会设置<literal>svn:mime-type</literal>属性，这会导致使用WebDAV共享目录查看时会看到原始的图标，而没有关联到任何应用。一个补救办法就是让系统管理员（或其他理解Subversion）的人检出一份工作拷贝，然后为需要的文件手动设置<literal>svn:mime-type</literal>属性，但是这个整理工作永远不会结束，作为替代，你可以在你的Subversion<literal>&lt;Location&gt;</literal>区使用<literal>ModMimeUsePathInfo</literal>指示：
+</para>
  
     <screen>
 &lt;Location /repos&gt;
@@ -250,13 +236,8 @@
 &lt;/Location&gt;
 </screen>
 
-    <para>This directive allows <literal>mod_mime</literal> to attempt
-      automatic deduction of the mime-type on new files that enter the
-      repository via autoversioning.  The module looks at the file's
-      named extension and possibly the contents as well; if the file
-      matches some common patterns, then the the
-      file's <literal>svn;mime-type</literal> property will be set
-      automatically.</para>
+    <para>这个指示允许<literal>mod_mime</literal>在使用自动版本化添加新文件时尝试自动检测新文件的mime-type，这个模块查看文件的扩展名，有可能的话还包括检查内容；如果文件符合某个常用模式，就会自动设置文件的<literal>svn;mime-type</literal>。
+    </para>
   </sect1>
 
   <!-- ================================================================= -->
@@ -446,14 +427,9 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
         <para>有各种解决问题的方法，但好像没有一种能够在各版本和各级别的Windows XP中有效。在我们的测试里，只有上面这种策略在各种系统中有效。WebDAV社区一致认为避免使用新的网络文件夹实现，而使用旧的，如果你希望在Windows XP使用真实的文件系统级的客户端，请使用第三方的程序，例如WebDrive或NetDrive。
         </para>
 
-       <para>A final tip: if you're attempting to use XP Web Folders,
-          make sure you have the absolute latest version from
-          Microsoft.  For example, Microsoft released a bug-fixed
-          version in January 2005, available at
-          <ulink url="http://support.microsoft.com/?kbid=892211"/>.
-          In particular, this release is known to fix a bug whereby
-          browsing a DAV share shows an unexpected infinite
-          recursion.</para>
+       <para>最后一个提示：如果你尝试使用XP的网络文件夹，确定你有Microsoft最新的版本，Microsoft在2005年1月发布了一个问题修正，在<ulink 
+      url="http://support.microsoft.com/?kbid=892211"/>，特别的，这个发布是用来修正在访问DAV时发生无限递归的问题。
+      </para>
       </sect3>
 
       <sect3 id="svn.webdav.clients.file-explorer-extensions.linux-de">
