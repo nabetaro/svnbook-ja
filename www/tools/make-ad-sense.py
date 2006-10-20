@@ -47,17 +47,23 @@ def die(msg):
     sys.stderr.write(msg + "\n")
     sys.exit(1)
 
-_body_open_re = re.compile('^(.*<body[^>]*>)(.*)$')
-
 def add_adsense_html(file):
     lines = open(file, 'r').readlines()
     for i in range(len(lines)):
-        match = _body_open_re.match(lines[i])
-        if match and match.groups():
-            lines[i] = '%s%s%s' \
-                       % (match.group(1), adsense_data, match.group(2))
-            open(file, 'w').writelines(lines)
-            return
+        start_offset = lines[i].find('<body')
+        if start_offset == -1:
+            continue
+        for j in range(i, len(lines)):
+            end_offset = lines[j][start_offset:].find('>')
+            if end_offset == -1:
+                start_offset = 0
+            else:
+                end_offset = start_offset + end_offset
+                lines[j] = '%s%s%s' \
+                           % (lines[j][:end_offset + 1],
+                              adsense_data, lines[j][end_offset + 1:])
+                open(file, 'w').writelines(lines)
+                return
     raise Exception, "Never found <body> tag in file '%s'" % (file)
 
 def add_adsense_css(file):
