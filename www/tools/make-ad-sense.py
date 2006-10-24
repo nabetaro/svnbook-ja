@@ -1,5 +1,10 @@
 #!/usr/bin/python
 
+"""Usage: 'make-ad-sense.py BOOK-HTML-DIR'
+
+Add AdSense bits to BOOK-HTML-DIR/*.html.  Note that if you run this
+twice, it will dumbly add the bits again, resulting in weirdness."""
+
 import sys
 import os
 import os.path
