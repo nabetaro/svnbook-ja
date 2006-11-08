@@ -23,7 +23,7 @@ def format_duration(seconds):
     return ((hours and "%dh " % hours or "")
             + (minutes and "%dm " % minutes or "")
             + "%ds" % seconds)
-    
+
 
 def sendmail(subject, body):
     outerrfp, infp = popen2.popen4(
@@ -96,31 +96,34 @@ for locale in locales:
     if locale in SKIP_PDF_LOCALES:
         book_formats.remove('pdf')
 
-    # Build
-    make_cmd = (['make', 'INSTALL_SUBDIR=__TEMPINSTALL__', 'clean', 'valid']
-                + map(lambda x: 'install-%s' % x, book_formats))
-    if os.path.isdir(temp_dir):
-        if DRYRUN:
-            print "Erase: %s" % (temp_dir)
-        else:
-            shutil.rmtree(temp_dir)
-    os.chdir(locale_dir)
     try:
-        cmd = " ".join(make_cmd)
-        if DRYRUN:
-            print "Run: %s" % (cmd)
-        else:
-            outerrfp, infp = popen2.popen4(cmd, mode='r')
-            logfp = open(build_log, 'w', 1)
-            while 1:
-                data = outerrfp.readline()
-                if not data: break
-                logfp.write(data)
-    finally:
-        os.chdir(cwd)
+        # Build
+        make_cmd = (['make', 'INSTALL_SUBDIR=__TEMPINSTALL__', 'clean', 'valid']
+                    + map(lambda x: 'install-%s' % x, book_formats))
+        if os.path.isdir(temp_dir):
+            if DRYRUN:
+                print "Erase: %s" % (temp_dir)
+            else:
+                shutil.rmtree(temp_dir)
+        os.chdir(locale_dir)
+        try:
+            cmd = " ".join(make_cmd)
+            if DRYRUN:
+                print "Run: %s" % (cmd)
+            else:
+                child = popen2.Popen4(cmd)
+                logfp = open(build_log, 'w', 1)
+                while 1:
+                    data = child.fromchild.readline()
+                    if not data: break
+                    logfp.write(data)
+                exitcode = child.wait()
+                if exitcode:
+                    raise RuntimeError("make exited with error %d" % exitcode)
+        finally:
+            os.chdir(cwd)
 
-    # Move stuff into place.  Ignore any errors.
-    try:
+        # Move stuff into place.
         if os.path.isdir(dropspot_locale_path):
             if DRYRUN:
                 print "Erase: %s" % (dropspot_locale_path)
