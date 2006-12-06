@@ -10,25 +10,48 @@ import os
 import os.path
 import re
 
-adsense_data = """
-<div id="adsense">
+adsense_left_data = """
+<div id="adsense_left">
 <script type="text/javascript"><!--
+// Text Ad: Skyscraper (120x600)
 google_ad_client = "pub-0505104349866057";
 google_ad_width = 120;
 google_ad_height = 600;
 google_ad_format = "120x600_as";
-google_ad_type = "text_image";
-google_ad_channel ="";
-google_color_border = "CC99CC";
-google_color_bg = "E7C6E8";
-google_color_link = "000000";
-google_color_url = "00008B";
-google_color_text = "663366";
+google_ad_channel = "";
+google_color_border = "ffffff";
+google_color_bg = "ffffff";
+google_color_link = "0000ff";
+google_color_url = "008000";
+google_color_text = "000000";
 //--></script>
 <script type="text/javascript"
 src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
 </script>
 </div>
+
+"""
+
+adsense_bottom_data = """
+<div id="adsense_bottom">
+<script type="text/javascript"><!--
+// Text Ad: Medium Rectangle (300x250)
+google_ad_client = "pub-0505104349866057";
+google_ad_width = 300;
+google_ad_height = 250;
+google_ad_format = "300x250_as";
+google_ad_channel = "";
+google_color_border = "ffffff";
+google_color_bg = "ffffff";
+google_color_link = "0000ff";
+google_color_url = "000000";
+google_color_text = "000000";
+//--></script>
+<script type="text/javascript"
+src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+</div>
+
 """
 
 adsense_css = """
@@ -38,7 +61,7 @@ body
     margin-left: 130px;
     margin-right: 130px;
 }
-#adsense
+#adsense_left
 {
     position: absolute;
     left: 0px; 
@@ -46,13 +69,16 @@ body
     width: 120px;
     z-index: 2;
 }
+#adsense_bottom
+{
+}
 """
 
 def die(msg):
     sys.stderr.write(msg + "\n")
     sys.exit(1)
 
-def add_adsense_html(file):
+def add_adsense_left_html(file):
     lines = open(file, 'r').readlines()
     for i in range(len(lines)):
         start_offset = lines[i].find('<body')
@@ -66,10 +92,25 @@ def add_adsense_html(file):
                 end_offset = start_offset + end_offset
                 lines[j] = '%s%s%s' \
                            % (lines[j][:end_offset + 1],
-                              adsense_data, lines[j][end_offset + 1:])
+                              adsense_left_data,
+                              lines[j][end_offset + 1:])
                 open(file, 'w').writelines(lines)
                 return
     raise Exception, "Never found <body> tag in file '%s'" % (file)
+
+def add_adsense_bottom_html(file):
+    lines = open(file, 'r').readlines()
+    for i in range(len(lines)):
+        start_offset = lines[i].find('<div class="navfooter"')
+        if start_offset == -1:
+            continue
+        lines[i] = '%s%s%s' \
+                   % (lines[i][0:start_offset],
+                      adsense_bottom_data,
+                      lines[i][start_offset:])
+        open(file, 'w').writelines(lines)
+        return
+    raise Exception, "Never found <div class=\"nav_footer\"> tag in file '%s'" % (file)
 
 def add_adsense_css(file):
     open(file, 'a').write(adsense_css)
@@ -83,7 +124,14 @@ def main():
         die("Book stylesheet is missing.")
     for child in os.listdir(sys.argv[1]):
         if child[-5:] == '.html':
-            add_adsense_html(os.path.join(book_dir, child))
+            try:
+                add_adsense_left_html(os.path.join(book_dir, child))
+            except:
+                pass
+            try:
+                add_adsense_bottom_html(os.path.join(book_dir, child))
+            except:
+                pass
     add_adsense_css(stylesheet)
 
 if __name__ == "__main__":
