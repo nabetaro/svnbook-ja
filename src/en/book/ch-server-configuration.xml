@@ -1,25 +1,21 @@
 <chapter id="svn.serverconfig">
   <title>Server Configuration</title>
   
-  <simplesect>
+  <para>A Subversion repository can be accessed simultaneously by
+    clients running on the same machine on which the repository
+    resides using the <literal>file:///</literal> method.  But the
+    typical Subversion setup involves a single server machine being
+    accessed from clients on computers all over the office&mdash;or,
+    perhaps, all over the world.</para>
     
-    <para>A Subversion repository can be accessed simultaneously by
-      clients running on the same machine on which the repository
-      resides using the <literal>file:///</literal> method.  But the
-      typical Subversion setup involves a single server machine being
-      accessed from clients on computers all over the office&mdash;or,
-      perhaps, all over the world.</para>
-
+  <para>This section describes how to get your Subversion repository
+    exposed outside its host machine for use by remote clients.  We
+    will cover Subversion's currently available server mechanisms,
+    discussing the configuration and use of each.  After reading
+    this section, you should be able to decide which networking
+    setup is right for your needs, and understand how to enable such
+    a setup on your host computer.</para>
     
-    <para>This section describes how to get your Subversion repository
-      exposed outside its host machine for use by remote clients.  We
-      will cover Subversion's currently available server mechanisms,
-      discussing the configuration and use of each.  After reading
-      this section, you should be able to decide which networking
-      setup is right for your needs, and understand how to enable such
-      a setup on your host computer.</para>
-    
-  </simplesect>
   
   <!-- ================================================================= -->
   <!-- ================================================================= -->
@@ -538,12 +534,11 @@ $               # svnserve is now running, listening on port 3690
         <emphasis>absolute</emphasis> path in the repository URL.  For
         example, if a repository is located at
         <filename>/usr/local/repositories/project1</filename>, then a
-        client would reach it via <systemitem
-        class="url">svn://host.example.com/usr/local/repositories/project1
-        </systemitem>.  To increase security, you can pass the
-        <option>-r</option> option to <command>svnserve</command>,
-        which restricts it to exporting only repositories below that
-        path:</para>
+        client would reach it via
+        <uri>svn://host.example.com/usr/local/repositories/project1</uri>.
+        To increase security, you can pass the <option>-r</option>
+        option to <command>svnserve</command>, which restricts it to
+        exporting only repositories below that path:</para>
       
       <screen>
 $ svnserve -d -r /usr/local/repositories
@@ -600,13 +595,14 @@ $ svn checkout svn://host.example.com/project1
 
       <para>At the time of writing, the server only knows how to send
         a CRAM-MD5 <footnote><para>See RFC 2195.</para></footnote>
-        authentication challenge.  In essence, the server sends a bit
-        of data to the client.  The client uses the MD5 hash algorithm
-        to create a fingerprint of the data and password combined,
-        then sends the fingerprint as a response.  The server performs
-        the same computation with the stored password to verify that
-        the result is identical.  <emphasis>At no point does the
-        actual password travel over the network.</emphasis></para>
+        authentication challenge.  In essence, the server sends a
+        small amount of data to the client.  The client uses the MD5
+        hash algorithm to create a fingerprint of the data and
+        password combined, then sends the fingerprint as a response.
+        The server performs the same computation with the stored
+        password to verify that the result is identical.  <emphasis>At
+        no point does the actual password travel over the
+        network.</emphasis></para>
 
       <para>It's also possible, of course, for the client to be
         externally authenticated via a tunnel agent, such as
@@ -1191,10 +1187,8 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
         common parent directory.  For example, if you know you will be
         creating multiple Subversion repositories in a directory
         <filename>/usr/local/svn</filename> that would be accessed via
-        URLs like <systemitem
-        class="url">http://my.server.com/svn/repos1</systemitem>,
-        <systemitem
-        class="url">http://my.server.com/svn/repos2</systemitem>, and
+        URLs like <uri>http://my.server.com/svn/repos1</uri>,
+        <uri>http://my.server.com/svn/repos2</uri>, and
         so on, you could use the <filename>httpd.conf</filename>
         configuration syntax in the following example:</para>
               
@@ -1221,9 +1215,10 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
       <para>Be sure that when you define your new
         <literal>Location</literal>, it doesn't overlap with other
         exported Locations.  For example, if your main
-        <literal>DocumentRoot</literal> is <filename>/www</filename>,
-        do not export a Subversion repository in <literal>&lt;Location
-        /www/repos&gt;</literal>.  If a request comes in for the URI
+        <literal>DocumentRoot</literal> is exported to
+        <filename>/www</filename>, do not export a Subversion
+        repository in <literal>&lt;Location /www/repos&gt;</literal>.
+        If a request comes in for the URI
         <filename>/www/repos/foo.c</filename>, Apache won't know
         whether to look for a file <filename>repos/foo.c</filename> in
         the <literal>DocumentRoot</literal>, or whether to delegate
@@ -1975,7 +1970,7 @@ everyone = @calc-developers, @paint-developers
 
         <para>All of this path-checking can sometimes be quite
           expensive, especially in the case of <command>svn
-          log</command>.  When retrieving a list revisions, the server
+          log</command>.  When retrieving a list of revisions, the server
           looks at every changed path in each revision and checks it
           for readability.  If an unreadable path is discovered, then
           it's omitted from the list of the revision's changed paths

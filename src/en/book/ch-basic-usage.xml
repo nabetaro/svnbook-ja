@@ -1,26 +1,23 @@
 <chapter id="svn.tour">
-  <title>Guided Tour</title>
+  <title>Basic Usage</title>
 
-  <simplesect>
+  <para>Now we will go into the details of using Subversion.  By the
+    time you reach the end of this chapter, you will be able to
+    perform almost all the tasks you need to use Subversion in a
+    normal day's work.  You'll start with an initial checkout of
+    your code, and walk through making changes and examining those
+    changes.  You'll also see how to bring changes made by others
+    into your working copy, examine them, and work through any
+    conflicts that might arise.</para>
 
-    <para>Now we will go into the details of using Subversion.  By the
-      time you reach the end of this chapter, you will be able to
-      perform almost all the tasks you need to use Subversion in a
-      normal day's work.  You'll start with an initial checkout of
-      your code, and walk through making changes and examining those
-      changes.  You'll also see how to bring changes made by others
-      into your working copy, examine them, and work through any
-      conflicts that might arise.</para>
+  <para>Note that this chapter is not meant to be an exhaustive list
+    of all Subversion's commands&mdash;rather, it's a conversational
+    introduction to the most common Subversion tasks you'll
+    encounter.  This chapter assumes that you've read and understood
+    <xref linkend="svn.basic"/> and are familiar with the general
+    model of Subversion.  For a complete reference of all commands,
+    see <xref linkend="svn.ref"/>.</para>
 
-    <para>Note that this chapter is not meant to be an exhaustive list
-      of all Subversion's commands&mdash;rather, it's a conversational
-      introduction to the most common Subversion tasks you'll
-      encounter.  This chapter assumes that you've read and understood
-      <xref linkend="svn.basic"/> and are familiar with the general
-      model of Subversion.  For a complete reference of all commands,
-      see <xref linkend="svn.ref"/>.</para>
-
-  </simplesect>
 
   <!-- ================================================================= -->
   <!-- ================================================================= -->
@@ -354,7 +351,7 @@ Checked out revision 2499.
         locale settings are compatible with UTF-8, and you don't use
         control characters in path names, you should have no trouble
         communicating with Subversion.  The command-line client adds
-        an extra bit of help&mdash;it will automatically escape legal
+        an extra bit of help&mdash;it will automatically escape illegal
         path characters as needed in URLs you type to create
         <quote>legally correct</quote> versions for internal
         use.</para>
@@ -671,12 +668,39 @@ Updated to revision 2.
         normally use.  Subversion handles binary files just as easily
         as it handles text files&mdash;and just as efficiently
         too.</para>
-      
+
       <para>Here is an overview of the four Subversion subcommands
         that you'll use most often to make tree changes (we'll cover
         <command>svn import</command> and <command>svn mkdir</command>
         later).</para>
 
+      <sidebar>
+        <title>Versioning symbolic links</title>
+
+        <para>On platforms which support them, Subversion is able to
+          version files of the special type <firstterm>symbolic
+          link</firstterm> (or, <quote>symlink</quote>).  A symlink is
+          a file which acts as a sort of transparent reference to some
+          other object in the filesystem, allowing programs to read
+          and write to those objects indirectly by way of performing
+          operations on the symlink itself.</para>
+
+        <para>When a symlink is committed into a Subversion
+          repository, Subversion retains the fact that the file was in
+          fact a symlink, as well as to what object the symlink
+          <quote>points</quote>.  When that symlink is checked out to
+          another working copy on a supporting system, Subversion
+          reconstructs a real filesystem-level symbolic link from the
+          versioned symlink.  But that doesn't in any way limit the
+          usability of working copies on systems such as Windows which
+          do not support symlinks.  On such systems, Subversion simply
+          constructs a regular text file whose contents are the path
+          to which to the original symlink pointed.  While that file
+          can't be used as a symlink on a Windows system, it also
+          won't prevent Windows users from performing their other
+          Subversion-related activities.</para>
+      </sidebar>
+      
       <warning>
         <para>While you can edit your files with whatever tool you
           like, you shouldn't change the structure of your working
@@ -809,7 +833,7 @@ Updated to revision 2.
         two commands to find out what files have changed in your
         working copy, and then perhaps the third to revert some (or
         all) of those changes.</para>
-      
+
       <!-- pll - Fri 07 Feb 2003 12:55:07                                   -->
       <!-- I find this following paragraph a little unclear.  Mostly for    -->
       <!-- the same reasons as I found the sidebar above unclear.  There    -->
@@ -817,6 +841,37 @@ Updated to revision 2.
       <!-- therefore, nothing has been clearly stated wrt the fact that the -->
       <!-- repository may not be local.                                     -->
       
+      <sidebar>
+        <title>Look Ma! No Network!</title>
+
+        <para>All three of these commands (<command>svn
+          status</command>, <command>svn diff</command>, and
+          <command>svn revert</command>) can be used without any
+          network access.  This makes it easy to manage your
+          changes-in-progress when you are somewhere without a network
+          connection, such as travelling on an airplane, riding a
+          commuter train or hacking on the beach.</para>
+
+        <para>Subversion does this by keeping private caches of
+          pristine versions of each versioned file inside of the
+          <filename>.svn</filename> administrative areas.  This allows
+          Subversion to report&mdash;and revert&mdash;local
+          modifications to those files <emphasis>without network
+          access</emphasis>.  This cache (called the
+          <quote>text-base</quote>) also allows Subversion to send the
+          user's local modifications during a commit to the server as
+          a compressed <firstterm>delta</firstterm> (or
+          <quote>difference</quote>) against the pristine version.
+          Having this cache is a tremendous benefit&mdash;even if you
+          have a fast net connection, it's much faster to send only a
+          file's changes rather than the whole file to the server.  At
+          first glance, this might not seem that important, but
+          imagine the repercussions if you try to commit a one line
+          change to a 400MB file and have to send the whole file to
+          the server!</para>
+
+      </sidebar>
+
       <para>Subversion has been optimized to help you with this task,
         and is able to do many things without communicating with the
         repository.  In particular, your working copy contains a
@@ -1024,7 +1079,11 @@ R       xyz.c               # file is scheduled for replacement
           linkend="svn.advanced.props"/> for more information on
           properties).  If an <computeroutput>M</computeroutput>
           appears in the second column, then the properties have been
-          modified, otherwise a whitespace will be printed.</para>
+          modified.  If a <computeroutput>C</computeroutput> appears
+          in that column, then the properties for the file are in a
+          state of conflict, which must be resolved before committing
+          the changes to the repository.  Otherwise a whitespace will
+          be printed.</para>
         
         <para>The third column will only show whitespace or an
           <computeroutput>L</computeroutput> which means that
@@ -1290,36 +1349,6 @@ $ svn status README
 </screen>
 
       </sect3>
-
-      <sidebar>
-          <title>Look Ma! No Network!</title>
-
-        <para>All three of these commands (<command>svn
-          status</command>, <command>svn diff</command>, and
-          <command>svn revert</command>) can be used without any
-          network access.  This makes it easy to manage your
-          changes-in-progress when you are somewhere without a network
-          connection, such as travelling on an airplane, riding a
-          commuter train or hacking on the beach.</para>
-
-        <para>Subversion does this by keeping private caches of
-          pristine versions of each versioned file inside of the
-          <filename>.svn</filename> administrative areas.  This allows
-          Subversion to report&mdash;and revert&mdash;local
-          modifications to those files <emphasis>without network
-          access</emphasis>.  This cache (called the
-          <quote>text-base</quote>) also allows Subversion to send the
-          user's local modifications during a commit to the server as
-          a compressed <firstterm>delta</firstterm> (or
-          <quote>difference</quote>) against the pristine version.
-          Having this cache is a tremendous benefit&mdash;even if you
-          have a fast net connection, it's much faster to send only a
-          file's changes rather than the whole file to the server.  At
-          first glance, this might not seem that important, but
-          imagine the repercussions if you try to commit a one line
-          change to a 400MB file and have to send the whole file to
-          the server!</para>
-    </sidebar>
 
     </sect2>
 
@@ -1587,12 +1616,20 @@ $ svn resolved sandwich.txt
 $ svn commit -m "Go ahead and use my sandwich, discarding Sally's edits."
 </screen>
 
-        <para>Remember, if you ever get confused while editing the
-          conflicted file, you can always consult the three files that
-          Subversion creates for you in your working
-          copy&mdash;including your file as it was before you updated.
-          You can even use a third-party interactive merging tool to
-          examine those three files.</para>
+        <para>Note that <command>svn resolved</command>, unlike most
+          of the other commands we deal with in this chapter, requires
+          an argument.  In any case, you want to be careful and only
+          run <command>svn resolved</command> when you're certain that
+          you've fixed the conflict in your file&mdash;once the
+          temporary files are removed, Subversion will let you commit
+          the file even if it still contains conflict markers.</para>
+      
+        <para>If you ever get confused while editing the conflicted
+          file, you can always consult the three files that Subversion
+          creates for you in your working copy&mdash;including your
+          file as it was before you updated.  You can even use a
+          third-party interactive merging tool to examine those three
+          files.</para>
 
       </sect3>
 
@@ -1635,15 +1672,6 @@ sandwich.txt
 
       </sect3>
 
-      <para>Now you're ready to check in your changes.  Note that
-        <command>svn resolved</command>, unlike most of the other
-        commands we've dealt with in this chapter, requires an
-        argument.  In any case, you want to be careful and only run
-        <command>svn resolved</command> when you're certain that you've
-        fixed the conflict in your file&mdash;once the temporary files
-        are removed, Subversion will let you commit the file even if
-        it still contains conflict markers.</para>
-      
     </sect2>
     
     <!-- =============================================================== -->
@@ -2073,9 +2101,9 @@ $
         a file, and pass both that and the file in your working copy
         to your external diff program.</para>
 
-      <para>Sometimes it's easier to look at an older version of a
-        file in its entirety as opposed to just the differences
-        between it and another revision.</para>
+      <para>Secondly, it's sometimes just easier to look at an older
+        version of a file in its entirety than to look only at the
+        differences between it and another revision.</para>
 
       </sect2>
 
