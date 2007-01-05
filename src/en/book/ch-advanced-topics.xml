@@ -439,7 +439,6 @@ $ svn <replaceable>command</replaceable> -r <replaceable>OPERATIVE-REV</replacea
 
     <screen>
 $ svn cat -r 1 concept/IDEA 
-subversion/libsvn_client/ra.c:775: (apr_err=20014)
 svn: Unable to find repository location for 'concept/IDEA' in revision 1
 </screen>
 
@@ -451,7 +450,6 @@ svn: Unable to find repository location for 'concept/IDEA' in revision 1
 
     <screen>
 $ svn cat -r 1 concept/IDEA@BASE
-subversion/libsvn_client/ra.c:775: (apr_err=20014)
 svn: Unable to find repository location for 'concept/IDEA' in revision 1
 </screen>
 
@@ -2750,19 +2748,53 @@ Fetching external item into calc/third-party/skins
       relative local target subdirectory will, of course, move with
       renamed directory).  This can be confusing&mdash;even
       frustrating&mdash;in certain situations.  For example, say you
-      have a top-level directory named <filename>project</filename>.
-      If you create an externals definition on one subdirectory of
-      your <filename>project</filename> directory which tracks the
-      latest revision of some other subdirectory of that same tree,
-      and then you use <command>svn move</command> to rename the
-      <filename>project</filename> directory
-      <filename>/branches/my-branch</filename>, the externals
-      definitions on items in your new branch will still refer to
-      versioned objects in the <filename>project</filename> directory,
-      even though that directory no longer exists.  Be aware, too,
-      that if you need to re-parent your working copy (using
-      <command>svn switch --relocate</command>), externals definitions
-      will <emphasis>not</emphasis> also be re-parented.</para>
+      have a top-level directory named
+      <filename>my-project</filename>, and you've created an externals
+      definition on one of its subdirectories
+      (<filename>my-project/some-dir</filename>) which tracks the
+      latest revision of another of its subdirectories
+      (<filename>my-project/external-dir</filename>).</para>
+
+    <screen>
+$ svn co http://svn.example.com/projects .
+A    my-project
+A    my-project/some-dir
+A    my-project/external-dir
+&hellip;
+Fetching external item into 'my-project/some-dir/subdir'
+Checked out external at revision 11.
+
+Checked out revision 11.
+$ svn pget svn:externals my-project/some-dir
+subdir http://svn.example.com/projects/my-project/external-dir
+
+$
+</screen>
+
+    <para>Now you use <command>svn move</command> to rename the
+      <filename>my-project</filename> directory.  At this point, your
+      externals definition will still refer to a path under the
+      <filename>my-project</filename> directory, even though that
+      directory no longer exists.</para>
+
+    <screen>
+$ svn mv -q my-project renamed-project
+$ svn ci -m "Rename my-project to renamed-project."
+Deleting       my-project
+Adding         my-renamed-project
+
+Committed revision 12.
+$ svn up
+
+Fetching external item into 'renamed-project/some-dir/subdir'
+svn: Target path does not exist
+$
+</screen>
+
+    <para>Be aware, too, that if you need to re-parent your working
+      copy (using <command>svn switch --relocate</command>), externals
+      definitions will <emphasis>not</emphasis> also be
+      re-parented.</para>
 
     <para>Finally, there might be times when you would prefer that
       <command>svn</command> subcommands would not recognize or
