@@ -1,5 +1,8 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version='1.0'>
 
+  <!-- PARAMETER REFERENCE:                                         -->
+  <!-- http://docbook.sourceforge.net/release/xsl/current/doc/html/ -->
+
   <xsl:import href="xsl/xhtml/docbook.xsl"/>
   <xsl:include href="base-html-stylesheet.xsl"/>
 
