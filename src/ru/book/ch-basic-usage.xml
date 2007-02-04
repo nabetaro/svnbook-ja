@@ -7,45 +7,41 @@
   <title>Экскурсия по Subversion</title>
   <!-- See also svn.preface.organization -->
 
-  <simplesect>
+  <!-- @ENGLISH {{{
+  <para>Now we will go into the details of using Subversion.  By the
+    time you reach the end of this chapter, you will be able to
+    perform almost all the tasks you need to use Subversion in a
+    normal day's work.  You'll start with an initial checkout of
+    your code, and walk through making changes and examining those
+    changes.  You'll also see how to bring changes made by others
+    into your working copy, examine them, and work through any
+    conflicts that might arise.</para>
+  @ENGLISH }}} -->
+  <para>Теперь перейдем к более тесной работе с Subversion. К тому
+    моменту, когда вы дойдёте до конца этой главы, вы сможете
+    выполнить практически все задачи, возникающие при повседневном
+    использовании Subversion. Вы начнете с
+    первоначального создания рабочей копии вашего кода и пройдете
+    через внесение изменений и проверку этих изменений. Вы познакомитесь
+    с тем, как внедрить изменения, сделанные другими, в вашу рабочую копию
+    и проверить их, а также сможете решить возможные конфликты.</para>
 
-    <!-- @ENGLISH {{{
-    <para>Now we will go into the details of using Subversion.  By the
-      time you reach the end of this chapter, you will be able to
-      perform almost all the tasks you need to use Subversion in a
-      normal day's work.  You'll start with an initial checkout of
-      your code, and walk through making changes and examining those
-      changes.  You'll also see how to bring changes made by others
-      into your working copy, examine them, and work through any
-      conflicts that might arise.</para>
-    @ENGLISH }}} -->
-    <para>Теперь перейдем к более тесной работе с Subversion. К тому
-      моменту, когда вы дойдёте до конца этой главы, вы сможете
-      выполнить практически все задачи, возникающие при повседневном
-      использовании Subversion. Вы начнете с
-      первоначального создания рабочей копии вашего кода и пройдете
-      через внесение изменений и проверку этих изменений. Вы познакомитесь
-      с тем, как внедрить изменения, сделанные другими, в вашу рабочую копию
-      и проверить их, а также сможете решить возможные конфликты.</para>
-
-    <!-- @ENGLISH {{{
-    <para>Note that this chapter is not meant to be an exhaustive list
-      of all Subversion's commands&mdash;rather, it's a conversational
-      introduction to the most common Subversion tasks you'll
-      encounter.  This chapter assumes that you've read and understood
-      <xref linkend="svn.basic"/> and are familiar with the general
-      model of Subversion.  For a complete reference of all commands,
-      see <xref linkend="svn.ref"/>.</para>
-    @ENGLISH }}} -->
-    <para>Обратите внимание на то, что эта глава не ставит цели быть
-      всеобъемлющим списком всех команд Subversion &mdash; скорее это
-      описательное введение в наиболее вероятные задачи, с которыми вы можете
-      столкнуться. Эта глава предполагает, что вы прочитали и поняли <xref
-      linkend="svn.basic"/> и хорошо разобрались с общей моделью Subversion.
-      За подробным описанием всех команд обратитесь в <xref
-      linkend="svn.ref"/>.</para>
-
-  </simplesect>
+  <!-- @ENGLISH {{{
+  <para>Note that this chapter is not meant to be an exhaustive list
+    of all Subversion's commands&mdash;rather, it's a conversational
+    introduction to the most common Subversion tasks you'll
+    encounter.  This chapter assumes that you've read and understood
+    <xref linkend="svn.basic"/> and are familiar with the general
+    model of Subversion.  For a complete reference of all commands,
+    see <xref linkend="svn.ref"/>.</para>
+  @ENGLISH }}} -->
+  <para>Обратите внимание на то, что эта глава не ставит цели быть
+    всеобъемлющим списком всех команд Subversion &mdash; скорее это
+    описательное введение в наиболее вероятные задачи, с которыми вы можете
+    столкнуться. Эта глава предполагает, что вы прочитали и поняли <xref
+    linkend="svn.basic"/> и хорошо разобрались с общей моделью Subversion.
+    За подробным описанием всех команд обратитесь в <xref
+    linkend="svn.ref"/>.</para>
 
   <!-- ================================================================= -->
   <!-- ================================================================= -->
@@ -1394,6 +1390,68 @@ Updated to revision 2.
       <!-- therefore, nothing has been clearly stated wrt the fact that the -->
       <!-- repository may not be local.                                     -->
 
+      <sidebar>
+        <!-- @ENGLISH {{{
+        <title>Look Ma! No Network!</title>
+        @ENGLISH }}} -->
+        <title>Look Ma! No Network!</title>
+
+        <!-- @ENGLISH {{{
+        <para>All three of these commands (<command>svn
+          status</command>, <command>svn diff</command>, and
+          <command>svn revert</command>) can be used without any
+          network access.  This makes it easy to manage your
+          changes-in-progress when you are somewhere without a network
+          connection, such as travelling on an airplane, riding a
+          commuter train or hacking on the beach.</para>
+        @ENGLISH }}} -->
+        <para>Все эти три команды (<command>svn
+          status</command>, <command>svn diff</command> и
+          <command>svn revert</command>) могут использоваться
+          при полном отсутствии сетевого доступа. Это позволяет
+          легко управлять рабочими изменениями когда вы находитесь там
+          где нет сетевого соединения, например, находясь в самолете,
+          едучи в пригородном поезде или занимаясь хакерством на
+          пляже.</para>
+
+        <!-- @ENGLISH {{{
+        <para>Subversion does this by keeping private caches of
+          pristine versions of each versioned file inside of the
+          <filename>.svn</filename> administrative areas.  This allows
+          Subversion to report&mdash;and revert&mdash;local
+          modifications to those files <emphasis>without network
+          access</emphasis>.  This cache (called the
+          <quote>text-base</quote>) also allows Subversion to send the
+          user's local modifications during a commit to the server as
+          a compressed <firstterm>delta</firstterm> (or
+          <quote>difference</quote>) against the pristine version.
+          Having this cache is a tremendous benefit&mdash;even if you
+          have a fast net connection, it's much faster to send only a
+          file's changes rather than the whole file to the server.  At
+          first glance, this might not seem that important, but
+          imagine the repercussions if you try to commit a one line
+          change to a 400MB file and have to send the whole file to
+          the server!</para>
+        @ENGLISH }}} -->
+        <para>Для этого Subversion использует отдельную для каждого
+          версионированного файла кэшированную в административной области
+          <filename>.svn</filename> первоначальную версию. Это позволяет
+          Subversion показывать &mdash; и отменять &mdash; локальные
+          изменения таких файлов <emphasis>без необходимости сетевого
+          доступа</emphasis>. Этот кеш (называемый <quote>текстовой
+          базой</quote>), кроме всего прочего, позволяет Subversion
+          при фиксации отправлять локальные пользовательские изменения
+          в виде сжатой <firstterm>дельты</firstterm> (или
+          <quote>различий</quote>) первоначальной версии. Наличие такого
+          кеша ужасно выгодно &mdash; даже если у вас высокоскоростное
+          соединение намного быстрее отправлять на сервер только изменения
+          файла вместо отправки целого файла. На первый взгляд это может
+          показаться не таким уж и важным, но представьте себе последствия,
+          если вы попытаетесь зафиксировать изменения в одной строчке для
+          файла размером 400MБ и отправите на сервер весь файл!</para>
+
+      </sidebar>
+
       <!-- @ENGLISH {{{
       <para>Subversion has been optimized to help you with this task,
         and is able to do many things without communicating with the
@@ -2182,68 +2240,6 @@ $ svn status README
 
       </sect3>
 
-      <sidebar>
-          <!-- @ENGLISH {{{
-          <title>Look Ma! No Network!</title>
-          @ENGLISH }}} -->
-          <title>Look Ma! No Network!</title>
-
-        <!-- @ENGLISH {{{
-        <para>All three of these commands (<command>svn
-          status</command>, <command>svn diff</command>, and
-          <command>svn revert</command>) can be used without any
-          network access.  This makes it easy to manage your
-          changes-in-progress when you are somewhere without a network
-          connection, such as travelling on an airplane, riding a
-          commuter train or hacking on the beach.</para>
-        @ENGLISH }}} -->
-        <para>Все эти три команды (<command>svn
-          status</command>, <command>svn diff</command> и
-          <command>svn revert</command>) могут использоваться
-          при полном отсутствии сетевого доступа. Это позволяет
-          легко управлять рабочими изменениями когда вы находитесь там
-          где нет сетевого соединения, например, находясь в самолете,
-          едучи в пригородном поезде или занимаясь хакерством на
-          пляже.</para>
-
-        <!-- @ENGLISH {{{
-        <para>Subversion does this by keeping private caches of
-          pristine versions of each versioned file inside of the
-          <filename>.svn</filename> administrative areas.  This allows
-          Subversion to report&mdash;and revert&mdash;local
-          modifications to those files <emphasis>without network
-          access</emphasis>.  This cache (called the
-          <quote>text-base</quote>) also allows Subversion to send the
-          user's local modifications during a commit to the server as
-          a compressed <firstterm>delta</firstterm> (or
-          <quote>difference</quote>) against the pristine version.
-          Having this cache is a tremendous benefit&mdash;even if you
-          have a fast net connection, it's much faster to send only a
-          file's changes rather than the whole file to the server.  At
-          first glance, this might not seem that important, but
-          imagine the repercussions if you try to commit a one line
-          change to a 400MB file and have to send the whole file to
-          the server!</para>
-        @ENGLISH }}} -->
-        <para>Для этого Subversion использует отдельную для каждого
-          версионированного файла кэшированную в административной области
-          <filename>.svn</filename> первоначальную версию. Это позволяет
-          Subversion показывать &mdash; и отменять &mdash; локальные
-          изменения таких файлов <emphasis>без необходимости сетевого
-          доступа</emphasis>. Этот кеш (называемый <quote>текстовой
-          базой</quote>), кроме всего прочего, позволяет Subversion
-          при фиксации отправлять локальные пользовательские изменения
-          в виде сжатой <firstterm>дельты</firstterm> (или
-          <quote>различий</quote>) первоначальной версии. Наличие такого
-          кеша ужасно выгодно &mdash; даже если у вас высокоскоростное
-          соединение намного быстрее отправлять на сервер только изменения
-          файла вместо отправки целого файла. На первый взгляд это может
-          показаться не таким уж и важным, но представьте себе последствия,
-          если вы попытаетесь зафиксировать изменения в одной строчке для
-          файла размером 400MБ и отправите на сервер весь файл!</para>
-
-    </sidebar>
-
     </sect2>
 
     <!-- =============================================================== -->
@@ -2671,14 +2667,31 @@ $ svn commit -m "Go ahead and use my sandwich, discarding Sally's edits."
 </screen>
 
         <!-- @ENGLISH {{{
-        <para>Remember, if you ever get confused while editing the
-          conflicted file, you can always consult the three files that
-          Subversion creates for you in your working
-          copy&mdash;including your file as it was before you updated.
-          You can even use a third-party interactive merging tool to
-          examine those three files.</para>
+        <para>Note that <command>svn resolved</command>, unlike most
+          of the other commands we deal with in this chapter, requires
+          an argument.  In any case, you want to be careful and only
+          run <command>svn resolved</command> when you're certain that
+          you've fixed the conflict in your file&mdash;once the
+          temporary files are removed, Subversion will let you commit
+          the file even if it still contains conflict markers.</para>
         @ENGLISH }}} -->
-        <para>Помните, если вы станете в тупик при редактировании
+        <para>Обратите внимание на то, что <command>svn resolved</command>,
+          в отличие от большинства команд с которыми мы имели дело в этой главе,
+          требует аргумент. В любом случае будьте осторожны и выполняйте
+          <command>svn resolved</command> тогда, когда убеждены, что исправили
+          конфликт в файле &mdash; после того как временные файлы будут удалены,
+          Subversion позволит вам зафиксировать файл даже если он все еще
+          содержит маркеры конфликта.</para>
+      
+        <!-- @ENGLISH {{{
+        <para>If you ever get confused while editing the conflicted
+          file, you can always consult the three files that Subversion
+          creates for you in your working copy&mdash;including your
+          file as it was before you updated.  You can even use a
+          third-party interactive merging tool to examine those three
+          files.</para>
+        @ENGLISH }}} -->
+        <para>Если вы станете в тупик при редактировании
           конфликтующего файла, вы всегда можете обратиться к трем
           файлам, которые Subversion создает в рабочей копии &mdash;
           включая ваш файл в том виде в каком он был до обновления.
@@ -2746,25 +2759,6 @@ sandwich.txt
         resolved</command>.</para>
 
       </sect3>
-
-      <!-- @ENGLISH {{{
-      <para>Now you're ready to check in your changes.  Note that
-        <command>svn resolved</command>, unlike most of the other
-        commands we've dealt with in this chapter, requires an
-        argument.  In any case, you want to be careful and only run
-        <command>svn resolved</command> when you're certain that you've
-        fixed the conflict in your file&mdash;once the temporary files
-        are removed, Subversion will let you commit the file even if
-        it still contains conflict markers.</para>
-      @ENGLISH }}} -->
-      <para>Теперь вы готовы к фиксации изменений. Обратите внимание на
-        то, что <command>svn resolved</command>, в отличие от большинства
-        команд с которыми мы имели дело в этой главе, требует аргумент.
-        В любом случае будьте осторожны и выполняйте <command>svn
-        resolved</command> тогда, когда убеждены, что исправили конфликт в
-        файле &mdash; после того как временные файлы будут удалены, Subversion
-        позволит вам зафиксировать файл даже если он все еще содержит маркеры
-        конфликта.</para>
 
     </sect2>
 
