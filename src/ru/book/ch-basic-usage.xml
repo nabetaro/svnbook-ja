@@ -614,7 +614,7 @@ Checked out revision 2499.
         locale settings are compatible with UTF-8, and you don't use
         control characters in path names, you should have no trouble
         communicating with Subversion.  The command-line client adds
-        an extra bit of help&mdash;it will automatically escape legal
+        an extra bit of help&mdash;it will automatically escape illegal
         path characters as needed in URLs you type to create
         <quote>legally correct</quote> versions for internal
         use.</para>
@@ -1150,8 +1150,35 @@ Updated to revision 2.
         (команды <command>svn import</command> и <command>svn
         mkdir</command> мы рассмотрим позже).</para>
 
-      <!-- @ENGLISH {{{
+      <sidebar>
+        <title>Versioning symbolic links</title>
+
+        <para>On platforms which support them, Subversion is able to
+          version files of the special type <firstterm>symbolic
+          link</firstterm> (or, <quote>symlink</quote>).  A symlink is
+          a file which acts as a sort of transparent reference to some
+          other object in the filesystem, allowing programs to read
+          and write to those objects indirectly by way of performing
+          operations on the symlink itself.</para>
+
+        <para>When a symlink is committed into a Subversion
+          repository, Subversion retains the fact that the file was in
+          fact a symlink, as well as to what object the symlink
+          <quote>points</quote>.  When that symlink is checked out to
+          another working copy on a supporting system, Subversion
+          reconstructs a real filesystem-level symbolic link from the
+          versioned symlink.  But that doesn't in any way limit the
+          usability of working copies on systems such as Windows which
+          do not support symlinks.  On such systems, Subversion simply
+          constructs a regular text file whose contents are the path
+          to which to the original symlink pointed.  While that file
+          can't be used as a symlink on a Windows system, it also
+          won't prevent Windows users from performing their other
+          Subversion-related activities.</para>
+      </sidebar>
+      
       <warning>
+        <!-- @ENGLISH {{{
         <para>While you can edit your files with whatever tool you
           like, you shouldn't change the structure of your working
           copy without letting Subversion know what you're doing.  Use
@@ -1160,17 +1187,16 @@ Updated to revision 2.
           to change the structure of your working copy, and use the
           <command>svn add</command> command to place new files and
           directories under version control.</para> </warning>
-       @ENGLISH }}} -->
-       <warning>
-         <para>Не смотря на то, что файлы вы можете редактировать
-           как угодно, не следует менять структуру рабочей копии
-           не проинформировав о своих действиях Subversion. Для
-           изменения структуры рабочей копии используйте команды
-           <command>svn copy</command>, <command>svn delete</command>
-           и <command>svn move</command>, а для добавления новых файлов
-           и директорий под контроль версий используйте
-           <command>svn add</command>.</para>
-       </warning>
+        @ENGLISH }}} -->
+        <para>Не смотря на то, что файлы вы можете редактировать
+          как угодно, не следует менять структуру рабочей копии
+          не проинформировав о своих действиях Subversion. Для
+          изменения структуры рабочей копии используйте команды
+          <command>svn copy</command>, <command>svn delete</command>
+          и <command>svn move</command>, а для добавления новых файлов
+          и директорий под контроль версий используйте
+          <command>svn add</command>.</para>
+      </warning>
 
       <variablelist>
 
@@ -1427,11 +1453,8 @@ Updated to revision 2.
           <quote>difference</quote>) against the pristine version.
           Having this cache is a tremendous benefit&mdash;even if you
           have a fast net connection, it's much faster to send only a
-          file's changes rather than the whole file to the server.  At
-          first glance, this might not seem that important, but
-          imagine the repercussions if you try to commit a one line
-          change to a 400MB file and have to send the whole file to
-          the server!</para>
+          file's changes rather than the whole file to the
+          server.</para>
         @ENGLISH }}} -->
         <para>Для этого Subversion использует отдельную для каждого
           версионированного файла кэшированную в административной области
@@ -1445,10 +1468,7 @@ Updated to revision 2.
           <quote>различий</quote>) первоначальной версии. Наличие такого
           кеша ужасно выгодно &mdash; даже если у вас высокоскоростное
           соединение намного быстрее отправлять на сервер только изменения
-          файла вместо отправки целого файла. На первый взгляд это может
-          показаться не таким уж и важным, но представьте себе последствия,
-          если вы попытаетесь зафиксировать изменения в одной строчке для
-          файла размером 400MБ и отправите на сервер весь файл!</para>
+          файла вместо отправки целого файла.</para>
 
       </sidebar>
 
@@ -1815,13 +1835,22 @@ R       xyz.c               # файл запланирован для заме�
           linkend="svn.advanced.props"/> for more information on
           properties).  If an <computeroutput>M</computeroutput>
           appears in the second column, then the properties have been
-          modified, otherwise a whitespace will be printed.</para>
+          modified.  If a <computeroutput>C</computeroutput> appears
+          in that column, then the properties for the file are in a
+          state of conflict, which must be resolved before committing
+          the changes to the repository.  Otherwise a whitespace will
+          be printed.</para>
         @ENGLISH }}} -->
         <para>Вторая колонка показывает статус свойств файлов и
           директорий (больше о свойствах см. в <xref
           linkend="svn.advanced.props"/>). Если во второй колонке
           показывается <computeroutput>M</computeroutput> свойства
-          были изменены, иначе печатается пробел.</para>
+          были изменены. Если в этой колонке показывается
+          <computeroutput>C</computeroutput> это значит, что свойства
+          этого файла находятся в состоянии конфликта, который должен быть
+          решен до фиксации изменений в хранилище. Во всех других случаях
+          будет выведен пробел.
+        </para>
 
         <!-- @ENGLISH {{{
         <para>The third column will only show whitespace or an
@@ -3402,9 +3431,9 @@ $
         a file, and pass both that and the file in your working copy
         to your external diff program.</para>
 
-      <para>Sometimes it's easier to look at an older version of a
-        file in its entirety as opposed to just the differences
-        between it and another revision.</para>
+      <para>Secondly, it's sometimes just easier to look at an older
+        version of a file in its entirety than to look only at the
+        differences between it and another revision.</para>
       @ENGLISH }}} -->
       <para>Вероятно, вам интересно почему мы не воспользовались
         <command>svn update --revision</command>, что бы обновить
@@ -3421,7 +3450,7 @@ $
         этот файл вместе с файлом в рабочей копии внешней программе
         просмотра различий.</para>
 
-      <para>Иногда проще посмотреть полную старую версию файла чем
+      <para>Во-вторых, иногда проще посмотреть полную старую версию файла чем
         только различия между ним и его другой правкой.</para>
 
       </sect2>
