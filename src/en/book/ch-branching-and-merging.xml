@@ -18,7 +18,7 @@
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.branchmerge.whatis">
-    <title>What's a Branch?</title> 
+    <title>What's a Branch?</title>
 
     <para>Suppose it's your job to maintain a document for a division
       in your company, a handbook of some sort.  One day a different
@@ -793,12 +793,13 @@ $ svn merge -r 100:200 http://svn.example.com/repos/trunk
           this information to help automate merges as much as
           possible.</para>
 
-        <para>Unfortunately, Subversion is not such a system.  Like
-          CVS, Subversion does not yet record any information about
-          merge operations.  When you commit local modifications, the
-          repository has no idea whether those changes came from
-          running <command>svn merge</command>, or from just
-          hand-editing the files.</para>
+        <para>Unfortunately, Subversion is not such a system; it does
+          not yet record any information about merge operations.
+            <footnote><para>However, at the time of writing, this
+             feature is being worked on!</para></footnote>
+          When you commit local modifications, the repository has no
+          idea whether those changes came from running <command>svn
+          merge</command>, or from just hand-editing the files.</para>
 
         <para>What does this mean to you, the user?  It means that
           until the day Subversion grows this feature, you'll have to
@@ -1010,6 +1011,73 @@ A  foo.c
           <option>--notice-ancestry</option> option will cause
           <command>svn diff</command> to behave like the
           <literal>merge</literal> command.)</para>
+
+      </sect3>
+
+      <sect3 id="svn.branchmerge.copychanges.bestprac.moves">
+        <title>Merges and Moves</title>
+
+        <para>A common desire is to <quote>refactor</quote> source
+          code, especially in Java-based software projects.  Files and
+          directories are shuffled around and renamed, often causing
+          great disruption to everyone working on the project.  Sounds
+          like a perfect case to use a branch, doesn't it?  Just
+          create a branch, shuffle things around, then merge the
+          branch back to the trunk, right?</para>
+
+        <para>Alas, this scenario doesn't work so well right now, and
+          is considered one of Subversion's current weak spots.  The
+          problem is that Subversion's <command>move</command>
+          and <command>copy</command> commands aren't as robust as
+          they should be.</para>
+
+        <para>When you use <command>svn copy</command> to duplicate a
+          file, the repository remembers where the new file came from,
+          but it fails to transmit that information to the client
+          which is running <command>svn update</command>
+          or <command>svn merge</command>.  Instead of telling the
+          client, <quote>Copy that file you have over there to this
+          new location</quote>, it instead just sends down an entirely
+          new file.  This can lead to problems, especially because the
+          same thing happens with renamed files.  A lesser-known fact
+          about Subversion is that it lacks <quote>true
+          renames</quote> &mdash; the <command>svn move</command>
+          command is nothing more than an aggregation of <command>svn
+          copy</command> and <command>svn delete</command>.</para>
+
+        <para>For example, suppose that while working on your private
+          branch, you rename <filename>integer.c</filename>
+          to <filename>whole.c</filename>.  Effectively you've created
+          a new file in your branch that is a copy of the original
+          file, and deleted the original file.  Meanwhile, back
+          on <filename>trunk</filename>, Sally has committed some
+          improvements to <filename>integer.c</filename>.  Now you
+          decide to merge your branch to the trunk:</para>
+
+        <screen>
+$ cd calc/trunk
+
+$ svn merge -r 341:405 http://svn.example.com/repos/calc/branches/my-calc-branch
+D   integer.c
+A   whole.c
+</screen>
+
+        <para>This doesn't look so bad at first glance, but it's also
+          probably not what you or Sally expected.  The merge
+          operation has deleted the latest version
+          of <filename>integer.c</filename> file (the one containing
+          Sally's latest changes), and blindly added your
+          new <filename>whole.c</filename> file &mdash; which is a
+          duplicate of the <emphasis>older</emphasis> version
+          of <filename>integer.c</filename>.  The net effect is that
+          merging your <quote>rename</quote> to the branch has removed
+          Sally's recent changes from the latest revision!</para>
+
+        <para>This isn't true data-loss; Sally's changes are still in
+          the repository's history, but it may not be immediately
+          obvious that this has happened.  Moral of the story: until
+          Subversion improves, be very careful about merging copies
+          and renames from one branch to another.</para>
 
       </sect3>
 
@@ -1265,7 +1333,7 @@ Committed revision 350.
           <quote>this issue was fixed by revision 9238.</quote>.
           Somebody can then run <command>svn log -r9238</command> to
           read about the exact changeset which fixed the bug, and run
-          <command>svn diff -r9237:9238</command> to see the patch
+          <command>svn diff -c 9238</command> to see the patch
           itself.  And Subversion's <literal>merge</literal> command
           also uses revision numbers.  You can merge specific changesets
           from one branch to another by naming them in the merge
@@ -1305,11 +1373,10 @@ Committed revision 350.
         possibly invalidating all working copies.
         <footnote>
           <para>The Subversion project has plans, however, to someday
-            implement an <command>svnadmin obliterate</command>
-            command that would accomplish the task of permanently
-            deleting information.  In the meantime, see <xref
-            linkend="svn.reposadmin.maint.tk.svndumpfilter"/> for a possible
-            workaround.</para>
+            implement a command that would accomplish the task of
+            permanently deleting information.  In the meantime, see
+            <xref linkend="svn.reposadmin.maint.tk.svndumpfilter"/>
+            for a possible workaround.</para>
         </footnote>
       </para>
 
@@ -1326,25 +1393,21 @@ Committed revision 350.
         One of the most common questions new users ask is, <quote>How
         do I get my old file or directory back?</quote>.</para>
 
-      <para>The first step is to define exactly <emphasis
-        role="bold">which</emphasis> item you're trying to resurrect.
-        Here's a useful metaphor: you can think of every object in the
-        repository as existing in a sort of two-dimensional coordinate
-        system.  The first coordinate is a particular revision tree,
-        and the second coordinate is a path within that tree.  So
-        every version of your file or directory can be defined by a
-        specific coordinate pair.</para>
+      <para>The first step is to define
+        exactly <emphasis role="bold">which</emphasis> item you're
+        trying to resurrect.  Here's a useful metaphor: you can think
+        of every object in the repository as existing in a sort of
+        two-dimensional coordinate system.  The first coordinate is a
+        particular revision tree, and the second coordinate is a path
+        within that tree.  So every version of your file or directory
+        can be defined by a specific coordinate pair.  (Remember the
+        familiar <quote>peg revision</quote> syntax &mdash; foo.c@224
+        &mdash; mentioned back in
+        <xref linkend="svn.advanced.pegrevs"/>.) </para>
 
-      <para>Subversion has no <filename>Attic</filename> directory
-        like CVS does,
-        <footnote>
-          <para>Because CVS doesn't version trees, it creates an
-            <filename>Attic</filename> area within each repository
-            directory as a way of remembering deleted files.</para>
-        </footnote>
-        so you need to use <command>svn
-        log</command> to discover the exact coordinate pair you wish
-        to resurrect.  A good strategy is to run <command>svn log
+      <para>First, you might need to use <command>svn log</command> to
+        discover the exact coordinate pair you wish to resurrect.  A
+        good strategy is to run <command>svn log
         --verbose</command> in a directory which used to contain your
         deleted item.  The <option>--verbose</option> option shows a
         list of all changed items in each revision; all you need to do
@@ -1732,8 +1795,9 @@ URL: http://svn.example.com/repos/calc/branches/my-calc-branch
       mixture of repository locations, these locations must all be
       within the <emphasis>same</emphasis> repository.  Subversion
       repositories aren't yet able to communicate with one another;
-      that's a feature planned beyond Subversion
-      1.0.<footnote><para>You <emphasis>can</emphasis>, however, use
+      that's a feature planned for the
+      future.<footnote><para>You <emphasis>can</emphasis>, however,
+      use
       <command>svn switch</command> with the
       <option>--relocate</option> switch if the URL of your server
       changes and you don't want to abandon an existing working copy.
