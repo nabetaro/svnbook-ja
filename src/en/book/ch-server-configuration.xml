@@ -414,277 +414,6 @@
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <!-- ================================================================= -->
-  <sect1 id="svn.serverconfig.netmodel">
-
-    <title>Network Model</title>
-
-    <para>This section is a general discussion of how a Subversion
-      client and server interact with one another, regardless of the
-      network implementation you're using.  After reading, you'll have
-      a good understanding of how a server can behave and the
-      different ways in which a client can be configured to
-      respond.</para>
-
-    <!-- =============================================================== -->
-    <sect2 id="svn.serverconfig.netmodel.reqresp">
-      <title>Requests and Responses</title>
-
-      <para>The Subversion client spends most of its time managing
-        working copies.  When it needs information from a repository,
-        however, it makes a network request, and the server responds
-        with an appropriate answer.  The details of the network
-        protocol are hidden from the user; the client attempts to
-        access a URL, and depending on the URL schema, a particular
-        protocol is used to contact the server (see <xref
-        linkend="svn.basic.in-action.wc.sb-1"/>).  Users can run <command>svn
-        --version</command> to see which URL schemas and protocols the
-        client knows how to use.</para>
-
-      <para>When the server process receives a client request, it
-        typically demands that the client identify itself.  It issues
-        an authentication challenge to the client, and the client
-        responds by providing <firstterm>credentials</firstterm> back
-        to the server.  Once authentication is complete, the server
-        responds with the original information the client asked for.
-        Notice that this system is different from systems like CVS,
-        where the client pre-emptively offers credentials (<quote>logs
-        in</quote>) to the server before ever making a request.  In
-        Subversion, the server <quote>pulls</quote> credentials by
-        challenging the client at the appropriate moment, rather than
-        the client <quote>pushing</quote> them.  This makes certain
-        operations more elegant.  For example, if a server is
-        configured to allow anyone in the world to read a repository,
-        then the server will never issue an authentication challenge
-        when a client attempts to <command>svn
-        checkout</command>.</para>
-
-      <para>If the client's network request writes new data to the
-        repository (e.g. <command>svn commit</command>), then a new
-        revision tree is created.  If the client's request was
-        authenticated, then the authenticated user's name is stored as
-        the value of the <literal>svn:author</literal> property on the
-        new revision (see <xref linkend="svn.reposadmin.basics.revprops"/>).  If
-        the client was not authenticated (in other words, the server
-        never issued an authentication challenge), then the revision's
-        <literal>svn:author</literal> property is empty.
-        <footnote><para>This problem is actually a FAQ, resulting from
-        a misconfigured server setup.</para></footnote></para>
-
-    </sect2>
-
-    <!-- =============================================================== -->
-    <sect2 id="svn.serverconfig.netmodel.credcache">
-      <title>Client Credentials Caching</title>
-
-      <para>Many servers are configured to require authentication on
-        every request.  This can become a big annoyance to users, who
-        are forced to type their passwords over and over again.</para>
-
-      <para>Happily, the Subversion client has a remedy for this: a
-        built-in system for caching authentication credentials on
-        disk.  By default, whenever the command-line client
-        successfully responds to a server's authentication challenge,
-        it saves the credentials in the user's private runtime
-        configuration
-        area&mdash;in <filename>~/.subversion/auth/</filename> on
-        Unix-like systems or
-        <filename>%APPDATA%/Subversion/auth/</filename> on Windows.
-        (The runtime area is covered in more detail in <xref
-        linkend="svn.advanced.confarea"/>.)  Successful credentials are
-        cached on disk, keyed on a combination of hostname, port, and
-        authentication realm.</para>
-
-      <para>When the client receives an authentication challenge, it
-        first looks for the appropriate credentials in the user's disk
-        cache; if not present, or if the cached credentials fail to
-        authenticate, then the client simply prompts the user for the
-        information.</para>
-
-      <para>Security-conscious people may be thinking to themselves,
-        <quote>Caching passwords on disk?  That's terrible!  You
-        should never do that!</quote> Please remain calm, it's not as
-        dangerous as it sounds.</para>
-
-      <itemizedlist>
-
-        <listitem>
-          <para>On Windows 2000 and later, the Subversion client uses
-            standard Windows cryptography services to encrypt the
-            password on disk.  Because the encryption key is managed
-            by Windows and is tied to the user's own login
-            credentials, only the user can decrypt the cached
-            password.  (Note: if the user's Windows account password
-            is reset by an administrator, all of the cached passwords
-            become undecipherable.  The Subversion client will behave
-            as if they don't exist, prompting for passwords when
-            required.)</para>
-        </listitem>
-
-        <listitem>
-          <para>Similarly, on Mac OS X, the Subversion client stores all
-            repository passwords in the Keychain service, protected by
-            the user's account passsword.</para>
-        </listitem>
-
-        <listitem>
-          <para>For other Unix-like operating systems, no standard
-            such <quote>keychain</quote> services exist.  However,
-            the <filename>auth/</filename> caching area is still
-            permission-protected so that only the user (owner) can
-            read data from it, not the world at large.  The operating
-            system's own file permissions are protecting the
-            password.</para>
-        </listitem>
-
-        <listitem>
-          <para>For the truly paranoid willing to sacrifice
-            convenience, it's always possible to disable credential
-            caching altogether.</para>
-        </listitem>
-
-      </itemizedlist>
-
-      <para>To disable caching for a single command, pass the
-        <option>--no-auth-cache</option> option:</para>
-
-      <screen>
-$ svn commit -F log_msg.txt --no-auth-cache
-Authentication realm: &lt;svn://host.example.com:3690&gt; example realm
-Username:  joe
-Password for 'joe':
-
-Adding         newfile
-Transmitting file data .
-Committed revision 2324.
-
-# password was not cached, so a second commit still prompts us
-
-$ svn delete newfile
-$ svn commit -F new_msg.txt
-Authentication realm: &lt;svn://host.example.com:3690&gt; example realm
-Username:  joe
-&hellip;
-</screen>
-
-      <para>Or, if you want to disable credential caching permanently,
-        you can edit your runtime <filename>config</filename> file
-        (located next to the <filename>auth/</filename> directory).
-        Simply set <literal>store-auth-creds</literal> to
-        <literal>no</literal>, and no credentials will be cached on
-        disk, ever.</para>
-
-      <screen>
-[auth]
-store-auth-creds = no
-</screen>
-
-      <para>Sometimes users will want to remove specific credentials
-        from the disk cache.  To do this, you need to navigate into
-        the <filename>auth/</filename> area and manually delete the
-        appropriate cache file.  Credentials are cached in individual
-        files;  if you look inside each file, you will see keys and
-        values.  The <literal>svn:realmstring</literal> key describes
-        the particular server realm that the file is associated
-        with:</para>
-
-      <screen>
-$ ls ~/.subversion/auth/svn.simple/
-5671adf2865e267db74f09ba6f872c28
-3893ed123b39500bca8a0b382839198e
-5c3c22968347b390f349ff340196ed39
-
-$ cat ~/.subversion/auth/svn.simple/5671adf2865e267db74f09ba6f872c28
-
-K 8
-username
-V 3
-joe
-K 8
-password
-V 4
-blah
-K 15
-svn:realmstring
-V 45
-&lt;https://svn.domain.com:443&gt; Joe's repository
-END
-</screen>
-
-      <para>Once you have located the proper cache file, just delete
-        it.</para>
-
-      <para>One last word about client authentication behavior: a bit
-        of explanation about the <option>--username</option> and
-        <option>--password</option> options is needed.  Many client
-        subcommands accept these options; however it is important to
-        understand using these options <emphasis>does not</emphasis>
-        automatically send credentials to the server.  As discussed
-        earlier, the server <quote>pulls</quote> credentials from the
-        client when it deems necessary; the client cannot
-        <quote>push</quote> them at will.  If a username and/or
-        password are passed as options, they will
-        <emphasis>only</emphasis> be presented to the server if the
-        server requests them.
-
-         <footnote><para>Again, a common mistake is to misconfigure a
-           server so that it never issues an authentication challenge.
-           When users pass <option>--username</option> and
-           <option>--password</option> options to the client,
-           they're surprised to see that they're never used, i.e. new
-           revisions still appear to have been committed
-           anonymously!</para></footnote>
-
-        Typically, these options are used when:</para>
-
-      <itemizedlist>
-        <listitem>
-          <para>the user wants to authenticate as a different user
-            than her system login name, or</para>
-        </listitem>
-        <listitem>
-          <para>a script wants to authenticate without using cached
-            credentials.</para>
-        </listitem>
-      </itemizedlist>
-
-
-      <para>Here is a final summary that describes how a Subversion
-        client behaves when it receives an authentication
-        challenge:</para>
-
-      <orderedlist>
-        <listitem>
-          <para>Check whether the user specified any credentials as
-            command-line options, via <option>--username</option>
-            and/or <option>--password</option>.  If not, or if these
-            options fail to authenticate successfully, then</para>
-        </listitem>
-
-        <listitem>
-          <para>Look up the server's realm in the runtime
-            <filename>auth/</filename> area, to see if the user already
-            has the appropriate credentials cached.  If not, or if the
-            cached credentials fail to authenticate, then</para>
-        </listitem>
-
-        <listitem>
-          <para>Resort to prompting the user.</para>
-        </listitem>
-      </orderedlist>
-
-      <para>If the client successfully authenticates by any of the
-        methods listed above, it will attempt to cache the credentials
-        on disk (unless the user has disabled this behavior, as
-        mentioned earlier).</para>
-
-    </sect2>
-
-  </sect1>
-
-
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
   <sect1 id="svn.serverconfig.svnserve">
 
     <title>svnserve, a custom server</title>
@@ -998,7 +727,7 @@ realm = example realm
           client displays it in the authentication prompt, and uses it
           as a key (along with the server's hostname and port) for
           caching credentials on disk (see <xref
-          linkend="svn.serverconfig.netmodel.credcache"/>).  The
+          linkend="svn.advanced.netmodel.credcache"/>).  The
           <literal>password-db</literal> variable points to a separate
           file that contains a list of usernames and passwords, using
           the same familiar format.  For example:</para>
@@ -1157,7 +886,7 @@ baz
         program prompting for authentication, and
         <emphasis>not</emphasis> the <command>svn</command> client
         program.  That means there's no automatic password caching
-        going on (see <xref linkend="svn.serverconfig.netmodel.credcache"/>).  The
+        going on (see <xref linkend="svn.advanced.netmodel.credcache"/>).  The
         Subversion client often makes multiple connections to the
         repository, though users don't normally notice this due to the
         password caching feature.  When using
@@ -1863,7 +1592,7 @@ Certificate information:
           will be cached in your private run-time
           <filename>auth/</filename> area in just the same way your
           username and password are cached (see <xref
-          linkend="svn.serverconfig.netmodel.credcache"/>).  If cached,
+          linkend="svn.advanced.netmodel.credcache"/>).  If cached,
           Subversion will automatically remember to trust this certificate
           in future negotiations.</para>
 
@@ -2525,42 +2254,26 @@ CustomLog logs/svn_logfile "%t %u %{SVN-ACTION}e" env=SVN-ACTION
           increased functionality or security in Subversion as well.
           Subversion communicates with Apache using Neon, which is a
           generic HTTP/WebDAV library with support for such mechanisms
-          as SSL (the Secure Socket Layer, discussed earlier) and
-          Deflate compression (the same algorithm used by the
-          <command>gzip</command> and <command>PKZIP</command>
-          programs to <quote>shrink</quote> files into smaller chunks
-          of data).  You need only to compile support for the features
-          you desire into Subversion and Apache, and properly
-          configure the programs to use those features.</para>
+          as SSL (the Secure Socket Layer, discussed earlier).  If
+          your Subversion client is built to support SSL, then it can
+          access your Apache server
+          using <literal>https://</literal>.</para>
 
-        <para>Deflate compression places a small burden on the client
-          and server to compress and decompress network transmissions
-          as a way to minimize the size of the actual transmission.
-          In cases where network bandwidth is in short supply, this
-          kind of compression can greatly increase the speed at which
-          communications between server and client can be sent.  In
-          extreme cases, this minimized network transmission could be
-          the difference between an operation timing out or completing
-          successfully.</para>
-
-        <para>Less interesting, but equally useful, are other features
-          of the Apache and Subversion relationship, such as the
-          ability to specify a custom port (instead of the default
-          HTTP port 80) or a virtual domain name by which the
-          Subversion repository should be accessed, or the ability to
-          access the repository through a proxy.  These things are all
-          supported by Neon, so Subversion gets that support for
-          free.</para>
+        <para>Equally useful are other features of the Apache and
+          Subversion relationship, such as the ability to specify a
+          custom port (instead of the default HTTP port 80) or a
+          virtual domain name by which the Subversion repository
+          should be accessed, or the ability to access the repository
+          through an HTTP proxy.  These things are all supported by
+          Neon, so Subversion gets that support for free.</para>
 
         <para>Finally, because <command>mod_dav_svn</command> is
-          speaking a semi-complete dialect of WebDAV/DeltaV, it's
+          speaking a subset of the WebDAV/DeltaV protocol, it's
           possible to access the repository via third-party DAV
           clients.  Most modern operating systems (Win32, OS X, and
           Linux) have the built-in ability to mount a DAV server as a
-          standard network <quote>share</quote>.  This is a
-          complicated topic; for details, read <xref
-          linkend="svn.webdav"/>.</para>
-
+          standard network share.  This is a complicated topic; for
+          details, read <xref linkend="svn.webdav"/>.</para>
 
       </sect3>
 
@@ -2610,8 +2323,13 @@ CustomLog logs/svn_logfile "%t %u %{SVN-ACTION}e" env=SVN-ACTION
         and it appeases the administrator's desire to maintain tight
         control of the repository.</para>
 
-      <para>Note, though, that there are often invisible costs
-        associated with this feature.  Most of the time, while certain
+      <para>Note, though, that there are often invisible (and
+        visible!) costs associated with this feature.  In the visible
+        category, the server needs to do a lot more work to ensure
+        that the user has the right to read or write each specific
+        path; in certain situations, there's very noticeable
+        performance loss.  In the invisible category, consider the
+        culture you're creating.  Most of the time, while certain
         users <emphasis>shouldn't</emphasis> be committing changes to
         certain parts of the repository, that social contract doesn't
         need to be technologically enforced.  Teams can sometimes
@@ -2621,7 +2339,8 @@ CustomLog logs/svn_logfile "%t %u %{SVN-ACTION}e" env=SVN-ACTION
         server level, you're setting up barriers to unexpected
         collaboration.  You're also creating a bunch of rules that
         need to be maintained as projects develop, new users are
-        added, and so on.  It's a bunch of extra work to maintain.</para>
+        added, and so on.  It's a bunch of extra work to
+        maintain.</para>
 
         <para>Remember that this is a version control system!  Even if
         somebody accidentally commits a change to something they
@@ -2633,10 +2352,11 @@ CustomLog logs/svn_logfile "%t %u %{SVN-ACTION}e" env=SVN-ACTION
       <para>So before you begin restricting users' access rights, ask
         yourself if there's a real, honest need for this, or if it's
         just something that <quote>sounds good</quote> to an
-        administrator.  Remember that there's very little risk
-        involved, and that it's bad to become dependent on technology
-        as a crutch for social problems.<footnote><para>A common theme
-        in this book!</para></footnote>.</para>
+        administrator.  Decide whether it's worth sacrificing some
+        server speed for, and remember that there's very little risk
+        involved; it's bad to become dependent on technology as a
+        crutch for social problems.<footnote><para>A common theme in
+        this book!</para></footnote>.</para>
 
       <para>As an example to ponder, consider that the Subversion
         project itself has always a notion of who is allowed to commit
@@ -2728,12 +2448,11 @@ harry =
       within it.</para>
 
     <para>The thing to remember is that the most specific path always
-      matches first.  The <command>mod_authz_svn</command> module
-      tries to match the path itself, and then the parent of the path,
-      then the parent of that, and so on.  The net effect is that
-      mentioning a specific path in the accessfile will always
-      override any permissions inherited from parent
-      directories.</para>
+      matches first.  The server tries to match the path itself, and
+      then the parent of the path, then the parent of that, and so on.
+      The net effect is that mentioning a specific path in the
+      accessfile will always override any permissions inherited from
+      parent directories.</para>
 
     <para>By default, nobody has any access to the repository at all.
       That means that if you're starting with an empty file, you'll
@@ -2749,23 +2468,20 @@ harry =
 
     <para>This is a common setup; notice that there's no repository
       name mentioned in the section name.  This makes all repositories
-      world readable to all users, whether you're
-      using <literal>SVNPath</literal> or
-      <literal>SVNParentPath</literal>.  Once all users have
-      read-access to the repositories, you can give explicit
+      world readable to all users. Once all users have read-access to
+      the repositories, you can give explicit
       <literal>rw</literal> permission to certain users on specific
       subdirectories within specific repositories.</para>
 
     <para>The asterisk variable (<literal>*</literal>) is also worth
       special mention here: it's the
       <emphasis>only</emphasis> pattern which matches an anonymous
-      user.  If you've configured your <literal>Location</literal>
-      block to allow a mixture of anonymous and authenticated access,
-      all users start out accessing Apache anonymously.
-      <command>mod_authz_svn</command> looks for a
+      user.  If you've configured your server block to allow a mixture
+      of anonymous and authenticated access, all users start out
+      accessing anonymously.  The server looks for a
       <literal>*</literal> value defined for the path being accessed;
-      if it can't find one, then Apache demands real authentication
-      from the client.</para>
+      if it can't find one, then it demands real authentication from
+      the client.</para>
 
     <para>The access file also allows you to define whole groups of
       users, much like the Unix <filename>/etc/group</filename>
