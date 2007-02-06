@@ -66,6 +66,296 @@
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <!-- ================================================================= -->
+  <sect1 id="svn.tour.revs.specifiers">
+    <title>Revision Specifiers</title>
+
+    <para>As we saw in <xref linkend="svn.tour.revs" />, revision
+      numbers in Subversion are pretty straightforward&mdash;integers
+      that keep getting larger as you commit more changes to your
+      versioned data.  Still, it doesn't take long before you can no
+      longer remember exactly what happened in each and every
+      revision.  Fortunately, the typical Subversion workflow doesn't
+      often demand that you supply arbitrary revisions to the
+      Subversion operations you perform.  For operations that
+      <emphasis>do</emphasis> require a revision specifier, you
+      generally supply a revision number that you saw in a commit
+      email, in the output of some other Subversion operation, or in
+      some other context that would yield meaning to that particular
+      number.</para>
+
+    <para>But occasionally, you need to pinpoint a moment in time for
+      which you don't already have a revision number memorized or
+      handy.  So besides the integer revision numbers,
+      <command>svn</command> allows as input some additional forms of
+      revision specifiers&mdash;revision keywords, and revision
+      dates.</para>
+
+    <note>
+      <para>The various forms of Subversion revision specifiers can be
+        mixed and matched when used to specify revision ranges.  For
+        example, you can use <option>-r
+        <replaceable>REV1</replaceable>:<replaceable>REV2</replaceable></option>
+        where <replaceable>REV1</replaceable> is a revision keyword
+        and <replaceable>REV2</replaceable> is a revision number, or
+        where <replaceable>REV1</replaceable> is a date and
+        <replaceable>REV2</replaceable> is a revision keyword, and so
+        on.  The individual revision specifiers are independently
+        evaluated, so you can put whatever you want on the opposite
+        sides of that colon.</para>
+    </note>
+    
+    <!-- =============================================================== -->
+    <sect2 id="svn.tour.revs.keywords">
+      <title>Revision Keywords</title>
+      
+      <para>The Subversion client understands a number of
+        <firstterm>revision keywords</firstterm>.  These keywords can
+        be used instead of integer arguments to the
+        <option>--revision</option> switch, and are resolved into
+        specific revision numbers by Subversion:</para>
+
+      <variablelist>
+
+        <varlistentry>
+          <term>HEAD</term>
+          <listitem>
+            <!-- @ENGLISH {{{
+            <para>The latest (or <quote>youngest</quote>) revision in
+              the repository.</para>
+            @ENGLISH }}} -->
+            <para>Последняя (или <quote>самая новая</quote>) правка
+              хранилища</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>BASE</term>
+          <listitem>
+            <!-- @ENGLISH {{{
+            <para>The revision number of an item in a working copy.
+              If the item has been locally modified, the <quote>BASE
+              version</quote> refers to the way the item appears
+              without those local modifications.</para>
+            @ENGLISH }}} -->
+            <para>Номер правки элемента рабочей копии. Если элемент
+              редактировался, то <quote>BASE версия</quote> соответствует тому,
+              как элемент выглядел до редактирования.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>COMMITTED</term>
+          <listitem>
+            <!-- @ENGLISH {{{
+            <para>The most recent revision prior to, or equal to,
+              <literal>BASE</literal>, in which an item changed.</para>
+            @ENGLISH }}} -->
+            <para>Правка, в которой элемент последний раз редактировался
+              (предшествующая либо равная <literal>BASE</literal>).</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>PREV</term>
+          <listitem>
+            <!-- @ENGLISH {{{
+            <para>The revision immediately <emphasis>before</emphasis>
+              the last revision in which an item changed.
+              (Technically, <literal>COMMITTED</literal> - 1.)</para>
+            @ENGLISH }}} -->
+            <para>Правка, <emphasis>предшествующая</emphasis> последней
+              правке, в которой элемент был изменен. (Технически,
+              <literal>COMMITTED</literal> - 1.)</para>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+      <para>As can be derived from their descriptions, the
+        <literal>PREV</literal>, <literal>BASE</literal>, and
+        <literal>COMMITTED</literal> revision keywords are used only
+        when referring to a working copy path&mdash;they don't apply
+        to repository URLs.  <literal>HEAD</literal>, on the other
+        hand, can be used in conjuction with both of these path
+        types.</para>
+      
+      <!-- @ENGLISH {{{
+      <para>Here are some examples of revision keywords in action.
+        Don't worry if the commands don't make sense yet; we'll be
+        explaining these commands as we go through the chapter:</para>
+      @ENGLISH }}} -->
+      <para>Ниже приведено несколько примеров использования ключевых слов
+        правок. Не волнуйтесь, если смысл команд пока не понятен; в дальнейшем
+        мы объясним эти команды:</para>
+
+      <screen>
+$ svn diff --revision PREV:COMMITTED foo.c
+<!-- @ENGLISH {{{
+# shows the last change committed to foo.c
+@ENGLISH }}} -->
+# показать последнее изменение зафиксированное для foo.c
+
+$ svn log --revision HEAD
+<!-- @ENGLISH {{{
+# shows log message for the latest repository commit
+@ENGLISH }}} -->
+# показать лог для последней фиксации хранилища
+
+$ svn diff --revision HEAD
+<!-- @ENGLISH {{{
+# compares your working file (with local changes) to the latest version
+# in the repository
+@ENGLISH }}} -->
+# сравнить ваш рабочый файл (с учетом локальных изменений)
+# с последней правкой в хранилище
+
+$ svn diff --revision BASE:HEAD foo.c
+<!-- @ENGLISH {{{
+# compares your <quote>pristine</quote> foo.c (no local changes) with the 
+# latest version in the repository
+@ENGLISH }}} -->
+# сравнить ваш <quote>исходный</quote> foo.c (без учета локальных
+# изменений) с последней версией в хранилище
+
+$ svn log --revision BASE:HEAD
+<!-- @ENGLISH {{{
+# shows all commit logs since you last updated
+@ENGLISH }}} -->
+# показать все логи фиксаций со времени вашего последнего обновления
+
+$ svn update --revision PREV foo.c
+<!-- @ENGLISH {{{
+# rewinds the last change on foo.c, decreasing foo.c's working revision
+@ENGLISH }}} -->
+# отменить последние изменения в foo.c, рабочая правка foo.c понижается
+      
+$ svn diff -r BASE:14 foo.c
+# compares the unmodified version of foo.c with the way foo.c looked
+# in revision 14
+</screen>
+      
+    </sect2>
+    
+    <!-- =============================================================== -->
+    <sect2 id="svn.tour.revs.dates">
+      <!-- @ENGLISH {{{
+      <title>Revision Dates</title>
+      @ENGLISH }}} -->
+      <title>Даты правок</title>
+      
+      <para>Revision numbers reveal nothing about the world outside
+        the version control system, but sometimes you need to
+        correlate a moment in real time with a moment in version
+        history.  To facilitate this, the <option>--revision</option>
+        option can also accept as input date specifiers wrapped in
+        curly braces (<literal>{</literal> and <literal>}</literal>).
+        Subversion accepts the standard ISO-8601 date and time
+        formats, plus a few others.  Here are some examples.
+        (Remember to use quotes around any date that contains
+        spaces.)</para>
+
+      <screen>
+$ svn checkout -r {2002-02-17}
+$ svn checkout -r {15:30}
+$ svn checkout -r {15:30:00.200000}
+$ svn checkout -r {"2002-02-17 15:30"}
+$ svn checkout -r {"2002-02-17 15:30 +0230"}
+$ svn checkout -r {2002-02-17T15:30}
+$ svn checkout -r {2002-02-17T15:30Z}
+$ svn checkout -r {2002-02-17T15:30-04:00}
+$ svn checkout -r {20020217T1530}
+$ svn checkout -r {20020217T1530Z}
+$ svn checkout -r {20020217T1530-0500}
+&hellip;
+</screen>
+      
+      <para>When you specify a date, Subversion resolves that date to
+        the most recent revision of the repository as of that date,
+        and then continues to operate against that resolved revision
+        number:</para>
+
+      <screen>
+$ svn log --revision {2002-11-28}
+------------------------------------------------------------------------
+r12 | ira | 2002-11-27 12:31:51 -0600 (Wed, 27 Nov 2002) | 6 lines
+&hellip;
+</screen>
+
+      <sidebar>
+        <!-- @ENGLISH {{{
+        <title>Is Subversion a Day Early?</title>
+        @ENGLISH }}} -->
+        <title>Is Subversion a Day Early?</title>
+
+        <!-- @ENGLISH {{{
+        <para>If you specify a single date as a revision without
+          specifying a time of day (for example
+          <literal>2002-11-27</literal>), you may think that Subversion
+          should give you the last revision that took place on the
+          27th of November.  Instead, you'll get back a revision from
+          the 26th, or even earlier.  Remember that Subversion will
+          find the <emphasis>most recent revision of the
+          repository</emphasis> as of the date you give.  If you give
+          a date without a timestamp, like
+          <literal>2002-11-27</literal>, Subversion assumes a time of
+          00:00:00, so looking for the most recent revision won't
+          return anything on the day of the 27th.</para>
+        @ENGLISH }}} -->
+        <para>Указав при обращении к правке только дату, без указания
+          времени (например, <literal>2002-11-27</literal>), возможно
+          вы подумаете, что Subversion выдаст вам последнюю правку за 27
+          ноября. А вместо этого можете получить правку за 26 число или
+          даже более раннюю. Помните, что Subversion будет искать
+          <emphasis>наиболее отвечающую</emphasis> указанной вами дате
+          правку хранилища. Если вы укажите дату без указания времени,
+          например <literal>2002-11-27</literal>, Subversion примет за
+          временную метку 00:00:00 и таким образом поиск ближайшей к 27
+          числу ревизии не даст ничего относящегося к 27 ноября.</para>
+
+        <!-- @ENGLISH {{{
+        <para>If you want to include the 27th in your search, you can
+          either specify the 27th with the time (<literal>{"2002-11-27
+          23:59"}</literal>), or just specify the next day
+          (<literal>{2002-11-28}</literal>).</para>
+        @ENGLISH }}} -->
+        <para>Если вам необходимо найти именно 27 число, вы можете либо
+          указать 27 число с временной меткой (<literal>{"2002-11-27
+          23:59"}</literal>) либо просто использовать в запросе следующий
+          день (<literal>{2002-11-28}</literal>).</para>
+
+      </sidebar>
+
+      <!-- @ENGLISH {{{
+      <para>You can also use a range of dates.  Subversion will find
+        all revisions between both dates, inclusive:</para>
+      @ENGLISH }}} -->
+      <para>Кроме того, вы можете использовать диапазоны дат. Subversion
+        найдет все правки между обеими датами включительно:</para>
+        
+      <screen>
+$ svn log -r {2002-11-28}
+------------------------------------------------------------------------
+r12 | ira | 2002-11-27 12:31:51 -0600 (Wed, 27 Nov 2002) | 6 lines
+&hellip;
+</screen>
+        
+      <warning>
+        <para>Since the timestamp of a revision is stored as an
+          unversioned, modifiable property of the revision (see <xref
+          linkend="svn.advanced.props" />, revision timestamps can be
+          changed to represent complete falsifications of true
+          chronology, or even removed altogether.  This will wreak
+          havoc on the internal date-to-revision conversion that
+          Subversion performs.</para>
+      </warning>
+        
+    </sect2>
+      
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
   <sect1 id="svn.advanced.pegrevs">
     <title>Peg and Operative Revisions</title>
 
