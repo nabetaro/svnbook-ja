@@ -1,23 +1,21 @@
 <chapter id="svn.reposadmin">
   <title>Repository Administration</title>
 
-  <para>### TODO:  Heavy (re-)construction will be happenin' here! ###</para>
+  <para>The Subversion repository is the central storehouse of all
+    your versioned data.  As such, it becomes an obvious candidate for
+    all the love and attention an administrator can offer.  While the
+    repository is generally a low-maintenance item, it is important to
+    understand how to properly configure and care for it so that
+    potential problems are avoided, and actual problems are safely
+    resolved.</para>
 
-  <para>The Subversion repository is the central storehouse of
-    versioned data for any number of projects.  As such, it becomes
-    an obvious candidate for all the love and attention an
-    administrator can offer.  While the repository is generally a
-    low-maintenance item, it is important to understand how to
-    properly configure and care for it so that potential problems
-    are avoided, and actual problems are safely resolved.</para>
-
-  <para>In this chapter, we'll discuss how to create and configure
-    a Subversion repository.  We'll also talk about repository
-    maintenance, including the use of the <command>svnlook</command>
-    and <command>svnadmin</command> tools (which are provided with
-    Subversion).  We'll address some common questions and mistakes,
-    and give some suggestions on how to arrange the data in the
-    repository.</para>
+  <para>In this chapter, we'll discuss how to create and configure a
+    Subversion repository.  We'll also talk about repository
+    maintenance, providing examples of how and when to use the
+    <command>svnlook</command> and <command>svnadmin</command> tools
+    provided with Subversion.  We'll address some common questions and
+    mistakes, and give some suggestions on how to arrange the data in
+    the repository.</para>
 
   <para>If you plan to access a Subversion repository only in the
     role of a user whose data is under version control (that is, via
@@ -30,7 +28,7 @@
         mysterious realm beyond the working copy where everyone's
         data hangs out.</para>
     </footnote>
-    you should definitely pay attention to this chapter.</para>
+    this chapter is for you.</para>
 
 
   <!-- ================================================================= -->
@@ -47,118 +45,22 @@
       a logical perspective&mdash;dealing with how data is represented
       inside the repository&mdash;and from a physical nuts-and-bolts
       perspective&mdash;how a repository looks and acts with respect
-      to non-Subversion tools.  The following section covers some of
-      these basic concepts at a very high level.</para>
-
-    <!-- =============================================================== -->
-    <sect2 id="svn.reposadmin.basics.txnsrevs">
-      <title>Understanding Transactions and Revisions</title>
-        
-      <para>Conceptually speaking, a Subversion repository is a
-        sequence of directory trees.  Each tree is a snapshot of how
-        the files and directories versioned in your repository looked
-        at some point in time.  These snapshots are created as a
-        result of client operations, and are called revisions.</para>
-
-      <para>Every revision begins life as a transaction tree.  When
-        doing a commit, a client builds a Subversion transaction that
-        mirrors their local changes (plus any additional changes that
-        might have been made to the repository since the beginning of
-        the client's commit process), and then instructs the
-        repository to store that tree as the next snapshot in the
-        sequence.  If the commit succeeds, the transaction is
-        effectively promoted into a new revision tree, and is assigned
-        a new revision number.  If the commit fails for some reason,
-        the transaction is destroyed and the client is informed of the
-        failure.</para>
-            
-      <para>Updates work in a similar way.  The client builds a
-        temporary transaction tree that mirrors the state of the
-        working copy.  The repository then compares that transaction
-        tree with the revision tree at the requested revision (usually
-        the most recent, or <quote>youngest</quote> tree), and sends
-        back information that informs the client about what changes
-        are needed to transform their working copy into a replica of
-        that revision tree.  After the update completes, the temporary
-        transaction is deleted.</para>
-          
-      <para>The use of transaction trees is the only way to make
-        permanent changes to a repository's versioned filesystem.
-        However, it's important to understand that the lifetime of a
-        transaction is completely flexible.  In the case of updates,
-        transactions are temporary trees that are immediately
-        destroyed.  In the case of commits, transactions are
-        transformed into permanent revisions (or removed if the commit
-        fails).  In the case of an error or bug, it's possible that a
-        transaction can be accidentally left lying around in the
-        repository (not really affecting anything, but still taking up
-        space).</para>
-
-      <para>In theory, someday whole workflow applications might
-        revolve around more fine-grained control of transaction
-        lifetime.  It is feasible to imagine a system whereby each
-        transaction slated to become a revision is left in stasis well
-        after the client finishes describing its changes to
-        repository.  This would enable each new commit to be reviewed
-        by someone else, perhaps a manager or engineering QA team, who
-        can choose to promote the transaction into a revision, or
-        abort it.</para>
-            
-    </sect2>
-
-    <!-- =============================================================== -->
-    <sect2 id="svn.reposadmin.basics.revprops">
-      <title>Unversioned Properties</title>
-
-      <para>Transactions and revisions in the Subversion repository
-        can have properties attached to them.  These properties are
-        generic key-to-value mappings, and are generally used to store
-        information about the tree to which they are attached.  The
-        names and values of these properties are stored in the
-        repository's filesystem, along with the rest of your tree
-        data.</para>
-
-      <para>Revision and transaction properties are useful for
-        associating information with a tree that is not strictly
-        related to the files and directories in that tree&mdash;the
-        kind of information that isn't managed by client working
-        copies.  For example, when a new commit transaction is created
-        in the repository, Subversion adds a property to that
-        transaction named <literal>svn:date</literal>&mdash;a
-        datestamp representing the time that the transaction was
-        created.  By the time the commit process is finished, and the
-        transaction is promoted to a permanent revision, the tree has
-        also been given a property to store the username of the
-        revision's author (<literal>svn:author</literal>) and a
-        property to store the log message attached to that revision
-        (<literal>svn:log</literal>).</para>
-
-      <para>Revision and transaction properties are
-        <firstterm>unversioned properties</firstterm>&mdash;as they
-        are modified, their previous values are permanently discarded.
-        Also, while revision trees themselves are immutable, the
-        properties attached to those trees are not.  You can add,
-        remove, and modify revision properties at any time in the
-        future.  If you commit a new revision and later realize that
-        you had some misinformation or spelling error in your log
-        message, you can simply replace the value of the
-        <literal>svn:log</literal> property with a new, corrected log
-        message.</para>
-
-    </sect2>
+      to non-Subversion tools.</para>
 
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.basics.backends">
       <title>Repository Data Stores</title>
 
-      <para>As of Subversion 1.1, there are two options for storing
-        data in a Subversion repository.  One type of repository
-        stores everything in a Berkeley DB database; the other kind
-        stores data in ordinary flat files, using a custom
-        format.  Because Subversion developers often refer to a
-        repository as <quote>the (versioned) filesystem</quote>, they have
-        adopted the habit of referring to the latter type of repository as
-        <firstterm>FSFS</firstterm>
+      <para>As of Subversion 1.1, Subversion provides two options for
+        the type of underlying data store each repository uses.  One
+        type of data store keeps everything in a Berkeley DB database;
+        repositories that use this type are often referred to as being
+        <quote>BDB-backed</quote>.  The other type stores data in
+        ordinary flat files, using a custom format.  Because
+        Subversion developers often refer to a repository as
+        <quote>the (versioned) filesystem</quote>, they have adopted
+        the habit of referring to this latter data storage mechanism
+        as <firstterm>FSFS</firstterm>
         <footnote>
           <para>Pronounced <quote>fuzz-fuzz</quote>, if Jack
             Repenning has anything to say about it.</para>
@@ -168,13 +70,11 @@
         to store data.</para>
 
       <para>When a repository is created, an administrator must decide
-        whether it will use Berkeley DB or FSFS.  There are advantages
-        and disadvantages to each, which we'll describe in a bit.
-        Neither back-end is more <quote>official</quote> than another,
-        and programs which access the repository are insulated from
-        this implementation detail.  Programs have no idea how a
-        repository is storing data; they only see revision and
-        transaction trees through the repository API.</para>
+        whether it will use Berkeley DB (if available) or FSFS.  There
+        are advantages and disadvantages to each, which we'll describe
+        in a bit.  Neither back-end is more <quote>official</quote>
+        than the other, and programs which access the repository are
+        blissfully ignorant of this implementation detail.</para>
 
       <para><xref linkend="svn.reposadmin.basics.backends.tbl-1"/>
         gives a comparative overview of Berkeley DB and FSFS
@@ -342,12 +242,18 @@
           there are other aspects of the environment that are not.
           Secondly, Subversion uses Berkeley DB in a way that will not
           operate on Windows 95/98 systems&mdash;if you need to house
-          a repository on a Windows machine, stick with Windows 2000
-          or Windows XP.  Also, you should never keep a Berkeley DB
-          repository on a network share.  While Berkeley DB promises
-          to behave correctly on network shares that meet a particular
-          set of specifications, almost no known shares actually meet
-          all those specifications.</para>
+          a BDB-backed repository on a Windows machine, stick with
+          Windows 2000 or newer.</para>
+
+        <para>While Berkeley DB promises to behave correctly on
+          network shares that meet a particular set of specifications,
+          there are many networked filesystem types and appliances
+          which do <emphasis>not</emphasis> actually meet those
+          requirements.  And in no case can you allow a BDB-backed
+          repository that resides on a network share to be accessed by
+          multiple clients of that share at once (which quite often is
+          the whole point of having the repository live on a network
+          share in the first place).</para>
 
         <para>Finally, because Berkeley DB is a library linked
           directly into Subversion, it's more sensitive to
@@ -367,13 +273,26 @@
           to restore to a checkpoint, which is a bit of an annoyance.
           Other things can cause a repository to <quote>wedge</quote>
           besides crashed processes, such as programs conflicting over
-          ownership and permissions on the database files.  So while a
-          Berkeley DB repository is quite fast and scalable, it's best
-          used by a single server process running as one
-          user&mdash;such as Apache's <command>httpd</command> or
-          <command>svnserve</command> (see <xref
-          linkend="svn.serverconfig"/>)&mdash;rather than accessing it as
-          many different users via <literal>file:///</literal> or
+          ownership and permissions on the database files.</para>
+
+       <note><para>Berkeley DB 4.4 brings (to Subversion 1.4 and better) the
+          ability for Subversion to automatically (and transparently)
+          recover Berkeley DB environments in need of such recovery.
+          When a Subversion process attaches to a repository's
+          Berkeley DB environment, it can use some process accounting
+          mechanisms to detect any unclean disconnections by previous
+          processes, perform any necessary recover, and then continue
+          on as if nothing happened.  This doesn't completely
+          eliminate instances of repository wedging, but it does
+          drastically reduce the amount of human interaction required
+          to recover from them.</para></note>
+
+       <para>So while a Berkeley DB repository is quite fast and
+          scalable, it's best used by a single server process running
+          as one user&mdash;such as Apache's <command>httpd</command>
+          or <command>svnserve</command> (see <xref
+          linkend="svn.serverconfig"/>)&mdash;rather than accessing it
+          as many different users via <literal>file:///</literal> or
           <literal>svn+ssh://</literal> URLs.  If using a Berkeley DB
           repository directly as multiple users, be sure to read <xref
           linkend="svn.serverconfig.multimethod"/>.</para>
@@ -1769,8 +1688,8 @@ Node-path: spreadsheet/Makefile
           <para>recovering <quote>wedged</quote> repositories, and</para>
         </listitem>
         <listitem>
-          <para>migrating repository contents to a different
-            repository.</para>
+          <para>moving, perhaps selectively, repository contents to a
+            different repository.</para>
         </listitem>
       </itemizedlist>
 
@@ -2600,6 +2519,15 @@ $
         times.</para>
 
     </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.reposadmin.maint.replicating">
+      <title>Replicating a Repository</title>
+
+      <para>### TODO</para>
+
+    </sect2>
+
   </sect1>
 
 
