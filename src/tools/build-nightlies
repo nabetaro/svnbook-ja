@@ -6,6 +6,7 @@ import os
 import shutil
 import time
 import popen2
+import traceback
 
 SKIP_LOCALES = ('de',)
 SKIP_PDF_LOCALES = ('ru', 'zh')
@@ -26,16 +27,24 @@ def format_duration(seconds):
 
 
 def sendmail(subject, body):
-    outerrfp, infp = popen2.popen4(
-            ['sendmail', '-f', MAIL_SENDER, MAIL_DESTINATION])
+    try:
+        outerrfp, infp = popen2.popen4(
+                ['sendmail', '-f', MAIL_SENDER, MAIL_DESTINATION])
 
-    infp.write("Subject: %s\n" % subject)
-    infp.write("To: %s\n" % MAIL_DESTINATION)
-    infp.write("From: %s <%s>\n" % (MAIL_SENDER_NAME, MAIL_SENDER))
-    infp.write("\n")
-    infp.write(body)
-    infp.close()
-    sys.stderr.write(outerrfp.read())
+        infp.write("Subject: %s\n" % subject)
+        infp.write("To: %s\n" % MAIL_DESTINATION)
+        infp.write("From: %s <%s>\n" % (MAIL_SENDER_NAME, MAIL_SENDER))
+        infp.write("\n")
+        infp.write(body)
+        infp.close()
+        output = outerrfp.read()
+        if len(output):
+            sys.stderr.write("MTA output when sending email (%s):\n" % subject)
+            sys.stderr.write(outerrfp.read())
+    except IOError:
+        etype, value, tb = sys.exc_info()
+        sys.stderr.write("Failed sending email (%s):\n" % subject)
+        traceback.print_exception(etype, value, tb)
 
 
 if len(sys.argv) < 3:
