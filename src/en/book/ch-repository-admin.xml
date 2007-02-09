@@ -35,46 +35,185 @@
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.reposadmin.basics">
-    <title>Repository Basics</title>
+    <title>The Subversion Repository, Defined</title>
 
     <para>Before jumping into the broader topic of repository
       administration, let's further define what a repository is.  How
       does it look?  How does it feel?  Does it take its tea hot or
       iced, sweetened, and with lemon?  As an administrator, you'll be
       expected to understand the composition of a repository both from
-      a logical perspective&mdash;dealing with how data is represented
-      inside the repository&mdash;and from a physical nuts-and-bolts
-      perspective&mdash;how a repository looks and acts with respect
-      to non-Subversion tools.</para>
+      a literal, OS-level perspective&mdash;how a repository looks and
+      acts with respect to non-Subversion tools&mdash;and from a
+      logical perspective&mdash;dealing with how data is represented
+      <emphasis>inside</emphasis> the repository.</para>
+
+    <para>Seen through the eyes of a typical file browser application
+      (such as the Windows Explorer) or command-line based filesystem
+      navigation tools, the Subversion repository is just another
+      directory full of stuff.  There are some subdirectories with
+      some human-readable configuration files in them, and a
+      subdirectory with some not-so-human-readable data files, and so
+      on.  As in other areas of the Subversion design, modularity is
+      given high regard, and hierarchical organization is preferred to
+      cluttered chaos.  So a shallow glance into a typical repository
+      from a nuts-and-bolts perspective is sufficient to reveal the
+      basic components of the repository:</para>
+            
+    <screen>
+$ ls repos
+conf/  dav/  db/  format  hooks/  locks/  README.txt
+</screen>
+
+    <para>Briefly, here's a legend which will help you interpret
+      exactly what you're seeing.  (Don't get bogged down in the
+      terminology, though&mdash;detailed coverage of these components
+      exists elsewhere in this and other chapters.)</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>conf</term>
+        <listitem>
+          <para>A directory containing repository configuration files.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>dav</term>
+        <listitem>
+          <para>A directory provided to Apache and mod_dav_svn for
+            their private housekeeping data.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>db</term>
+        <listitem>
+          <para>The data store for all of your versioned data.  This
+            directory is either a Berkeley DB environment (full of DB
+            tables and other things), or is an FSFS environment
+            containing revision files.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>format</term>
+        <listitem>
+          <para>A file whose contents are a single integer value that
+            dictates the version number of the repository layout.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>hooks</term>
+        <listitem>
+          <para>A directory full of hook script templates (and hook
+            scripts themselves, once you've installed some).</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>locks</term>
+        <listitem>
+          <para>A directory for Subversion's repository locking
+            data, used for tracking accessors to the repository.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>README.txt</term>
+        <listitem>
+          <para>A file which merely informs its readers that they
+            are looking at a Subversion repository.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>Of course, when accessed via the Subversion libraries, this
+      otherwise unremarkable collection of files and directories
+      suddenly becomes, among other things, an implementation of a
+      virtual, versioned filesystem.  This filesystem has its own
+      notions of directories and files, very similar to the notions of
+      such things held by real filesystems (such as NTFS, FAT32, ext3,
+      and so on).  But this is a special filesystem&mdash;it hangs
+      these directories and files from revisions, keeping all the
+      changes you've ever made to them safely stored and forever
+      accessible.  This is where the entirety of your versioned data
+      lives.</para>
+
+  </sect1>
+ 
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.reposadmin.create">
+    <title>Repository Creation and Configuration</title>
+
+    <para>Due largely to the simplicity of the overall design of the
+      Subversion repository and the technologies on which it relies,
+      creating and configuring a repository are fairly straightforward
+      tasks.  There are a few preliminary decisions you'll want to
+      make, but the actual work involved in any given setup of a
+      Subversion repository is pretty straightforward, tending towards
+      mindless repetition if you find yourself setting up multiples of
+      these things.</para>
+
+    <para>Some of things you'll want to consider up front, though, are
+      as follows:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>What data do you expect to live in your repository (or
+          repositories), and how will that data be organized?</para>
+      </listitem>
+      <listitem>
+        <para>Where will your repository live, and how will it be
+          accessed?</para>
+      </listitem>
+      <listitem>
+        <para>Which of the available types of data store do you want
+          to use?</para>
+      </listitem>
+      <listitem>
+        <para>What types of access control and repository event
+          reporting do you need?</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>We'll try to help you answer those questions, and then guide
+      you through the setup steps.</para>
 
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.basics.backends">
-      <title>Repository Data Stores</title>
+      <title>Choosing a Data Store</title>
 
       <para>As of Subversion 1.1, Subversion provides two options for
-        the type of underlying data store each repository uses.  One
-        type of data store keeps everything in a Berkeley DB database;
-        repositories that use this type are often referred to as being
-        <quote>BDB-backed</quote>.  The other type stores data in
-        ordinary flat files, using a custom format.  Because
-        Subversion developers often refer to a repository as
-        <quote>the (versioned) filesystem</quote>, they have adopted
-        the habit of referring to this latter data storage mechanism
-        as <firstterm>FSFS</firstterm>
+        the type of underlying data store (often referred to as
+        <quote>the back-end</quote> or, somewhat confusingly,
+        <quote>the (versioned) filesystem</quote>) that each
+        repository uses.  One type of data store keeps everything in a
+        Berkeley DB database; repositories that use this type are
+        often referred to as being <quote>BDB-backed</quote>.  The
+        other type stores data in ordinary flat files, using a custom
+        format.  Subversion developers have adopted the habit of
+        referring to this latter data storage mechanism as
+        <firstterm>FSFS</firstterm>
         <footnote>
-          <para>Pronounced <quote>fuzz-fuzz</quote>, if Jack
-            Repenning has anything to say about it.</para>
-        </footnote>
-        &mdash;a versioned
-        filesystem implementation that uses the native OS filesystem
-        to store data.</para>
+          <para>Often pronounced <quote>fuzz-fuzz</quote>, if Jack
+            Repenning has anything to say about it.  (This book,
+            however, assumes that the reader is thinking
+            <quote>eff-ess-eff-ess</quote>.)</para>
+        </footnote> 
+        &mdash;a versioned filesystem implementation that uses the
+        native OS filesystem to store data.</para>
 
-      <para>When a repository is created, an administrator must decide
-        whether it will use Berkeley DB (if available) or FSFS.  There
+      <para>As a repository administrator, the first (and most
+        important) decision you need to make before creating and
+        populating a new Subversion repository is which of the
+        available data stores you want your repository to use.  There
         are advantages and disadvantages to each, which we'll describe
         in a bit.  Neither back-end is more <quote>official</quote>
-        than the other, and programs which access the repository are
-        blissfully ignorant of this implementation detail.</para>
+        than the other, though the newer FSFS is the default data
+        store as of Subversion 1.2.  Generally speaking, though, the
+        programs which access the repository are blissfully ignorant
+        of this implementation detail.  And fortunately, you aren't
+        necessarily stuck with your first choice of a data
+        store&mdash;in the event that you change your mind later,
+        Subversion provides ways of migrating your repository's data
+        into another one created with a different back-end.</para>
 
       <para><xref linkend="svn.reposadmin.basics.backends.tbl-1"/>
         gives a comparative overview of Berkeley DB and FSFS
@@ -92,102 +231,71 @@
           </thead>
           <tbody>
             <row>
-              <entry>Sensitivity to interruptions</entry>
-              
+              <entry>Reliability:  sensitivity to interruptions</entry>
               <entry>very;  crashes and permission problems can leave the
                 database <quote>wedged</quote>, requiring journaled
                 recovery procedures.</entry>
-              
               <entry>quite insensitive.</entry>
             </row>
-            
             <row>
-              <entry>Usable from a read-only mount</entry>
-              
+              <entry>Accessibility:  usable from a read-only mount</entry>
               <entry>no</entry>
-              
               <entry>yes</entry>
             </row>
-            
             <row>
-              <entry>Platform-independent storage</entry>
-              
+              <entry>Accessibility:  platform-independent storage</entry>
               <entry>no</entry>
-              
               <entry>yes</entry>
             </row>
-            
             <row>
-              <entry>Usable over network filesystems</entry>
-              
+              <entry>Accessibility:  usable over network filesystems</entry>
               <entry>no</entry>
-              
               <entry>yes</entry>
             </row>
-            
             <row>
-              <entry>Repository size</entry>
-              
+              <entry>Accessibility:  group permissions handling</entry>
+              <entry>sensitive to user umask problems;  best if accessed
+                by only one user.</entry>
+              <entry>works around umask problems</entry>
+            </row>
+            <row>
+              <entry>Scalability:  repository size</entry>
               <entry>slightly larger</entry>
-              
               <entry>slightly smaller</entry>
             </row>
-
             <row>
-              <entry>Scalability: number of revision trees</entry>
-              
+              <entry>Scalability:  number of revision trees</entry>
               <entry>database;  no problems</entry>
-              
               <entry>some older native filesystems don't scale well with
                 thousands of entries in a single directory.</entry>
             </row>
-
             <row>
-              <entry>Scalability: directories with many files</entry>
-              
+              <entry>Scalability:  directories with many files</entry>
               <entry>slower</entry>
-              
               <entry>faster</entry>
             </row>
-                        
             <row>
-              <entry>Speed:  checking out latest code</entry>
-              
+              <entry>Performance:  checking out latest revision</entry>
               <entry>faster</entry>
-              
               <entry>slower</entry>
             </row>
-            
             <row>
-              <entry>Speed:  large commits</entry>
-              
-              <entry>slower, but work is spread throughout commit</entry>
-              
-              <entry>faster, but finalization delay may cause client
-                timeouts</entry>
+              <entry>Performance:  large commits</entry>
+              <entry>slower overall, but cost is amortized across the
+                lifetime of the commit</entry>
+              <entry>faster overall, but finalization delay may cause 
+                client timeouts</entry>
             </row>
-            
             <row>
-              <entry>Group permissions handling</entry>
-              
-              <entry>sensitive to user umask problems;  best if accessed
-                by only one user.</entry>
-              
-              <entry>works around umask problems</entry>
-            </row>
-
-            <row>
-              <entry>Code maturity</entry>
-              
+              <entry>Maturity</entry>
               <entry>in use since 2001</entry>
-              
               <entry>in use since 2004</entry>
             </row>
-
           </tbody>
         </tgroup>      
       </table>
       
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.reposadmin.basics.backends.bdb">
         <title>Berkeley DB</title>
         
@@ -221,17 +329,18 @@
           able to make fully functional copies of your repositories
           without any downtime should be obvious.</para>
 
-        <para>Berkeley DB is also a very reliable database system.
-          Subversion uses Berkeley DB's logging facilities, which
-          means that the database first writes to on-disk log files a
-          description of any modifications it is about to make, and
-          then makes the modification itself.  This is to ensure that
-          if anything goes wrong, the database system can back up to
-          a previous <firstterm>checkpoint</firstterm>&mdash;a
-          location in the log files known not to be corrupt&mdash;and
-          replay transactions until the data is restored to a usable
-          state.  See <xref linkend="svn.reposadmin.maint.diskspace"/> for more
-          about Berkeley DB log files.</para>
+        <para>Berkeley DB is also a very reliable database system when
+          properly used.  Subversion uses Berkeley DB's logging
+          facilities, which means that the database first writes to
+          on-disk log files a description of any modifications it is
+          about to make, and then makes the modification itself.  This
+          is to ensure that if anything goes wrong, the database
+          system can back up to a previous
+          <firstterm>checkpoint</firstterm>&mdash;a location in the
+          log files known not to be corrupt&mdash;and replay
+          transactions until the data is restored to a usable state.
+          See <xref linkend="svn.reposadmin.maint.diskspace"/> for
+          more about Berkeley DB log files.</para>
 
         <para>But every rose has its thorn, and so we must note some
           known limitations of Berkeley DB.  First, Berkeley DB
@@ -247,14 +356,30 @@
 
         <para>While Berkeley DB promises to behave correctly on
           network shares that meet a particular set of specifications,
-          there are many networked filesystem types and appliances
-          which do <emphasis>not</emphasis> actually meet those
-          requirements.  And in no case can you allow a BDB-backed
-          repository that resides on a network share to be accessed by
-          multiple clients of that share at once (which quite often is
-          the whole point of having the repository live on a network
-          share in the first place).</para>
+          <footnote>
+            <para>Berkeley DB requires that the underlying filesystem
+              implement strict POSIX locking semantics, and more
+              importantly, the ability to map files directly into
+              process memory.</para>
+          </footnote>
+          most networked filesystem types and appliances do
+          <emphasis>not</emphasis> actually meet those requirements.
+          And in no case can you allow a BDB-backed repository that
+          resides on a network share to be accessed by multiple
+          clients of that share at once (which quite often is the
+          whole point of having the repository live on a network share
+          in the first place).</para>
 
+        <warning>
+          <para>If you attempt to use Berkeley DB on a non-compliant
+            remote filesystem, the results are unpredictable&mdash;you
+            may see mysterious errors right away, or it may be months
+            before you discover that your repository database is
+            subtly corrupted.  You should strongly consider using the
+            FSFS data store for repositories that need to live on a
+            network share.</para>
+        </warning>
+          
         <para>Finally, because Berkeley DB is a library linked
           directly into Subversion, it's more sensitive to
           interruptions than a typical relational database system.
@@ -299,20 +424,22 @@
 
       </sect3>
       
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.reposadmin.basics.backends.fsfs">
         <title>FSFS</title>
 
-        <para>In mid-2004, a second type of repository storage system
-          came into being: one which doesn't use a database at all.
-          An FSFS repository stores a revision tree in a single file,
-          and so all of a repository's revisions can be found in a
-          single subdirectory full of numbered files.  Transactions
-          are created in separate subdirectories.  When complete, a
-          single transaction file is created and moved to the
-          revisions directory, thus guaranteeing that commits are
-          atomic.  And because a revision file is permanent and
-          unchanging, the repository also can be backed up while
-          <quote>hot</quote>, just like a Berkeley DB repository.</para>
+        <para>In mid-2004, a second type of repository storage
+          system&mdash;one which doesn't use a database at
+          all&mdash;came into being.  An FSFS repository stores a
+          revision tree in a single file, and so all of a repository's
+          revisions can be found in a single subdirectory full of
+          numbered files.  Transactions are created in separate
+          subdirectories.  When complete, a single transaction file is
+          created and moved to the revisions directory, thus
+          guaranteeing that commits are atomic.  And because a
+          revision file is permanent and unchanging, the repository
+          also can be backed up while <quote>hot</quote>, just like a
+          Berkeley DB repository.</para>
 
         <para>The revision-file format represents a revision's
           directory structure, file contents, and deltas against files
@@ -357,169 +484,100 @@
 
       </sect3>
     </sect2>
-  </sect1>
 
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <sect1 id="svn.reposadmin.create">
-    <title>Repository Creation and Configuration</title>
-
-    <para>Creating a Subversion repository is an incredibly simple
-      task.  The <command>svnadmin</command> utility, provided with
-      Subversion, has a subcommand for doing just that.  To create a
-      new repository, just run:</para>
+    <!-- =============================================================== -->
+    <sect2 id="svn.reposadmin.basics.creating">
+      <title>Creating the Repository</title>
+   
+      <para>Subversion repository creation is an incredibly simple
+        task.  The <command>svnadmin</command> utility that comes with
+        Subversion provides a subcommand (<literal>create</literal>)
+        for doing just that.</para>
           
-    <screen>
+      <screen>
 $ svnadmin create /path/to/repos
 </screen>
           
-    <para>This creates a new repository in the directory
-      <filename>/path/to/repos</filename>.  This new repository begins
-      life at revision 0, which is defined to consist of nothing but
-      the top-level root (<filename>/</filename>) filesystem
-      directory.  Initially, revision 0 also has a single revision
-      property, <literal>svn:date</literal>, set to the time at which
-      the repository was created.</para>
-
-    <para>In Subversion 1.2, a repository is created with an FSFS
-      back-end by default (see <xref
-      linkend="svn.reposadmin.basics.backends"/>).  The back-end can
-      be explicitly chosen with the <option>--fs-type</option>
-      argument:</para>
-
-    <screen>
+      <para>This creates a new repository in the directory
+        <filename>/path/to/repos</filename>, and with the default
+        filesystem data store.  Prior to Subversion 1.2, the default
+        was to use Berkeley DB; the default is now FSFS.  You can
+        explicitly choose the filesystem type using the
+        <option>--fs-type</option> argument, which accepts as a
+        parameter either <literal>fsfs</literal> or
+        <literal>bdb</literal>.</para>
+ 
+      <screen>
+$ # Create an FSFS-backed repository
 $ svnadmin create --fs-type fsfs /path/to/repos
-$ svnadmin create --fs-type bdb /path/to/other/repos
+$
 </screen>
 
-
-    <warning>
-      <para>Do not create a Berkeley DB repository on a network
-        share&mdash;it <emphasis>cannot</emphasis> exist on a remote
-        filesystem such as NFS, AFS, or Windows SMB.  Berkeley DB
-        requires that the underlying filesystem implement strict POSIX
-        locking semantics, and more importantly, the ability to map
-        files directly into process memory.  Almost no network
-        filesystems provide these features.  If you attempt to use
-        Berkeley DB on a network share, the results are
-        unpredictable&mdash;you may see mysterious errors right away,
-        or it may be months before you discover that your repository
-        database is subtly corrupted.</para>
-
-      <para>If you need multiple computers to access the repository,
-        you create an FSFS repository on the network share, not a
-        Berkeley DB repository.  Or better yet, set up a real server
-        process (such as Apache or <command>svnserve</command>), store
-        the repository on a local filesystem which the server can
-        access, and make the repository available over a network.
-        <xref linkend="svn.serverconfig"/> covers this process in
-        detail.</para>
-    </warning>
-          
-    <para>You may have noticed that the path argument to
-      <command>svnadmin</command> was just a regular filesystem path
-      and not a URL like the <command>svn</command> client program
-      uses when referring to repositories.  Both
-      <command>svnadmin</command> and <command>svnlook</command> are
-      considered server-side utilities&mdash;they are used on the
-      machine where the repository resides to examine or modify
-      aspects of the repository, and are in fact unable to perform
-      tasks across a network.  A common mistake made by Subversion
-      newcomers is trying to pass URLs (even <quote>local</quote>
-      <literal>file:</literal> ones) to these two programs.</para>
-
-    <para>So, after you've run the <command>svnadmin create</command>
-      command, you have a shiny new Subversion repository in its own
-      directory.  Let's take a peek at what is actually created inside
-      that subdirectory.</para>
-            
-    <screen>
-$ ls repos
-conf/  dav/  db/  format  hooks/  locks/  README.txt
+      <screen>
+# Create a Berkeley-DB-backed repository
+$ svnadmin create --fs-type bdb /path/to/repos
+$
 </screen>
-      
-    <para>With the exception of the <filename>README.txt</filename> and
-      <filename>format</filename> files,
-      the repository directory is a collection of subdirectories.  As
-      in other areas of the Subversion design, modularity is given
-      high regard, and hierarchical organization is preferred to
-      cluttered chaos.  Here is a brief description of all of
-      the items you see in your new repository directory:</para>
+              
+      <para>After running this simple command, you have a Subversion
+        repository.</para>
 
-    <variablelist>
-      <varlistentry>
-        <term>conf</term>
-        <listitem>
-          <para>A directory containing repository configuration files.</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>dav</term>
-        <listitem>
-          <para>A directory provided to Apache and mod_dav_svn for
-            their private housekeeping data.</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>db</term>
-        <listitem>
-          <para>Where all of your versioned data resides.  This
-            directory is either a Berkeley DB environment (full of DB
-            tables and other things), or is an FSFS environment
-            containing revision files.</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>format</term>
-        <listitem>
-          <para>A file whose contents are a single integer value that
-            dictates the version number of the repository layout.</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>hooks</term>
-        <listitem>
-          <para>A directory full of hook script templates (and hook
-            scripts themselves, once you've installed some).</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>locks</term>
-        <listitem>
-          <para>A directory for Subversion's repository locking
-            data, used for tracking accessors to the repository.</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>README.txt</term>
-        <listitem>
-          <para>A file which merely informs its readers that they
-            are looking at a Subversion repository.</para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-      
-    <para>In general, you shouldn't tamper with your repository
-      <quote>by hand</quote>.  The <command>svnadmin</command> tool
-      should be sufficient for any changes necessary to your
-      repository, or you can look to third-party tools (such as
-      Berkeley DB's tool suite) for tweaking relevant subsections of
-      the repository.  Some exceptions exist, though, and we'll cover
-      those here.</para>
+      <tip>
+        <para>The path argument to <command>svnadmin</command> is just
+          a regular filesystem path and not a URL like the
+          <command>svn</command> client program uses when referring to
+          repositories.  Both <command>svnadmin</command> and
+          <command>svnlook</command> are considered server-side
+          utilities&mdash;they are used on the machine where the
+          repository resides to examine or modify aspects of the
+          repository, and are in fact unable to perform tasks across a
+          network.  A common mistake made by Subversion newcomers is
+          trying to pass URLs (even <quote>local</quote>
+          <literal>file:</literal> ones) to these two programs.</para>
+      </tip>
+
+      <para>Present in the <filename>db/</filename> subdirectory of
+        your repository is the implementation of the versioned
+        filesystem. Your new repository's versioned filesystem begins life at
+        revision 0, which is defined to consist of nothing but the
+        top-level root (<filename>/</filename>) directory.  Initially,
+        revision 0 also has a single revision property,
+        <literal>svn:date</literal>, set to the time at which the
+        repository was created.</para>
+
+      <para>Now that you have a repository, it's time to customize
+        it.</para>
+
+      <warning>
+        <para>While some parts of a Subversion repository&mdash;such
+          as the configuration files and hook scripts&mdash;are meant
+          to be examined and modified manually, you shouldn't (and
+          shouldn't need to) tamper with the repository <quote>by
+          hand</quote>.  The <command>svnadmin</command> tool should
+          be sufficient for any changes necessary to your repository,
+          or you can look to third-party tools (such as Berkeley DB's
+          tool suite) for tweaking relevant subsections of the
+          repository.</para>
+      </warning>
+
+    </sect2>
 
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.create.hooks">
-      <title>Hook Scripts</title>
+      <title>Implementing Repository Hooks</title>
 
       <para>A <firstterm>hook</firstterm> is a program triggered by
         some repository event, such as the creation of a new revision
-        or the modification of an unversioned property.  Each hook is
-        handed enough information to tell what that event is, what
-        target(s) it's operating on, and the username of the person
-        who triggered the event.  Depending on the hook's output or
-        return status, the hook program may continue the action, stop
-        it, or suspend it in some way.</para>
+        or the modification of an unversioned property.  Some hooks
+        (the so-called <quote>pre hooks</quote>) run in advance of a
+        high-level repository operation and provide a means by which
+        to both report what is about to happen and to prevent it from
+        happening at all.  Other hooks (the <quote>post hooks</quote>)
+        run after the completion of a repository revent, and are
+        useful for reporting purposes only.  Each hook is handed enough
+        information to tell what that event is (or was), the specific
+        repository changes proposed (or completed), and the username
+        of the person who triggered the event.</para>
             
       <para>The <filename>hooks</filename> subdirectory is, by
         default, filled with templates for various repository
@@ -527,9 +585,9 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
             
       <screen>
 $ ls repos/hooks/
-post-commit.tmpl          post-unlock.tmpl          pre-revprop-change.tmpl
-post-lock.tmpl            pre-commit.tmpl           pre-unlock.tmpl
-post-revprop-change.tmpl  pre-lock.tmpl             start-commit.tmpl
+post-commit.tmpl	  post-unlock.tmpl  pre-revprop-change.tmpl
+post-lock.tmpl		  pre-commit.tmpl   pre-unlock.tmpl
+post-revprop-change.tmpl  pre-lock.tmpl     start-commit.tmpl
 </screen>
             
       <para>There is one template for each hook that the Subversion
@@ -565,238 +623,15 @@ post-revprop-change.tmpl  pre-lock.tmpl             start-commit.tmpl
 
       <tip>
         <para>For security reasons, the Subversion repository executes
-        hook scripts with an empty environment&mdash;that is, no
-        environment variables are set at all, not even
-        <literal>$PATH</literal> or <literal>%PATH%</literal>.
-        Because of this, a lot of administrators are baffled when
-        their hook script runs fine by hand, but doesn't work when run
-        by Subversion.  Be sure to explicitly set environment
-        variables in your hook and/or use absolute paths to
-        programs.</para>
+          hook programs with an empty environment&mdash;that is, no
+          environment variables are set at all, not even
+          <literal>$PATH</literal> or <literal>%PATH%</literal>.
+          Because of this, a lot of administrators are baffled when
+          their hook program runs fine by hand, but doesn't work when
+          run by Subversion.  Be sure to explicitly set any necessary
+          environment variables in your hook program and/or use
+          absolute paths to programs.</para>
       </tip>
-
-      <para>There are nine hooks implemented by the Subversion
-        repository:</para>
-
-      <variablelist>
-        <varlistentry>
-          <term><filename>start-commit</filename></term>
-          <listitem>
-            <para>This is run before the commit transaction is even
-              created.  It is typically used to decide if the user has
-              commit privileges at all.  The repository passes two
-              arguments to this program: the path to the repository,
-              and username which is attempting the commit.  If the
-              program returns a non-zero exit value, the commit is
-              stopped before the transaction is even created.  If the
-              hook program writes data to stderr, it will be
-              marshalled back to the client.</para>
-          </listitem>
-        </varlistentry>
-            
-        <varlistentry>
-          <term><filename>pre-commit</filename></term>
-          <listitem>
-            <para>This is run when the transaction is complete, but
-              before it is committed.  Typically, this hook is used to
-              protect against commits that are disallowed due to
-              content or location (for example, your site might
-              require that all commits to a certain branch include a
-              ticket number from the bug tracker, or that the incoming
-              log message is non-empty).  The repository passes two
-              arguments to this program: the path to the repository,
-              and the name of the transaction being committed.  If the
-              program returns a non-zero exit value, the commit is
-              aborted and the transaction is removed.  If the hook
-              program writes data to stderr, it will be marshalled
-              back to the client.</para>
-
-            <para>The Subversion distribution includes some access
-              control scripts (located in the
-              <filename>tools/hook-scripts</filename> directory of the
-              Subversion source tree) that can be called from
-              <command>pre-commit</command> to implement fine-grained
-              write-access control.  Another option is to use the
-              <command>mod_authz_svn</command> Apache httpd module,
-              which provides both read and write access control on
-              individual directories (see <xref
-              linkend="svn.serverconfig.httpd.authz.perdir"/>).  In a future version
-              of Subversion, we plan to implement access control lists
-              (ACLs) directly in the filesystem.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><filename>post-commit</filename></term>
-          <listitem>
-            <para>This is run after the transaction is committed, and
-              a new revision is created.  Most people use this hook to
-              send out descriptive emails about the commit or to make
-              a backup of the repository.  The repository passes two
-              arguments to this program: the path to the repository,
-              and the new revision number that was created.  The exit
-              code of the program is ignored.</para>
-                
-            <para>The Subversion distribution includes
-              <command>mailer.py</command> and
-              <command>commit-email.pl</command> scripts (located in
-              the <filename>tools/hook-scripts/</filename> directory
-              of the Subversion source tree) that can be used to send
-              email with (and/or append to a log file) a description
-              of a given commit.  This mail contains a list of the
-              paths that were changed, the log message attached to the
-              commit, the author and date of the commit, as well as a
-              GNU diff-style display of the changes made to the
-              various versioned files as part of the commit.</para>
-
-            <para>Another useful tool provided by Subversion is the
-              <command>hot-backup.py</command> script (located in the
-              <filename>tools/backup/</filename> directory of the
-              Subversion source tree).  This script performs hot
-              backups of your Subversion repository (a feature
-              supported by the Berkeley DB database back-end), and can
-              be used to make a per-commit snapshot of your repository
-              for archival or emergency recovery purposes.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><filename>pre-revprop-change</filename></term>
-          <listitem>
-            <para>Because Subversion's revision properties are not
-              versioned, making modifications to such a property (for
-              example, the <literal>svn:log</literal> commit message
-              property) will overwrite the previous value of that
-              property forever.  Since data can be potentially lost
-              here, Subversion supplies this hook (and its
-              counterpart, <filename>post-revprop-change</filename>)
-              so that repository administrators can keep records of
-              changes to these items using some external means if
-              they so desire.  As a precaution against losing
-              unversioned property data, Subversion clients will not
-              be allowed to remotely modify revision properties at all
-              unless this hook is implemented for your repository.</para>
-
-            <para>This hook runs just before such a modification is
-              made to the repository.  The repository passes four
-              arguments to this hook: the path to the repository, the
-              revision on which the to-be-modified property exists, the
-              authenticated username of the person making the change,
-              and the name of the property itself.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><filename>post-revprop-change</filename></term>
-          <listitem>
-            <para>As mentioned earlier, this hook is the counterpart
-              of the <filename>pre-revprop-change</filename> hook.  In
-              fact, for the sake of paranoia this script will not run
-              unless the <filename>pre-revprop-change</filename> hook
-              exists.  When both of these hooks are present, the
-              <filename>post-revprop-change</filename> hook runs just
-              after a revision property has been changed, and is
-              typically used to send an email containing the new value
-              of the changed property.  The repository passes four
-              arguments to this hook: the path to the repository, the
-              revision on which the property exists, the authenticated
-              username of the person making the change, and the name of
-              the property itself.</para>
-
-            <para>The Subversion distribution includes a
-              <command>propchange-email.pl</command> script (located
-              in the <filename>tools/hook-scripts/</filename>
-              directory of the Subversion source tree) that can be
-              used to send email with (and/or append to a log file)
-              the details of a revision property change.  This mail
-              contains the revision and name of the changed property,
-              the user who made the change, and the new property
-              value.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><filename>pre-lock</filename></term>
-          <listitem>
-            <para>This hook runs whenever someone attempts to lock a
-              file.  It can be used to prevent locks altogether, or to
-              create a more complex policy specifying exactly which
-              users are allowed to lock particular paths.  If the hook
-              notices a pre-existing lock, then it can also decide
-              whether a user is allowed to <quote>steal</quote> the
-              existing lock.  The repository passes three arguments to
-              the hook: the path to the repository, the path being
-              locked, and the user attempting to perform the lock.  If
-              the program returns a non-zero exit value, the lock
-              action is aborted and anything printed to stderr is
-              marshalled back to the client.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><filename>post-lock</filename></term>
-          <listitem>
-            <para>This hook runs after a path is locked.  The locked
-              path is passed to the hook's stdin, and the hook also
-              receives two arguments:  the path to the repository, and
-              the user who performed the lock.  The hook is then free
-              to send email notification or record the event in any
-              way it chooses.  Because the lock already happened, the
-              output of the hook is ignored.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><filename>pre-unlock</filename></term>
-          <listitem>
-            <para>This hook runs whenever someone attempts to remove a
-              lock on a file.  It can be used to create policies that
-              specify which users are allowed to unlock particular
-              paths.  It's particularly important for determining
-              policies about lock breakage.  If user A locks a file,
-              is user B allowed to break the lock?  What if the lock
-              is more than a week old?  These sorts of things can be
-              decided and enforced by the hook.  The repository passes
-              three arguments to the hook: the path to the repository,
-              the path being unlocked, and the user attempting to
-              remove the lock.  If the program returns a non-zero exit
-              value, the unlock action is aborted and anything printed
-              to stderr is marshalled back to the client.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><filename>post-unlock</filename></term>
-          <listitem>
-            <para>This hook runs after a path is unlocked.  The
-              unlocked path is passed to the hook's stdin, and the
-              hook also receives two arguments: the path to the
-              repository, and the user who removed the lock.  The hook
-              is then free to send email notification or record the
-              event in any way it chooses.  Because the lock removal
-              already happened, the output of the hook is
-              ignored.</para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-      <warning>
-        <para>Do not attempt to modify the transaction using hook
-          scripts.  A common example of this would be to automatically
-          set properties such as <literal>svn:eol-style</literal> or
-          <literal>svn:mime-type</literal> during the commit.  While
-          this might seem like a good idea, it causes problems.  The
-          main problem is that the client does not know about the
-          change made by the hook script, and there is no way to
-          inform the client that it is out-of-date.  This
-          inconsistency can lead to surprising and unexpected
-          behavior.</para>
-
-        <para>Instead of attempting to modify the transaction, it is
-          much better to <emphasis>check</emphasis> the transaction in
-          the <filename>pre-commit</filename> hook and reject the
-          commit if it does not meet the desired requirements.</para>
-      </warning>
 
       <para>Subversion will attempt to execute hooks as the same user
         who owns the process which is accessing the Subversion
@@ -810,6 +645,36 @@ post-revprop-change.tmpl  pre-lock.tmpl             start-commit.tmpl
         same user.  In other words, be alert to potential
         permission-related problems that could prevent the hook from
         performing the tasks you've written it to perform.</para>
+
+      <para>There are nine hooks implemented by the Subversion
+        repository, and you can get details about each of them in
+        <xref linkend="svn.ref.reposhooks" />.  As a repository
+        administrator, you'll need to decide which of hooks you wish
+        to implement (by way of providing an appropriately named and
+        permissioned hook program), and how.  This decision needs to
+        be made with the bigger picture of how repository is deployed
+        in mind.  For example, if you are using server configuration
+        stuffs to determine which usernames are permitted to commit
+        changes to your repository, then you don't need to do this
+        sort of access control via the hook system.</para>
+
+      <warning>
+        <para>Do not attempt to modify the transaction using hook
+          scripts.  A common example of this would be to automatically
+          set properties such as <literal>svn:eol-style</literal> or
+          <literal>svn:mime-type</literal> during the commit.  While
+          this might seem like a good idea, it causes problems.  The
+          main problem is that the client does not know about the
+          change made by the hook program, and there is no way to
+          inform the client that it is out-of-date.  This
+          inconsistency can lead to surprising and unexpected
+          behavior.</para>
+
+        <para>Instead of attempting to modify the transaction, it is
+          much better to <emphasis>check</emphasis> the transaction in
+          the <filename>pre-commit</filename> hook and reject the
+          commit if it does not meet the desired requirements.</para>
+      </warning>
 
     </sect2>
 
@@ -886,6 +751,7 @@ post-revprop-change.tmpl  pre-lock.tmpl             start-commit.tmpl
         to your repository's database backend not otherwise provided
         by Subversion's own tools.</para>
 
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.reposadmin.maint.tk.svnlook">
         <title>svnlook</title>
             
@@ -1169,6 +1035,7 @@ $ svnlook tree /path/to/repos --show-ids
 
       </sect3>
 
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.reposadmin.maint.tk.svnadmin">
         <title>svnadmin</title>
 
@@ -1335,6 +1202,7 @@ Available subcommands:
 
       </sect3>
 
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.reposadmin.maint.tk.svndumpfilter">
         <title>svndumpfilter</title>
 
@@ -1626,6 +1494,7 @@ Node-path: spreadsheet/Makefile
 
       </sect3>
 
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.reposadmin.maint.tk.bdbutil">
         <title>Berkeley DB Utilities</title>
 
@@ -2077,7 +1946,7 @@ The latest repos revision is 19.
 
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.maint.migrate">
-      <title>Migrating a Repository</title>
+      <title>Migrating Repository Data Elsewhere</title>
     
       <para>A Subversion filesystem has its data spread throughout
         various database tables in a fashion generally understood by
@@ -2121,7 +1990,7 @@ The latest repos revision is 19.
         <listitem>
           <para>Be sure to copy any customizations from your old
             repositories to the new ones, including
-            <filename>DB_CONFIG</filename> files and hook scripts.
+            <filename>DB_CONFIG</filename> files and hook programs.
             You'll want to pay attention to the release notes for the
             new release of Subversion to see if any changes since your
             last upgrade affect those hooks or configuration
@@ -2206,12 +2075,12 @@ $ svnadmin load newrepos &lt; dumpfile
       <para>The result of a load is new revisions added to a
         repository&mdash;the same thing you get by making commits
         against that repository from a regular Subversion client.  And
-        just as in a commit, you can use hook scripts to perform
+        just as in a commit, you can use hook programs to perform
         actions before and after each of the commits made during a load
         process.  By passing the <option>--use-pre-commit-hook</option> 
         and <option>--use-post-commit-hook</option> options to
         <command>svnadmin load</command>, you can instruct Subversion
-        to execute the pre-commit and post-commit hook scripts,
+        to execute the pre-commit and post-commit hook programs,
         respectively, for each loaded revision.  You might use these,
         for example, to ensure that loaded revisions pass through the
         same validation steps that regular commits pass through.  Of
@@ -2435,7 +2304,7 @@ $
         might consider adding <command>hot-backup.py</command> to a
         program scheduler (such as <command>cron</command> on Unix
         systems).  Or, if you prefer fine-grained backup solutions,
-        you could have your post-commit hook script call
+        you could have your post-commit hook program call
         <command>hot-backup.py</command> (see <xref
         linkend="svn.reposadmin.create.hooks" />), which will then cause a new
         backup of your repository to occur with every new revision
@@ -2572,7 +2441,7 @@ $
       <para>There are benefits to using a single repository for
         multiple projects, most obviously the lack of duplicated
         maintenance.  A single repository means that there is one set
-        of hook scripts, one thing to routinely backup, one thing to
+        of hook programs, one thing to routinely backup, one thing to
         dump and load if Subversion releases an incompatible new
         version, and so on.  Also, you can move data between projects
         easily, and without losing any historical versioning
