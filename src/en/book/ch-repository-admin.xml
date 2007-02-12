@@ -51,23 +51,23 @@
       (such as the Windows Explorer) or command-line based filesystem
       navigation tools, the Subversion repository is just another
       directory full of stuff.  There are some subdirectories with
-      some human-readable configuration files in them, and a
-      subdirectory with some not-so-human-readable data files, and so
-      on.  As in other areas of the Subversion design, modularity is
-      given high regard, and hierarchical organization is preferred to
-      cluttered chaos.  So a shallow glance into a typical repository
-      from a nuts-and-bolts perspective is sufficient to reveal the
-      basic components of the repository:</para>
+      human-readable configuration files in them, some subdirectories
+      with some not-so-human-readable data files, and so on.  As in
+      other areas of the Subversion design, modularity is given high
+      regard, and hierarchical organization is preferred to cluttered
+      chaos.  So a shallow glance into a typical repository from a
+      nuts-and-bolts perspective is sufficient to reveal the basic
+      components of the repository:</para>
             
     <screen>
 $ ls repos
 conf/  dav/  db/  format  hooks/  locks/  README.txt
 </screen>
 
-    <para>Briefly, here's a legend which will help you interpret
-      exactly what you're seeing.  (Don't get bogged down in the
-      terminology, though&mdash;detailed coverage of these components
-      exists elsewhere in this and other chapters.)</para>
+    <para>Here's a quick fly-by overview of what exactly you're seeing
+      in this directory listing.  (Don't get bogged down in the
+      terminology&mdash;detailed coverage of these components exists
+      elsewhere in this and other chapters.)</para>
 
     <variablelist>
       <varlistentry>
@@ -86,10 +86,7 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
       <varlistentry>
         <term>db</term>
         <listitem>
-          <para>The data store for all of your versioned data.  This
-            directory is either a Berkeley DB environment (full of DB
-            tables and other things), or is an FSFS environment
-            containing revision files.</para>
+          <para>The data store for all of your versioned data.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -109,30 +106,30 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
       <varlistentry>
         <term>locks</term>
         <listitem>
-          <para>A directory for Subversion's repository locking
-            data, used for tracking accessors to the repository.</para>
+          <para>A directory for Subversion's repository lock
+            files, used for tracking accessors to the repository.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>README.txt</term>
         <listitem>
-          <para>A file which merely informs its readers that they
-            are looking at a Subversion repository.</para>
+          <para>A file whose contents merely inform its readers that
+            they are looking at a Subversion repository.</para>
         </listitem>
       </varlistentry>
     </variablelist>
 
     <para>Of course, when accessed via the Subversion libraries, this
       otherwise unremarkable collection of files and directories
-      suddenly becomes, among other things, an implementation of a
-      virtual, versioned filesystem.  This filesystem has its own
-      notions of directories and files, very similar to the notions of
-      such things held by real filesystems (such as NTFS, FAT32, ext3,
-      and so on).  But this is a special filesystem&mdash;it hangs
-      these directories and files from revisions, keeping all the
-      changes you've ever made to them safely stored and forever
-      accessible.  This is where the entirety of your versioned data
-      lives.</para>
+      suddenly becomes an implementation of a virtual, versioned
+      filesystem, complete with customizable event triggers.  This
+      filesystem has its own notions of directories and files, very
+      similar to the notions of such things held by real filesystems
+      (such as NTFS, FAT32, ext3, and so on).  But this is a special
+      filesystem&mdash;it hangs these directories and files from
+      revisions, keeping all the changes you've ever made to them
+      safely stored and forever accessible.  This is where the
+      entirety of your versioned data lives.</para>
 
   </sect1>
  
@@ -181,15 +178,15 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
       <title>Choosing a Data Store</title>
 
       <para>As of Subversion 1.1, Subversion provides two options for
-        the type of underlying data store (often referred to as
+        the type of underlying data store&mdash;often referred to as
         <quote>the back-end</quote> or, somewhat confusingly,
-        <quote>the (versioned) filesystem</quote>) that each
+        <quote>the (versioned) filesystem</quote>&mdash;that each
         repository uses.  One type of data store keeps everything in a
-        Berkeley DB database; repositories that use this type are
-        often referred to as being <quote>BDB-backed</quote>.  The
-        other type stores data in ordinary flat files, using a custom
-        format.  Subversion developers have adopted the habit of
-        referring to this latter data storage mechanism as
+        Berkeley DB database environment; repositories that use this
+        type are often referred to as being <quote>BDB-backed</quote>.
+        The other type stores data in ordinary flat files, using a
+        custom format.  Subversion developers have adopted the habit
+        of referring to this latter data storage mechanism as
         <firstterm>FSFS</firstterm>
         <footnote>
           <para>Often pronounced <quote>fuzz-fuzz</quote>, if Jack
@@ -658,20 +655,30 @@ post-revprop-change.tmpl  pre-lock.tmpl     start-commit.tmpl
         changes to your repository, then you don't need to do this
         sort of access control via the hook system.</para>
 
-      <warning>
-        <para>Do not attempt to modify the transaction using hook
-          scripts.  A common example of this would be to automatically
-          set properties such as <literal>svn:eol-style</literal> or
-          <literal>svn:mime-type</literal> during the commit.  While
-          this might seem like a good idea, it causes problems.  The
-          main problem is that the client does not know about the
-          change made by the hook program, and there is no way to
-          inform the client that it is out-of-date.  This
-          inconsistency can lead to surprising and unexpected
-          behavior.</para>
+      <para>There is no shortage of Subversion hook programs and
+        scripts freely available either from the Subversion community
+        itself or elsewhere.  These scripts cover a wide range of
+        utility&mdash;basic access control, policy adherence checking,
+        issue tracker integration, email- or RSS-based commit
+        notification, and beyond.  See <xref linkend="svn.3rdparty" />
+        for discussion of some of the most commonly used hook
+        programs.  Or, if you wish to write your own, see <xref
+        linkend="svn.developer" />.</para>
 
-        <para>Instead of attempting to modify the transaction, it is
-          much better to <emphasis>check</emphasis> the transaction in
+      <warning>
+        <para>While hook scripts can be leveraged to do almost
+          anything, there is one dimension in which hook script
+          authors should show restraint:  do <emphasis>not</emphasis>
+          modify a commit transaction using hook scripts.  While it
+          might be tempting to use hook scripts to automatically
+          correct errors or shortcomings or policy violations present
+          in the files being committed, doing so can cause problems.
+          Subversion's keeps client-side caches of certain bits of
+          repository data, and if you change a commit transaction in
+          this way, those cache become indetectably stale.  This
+          inconsistency can lead to surprising and unexpected
+          behavior.  Instead of modifying the transaction, it is much
+          better to <emphasis>validate</emphasis> the transaction in
           the <filename>pre-commit</filename> hook and reject the
           commit if it does not meet the desired requirements.</para>
       </warning>
@@ -694,14 +701,14 @@ post-revprop-change.tmpl  pre-lock.tmpl     start-commit.tmpl
         access patterns, might require a different set of
         configuration option values.</para>
 
-      <para>The folks at Sleepycat (the producers of Berkeley DB)
-        understand that different databases have different
-        requirements, and so they have provided a mechanism for
-        overriding at runtime many of the configuration values for the
-        Berkeley DB environment.  Berkeley checks for the presence of
-        a file named <filename>DB_CONFIG</filename> in each
-        environment directory, and parses the options found in that
-        file for use with that particular Berkeley environment.</para>
+      <para>The producers of Berkeley DB understand that different
+        databases have different requirements, and so they have
+        provided a mechanism for overriding at runtime many of the
+        configuration values for the Berkeley DB environment.
+        Berkeley checks for the presence of a file named
+        <filename>DB_CONFIG</filename> in each environment directory,
+        and parses the options found in that file for use with that
+        particular Berkeley environment.</para>
 
       <para>The Berkeley configuration file for your repository is
         located in the <filename>db</filename> environment directory,
@@ -1504,9 +1511,10 @@ Node-path: spreadsheet/Makefile
           subdirectory of your repository.  This subdirectory is a
           regular Berkeley DB environment directory, and can therefore
           be used in conjunction with any of the Berkeley database
-          tools (you can see the documentation for these tools at
-          Sleepycat's website,
-          <ulink url="http://www.sleepycat.com/"/>).</para>
+          tools (you can see the documentation for these tools at the
+          Berkeley DB website, <ulink
+          url="http://www.oracle.com/technology/documentation/berkeley-db/db/"
+          />).</para>
 
         <para>For day-to-day Subversion use, these tools are
           unnecessary.  Most of the functionality typically needed for
@@ -2282,7 +2290,7 @@ $
         generating a faulty backup, since someone might be currently
         writing to the database.</para>
 
-      <para>In the case of Berkeley DB, Sleepycat documents describe a
+      <para>In the case of Berkeley DB, the documentation describes a
         certain order in which database files can be copied that will
         guarantee a valid backup copy.  And a similar ordering exists
         for FSFS data.  Better still, you don't have to implement
