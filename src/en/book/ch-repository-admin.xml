@@ -2242,7 +2242,374 @@ $
     <sect2 id="svn.reposadmin.maint.replication">
       <title>Repository Replication</title>
 
-      <para></para>
+      <para>There are several scenarios in which it is quite handy to
+        have a Subversion repository whose version history is exactly
+        the same as some other repository's.  Perhaps the most obvious
+        one is the maintenance of a simple backup repository, used
+        when the primary repository has become inaccessible due to a
+        hardware failure, network outage, or other such annoyance.
+        Other scenarios include deploying mirror repositories to
+        distribute heavy Subversion load across multiple servers, use
+        as a soft-upgrade mechanism, and so on.</para>
+
+      <para>The <command>svnsync</command> program, which is new to
+        the 1.4.0 release of Subversion, provides all the
+        functionality required for maintaining a read-only mirror of a
+        Subversion repository.</para>
+
+      <screen>
+$ svnsync help
+general usage: svnsync SUBCOMMAND DEST_URL  [ARGS &amp; OPTIONS ...]
+Type 'svnsync help &lt;subcommand&gt;' for help on a specific subcommand.
+Type 'svnsync --version' to see the program version and RA modules.
+
+Available subcommands:
+   initialize (init)
+   synchronize (sync)
+   copy-revprops
+   help (?, h)
+$
+</screen>
+
+      <para><command>svnsync</command> works by essentially asking the
+        Subversion server to <quote>replay</quote> revisions, one at a
+        time.  It then uses that revision information to mimic a
+        commit of the same to another repository.  Neither repository
+        needs to be locally accessible to
+        <command>svnsync</command>&mdash;its parameters are repository
+        URLs, and it does all its work through Subversion's repository
+        access interfaces.  All you need is read access to the source
+        repository; commit access and revision property modification
+        access to the destination repository.</para>
+
+      <note>
+        <para>When using <command>svnsync</command> against a remote
+          source repository, the Subversion server for that repository
+          must be running Subversion version 1.4 or better.</para>
+      </note>
+
+      <para>Assuming you already have a source repository that you'd
+        like to mirror, the next thing you need is an empty target
+        repository which will actually serve as that mirror.  This
+        target repository can use either of the available filesystem
+        data-store back-ends (see <xref
+        linkend="svn.reposadmin.basics.backends" />), but it must not
+        yet have any version history in it.  The protocol via which
+        <command>svnsync</command> communicates revision information
+        is highly sensitive to mismatches between the versioned
+        histories contained in the source and target repositories.
+        For this reason, while <command>svnsync</command> cannot
+        <emphasis>demand</emphasis> that the target repository be
+        read-only,
+        <footnote>
+          <para>In fact, it can't truly be read-only, or
+            <command>svnsync</command> itself would have a tough time
+            copying revision history into it.</para>
+        </footnote>
+        allowing the revision history in the target repository to
+        change by any mechanism other than the mirroring process is a
+        recipe for disaster.</para>
+
+      <warning>
+        <para>Do <emphasis>not</emphasis> modify a mirror repository
+          in such a way as to cause its version history to deviate
+          from that of the repository it mirrors.  The only commits
+          and revision property modifications that ever occur on that
+          mirror repository should be those performed by the
+          <command>svnsync</command> tool.</para>
+      </warning>
+
+      <para>Another requirement of the target repository is that the
+        <command>svnsync</command> process be allowed to modify
+        certain revision properties.  <command>svnsync</command>
+        stores its bookkeeping information in special revision
+        properties on revision 0 of the destination repository.
+        Because <command>svnsync</command> works within the framework
+        of that repository's hook system, the default state of the
+        repository (which is to disallow revision property changes;
+        see <xref linkend="svn.ref.reposhooks.pre-revprop-change" />)
+        is insufficient.  You'll need to explicitly implement the
+        pre-revprop-change hook, and your script must allow
+        <command>svnsync</command> to set and change its special
+        properties.  With those provisions in place, you are ready to
+        start mirroring repository revisions.</para>
+
+      <tip>
+        <para>It's a good idea to implement authorization measures
+          which allow your repository replication process to perform
+          its tasks while preventing other users from modifying the
+          contents of your mirror repository at all.</para>
+      </tip>
+
+      <para>Let's walk through the use of <command>svnsync</command>
+        in a somewhat typical mirroring scenario.  We'll pepper this
+        discourse with practical recommendations which you are free to
+        disregard if they aren't required by or suitable for your
+        environment.</para>
+
+      <para>As a service to the fine developers of our favorite
+        version control system, we will be mirroring the public
+        Subversion source code repository and exposing that mirror
+        publicly on the Internet, hosted on a different machine than
+        the one on which the original Subversion source code
+        repository lives.  This remote host has a global configuration
+        which permits anonymous users to read the contents of
+        repositories on the host, but requires users to authenticate
+        in order to modify those repositories.  (Please forgive us for
+        glossing over the details of Subversion server configuration
+        for the moment&mdash;those are covered thoroughly in <xref
+        linkend="svn.serverconfig" />.)  And for no other reason than
+        that it makes for a more interesting example, we'll be driving
+        the replication process from a third machine, the one which
+        we currently find ourselves using.</para>
+
+      <para>First, we'll create the repository which will be our
+        mirror.  This and the next couple of steps do require shell
+        access to the machine on which the mirror repository will
+        live.  Once the repository is all configured, though, we
+        shouldn't need to touch it directly again.</para>
+
+      <screen>
+$ ssh admin@svn.example.com
+svn> svnadmin create /path/to/repositories/svn-mirror
+svn>
+</screen>
+
+      <para>At this point, we have our repository, and due to our
+        server's configuration, that repository is now
+        <quote>live</quote> on the Internet.  Now, because we don't
+        want anything modifying the repository except our replication
+        process, we need a way to distinguish that process from other
+        would-be committers.  To do so, we use a dedicated username
+        for our process.  Only commits and revision property
+        modifications performed by the special username
+        <literal>syncproc</literal> will be allowed.</para>
+
+      <para>We'll use the repository's hook system both to allow the
+        replication process to do what it needs to do, and to enforce
+        that only it is doing those things.  We accomplish this by
+        implementing two of the repository event
+        hooks&mdash;pre-revprop-change and start-commit.  Our
+        <filename>pre-revprop-change</filename> hook script is found
+        in <xref
+        linkend="svn.reposadmin.maint.replication.pre-revprop-change"
+        />, and basically verifies that the user attempting the
+        property changes is our <literal>syncproc</literal> user.  If
+        so, the change is allowed; otherwise, it is denied.</para>
+
+      <example id="svn.reposadmin.maint.replication.pre-revprop-change">
+        <title>Mirror repository's pre-revprop-change hook script</title>
+
+        <programlisting>
+#!/bin/sh 
+
+USER="$3"
+
+if [ "$USER" = "syncproc" ]; then exit 0; fi
+
+echo "Only the syncproc user may change revision properties" >&amp;2
+exit 1
+</programlisting>
+      </example>
+
+      <para>That covers revision property changes.  Now we need to
+        ensure that only the <literal>syncproc</literal> user is
+        permitted to commit new revisions to the repository.  We do
+        this using a <filename>start-commit</filename> hook scripts
+        like the one in <xref
+        linkend="svn.reposadmin.maint.replication.start-commit"
+        />.</para>
+
+      <example id="svn.reposadmin.maint.replication.start-commit">
+        <title>Mirror repository's start-commit hook script</title>
+
+        <programlisting>
+#!/bin/sh 
+
+USER="$2"
+
+if [ "$USER" = "syncproc" ]; then exit 0; fi
+
+echo "Only the syncproc user may commit new revisions" >&amp;2
+exit 1
+</programlisting>
+      </example>
+
+      <para>After installing our hook scripts and ensuring that they
+        are executable by the Subversion server, we're finished with
+        the setup of the mirror repository.  Now, we get to actually
+        do the mirroring.</para>
+
+      <para>The first thing we need to do with
+        <command>svnsync</command> is to register in our target
+        repository the fact that it will be a mirror of the source
+        repository.  We do this using the <command>svnsync
+        initialize</command> subcommand.</para>
+
+      <screen>
+$ svnsync initialize http://svn.example.com/svn-mirror \
+                     http://svn.collab.net/repos/svn \
+                     --username syncprop --password syncpass
+Copied properties for revision 0.
+$
+</screen>
+
+      <para>Our target repository will now remember that it is a
+        mirror of the public Subversion source code repository.
+        Notice that we provided a username and password as arguments
+        to <command>svnsync</command>&mdash;that was required by the
+        pre-revprop-change hook on our mirror repository.</para>
+
+      <note>
+        <para>The URLs provided to <command>svnsync</command> must
+          point to the root directories of the target and source
+          repositories, respectively.  The tool does not handle
+          mirroring of repository subtrees.</para>
+      </note>
+
+      <para>And now comes the fun part.  With a single subcommand, we
+        can tell <command>svnsync</command> to copy all the
+        as-yet-unmirrored revisions from the source repository to the
+        target.
+        <footnote>
+          <para>Be forewarned that while it will take only a few
+            seconds for the average reader to parse this paragraph and
+            the sample output which follows it, the actual time
+            required to complete such a mirroring operation is, shall
+            we say, quite a bit longer.</para>
+        </footnote>
+        The <command>svnsync synchronize</command> subcommand will
+        peek into the special revision properties previously stored on
+        the target repository, and determine what repository it is
+        mirroring and that the most recently mirrored revision was
+        revision 0.  Then it will query the source repository and
+        determine what the latest revision in that repository is.
+        Finally, it asks the source repository's server to start
+        replaying all the revisions between 0 and that latest
+        revision.  As <command>svnsync</command> get the resulting
+        response from the source repository's server, it begins
+        forwarding those revisions to the target repository's server
+        as new commits.</para>
+
+      <screen>
+$ svnsync synchronize http://svn.example.com/svn-mirror \
+                      --username syncprop --password syncpass
+Committed revision 1.
+Copied properties for revision 1.
+Committed revision 2.
+Copied properties for revision 2.
+Committed revision 3.
+Copied properties for revision 3.
+&hellip;
+Committed revision 23406.
+Copied properties for revision 23406.
+Committed revision 23407.
+Copied properties for revision 23407.
+Committed revision 23408.
+Copied properties for revision 23408.
+</screen>
+
+      <para>Of particular interest here is that for each mirrored
+        revision, there is first a commit of that revision to the
+        target repository, and then property changes follow.  This is
+        because the initial commit is performed by (and attributed to)
+        the user <literal>syncproc</literal>, and datestamped with the
+        time as of that revision's creation.  Also, Subversion's
+        underlying repository access interfaces don't provide a
+        mechanism for setting arbitary revision properties as part of
+        a commit.  So <command>svnsync</command> follows up with an
+        immediate series of property modifications which copy all the
+        revision properties found for that revision in the source
+        repository into the target repository.  This also has the
+        effect of fixing the author and datestamp of the revision
+        to match that of the source repository.</para>
+
+      <para>Also noteworthy is that <command>svnsync</command>
+        performs careful bookkeeping that allows it to be safely
+        interrupted and restarted without ruining the integrity of the
+        mirrored data.  If a network glitch occurs while mirroring a
+        repository, simply repeat the <command>svnsync
+        synchronize</command> command and it will happily pick up
+        right where it left off.  In fact, as new revisions appear in
+        the source repository, this is exactly what you to do
+        in order to keep your mirror up-to-date.</para>
+
+      <para>There is, however, one bit of inelegance in the process.
+        Because Subversion revision properties can be changed at any
+        time throughout the lifetime of the repository, and don't
+        leave an audit trail that indicates when they were changed,
+        replication processes have to pay special attention to them.
+        If you've already mirror the first 15 revisions of a
+        repository and someone then changes a revision property on
+        revision 12, <command>svnsync</command> won't know to go back
+        and patch up its copy of revision 12.  You'll need to tell it
+        to do so manually by using (or with some additionally tooling
+        around) the <command>svnsync copy-revprops</command>
+        subcommand, which simply re-replicates all the revision
+        properties for a particular revision.</para>
+
+      <screen>
+$ svnsync copy-revprops http://svn.example.com/svn-mirror 12 \
+                        --username syncprop --password syncpass
+Copied properties for revision 12.
+$
+</screen>
+
+      <para>That's repository replication in a nutshell.  You'll
+        likely want some automation around such a process.  For
+        example, while our example was a pull-and-push setup, you
+        might wish to have your primary repository push changes to one
+        or more blessed mirrors as part of its post-commit and
+        post-revprop-change hook implementations.  This would enable
+        the mirror to be up-to-date in as near to realtime as is
+        likely possible.</para>
+
+      <para>Also, while it isn't very commonplace to do so,
+        <command>svnsync</command> does gracefully mirror repositories
+        in which the user as whom it authenticates only has partial
+        read access.  It simply copies only the bits of the repository
+        that it is permitted to see.  Obviously such a mirror is not
+        useful as a backup solution.</para>
+
+      <para>As far as user interaction with repositories and mirrors
+        goes, it <emphasis>is</emphasis> possible to have a single
+        working copy that interacts with both, but you'll have to jump
+        through some hoops to make it happen.  First, you need to
+        ensure that both the primary and mirror repositories have the
+        same repository UUID (which is not the case by default).  You
+        can set the mirror repository's UUID by loading a dump file
+        stub into it which contains the UUID of the primary
+        repository, like so:</para>
+
+      <screen>
+$ cat - &lt;&lt;EOF | svnadmin load --force-uuid dest
+SVN-fs-dump-format-version: 2
+
+UUID: 65390229-12b7-0310-b90b-f21a5aa7ec8e
+EOF
+$
+</screen>
+        
+      <para>Now that the two repositories have the same UUID, you can
+        use <command>svn switch --relocate</command> to point your
+        working copy to whichever of the repositories you wish to
+        operate against, a process which is described in <xref
+        linkend="svn.ref.svn.c.switch" />.  There is a possible danger
+        here, though, in that if the primary and mirror repositories
+        aren't in close synchronization, a working copy up-to-date
+        with and pointing to the primary repository will, if relocated
+        to point to an out-of-date mirror, become confused about the
+        apparent sudden loss of revisions it fully expects to be
+        present.</para>
+
+      <para>Finally, be aware that the revision-based replication
+        provided by <command>svnsync</command> is only
+        that&mdash;replication of revisions.  It does not include such
+        things as the hook implementations, repository or server
+        configuration data, uncommitted transactions, or information
+        about user locks on repository paths.  Only information
+        carried by the Subversion repository dump file format is
+        available for replication.</para>
 
     </sect2>
 
