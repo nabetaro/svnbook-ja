@@ -719,6 +719,7 @@ END
   <!-- ================================================================= -->
   <sect1 id="svn.serverconfig.svnserve">
 
+<!-- @ENGLISH {{{
     <title>svnserve, a custom server</title>
 
     <para>The <command>svnserve</command> program is a lightweight
@@ -730,9 +731,23 @@ END
       <command>svnserve</command>, how clients authenticate themselves
       to the server, and how to configure appropriate access control
       to your repositories.</para>
+@ENGLISH }}} -->
+   <title>svnserve - Заказной сервер</title>
+
+    <para> Программа <command>svnserve</command> легкий сервер, способный общаться 
+      с клиентами через TCP/IP, используя собственный простой протокол. Клиенты 
+      обращаются к серверу, 
+      <command>svnserve</command> используя URL, который начинается с 
+      <literal>svn://</literal> или <literal>svn+ssh://</literal>.  
+      В этом разделе рсказывается о различных путях запуска 
+      <command>svnserve</command>, о том 
+      как клиенты удостоверяются
+      (authenticate) на сервере и настройке соответствующих правил доступа к
+      вашему хранилищу.</para>
 
     <!-- =============================================================== -->
     <sect2 id="svn.serverconfig.svnserve.invoking">
+<!-- @ENGLISH {{{      
       <title>Invoking the Server</title>
 
       <para>There are a few different ways to invoke the
@@ -740,14 +755,17 @@ END
         options, you'll see nothing but a help message.  However, if
         you're planning to have <command>inetd</command> launch the
         process, then you can pass the <option>-i</option>
-        (<option>--inetd</option>) option:</para>
+        (<option>--><!--inetd</option>) option:</para>
+@ENGLISH }}} -->
+      <title>Запуск Сервера</title>
 
       <screen>
 $ svnserve -i
 ( success ( 1 2 ( ANONYMOUS ) ( edit-pipeline ) ) )
 </screen>
 
-      <para>When invoked with the <option>--inetd</option> option,
+<!-- @ENGLISH {{{      
+      <para>When invoked with the <option>--><!--inetd</option> option,
         <command>svnserve</command> attempts to speak with a
         Subversion client via <emphasis>stdin</emphasis> and
         <emphasis>stdout</emphasis> using a custom protocol.  This is
@@ -756,20 +774,36 @@ $ svnserve -i
         for the Subversion protocol, so on a Unix-like system you can
         add lines to <filename>/etc/services</filename> like these (if
         they don't already exist):</para>
+@ENGLISH }}} -->
+      <para>Когда произведен запуск с параметром <option>--inetd</option>,
+        <command>svnserve</command> пытается общаться с клиентом
+        Subversion через <emphasis>stdin</emphasis> и <emphasis>stdout</emphasis> 
+        используя собственный протокол.
+        Это стандартное поведение для программ, запускаемых через 
+        <command>inetd</command>.  IANA зарезервировал порт  3690
+      	для протокола Subversion, поэтому на unix-подобных системах Вы можете добавить в 
+        <filename>/etc/services</filename> строки подобные этим (возможно, они 
+        уже существуют):</para>
 
       <screen>
 svn           3690/tcp   # Subversion
 svn           3690/udp   # Subversion
 </screen>
 
+<!-- @ENGLISH {{{      
       <para>And if your system is using a classic Unix-like
         <command>inetd</command> daemon, you can add this line to
         <filename>/etc/inetd.conf</filename>:</para>
+@ENGLISH }}} -->
+      <para> И если Ваша система использует классический Unix-подобный 
+         демон <command>inetd</command>, Вы можете добавить эти строки в 
+         <filename>/etc/inetd.conf</filename>:</para>
 
       <screen>
 svn stream tcp nowait svnowner /usr/bin/svnserve svnserve -i
 </screen>
 
+<!-- @ENGLISH {{{      
       <para>Make sure <quote>svnowner</quote> is a user which has
         appropriate permissions to access your repositories.  Now, when
         a client connection comes into your server on port 3690,
@@ -783,17 +817,40 @@ svn stream tcp nowait svnowner /usr/bin/svnserve svnserve -i
       <para>A second option is to run <command>svnserve</command> as a
         standalone <quote>daemon</quote> process.  Use the
         <option>-d</option> option for this:</para>
+@ENGLISH }}} -->
+      <para> Убедитесь, что <quote>svnowner</quote> это пользователь, который 
+         имеет достаточно прав на доступ к 
+        хранилищу. Теперь, когда от клиента к серверу на порт 3690 приходит запрос 
+        на соединение, <command>inetd</command>
+        запустит процесс <command>svnserve</command> для обслуживания этого запроса.      
+      </para>
+
+      <para>На Windows системах, существуют средства от сторонних производителей, 
+         которые запускают <command>svnserve</command> как сервис. Список этих 
+         инструментов Вы можете посмотреть на Веб-сайте Subversion. </para>
+
+      <para> Второй параметр запускает <command>svnserve</command> как 
+         автономный процесс-демон. Используйте для этого опцию 
+         <option>-d</option>:</para>
 
         <screen>
 $ svnserve -d
 $               # svnserve is now running, listening on port 3690
 </screen>
 
+<!-- @ENGLISH {{{      
       <para>When running <command>svnserve</command> in daemon mode,
-        you can use the <option>--listen-port=</option> and
-        <option>--listen-host=</option> options to customize the exact
+        you can use the <option>--><!--listen-port=</option> and
+        <option>--><!--listen-host=</option> options to customize the exact
         port and hostname to <quote>bind</quote> to.</para>
+@ENGLISH }}} -->
+      <para> Когда <command>svnserve</command> запускается в режиме демона, то
+         Вы можете использовать опции <option>--listen-port=</option> и
+         <option>--listen-host=</option>, чтобы назначить нужное значение порта и 
+         имени хоста, 
+         к которому <quote>привязан</quote> <command>svnserve</command>.</para>
 
+<!-- @ENGLISH {{{      
       <para>There's still a third way to invoke
         <command>svnserve</command>, and that's in <quote>tunnel
         mode</quote>, with the <option>-t</option> option.  This mode
@@ -812,8 +869,27 @@ $               # svnserve is now running, listening on port 3690
         linkend="svn.serverconfig.svnserve.invoking.sb-1"/>.)  It's essentially the same as
         a local user accessing the repository via
         <literal>file:///</literal> URLs.</para>
+@ENGLISH }}} -->
+      <para> Есть также третий способ запускать <command>svnserve</command> в
+        так называемом <quote>туннельном режиме</quote>, с параметром
+        <option>-t</option>. Этот режим допускает, что программы удаленного
+        доступа такие как <command>RSH</command> и <command>SSH</command>
+	      успешно авторизируют пользователя и тогда от имени этого 
+        пользователя
+        запускают частный процесс <command>svnserve</command> <emphasis>как
+        пользователь</emphasis>. Программа <command>svnserve</command>
+        работает в обычном режиме (ведется передача через stdin и stdout) и
+        допускает, что трафик автоматически перенаправляется по некоторому
+        тунелю к клиенту. Когда <command>svnserve</command> запущен
+        "туннельным" агентом подобно тому как было описано выше, убедитесь,
+        что авторизующийся пользователь имеет полный доступ на чтение и запись
+        к файлам базы данных хранилища (см. 
+        <xref linkend="svn.serverconfig.svnserve.invoking.sb-1"/>). По
+        существу, это точно также как и при локальном доступе пользователя через 
+        URL, начинающийся с <literal>file:///</literal>. </para>
 
       <sidebar id="svn.serverconfig.svnserve.invoking.sb-1">
+<!-- @ENGLISH {{{            
         <title>Servers and Permissions:  A Word of Warning</title>
 
         <para>First, remember that a Subversion repository is a
@@ -823,7 +899,19 @@ $               # svnserve is now running, listening on port 3690
           careful, this can lead to a number of headaches, especially
           if you're using a Berkeley DB database rather than FSFS.  Be
           sure to read <xref linkend="svn.serverconfig.multimethod"/>.</para>
+@ENGLISH }}} -->
+       <title>Серверы и права: Предупреждение</title>
 
+        <para>Во-первых, запомните, что хранилище Subversion - по сути
+           несколько файлов базы данных; любой процесс, который имеет
+	   прямой доступ к хранилищу, должен иметь соответствующие права
+	   на чтение и запись ко всему хранилищу. Если Вы не будете
+           осторожны, то это в будущем может привести к головной боли,
+           особенно если вы используете базу данных Berkeley DB по
+	   сравнению с FSFS. Не забудьте прочитать <xref 
+           linkend="svn.serverconfig.multimethod"/>.</para>
+  
+<!-- @ENGLISH {{{      
         <para>Secondly, when configuring <command>svnserve</command>,
           Apache <command>httpd</command>, or any other server
           process, keep in mind that you might not want to launch the
@@ -836,9 +924,23 @@ $               # svnserve is now running, listening on port 3690
           <literal>svn</literal>, grant that user exclusive ownership
           and rights to the exported Subversion repositories, and only
           run their server processes as that user.</para>
+@ENGLISH }}} -->  
+       <para> Во-вторых, когда настраиваете <command>svnserve</command>,
+          Apache <command>httpd</command> или любой другой серверный
+          процесс, имейте в виду, что нет необходимости запускать
+          серверный процесс от имени пользователя <literal>root</literal>
+          (или любого другого пользователя с неограниченными правами). В
+          зависимости от владельцев и разрешений на экспортируемые
+          хранилища, часто предусмотрительнее использовать
+	  &mdash;другого&mdash; пользователя. На пример, многие администраторы
+	  создают нового пользователя <literal>svn</literal>, предоставляют
+	  исключительное владение и права на экспортируемые хранилища
+	  Subversion, и запускают серверные процессы только от имени этого
+	  пользователя. </para>
       </sidebar>
 
 
+<!-- @ENGLISH {{{      
       <para>Once the <command>svnserve</command> program is running,
         it makes every repository on your system available to the
         network.  A client needs to specify an
@@ -850,17 +952,35 @@ $               # svnserve is now running, listening on port 3690
         To increase security, you can pass the <option>-r</option>
         option to <command>svnserve</command>, which restricts it to
         exporting only repositories below that path:</para>
+@ENGLISH }}} -->  
+      <para> Как только <command>svnserve</command> запущена каждое хранилище
+        на Вашей системе доступно по сети. Клиенту необходимо указать
+        <emphasis>абсолютный</emphasis> путь в URL хранилища. Например, если
+        хранилище расположено в
+        <filename>/usr/local/repositories/project1</filename>, тогда клиент
+        должен получит доступ к нему через
+        <uri>svn://host.example.com/usr/local/repositories/project1</uri>. Чтобы
+        увеличить безопасность, Вы можете указать у <command>svnserve</command>
+        опцию -r, которая разрешает экспортировать хранилища расположенные
+        только ниже указанного пути: </para>
 
       <screen>
 $ svnserve -d -r /usr/local/repositories
 &hellip;
 </screen>
 
+<!-- @ENGLISH {{{      
       <para>Using the <option>-r</option> option effectively
         modifies the location that the program treats as the root of
         the remote filesystem space.  Clients then use URLs that
         have that path portion removed from them, leaving much
         shorter (and much less revealing) URLs:</para>
+@ENGLISH }}} -->  
+      <para> Использование параметра -r эффективно изменяет расположение, 
+        которое программа рассматривает как корень раздела удаленной 
+        файловой системы. Тогда клиенты используют URL, из которых удален этот 
+        путь, в итоге получается URL значительно короче (и более 
+        наглядным):</para>
 
       <screen>
 $ svn checkout svn://host.example.com/project1
