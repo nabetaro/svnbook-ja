@@ -991,12 +991,19 @@ $ svn checkout svn://host.example.com/project1
 
     <!-- =============================================================== -->
     <sect2 id="svn.serverconfig.svnserve.auth">
+<!-- @ENGLISH {{{            
       <title>Built-in authentication and authorization</title>
 
       <para>When a client connects to an <command>svnserve</command>
         process, the following things happen:</para>
+@ENGLISH }}} -->  
+      <title>Встроенная идентификация и авторизация</title>
+
+      <para>Когда клиент соединяется с процессом <command>svnserve</command>,
+        то происходит следующее:</para>
 
       <itemizedlist>
+<!-- @ENGLISH {{{            
         <listitem><para>The client selects a specific
         repository.</para></listitem>
 
@@ -1021,9 +1028,33 @@ $ svn checkout svn://host.example.com/project1
               already externally authenticated.</para></listitem>
           </itemizedlist>
         </listitem>
+@ENGLISH }}} -->  	
+        <listitem><para>Клиент указывает
+        конкретное хранилище.</para></listitem>
+
+        <listitem><para>Сервер обрабатывает файл <filename>conf/svnserve.conf</filename>,
+        и начинает осуществлять правила идентификации и авторизации, указанные там.
+        </para></listitem>
+
+        <listitem><para>В зависимости от ситуации и правил
+        авторизации,</para>
+
+          <itemizedlist>
+             <listitem><para>клиенту может быть разрешено делать анонимные
+                запросы, без получения вызова на идентификацию, ИЛИ </para>
+             </listitem>
+
+             <listitem><para>клиент может быть вызван на идентификацию
+                в любой момент, ИЛИ </para></listitem>
+
+	     <listitem><para>при обслуживании в <quote>туннельном режиме</quote>,
+                клиент сам объявит, что уже был идентифицирован.</para></listitem>
+           </itemizedlist>
+        </listitem>
 
       </itemizedlist>
 
+<!-- @ENGLISH {{{      
       <para>At the time of writing, the server only knows how to send
         a CRAM-MD5 <footnote><para>See RFC 2195.</para></footnote>
         authentication challenge.  In essence, the server sends a
@@ -1034,14 +1065,32 @@ $ svn checkout svn://host.example.com/project1
         password to verify that the result is identical.  <emphasis>At
         no point does the actual password travel over the
         network.</emphasis></para>
+@ENGLISH }}} -->  	
+     <para>Во время написания данного материала сервер знал только об вызове
+        авторизации через CRAM-MD5 <footnote><para>Смотри RFC 2195.</para></footnote>. В 
+        сущности, сервер отправляет некоторые данные клиенту. Клиент, используя хэш 
+        алгоритма MD5,         создает отпечаток (fingerprint) из совмещенных вместе этих данных и своего пароля, 
+        после         чего отправляет этот отпечаток серверу как ответ. Сервер производит подобные 
+        вычисления со своей версией пользовательского пароля и проверяет идентичность 
+        результатов. <emphasis>Таким образом пароль никогда не передается в открытую по 
+        сети.</emphasis></para>     
 
+<!-- @ENGLISH {{{      
       <para>It's also possible, of course, for the client to be
         externally authenticated via a tunnel agent, such as
         <command>SSH</command>.  In that case, the server simply
         examines the user it's running as, and uses it as the
         authenticated username.  For more on this, see <xref
         linkend="svn.serverconfig.svnserve.sshauth"/>.</para>
+@ENGLISH }}} -->
+      <para> Также возможно, что клиент уже был идентифицирован через внешнего
+	 туннельного агента, такого как <command>SSH</command>. В таком
+	 случае, сервер просто проверяет запустившего его пользователя и
+	 в дальнейшем использует идентифицированное имя пользователя.
+	 Более подробно об этом смотри в <xref 
+         linkend="svn.serverconfig.svnserve.sshauth"/>.</para>
 
+<!-- @ENGLISH {{{      
       <para>As you've already guessed, a repository's
         <filename>svnserve.conf</filename> file is the central
         mechanism for controlling authentication and authorization
@@ -1053,14 +1102,29 @@ $ svn checkout svn://host.example.com/project1
         specific variables that can be set (<literal>variable =
         value</literal>).  Let's walk through this file and learn how
         to use them.</para>
+@ENGLISH }}} -->
+      <para>Как Вы уже догадались, файл хранилища <filename>svnserve.conf</filename> 
+         - центральный механизм контроля правил идентификации и авторизации. Этот файл имеет такой же 
+         формат, как и другие конфигурационные файлы (см.  <xref linkend="svn.advanced.confarea"/>): имена 
+         секций помечены квадратными скобками ((<literal>[</literal> и <literal>]</literal>), 
+         комментарии начинаются с <literal>#</literal>, а каждая секция содержит определенные переменные, 
+         которые могут быть использованы для конфигурирования (<literal>переменная = значение</literal>). Давайте 
+         посмотрим на этот файл и изучим как им пользоваться. </para>
 
       <sect3 id="svn.serverconfig.svnserve.auth.users">
+<!-- @ENGLISH {{{            
         <title>Create a 'users' file and realm</title>
 
         <para>For now, the <literal>[general]</literal> section of the
           <filename>svnserve.conf</filename> has all the variables you
           need.  Begin by defining a file which contains usernames and
           passwords, and an authentication realm:</para>
+@ENGLISH }}} -->      
+       <title>Создание файла пользователей и область хранилища </title>
+       <para>Сейчас, секция <literal>[general]</literal>
+          в<filename>svnserve.conf</filename> имеет все необходимые Вам
+          переменные. Начнем с определения файла, содержащего имена
+          пользователей и пароли, а также с области хранилища: </para>
 
         <screen>
 [general]
@@ -1068,6 +1132,7 @@ password-db = userfile
 realm = example realm
 </screen>
 
+<!-- @ENGLISH {{{      
         <para>The <literal>realm</literal> is a name that you define.
           It tells clients which sort of <quote>authentication
           namespace</quote> they're connecting to; the Subversion
@@ -1078,6 +1143,17 @@ realm = example realm
           <literal>password-db</literal> variable points to a separate
           file that contains a list of usernames and passwords, using
           the same familiar format.  For example:</para>
+@ENGLISH }}} -->
+      <para><literal>realm</literal> - это определяемое Вами имя. Она сообщает 
+         клиентам, к какой <quote>области 
+	идентификации</quote> они подсоединяются; клиенту Subversion она выводится 
+        в приглашении к аутентификации, 
+        и используется как ключ (вместе с именем сервера и портом) для кэширования 
+        клиентской идентификационной 
+	информации на диск (см. <xref linkend="svn.serverconfig.netmodel.credcache"/>). 
+        Переменная 	<literal>password-db</literal> указывает на отдельный файл, 
+        который содержит список пользователей и пароли в таком же простом формате. 
+        Например: </para>
 
         <screen>
 [users]
@@ -1085,6 +1161,7 @@ harry = foopassword
 sally = barpassword
 </screen>
 
+<!-- @ENGLISH {{{      
         <para>The value of <literal>password-db</literal> can be an
           absolute or relative path to the users file.  For many
           admins, it's easy to keep the file right in the
@@ -1099,6 +1176,24 @@ sally = barpassword
           set the file's read and write permissions appropriately.  If
           you know which user(s) <command>svnserve</command> will run
           as, restrict read access to the user file as necessary.</para>
+@ENGLISH }}} -->
+	<para>Значение <literal>password-db</literal> может быть абсолютным или 
+         относительным путем к файлу пользователей. Для большинства 
+         администраторов, его легче держать в <filename>conf/</filename> области 
+	 хранилища, рядом с <filename>svnserve.conf</filename>. С другой 
+         стороны, возможно, Вы захотите использовать
+	 (разделять) один и тот же файл пользователей для двух или более 
+         хранилищ, в этом случае этот файл стоит 
+	 поместить в более доступное место. Хранилища разделяющие файл 
+         пользователей, должны быть также
+	 сконфигурированы с одинаковыми областями, так как список пользователей 
+         по существу определяет область 
+	 аутентификации. Где бы в итоге файл не находился, убедитесь, что у него 
+         выставлены соответствующие 
+	 права на чтение/запись. Если Вы знаете от имени какого 
+         пользователя(-ей) будет запускаться 
+	 <command>svnserve</command>, то ограничьте доступ на чтение только
+	 тем пользователем, которым это нужно.</para>
 
       </sect3>
 
