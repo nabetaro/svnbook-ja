@@ -206,17 +206,20 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
         information.</para>
 
       <para>The downside of using a single repository is that
-        different projects may have different commit mailing lists or
-        different authentication and authorization requirements.
-        These aren't insurmountable problems, of course&mdash;it just
-        means that all of your hook scripts have to be sensitive to
-        the layout of your repository rather than assuming that the
-        whole repository is associated with a single group of people.
-        Also, remember that Subversion uses repository-global revision
-        numbers.  Some folks don't like the fact that even though no
-        changes have been made to their project lately, the youngest
-        revision number for the repository keeps climbing because
-        other projects are actively adding new revisions.</para>
+        different projects may have different requirements in terms of
+        the repository event triggers, such as needing to send commit
+        notification emails to different mailing lists, or having
+        different definitions about what does and does not constitute
+        a legitimate commit.  These aren't insurmountable problems, of
+        course&mdash;it just means that all of your hook scripts have
+        to be sensitive to the layout of your repository rather than
+        assuming that the whole repository is associated with a single
+        group of people.  Also, remember that Subversion uses
+        repository-global revision numbers.  Some folks don't like the
+        fact that even though no changes have been made to their
+        project lately, the youngest revision number for the
+        repository keeps climbing because other projects are actively
+        adding new revisions.</para>
 
       <para>A middle-ground approach can be taken, too.  For example,
         projects can be grouped by how well they relate to each other.
@@ -378,7 +381,7 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
 
       <para>To try to address each and every possible way to deploy
         Subversion is both not possible and outside the scope of this
-        book.  We simply encourage you to evaluate your options, using
+        book.  We simply encourage you to evaluate your options using
         these pages and other sources as your reference material, and
         plan ahead.</para>
 
@@ -388,17 +391,17 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
     <sect2 id="svn.reposadmin.basics.backends">
       <title>Choosing a Data Store</title>
 
-      <para>As of Subversion 1.1, Subversion provides two options for
-        the type of underlying data store&mdash;often referred to as
+      <para>As of version 1.1, Subversion provides two options for the
+        type of underlying data store&mdash;often referred to as
         <quote>the back-end</quote> or, somewhat confusingly,
         <quote>the (versioned) filesystem</quote>&mdash;that each
         repository uses.  One type of data store keeps everything in a
-        Berkeley DB database environment; repositories that use this
-        type are often referred to as being <quote>BDB-backed</quote>.
-        The other type stores data in ordinary flat files, using a
-        custom format.  Subversion developers have adopted the habit
-        of referring to this latter data storage mechanism as
-        <firstterm>FSFS</firstterm>
+        Berkeley DB (or BDB) database environment; repositories that
+        use this type are often referred to as being
+        <quote>BDB-backed</quote>.  The other type stores data in
+        ordinary flat files, using a custom format.  Subversion
+        developers have adopted the habit of referring to this latter
+        data storage mechanism as <firstterm>FSFS</firstterm>
         <footnote>
           <para>Often pronounced <quote>fuzz-fuzz</quote>, if Jack
             Repenning has anything to say about it.  (This book,
@@ -408,20 +411,18 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
         &mdash;a versioned filesystem implementation that uses the
         native OS filesystem to store data.</para>
 
-      <para>As a repository administrator, the first (and most
-        important) decision you need to make before creating and
-        populating a new Subversion repository is which of the
-        available data stores you want your repository to use.  There
-        are advantages and disadvantages to each, which we'll describe
-        in a bit.  Neither back-end is more <quote>official</quote>
-        than the other, though the newer FSFS is the default data
-        store as of Subversion 1.2.  Generally speaking, though, the
-        programs which access the repository are blissfully ignorant
-        of this implementation detail.  And fortunately, you aren't
+      <para>There are advantages and disadvantages to each of these
+        two back-end types, which we'll describe in a bit.  Neither
+        back-end is more <quote>official</quote> than the other,
+        though the newer FSFS is the default data store as of
+        Subversion 1.2.  Generally speaking, though, the programs
+        which access the repository are blissfully ignorant of this
+        implementation detail.  And fortunately, you aren't
         necessarily stuck with your first choice of a data
         store&mdash;in the event that you change your mind later,
         Subversion provides ways of migrating your repository's data
-        into another one created with a different back-end.</para>
+        into another repository that uses a different back-end data
+        store.</para>
 
       <para><xref linkend="svn.reposadmin.basics.backends.tbl-1"/>
         gives a comparative overview of Berkeley DB and FSFS
@@ -440,7 +441,7 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           <tbody>
             <row>
               <entry>Reliability:  sensitivity to interruptions</entry>
-              <entry>very;  crashes and permission problems can leave the
+              <entry>very; crashes and permission problems can leave the
                 database <quote>wedged</quote>, requiring journaled
                 recovery procedures.</entry>
               <entry>quite insensitive.</entry>
@@ -608,19 +609,21 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           besides crashed processes, such as programs conflicting over
           ownership and permissions on the database files.</para>
 
-       <note><para>Berkeley DB 4.4 brings (to Subversion 1.4 and better) the
-          ability for Subversion to automatically (and transparently)
-          recover Berkeley DB environments in need of such recovery.
-          When a Subversion process attaches to a repository's
-          Berkeley DB environment, it can use some process accounting
-          mechanisms to detect any unclean disconnections by previous
-          processes, perform any necessary recover, and then continue
-          on as if nothing happened.  This doesn't completely
-          eliminate instances of repository wedging, but it does
-          drastically reduce the amount of human interaction required
-          to recover from them.</para></note>
+        <note>
+          <para>Berkeley DB 4.4 brings (to Subversion 1.4 and better)
+            the ability for Subversion to automatically and
+            transparently recover Berkeley DB environments in need of
+            such recovery.  When a Subversion process attaches to a
+            repository's Berkeley DB environment, it uses some process
+            accounting mechanisms to detect any unclean disconnections
+            by previous processes, performs any necessary recover, and
+            then continues on as if nothing happened.  This doesn't
+            completely eliminate instances of repository wedging, but
+            it does drastically reduce the amount of human interaction
+            required to recover from them.</para>
+        </note>
 
-       <para>So while a Berkeley DB repository is quite fast and
+        <para>So while a Berkeley DB repository is quite fast and
           scalable, it's best used by a single server process running
           as one user&mdash;such as Apache's <command>httpd</command>
           or <command>svnserve</command> (see <xref
@@ -638,18 +641,19 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
 
         <para>In mid-2004, a second type of repository storage
           system&mdash;one which doesn't use a database at
-          all&mdash;came into being.  An FSFS repository stores a
-          revision tree in a single file, and so all of a repository's
-          revisions can be found in a single subdirectory full of
-          numbered files.  Transactions are created in separate
-          subdirectories.  When complete, a single transaction file is
-          created and moved to the revisions directory, thus
-          guaranteeing that commits are atomic.  And because a
-          revision file is permanent and unchanging, the repository
-          also can be backed up while <quote>hot</quote>, just like a
-          Berkeley DB repository.</para>
+          all&mdash;came into being.  An FSFS repository stores the
+          changes associated with a revision in a single file, and so
+          all of a repository's revisions can be found in a single
+          subdirectory full of numbered files.  Transactions are
+          created in separate subdirectories as individual files.
+          When complete, the transaction file is renamed and moved
+          into the revisions directory, thus guaranteeing that commits
+          are atomic.  And because a revision file is permanent and
+          unchanging, the repository also can be backed up while
+          <quote>hot</quote>, just like a BDB-backed
+          repository.</para>
 
-        <para>The revision-file format represents a revision's
+        <para>The FSFS revision files describe a revision's
           directory structure, file contents, and deltas against files
           in other revision trees.  Unlike a Berkeley DB database,
           this storage format is portable across different operating
@@ -805,7 +809,7 @@ $
         high-level repository operation and provide a means by which
         to both report what is about to happen and to prevent it from
         happening at all.  Other hooks (the <quote>post hooks</quote>)
-        run after the completion of a repository revent, and are
+        run after the completion of a repository event, and are
         useful for reporting purposes only.  Each hook is handed enough
         information to tell what that event is (or was), the specific
         repository changes proposed (or completed), and the username
@@ -823,8 +827,8 @@ post-revprop-change.tmpl  pre-lock.tmpl     start-commit.tmpl
 </screen>
             
       <para>There is one template for each hook that the Subversion
-        repository implements, and by examining the contents of those
-        template scripts, you can see what triggers each such script
+        repository supports, and by examining the contents of those
+        template scripts, you can see what triggers each script
         to run and what data is passed to that script.  Also present
         in many of these templates are examples of how one might use
         that script, in conjunction with other Subversion-supplied
@@ -857,26 +861,26 @@ post-revprop-change.tmpl  pre-lock.tmpl     start-commit.tmpl
         <para>For security reasons, the Subversion repository executes
           hook programs with an empty environment&mdash;that is, no
           environment variables are set at all, not even
-          <literal>$PATH</literal> or <literal>%PATH%</literal>.
-          Because of this, a lot of administrators are baffled when
-          their hook program runs fine by hand, but doesn't work when
-          run by Subversion.  Be sure to explicitly set any necessary
-          environment variables in your hook program and/or use
-          absolute paths to programs.</para>
+          <literal>$PATH</literal> (or <literal>%PATH%</literal>,
+          under Windows).  Because of this, many administrators
+          are baffled when their hook program runs fine by hand, but
+          doesn't work when run by Subversion.  Be sure to explicitly
+          set any necessary environment variables in your hook program
+          and/or use absolute paths to programs.</para>
       </tip>
 
       <para>Subversion will attempt to execute hooks as the same user
         who owns the process which is accessing the Subversion
         repository.  In most cases, the repository is being accessed
-        via Apache HTTP server and mod_dav_svn, so this user is the
-        same user that Apache runs as.  The hooks themselves will need
-        to be configured with OS-level permissions that allow that
-        user to execute them.  Also, this means that any file or
-        programs (including the Subversion repository itself) accessed
-        directly or indirectly by the hook will be accessed as the
-        same user.  In other words, be alert to potential
+        via a Subversion server, so this user is the same user as
+        which that server runs on the system.  The hooks themselves
+        will need to be configured with OS-level permissions that
+        allow that user to execute them.  Also, this means that any
+        file or programs (including the Subversion repository itself)
+        accessed directly or indirectly by the hook will be accessed
+        as the same user.  In other words, be alert to potential
         permission-related problems that could prevent the hook from
-        performing the tasks you've written it to perform.</para>
+        performing the tasks it is designed to perform.</para>
 
       <para>There are nine hooks implemented by the Subversion
         repository, and you can get details about each of them in
@@ -894,7 +898,7 @@ post-revprop-change.tmpl  pre-lock.tmpl     start-commit.tmpl
         scripts freely available either from the Subversion community
         itself or elsewhere.  These scripts cover a wide range of
         utility&mdash;basic access control, policy adherence checking,
-        issue tracker integration, email- or RSS-based commit
+        issue tracker integration, email- or syndication-based commit
         notification, and beyond.  See <xref linkend="svn.3rdparty" />
         for discussion of some of the most commonly used hook
         programs.  Or, if you wish to write your own, see <xref
@@ -903,19 +907,21 @@ post-revprop-change.tmpl  pre-lock.tmpl     start-commit.tmpl
       <warning>
         <para>While hook scripts can be leveraged to do almost
           anything, there is one dimension in which hook script
-          authors should show restraint:  do <emphasis>not</emphasis>
+          authors should show restraint: do <emphasis>not</emphasis>
           modify a commit transaction using hook scripts.  While it
           might be tempting to use hook scripts to automatically
           correct errors or shortcomings or policy violations present
           in the files being committed, doing so can cause problems.
-          Subversion's keeps client-side caches of certain bits of
+          Subversion keeps client-side caches of certain bits of
           repository data, and if you change a commit transaction in
-          this way, those cache become indetectably stale.  This
+          this way, those caches become indetectably stale.  This
           inconsistency can lead to surprising and unexpected
-          behavior.  Instead of modifying the transaction, it is much
-          better to <emphasis>validate</emphasis> the transaction in
-          the <filename>pre-commit</filename> hook and reject the
-          commit if it does not meet the desired requirements.</para>
+          behavior.  Instead of modifying the transaction, you should
+          simply <emphasis>validate</emphasis> the transaction in the
+          <filename>pre-commit</filename> hook and reject the commit
+          if it does not meet the desired requirements.  As an added
+          bonus, your users will learn the value of careful,
+          compliance-minded work habits.</para>
       </warning>
 
     </sect2>
@@ -930,7 +936,7 @@ post-revprop-change.tmpl  pre-lock.tmpl     start-commit.tmpl
         configuration values for things like the number of database locks
         allowed to be taken out at any given time, or the maximum size
         of the journaling log files, etc.  Subversion's filesystem
-        code additionally chooses default values for some of the
+        logic additionally chooses default values for some of the
         Berkeley DB configuration options.  However, sometimes your
         particular repository, with its unique collection of data and
         access patterns, might require a different set of
@@ -958,11 +964,11 @@ post-revprop-change.tmpl  pre-lock.tmpl     start-commit.tmpl
         Subversion never attempts to read or interpret the contents of
         the file, and makes no direct use of the option settings in
         it, you'll want to avoid any configuration changes that may
-        cause Berkeley DB to behave in a fashion that is unexpected by
-        the rest of the Subversion code.  Also, changes made to
+        cause Berkeley DB to behave in a fashion that is at odds with
+        what Subversion might expect.  Also, changes made to
         <filename>DB_CONFIG</filename> won't take effect until you
         recover the database environment (using <command>svnadmin
-        recover</command>).</para> 
+        recover</command>).</para>
 
     </sect2>
   </sect1>
@@ -1038,8 +1044,9 @@ Type 'svnlook --version' to see the program version and FS modules.
           transactions (transactions that have not resulted in a new
           revision).  Most repositories will have no such
           transactions, because transactions are usually either
-          committed (which disqualifies them from viewing) or aborted
-          and removed.</para>
+          committed (in which case, you should access them as revision
+          with the <option>--revision</option> option) or aborted and
+          removed.</para>
 
         <para>In the absence of both the <option>--revision</option>
           and <option>--transaction</option> options,
@@ -1201,7 +1208,7 @@ Available subcommands:
 
         <para>Since Subversion stores your versioned history using, at
           the very least, binary differencing algorithms and data
-          compression (and optionally in a completely opaque database
+          compression (optionally in a completely opaque database
           system), attempting manual tweaks is unwise, if not quite
           difficult.  And once data has been stored in your
           repository, Subversion generally doesn't provide an easy way
@@ -1373,7 +1380,7 @@ Content-length: 0
             remove a top-level directory, make sure that your editor is
             not set to automatically convert end-lines to the native
             format (e.g. \r\n to \n) as the content will then not agree
-            with the metadata and this will render the dump file
+            with the metadata.  This will render the dump file
             useless.</para>
         </warning>
 
@@ -1500,10 +1507,8 @@ Node-path: spreadsheet/Makefile
           subdirectory of your repository.  This subdirectory is a
           regular Berkeley DB environment directory, and can therefore
           be used in conjunction with any of the Berkeley database
-          tools (you can see the documentation for these tools at the
-          Berkeley DB website, <ulink
-          url="http://www.oracle.com/technology/documentation/berkeley-db/db/"
-          />).</para>
+          tools, typically provided as part of the Berkeley DB
+          distribution.</para>
 
         <para>For day-to-day Subversion use, these tools are
           unnecessary.  Most of the functionality typically needed for
@@ -1529,46 +1534,19 @@ Node-path: spreadsheet/Makefile
           your Berkeley DB environment, including detailed statistics
           about the locking and storage subsystems.</para>
 
+        <para>For more information on the Berkeley DB tool chain,
+          visit the documentation section of the Berkeley DB section
+          of Oracle's website, located at <ulink
+          url="http://www.oracle.com/technology/documentation/berkeley-db/db/"
+          />.</para>
+
       </sect3>
     </sect2>
 
     <!-- =============================================================== -->
-    <sect2 id="svn.reposadmin.maint.cleanup">
-      <title>Repository Cleanup</title>
+    <sect2 id="svn.reposadmin.maint.setlog">
+      <title>Commit Log Message Correction</title>
             
-      <para>Your Subversion repository will generally require very
-        little attention once it is configured to your liking.
-        However, there are times when some manual assistance from an
-        administrator might be in order.  The
-        <command>svnadmin</command> utility provides some helpful
-        functionality to assist you in performing such tasks as:</para>
-
-      <itemizedlist>
-        <listitem>
-          <para>modifying commit log messages,</para>
-        </listitem>
-        <listitem>
-          <para>removing dead transactions,</para>
-        </listitem>
-        <listitem>
-          <para>recovering <quote>wedged</quote> repositories, and</para>
-        </listitem>
-        <listitem>
-          <para>moving, perhaps selectively, repository contents to a
-            different repository.</para>
-        </listitem>
-      </itemizedlist>
-
-      <para>Perhaps the most commonly used of
-        <command>svnadmin</command>'s subcommands is
-        <literal>setlog</literal>.  When a transaction is committed to
-        the repository and promoted to a revision, the descriptive log
-        message associated with that new revision (and provided by the
-        user) is stored as an unversioned property attached to the
-        revision itself.  In other words, the repository remembers
-        only the latest value of the property, and discards previous
-        ones.</para>
-
       <para>Sometimes a user will have an error in her log message (a
         misspelling or some misinformation, perhaps).  If the
         repository is configured (using the
@@ -1623,12 +1601,12 @@ $ svnadmin setlog myrepos newlog.txt -r 388
       <para>While the cost of storage has dropped incredibly in the
         past few years, disk usage is still a valid concern for
         administrators seeking to version large amounts of data.
-        Every additional byte consumed by the live repository is a
-        byte that needs to be backed up offsite, perhaps multiple
-        times as part of rotating backup schedules.  It is useful to
-        know what pieces of Subversion's repository data need to
-        remain on the live site, which need to be backed up, and which
-        can be safely removed.</para>
+        Every bit of version history information stored in the live
+        repository is information that needs to be backed up
+        elsewhere, perhaps multiple times as part of rotating backup
+        schedules.  It is useful to know what pieces of Subversion's
+        repository data need to remain on the live site, which need to
+        be backed up, and which can be safely removed.</para>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.reposadmin.maint.diskspace.deltas">
@@ -1642,7 +1620,7 @@ $ svnadmin setlog myrepos newlog.txt -r 388
           some other chunk of data.  If the two pieces of data are
           very similar, this deltification results in storage savings
           for the deltified chunk&mdash;rather than taking up space
-          equal to the size of the original data, it only takes up
+          equal to the size of the original data, it takes up only
           enough space to say, <quote>I look just like this other
           piece of data over here, except for the following couple of
           changes</quote>.  The result is that most of the repository
@@ -1673,18 +1651,18 @@ $ svnadmin setlog myrepos newlog.txt -r 388
       <sect3 id="svn.reposadmin.maint.diskspace.deadtxns">
         <title>Removing dead transactions</title>
 
-        <para>While generally not the common case, there are
-          circumstances in which a Subversion commit process might
-          fail, leaving behind in the repository the remnants of the
-          revision-to-be that wasn't&mdash;an uncommitted transaction
-          and all the file and directory changes associated with it.
-          This could happen for several reasons: perhaps the client
-          operation was inelegantly terminated by the user, or a
-          network failure might have occurred in the middle of an
-          operation, etc.  Regardless of the reason, dead transactions
-          can happen.  They don't do any real harm, other than
-          consuming disk space.  A fastidious administrator may
-          nonetheless wish to remove them.</para>
+        <para>Though they are uncommon, there are circumstances in
+          which a Subversion commit process might fail, leaving behind
+          in the repository the remnants of the revision-to-be that
+          wasn't&mdash;an uncommitted transaction and all the file and
+          directory changes associated with it.  This could happen for
+          several reasons: perhaps the client operation was
+          inelegantly terminated by the user, or a network failure
+          might have occurred in the middle of an operation, etc.
+          Regardless of the reason, dead transactions can happen.
+          They don't do any real harm, other than consuming disk
+          space.  A fastidious administrator may nonetheless wish to
+          remove them.</para>
 
         <para>You can use <command>svnadmin</command>'s
           <literal>lstxns</literal> command to list the names of the
@@ -1702,11 +1680,11 @@ $
           <command>svnlook</command> (and its
           <option>--transaction</option> option) to determine who
           created the transaction, when it was created, what types of
-          changes were made in the transaction&mdash;in other words,
-          whether or not the transaction is a safe candidate for
-          removal!  If so, the transaction's name can be passed to
-          <command>svnadmin rmtxns</command>, which will perform the
-          cleanup of the transaction.  In fact, the
+          changes were made in the transaction&mdash;information that
+          is helpful in determining whether or not the transaction is
+          a safe candidate for removal!  If so, the transaction's name
+          can be passed to <command>svnadmin rmtxns</command>, which
+          will perform the cleanup of the transaction.  In fact, the
           <literal>rmtxns</literal> subcommand can take its input
           directly from the output of
           <literal>lstxns</literal>!</para>
@@ -1719,12 +1697,13 @@ $
         <para>If you use these two subcommands like this, you should
           consider making your repository temporarily inaccessible to
           clients.  That way, no one can begin a legitimate
-          transaction before you start your cleanup.  The following is
-          a little bit of shell-scripting that can quickly generate
+          transaction before you start your cleanup.  <xref
+          linkend="svn.reposadmin.maint.diskspace.deadtxns.ex-1" />
+          contains a bit of shell-scripting that can quickly generate
           information about each outstanding transaction in your
-          repository:</para>
+          repository.</para>
 
-        <example id="svn.reposadmin.maint.cleanup.ex-1">
+        <example id="svn.reposadmin.maint.diskspace.deadtxns.ex-1">
           <title>txn-info.sh (Reporting Outstanding Transactions)</title>
 
           <programlisting>
@@ -1746,12 +1725,10 @@ done
 </programlisting>
         </example>
 
-        <para>You can run the previous script using
-          <command>/path/to/txn-info.sh /path/to/repos</command>.  The
-          output is basically a concatenation of several chunks of
-          <command>svnlook info</command> output (see <xref
-          linkend="svn.reposadmin.maint.tk.svnlook"/>), and will look
-          something like:</para>
+        <para>The output of the script is basically a concatenation of
+          several chunks of <command>svnlook info</command> output
+          (see <xref linkend="svn.reposadmin.maint.tk.svnlook"/>), and
+          will look something like:</para>
 
         <screen>
 $ txn-info.sh myrepos
@@ -1779,12 +1756,12 @@ $
 
         <para>In short, transaction cleanup decisions need not be made
           unwisely.  Various sources of information&mdash;including
-          Apache's error and access logs, the logs of successful
-          Subversion commits, and so on&mdash;can be employed in the
-          decision-making process.  Finally, an administrator can
-          often simply communicate with a seemingly dead transaction's
-          owner (via email, for example) to verify that the
-          transaction is, in fact, in a zombie state.</para>
+          Apache's error and access logs, Subversion's operational
+          logs, Subversion revision history, and so on&mdash;can be
+          employed in the decision-making process.  And of course, an
+          administrator can often simply communicate with a seemingly
+          dead transaction's owner (via email, for example) to verify
+          that the transaction is, in fact, in a zombie state.</para>
 
       </sect3>
 
@@ -1794,13 +1771,13 @@ $
 
         <para>Until recently, the largest offender of disk space usage
           with respect to BDB-backed Subversion repositories was the
-          log files to which Berkeley DB performs its pre-writes
+          log files in which Berkeley DB performs its pre-writes
           before modifying the actual database files.  These files
           capture all the actions taken along the route of changing
           the database from one state to another&mdash;while the
           database files reflect at any given time some state, the log
           files contain all the many changes along the way between
-          states.  As such, they can start to accumulate quite
+          states.  As such, they can grow and accumulate quite
           rapidly.</para>
 
         <para>Fortunately, beginning with the 4.2 release of Berkeley
@@ -1844,6 +1821,18 @@ $ svnadmin list-unused-dblogs /path/to/repos | xargs rm
 ## disk space reclaimed!
 </screen>
 
+        <warning>
+          <para>BDB-backed repositories whose log files are used
+            as part of a backup or disaster recovery plan should
+            <emphasis>not</emphasis> make use of the log file
+            autoremoval feature.  Reconstruction of a repository's
+            data from log files can only be accomplished when the log
+            files are all available.  If some of the log files are
+            removed from disk before the backup system has a chance to
+            copy them elsewhere, the incomplete set of backed-up log
+            files is essentially useless.</para>
+        </warning>
+
       </sect3>
 
     </sect2>
@@ -1883,28 +1872,27 @@ $ svnadmin list-unused-dblogs /path/to/repos | xargs rm
         linkend="svn.advanced.locking.meanings" />.)</para>
 
       <para>In the course of using your Subversion repository, fatal
-        errors (such as running out of disk space or available memory)
-        or interruptions can prevent a process from having the chance to
-        remove the locks it has placed in the database.  The result is
-        that the back-end database system gets <quote>wedged</quote>.
-        When this happens, any attempts to access the repository hang
-        indefinitely (since each new accessor is waiting for a lock to
-        go away&mdash;which isn't going to happen).</para>
+        errors or interruptions can prevent a process from having the
+        chance to remove the locks it has placed in the database.  The
+        result is that the back-end database system gets
+        <quote>wedged</quote>.  When this happens, any attempts to
+        access the repository hang indefinitely (since each new
+        accessor is waiting for a lock to go away&mdash;which isn't
+        going to happen).</para>
 
-      <para>First, if this happens to your repository, don't panic.
-        The Berkeley DB filesystem takes advantage of database
+      <para>If this happens to your repository, don't panic.  The
+        Berkeley DB filesystem takes advantage of database
         transactions and checkpoints and pre-write journaling to
         ensure that only the most catastrophic of events
         <footnote>
           <para>E.g.: hard drive + huge electromagnet = disaster.</para>
         </footnote>
         can permanently destroy a database environment.  A
-        sufficiently paranoid repository administrator will be making
+        sufficiently paranoid repository administrator will have made
         off-site backups of the repository data in some fashion, but
-        don't call your system administrator to restore a backup tape
-        just yet.</para>
+        head off to the tape backup storage closet just yet.</para>
 
-      <para>Secondly, use the following recipe to attempt to
+      <para>Instead, use the following recipe to attempt to
         <quote>unwedge</quote> your repository:</para>
    
       <orderedlist>
@@ -1912,7 +1900,7 @@ $ svnadmin list-unused-dblogs /path/to/repos | xargs rm
           <para>Make sure that there are no processes accessing (or
             attempting to access) the repository.  For networked
             repositories, this means shutting down the Apache HTTP
-            Server, too.</para>
+            Server or svnserve daemon, too.</para>
         </listitem>
         <listitem> 
           <para>Become the user who owns and manages the repository.
@@ -1980,10 +1968,10 @@ The latest repos revision is 19.
 
       <para>There are many reasons for dumping and loading Subversion
         repository data.  Early in Subversion's life, the most common
-        reason was due to changes in Subversion itself.  As Subversion
-        matured, there were times when certain changes made to the
-        back-end database schema caused Subversion to be incompatible
-        with previous versions of the repository, so users had to dump
+        reason was due to the evolution of Subversion itself.  As
+        Subversion matured, there were times when changes made to the
+        back-end database schema caused compatibility issues with
+        previous versions of the repository, so users had to dump
         their repository data using the previous version of
         Subversion, and load it into a freshly created repository with
         the new version of Subversion.  Other reasons for dumping and
@@ -2656,11 +2644,10 @@ $
         you don't have to implement these algorithms yourself, because
         the Subversion development team has already done so.  The
         <command>svnadmin hotcopy</command> command takes care of the
-        minutia involved in making a <firstterm>hot backup</firstterm>
-        (that is, a backup made without interrupting the repository's
-        general accessibility) of your repository.  And its invocation
-        is as trivial as Unix's <command>cp</command> or Windows'
-        <command>copy</command> operations:</para>
+        minutia involved in making a hot backup of your repository.
+        And its invocation is as trivial as Unix's
+        <command>cp</command> or Windows' <command>copy</command>
+        operations:</para>
 
       <screen>
 $ svnadmin hotcopy /path/to/repos /path/to/repos-backup
@@ -2682,9 +2669,9 @@ $ svnadmin hotcopy /path/to/repos /path/to/repos-backup
 $ svnadmin hotcopy --clean-logs /path/to/bdb-repos /path/to/bdb-repos-backup
 </screen>
 
-      <para>There's additional tooling around this command that's
-        available, too.  The <filename>tools/backup/</filename>
-        directory of the Subversion source distribution holds the
+      <para>Additional tooling around this command is available, too.
+        The <filename>tools/backup/</filename> directory of the
+        Subversion source distribution holds the
         <command>hot-backup.py</command> script.  This script adds a
         bit of backup management atop <command>svnadmin
         hotcopy</command>, allowing you to keep only the most recent
@@ -2692,7 +2679,7 @@ $ svnadmin hotcopy --clean-logs /path/to/bdb-repos /path/to/bdb-repos-backup
         automatically manage the names of the backed-up repository
         directories to avoid collisions with previous backups, and
         will <quote>rotate off</quote> older backups, deleting them so
-        only the most ones remain.  Even if you also have an
+        only the most recent ones remain.  Even if you also have an
         incremental backup, you might want to run this program on a
         regular basis.  For example, you might consider using
         <command>hot-backup.py</command> from a program scheduler
