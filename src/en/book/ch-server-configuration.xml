@@ -123,11 +123,12 @@
 
       <title>The Apache HTTP Server</title>
 
-      <para>The Apache HTTP Server is a well-establish, full-featured
+      <para>The Apache HTTP Server is a well-established, full-featured
         web server program.  But when you extend this server with the
-        mod_dav_svn Subversion server module, the Apache HTTP Server
-        becomes a Subversion server, too.  Clients speak to server via
-        HTTP or HTTPS, using the WebDAV protocol.</para>
+        <command>mod_dav_svn</command> Subversion server module, the
+        Apache HTTP Server becomes a Subversion server, too.  Clients
+        speak to server via HTTP or HTTPS, using the WebDAV/DeltaV
+        protocol.</para>
 
       <variablelist>
         <varlistentry>
@@ -562,7 +563,17 @@ svn stream tcp nowait svnowner /usr/bin/svnserve svnserve -i
         <para>If your Windows system is a descendant of Windows NT
           (2000, 2003, XP, Vista), then you can
           run <command>svnserve</command> as a standard Windows
-          service.  You'll need to define the service using a
+          service.  This is typically a much nicer experience than
+          running it as a standalone daemon with
+          the <option>-d</option> option.  Using daemon-mode requires
+          launching a console, typing a command, and then leaving the
+          console window running indefinitely.  A Windows service,
+          however, runs in the background, can start at boot time
+          automatically, and can be started and stopped using the same
+          consistent administration interface as other
+          services. </para>
+
+        <para>You'll need to define the new service using the
           command-line tool <command>SC.EXE</command>.  Much like
           the <command>inetd</command> configuration line, you must
           specify an exact invocation of <command>svnserve</command>
@@ -820,7 +831,7 @@ authz-db = authzfile
 
     <!-- =============================================================== -->
     <sect2 id="svn.serverconfig.svnserve.sshauth">
-      <title>SSH authentication and authorization</title>
+      <title>Tunneling over SSH</title>
 
       <para><command>svnserve</command>'s built-in authentication can
         be very handy, because it avoids the need to create real
@@ -1408,6 +1419,13 @@ ServerName svn.example.com
           <para>anyone can commit to the repository.</para>
         </listitem>
       </itemizedlist>
+
+      <para>Of course, you might have already set up
+        a <filename>pre-commit</filename> hook script to prevent
+        commits (see <xref linkend="svn.reposadmin.create.hooks"/>).
+        But as you read on, you'll see that it's also possible use
+        Apache's built-in methods to restrict access in specific
+        ways.</para>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.serverconfig.httpd.authn.basic">
@@ -2311,8 +2329,7 @@ CustomLog logs/svn_logfile "%t %u %{SVN-ACTION}e" env=SVN-ACTION
       rules-file.</para>
 
     <sidebar>
-      <title>Best practice: do you really need path-based access
-        control?</title>
+      <title>Do you really need path-based access control?</title>
 
       <para>A lot of administrators setting up Subversion for the
         first time tend to jump into path-based access control without
@@ -2359,11 +2376,11 @@ CustomLog logs/svn_logfile "%t %u %{SVN-ACTION}e" env=SVN-ACTION
         this book!</para></footnote>.</para>
 
       <para>As an example to ponder, consider that the Subversion
-        project itself has always a notion of who is allowed to commit
-        where, but it's always been enforced socially.  This is a good
-        model of community trust, especially for open-source projects.
-        Of course, sometimes there <emphasis>are</emphasis> truly
-        legitimate needs for path-based access control; within
+        project itself has always had a notion of who is allowed to
+        commit where, but it's always been enforced socially.  This is
+        a good model of community trust, especially for open-source
+        projects.  Of course, sometimes there <emphasis>are</emphasis>
+        truly legitimate needs for path-based access control; within
         corporations, for example, certain types of data really can be
         sensitive, and access needs to be genuinely restricted to
         small groups of people.</para>
@@ -2515,8 +2532,6 @@ calc-developers = harry, sally, joe
 paint-developers = frank, sally, jane
 everyone = @calc-developers, @paint-developers
 </screen>
-
-    <para>&hellip;and that's pretty much all there is to it.</para>
 
   </sect1>
 
