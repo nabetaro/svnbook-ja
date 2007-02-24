@@ -205,9 +205,10 @@ Adding         branches/my-calc-branch
 Committed revision 341.
 </screen>
 
-      <para>And now the easier method of creating a branch, which we
-        should have told you about in the first place: <command>svn
-        copy</command> is able to operate directly on two URLs.</para>
+      <para>And now here's the easier method of creating a branch,
+        which we should have told you about in the first
+        place: <command>svn copy</command> is able to operate directly
+        on two URLs.</para>
 
       <screen>
 $ svn copy http://svn.example.com/repos/calc/trunk \
@@ -220,19 +221,20 @@ Committed revision 341.
       <para>There's really no difference between these two methods.
         Both procedures create a new directory in revision 341, and
         the new directory is a copy of
-        <filename>/calc/trunk</filename>.  This is shown in <xref
-        linkend="svn.branchmerge.using.create.dia-1"/>.  Notice that the second method,
-        however, performs an <emphasis>immediate</emphasis> commit.
+        <filename>/calc/trunk</filename>.  This is shown in
+        <xref linkend="svn.branchmerge.using.create.dia-1"/>.  Notice
+        that the second method, however, performs
+        an <emphasis>immediate</emphasis> commit.
         <footnote>
-          <para>Subversion does not support
-            cross-repository copying.  When using URLs with <command>svn
-            copy</command> or <command>svn move</command>, you can only
-            copy items within the same repository.</para>
+          <para>Subversion does not support copying between different
+            repositories.  When using URLs with <command>svn
+            copy</command> or <command>svn move</command>, you can
+            only copy items within the same repository.</para>
         </footnote>
         It's an easier procedure, because it doesn't require you to
-        check out a large mirror of the repository.  In fact, this
+        check out a large portion of the repository.  In fact, this
         technique doesn't even require you to have a working copy at
-        all.</para>
+        all.  This is the way most users create branches.</para>
 
       <figure id="svn.branchmerge.using.create.dia-1">
         <title>Repository with new copy</title>
@@ -248,12 +250,11 @@ Committed revision 341.
           duplicate any data.  Instead, it creates a new directory
           entry that points to an <emphasis>existing</emphasis> tree.
           If you're a Unix user, this is the same concept as a
-          hard-link.  From there, the copy is said to be
-          <quote>lazy</quote>.  That is, if you commit a change to one
-          file within the copied directory, then only that file
-          changes&mdash;the rest of the files continue to exist as
-          links to the original files in the original
-          directory.</para>
+          hard-link.  As further changes are made to files and
+          directories beneath the copied directory, Subversion
+          continues to employ this hard-link concept where it can.  It
+          only duplicates data when it is necessary to disambiguate
+          different versions of objects.</para>
 
         <para>This is why you'll often hear Subversion users talk
           about <quote>cheap copies</quote>.  It doesn't matter how
@@ -269,8 +270,10 @@ Committed revision 341.
         <para>Of course, these internal mechanics of copying and
           sharing data are hidden from the user, who simply sees
           copies of trees.  The main point here is that copies are
-          cheap, both in time and space.  Make branches as often as
-          you want.</para>
+          cheap, both in time and space.  If you create a branch
+          entirely within the repository (by running <command>svn copy
+          URL1 URL2</command>), it's a quick, constant-time operation.
+          Make branches as often as you want.</para>
       </sidebar>
 
     </sect2>
@@ -425,27 +428,20 @@ Changed paths:
       <title>The Key Concepts Behind Branches</title> 
 
       <para>There are two important lessons that you should remember
-        from this section.</para>
-
-      <orderedlist>
-        <listitem>
-          <para>Unlike many other version control systems,
-            Subversion's branches exist as <emphasis>normal filesystem
-            directories</emphasis> in the repository, not in an extra
-            dimension.  These directories just happen to carry some
-            extra historical information.</para>
-        </listitem>
-        <listitem>
-          <para>Subversion has no internal concept of a
-            branch&mdash;only copies.  When you copy a directory, the
-            resulting directory is only a <quote>branch</quote>
-            because <emphasis>you</emphasis> attach that meaning to
-            it.  You may think of the directory differently, or treat
-            it differently, but to Subversion it's just an ordinary
-            directory that happens to have been created by
-            copying.</para>
-        </listitem>
-      </orderedlist>
+        from this section.  First, Subversion has no internal concept
+        of a branch&mdash;it only knows how to make copies.  When you
+        copy a directory, the resulting directory is only
+        a <quote>branch</quote> because <emphasis>you</emphasis>
+        attach that meaning to it.  You may think of the directory
+        differently, or treat it differently, but to Subversion it's
+        just an ordinary directory that happens to carry some extra
+        historical information.  Second, because of this copy
+        mechanism, Subversion's branches exist as <emphasis>normal
+        filesystem directories</emphasis> in the repository.  This is
+        different from other version control systems, where branches
+        are typically defined by adding
+        extra-dimensional <quote>labels</quote> to collections of
+        files.</para>
 
     </sect2>
 
@@ -512,7 +508,7 @@ Changed paths:
         revision 344:</para>
 
       <screen>
-$ svn diff -r 343:344 http://svn.example.com/repos/calc/trunk
+$ svn diff -c 344 http://svn.example.com/repos/calc/trunk
 
 Index: integer.c
 ===================================================================
@@ -562,7 +558,7 @@ Index: integer.c
         copy as <emphasis>local modifications</emphasis>:</para>
 
       <screen>
-$ svn merge -r 343:344 http://svn.example.com/repos/calc/trunk
+$ svn merge -c 344 http://svn.example.com/repos/calc/trunk
 U  integer.c
 
 $ svn status
@@ -608,7 +604,7 @@ Committed revision 360.
 
       <sidebar>
         <title>Why Not Use Patches Instead?</title>
-        
+
         <para>A question may be on your mind, especially if you're a
           Unix user: why bother to use <command>svn merge</command> at
           all?  Why not simply use the operating system's
@@ -616,7 +612,7 @@ Committed revision 360.
           For example:</para>
 
         <screen>
-$ svn diff -r 343:344 http://svn.example.com/repos/calc/trunk &gt; patchfile
+$ svn diff -c 344 http://svn.example.com/repos/calc/trunk &gt; patchfile
 $ patch -p0  &lt; patchfile
 Patching file integer.c using Plan A...
 Hunk #1 succeeded at 147.
@@ -633,19 +629,15 @@ done
           limited; it's only able to tweak file contents.  There's no
           way to represent changes to <emphasis>trees</emphasis>, such
           as the addition, removal, or renaming of files and
-          directories.  If Sally's change had, say, added a new
-          directory, the output of <command>svn diff</command>
-          wouldn't have mentioned it at all.  <command>svn
-          diff</command> only outputs the limited patch-format, so
-          there are some ideas it simply can't express.
-          <footnote>
-            <para>In the future, the Subversion project plans to use
-              (or invent) an expanded patch format that describes
-              changes in tree structure and properties.</para>
-          </footnote>
-          The <command>svn merge</command> command, however, can express
-          changes in tree structure and properties by directly applying
-          them to your working copy.</para>
+          directories.  Nor can the <command>patch</command> program
+          notice changes to property changes.  If Sally's change had,
+          say, added a new directory, the output of <command>svn
+          diff</command> wouldn't have mentioned it at
+          all.  <command>svn diff</command> only outputs the limited
+          patch-format, so there are some ideas it simply can't
+          express.  The <command>svn merge</command> command, however,
+          can express changes in tree structure and properties by
+          directly applying them to your working copy.</para>
 
       </sidebar>
 
@@ -685,7 +677,7 @@ done
         target directory to receive the changes:</para>
 
       <screen>
-$ svn merge -r 343:344 http://svn.example.com/repos/calc/trunk my-calc-branch
+$ svn merge -c 344 http://svn.example.com/repos/calc/trunk my-calc-branch
 U   my-calc-branch/integer.c
 </screen>
 
@@ -845,7 +837,7 @@ $ svn merge -r 100:200 http://svn.example.com/repos/trunk
           command:</para>
 
         <screen>
-$ svn merge --dry-run -r 343:344 http://svn.example.com/repos/calc/trunk
+$ svn merge --dry-run -c 344 http://svn.example.com/repos/calc/trunk
 U  integer.c
 
 $ svn status
@@ -915,7 +907,7 @@ $
           the working copy.  Whatever the case, the
           <quote>skipped</quote> message means that the user is most
           likely comparing the wrong two trees; they're the classic
-          sign of driver error.  When this happens, it's easy to
+          sign of user error.  When this happens, it's easy to
           recursively revert all the changes created by the merge
           (<command>svn revert --recursive</command>), delete any
           unversioned files or directories left behind after the
@@ -1022,28 +1014,28 @@ A  foo.c
       <sect3 id="svn.branchmerge.copychanges.bestprac.moves">
         <title>Merges and Moves</title>
 
-        <para>A common desire is to <quote>refactor</quote> source
-          code, especially in Java-based software projects.  Files and
-          directories are shuffled around and renamed, often causing
-          great disruption to everyone working on the project.  Sounds
-          like a perfect case to use a branch, doesn't it?  Just
-          create a branch, shuffle things around, then merge the
-          branch back to the trunk, right?</para>
+        <para>A common desire is to refactor source code, especially
+          in Java-based software projects.  Files and directories are
+          shuffled around and renamed, often causing great disruption
+          to everyone working on the project.  Sounds like a perfect
+          case to use a branch, doesn't it?  Just create a branch,
+          shuffle things around, then merge the branch back to the
+          trunk, right?</para>
 
         <para>Alas, this scenario doesn't work so well right now, and
           is considered one of Subversion's current weak spots.  The
-          problem is that Subversion's <command>move</command>
-          and <command>copy</command> commands aren't as robust as
-          they should be.</para>
+          problem is that Subversion's <command>update</command>
+          command isn't as robust as it should be, particularly when
+          dealing with copy and move operations.</para>
 
         <para>When you use <command>svn copy</command> to duplicate a
           file, the repository remembers where the new file came from,
           but it fails to transmit that information to the client
           which is running <command>svn update</command>
           or <command>svn merge</command>.  Instead of telling the
-          client, <quote>Copy that file you have over there to this
-          new location</quote>, it instead just sends down an entirely
-          new file.  This can lead to problems, especially because the
+          client, <quote>Copy that file you already have to this new
+          location</quote>, it instead sends down an entirely new
+          file.  This can lead to problems, especially because the
           same thing happens with renamed files.  A lesser-known fact
           about Subversion is that it lacks <quote>true
           renames</quote> &mdash; the <command>svn move</command>
@@ -1080,9 +1072,10 @@ A   whole.c
 
         <para>This isn't true data-loss; Sally's changes are still in
           the repository's history, but it may not be immediately
-          obvious that this has happened.  Moral of the story: until
-          Subversion improves, be very careful about merging copies
-          and renames from one branch to another.</para>
+          obvious that this has happened.  The moral of this story is
+          that until Subversion improves, be very careful about
+          merging copies and renames from one branch to
+          another.</para>
 
       </sect3>
 
@@ -1476,7 +1469,7 @@ Removed real.c because code now in double.c.
         repository to your working copy:</para>
 
       <screen>
-$ svn copy --revision 807 \
+$ svn copy -r 807 \
            http://svn.example.com/repos/calc/trunk/real.c ./real.c
 
 $ svn status
@@ -1722,10 +1715,10 @@ A  newdirectory/newfile
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.branchmerge.switchwc">
-    <title>Switching a Working Copy</title>
+    <title>Traversing Branches</title>
 
     <para>The <command>svn switch</command> command transforms an
-      existing working copy into a different branch.  While this
+      existing working copy to reflect a different branch.  While this
       command isn't strictly necessary for working with branches, it
       provides a nice shortcut to users.  In our earlier example,
       after creating your private branch, you checked out a fresh
@@ -1901,9 +1894,9 @@ Committed revision 351.
 </screen>
 
       <para>This example assumes that a
-        <filename>/calc/tags</filename> directory already exists.  (If it
-        doesn't, see <xref linkend="svn.ref.svn.c.mkdir"/>).
-        After the copy completes, the new
+        <filename>/calc/tags</filename> directory already exists.  (If
+        it doesn't, you can create it using <command>svn
+        mkdir</command>.)  After the copy completes, the new
         <filename>release-1.0</filename> directory is forever a
         snapshot of how the project looked in the
         <literal>HEAD</literal> revision at the time you made the
@@ -2531,7 +2524,9 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
       repository.</para>
 
     <para>Remember the Subversion mantra: branches and tags are cheap.
-      So use them liberally!</para>
+      So use them liberally!  At the same time, don't forget to use
+      good merging habits.  Cheap copies are only useful when you're
+      careful about tracking your merging actions.</para>
 
   </sect1>
 
