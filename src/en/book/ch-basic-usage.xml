@@ -33,6 +33,22 @@
       <replaceable>SUBCOMMAND</replaceable></command> will describe
       the syntax, switches, and behavior of the subcommand.</para>
 
+    <screen>
+$ svn help import
+import: Commit an unversioned file or tree into the repository.
+usage: import [PATH] URL
+
+  Recursively commit a copy of PATH to URL.
+  If PATH is omitted '.' is assumed.
+  Parent directories are created as necessary in the repository.
+  If PATH is a directory, the contents of the directory are added
+  directly under URL.
+
+Valid options:
+  -q [--quiet]             : print as little as possible
+  -N [--non-recursive]     : operate on single directory only
+&hellip;
+</screen>
   </sect1>
 
   <!-- ================================================================= -->
@@ -108,10 +124,12 @@ $ svn list file:///usr/local/svn/repos
 /tags
 </screen>
 
-      <para>For details and how to setup multiple projects, see <xref
-         linkend="svn.branchmerge.maint.layout"/> and <xref
-         linkend="svn.reposadmin.projects.chooselayout"/> to read more
-         about <quote>project roots</quote>.</para>
+      <para>You'll learn more about tags and branches in <xref
+      linkend="svn.branchmerge"/>.  For details and how to setup
+      multiple projects, see <xref
+      linkend="svn.branchmerge.maint.layout"/> and <xref
+      linkend="svn.reposadmin.projects.chooselayout"/> to read more
+      about <quote>project roots</quote>.</para>
 
     </sect2>
 
@@ -204,23 +222,24 @@ Checked out revision 8810.
 
     <para>Since Subversion uses a <quote>copy-modify-merge</quote>
       model instead of <quote>lock-modify-unlock</quote> (see <xref
-      linkend="svn.basic"/>), you're already able to start making
-      changes to the files and directories in your working copy.  Your
-      working copy is just like any other collection of files and
-      directories on your system.  You can edit and change them, move
-      them around, you can even delete the entire working copy and
-      forget about it.</para>
+      linkend="svn.basic.vsn-models"/>), you're already able to start
+      making changes to the files and directories in your working
+      copy.  Your working copy is just like any other collection of
+      files and directories on your system.  You can edit and change
+      them, move them around, you can even delete the entire working
+      copy and forget about it.</para>
 
       <note>
+
         <para>While your working copy is <quote>just like any other
           collection of files and directories on your system</quote>,
-          you need to let Subversion know if you're going to be
-          rearranging anything inside of your working copy.  If you
-          want to copy or move an item in a working copy, you should
-          use <command>svn copy</command> or <command>svn
-          move</command> instead of the copy and move commands
-          provided by your operating system.  We'll talk more about
-          them later in this chapter.</para>
+          you can edit files at will, but you must tell Subversion
+          about <emphasis>everything else</emphasis>that you do.  For
+          example, if you want to copy or move an item in a working
+          copy, you should use <command>svn copy</command> or
+          <command>svn move</command> instead of the copy and move
+          commands provided by your operating system.  We'll talk more
+          about them later in this chapter.</para>
       </note>
 
     <para>Unless you're ready to commit a new file or directory, or
@@ -258,7 +277,9 @@ Checked out revision 8810.
 
     <para>That will place your working copy in a directory named
       <literal>subv</literal> instead of a directory named
-      <literal>trunk</literal> as we did previously.</para>
+      <literal>trunk</literal> as we did previously.  The directory
+      <literal>subv</literal> will be created if it doesn't already
+      exist.</para>
 
 
     <sect2 id="svn.tour.initial.disabling-password-caching">
@@ -439,7 +460,7 @@ Updated to revision 2.
         working copy: file changes and tree changes.  You don't need
         to tell Subversion that you intend to change a file; just make
         your changes using your text editor, word processor, graphics
-        program, or whatever tool you wulrd normally use.  Subversion
+        program, or whatever tool you would normally use.  Subversion
         automatically detects which files have been changed, and in
         addition handles binary files just as easily as it handles
         text files&mdash;and just as efficiently too.  For tree
@@ -477,16 +498,6 @@ Updated to revision 2.
           can't be used as a symlink on a Windows system, it also
           won't prevent Windows users from performing their other
           Subversion-related activities.</para> </sidebar>
-
-      <warning>
-        <para>While you can edit your files with whatever tool you
-          like, you shouldn't change the structure of your working
-          copy without letting Subversion know what you're doing.  Use
-          the <command>svn copy</command>, <command>svn
-          delete</command>, and <command>svn move</command> commands
-          to change the structure of your working copy, and use the
-          <command>svn add</command> command to place new files and
-          directories under version control.</para> </warning>
 
       <variablelist>
 
@@ -757,7 +768,7 @@ D      stuff/fish.c
           changed:</para>
 
         <screen>
-$ svn status --verbose
+$ svn status -v
 M               44        23    sally     README
                 44        30    sally     INSTALL
 M               44        20    harry     bar.c
@@ -787,7 +798,7 @@ A                0         ?     ?        stuff/things/bloo.h
           out-of-date:</para>
 
         <screen>
-$ svn status --show-updates --verbose
+$ svn status -u -v
 M      *        44        23    sally     README
 M               44        20    harry     bar.c
        *        44        35    harry     stuff/trout.c
@@ -822,16 +833,7 @@ Status against revision:   46
           <emphasis>exactly</emphasis> how you've modified things by
           running <command>svn diff</command> with no arguments, which
           prints out file changes in unified diff
-          format:<footnote><para>Subversion uses its internal diff
-          engine, which produces unified diff format, by default.  If
-          you want diff output in a different format, specify an
-          external diff program using <option>--diff-cmd</option> and
-          pass any flags you'd like to it using the
-          <option>--extensions</option> switch.  For example, to see
-          local differences in file <filename>foo.c</filename> in
-          context output format while ignoring case differences, you
-          might run <command>svn diff --diff-cmd /usr/bin/diff
-          --extensions '-i' foo.c</command>.</para> </footnote></para>
+          format:</para>
 
         <screen>
 $ svn diff
@@ -898,6 +900,17 @@ $ svn diff &gt; patchfile
         <para>You could, for example, email the patch file to another
           developer for review or testing prior to commit.</para>
 
+        <para>Subversion uses its internal diff engine, which produces
+          unified diff format, by default.  If you want diff output in
+          a different format, specify an external diff program using
+          <option>--diff-cmd</option> and pass any flags you'd like to
+          it using the <option>--extensions</option> switch.  For
+          example, to see local differences in file
+          <filename>foo.c</filename> in context output format while
+          ignoring case differences, you might run <command>svn diff
+          --diff-cmd /usr/bin/diff --extensions '-i'
+          foo.c</command>.</para>
+
       </sect3>
 
     </sect2>
@@ -908,11 +921,11 @@ $ svn diff &gt; patchfile
       <title>Undoing Working Changes</title>
 
 
-      <para>Suppose while viewing the output of 'svn diff' you
-        determine that all the changes you made to a particular file
-        are mistakes.  Maybe you shouldn't have changed the file at
-        all, or perhaps it would be easier to make different changes
-        starting from scratch.</para>
+      <para>Suppose while viewing the output of <command>svn
+        diff</command> you determine that all the changes you made to
+        a particular file are mistakes.  Maybe you shouldn't have
+        changed the file at all, or perhaps it would be easier to make
+        different changes starting from scratch.</para>
  
       <para>This is a perfect opportunity to use <command>svn
         revert</command>:</para>
@@ -1425,8 +1438,7 @@ svn: Your file or directory 'sandwich.txt' is probably out-of-date
         <varlistentry>
           <term><command>svn diff</command></term>
           <listitem>
-            <para>Shows you the specific details of how a file changed
-              over time.</para>
+            <para>Shows line-level details of a particular change.</para>
           </listitem>
         </varlistentry>
 
@@ -1660,7 +1672,26 @@ $
           compared.</para>
 
         <screen>
-$ svn diff --revision 2:3 rules.txt
+$ svn diff --r 2:3 rules.txt
+Index: rules.txt
+===================================================================
+--- rules.txt	(revision 2)
++++ rules.txt	(revision 3)
+@@ -1,4 +1,4 @@
+ Be kind to others
+-Freedom = Chocolate Ice Cream
++Freedom = Responsibility
+ Everything in moderation
+ Chew with your mouth open
+$
+</screen>
+
+        <para>A more convenient way of comparing a revision to the
+          previous revision is to use the <option>--change</option>
+          (<option>-c</option>):</para>
+
+        <screen>
+$ svn diff -c 3 rules.txt
 Index: rules.txt
 ===================================================================
 --- rules.txt	(revision 2)
@@ -1786,6 +1817,16 @@ $ svn checkout --revision 1729 # Checks out a new working copy at r1729
 $ svn update --revision 1729 # Updates an existing working copy to r1729
 &hellip;
 </screen>
+
+      <warning>
+        <para>Many Subversion newcomers attempt to use the above
+          <command>svn update</command> example to <quote>undo</quote>
+          committed changes, but this won't work as you can't commit
+          changes that you obtain from backdating a working copy if
+          the changed files have newer revisions.  See <xref
+          linkend="svn.branchmerge.commonuses.resurrect"/> for a
+          description of how to <quote>undo</quote> a commit.</para>
+          </warning>
 
       <para>Lastly, if you're building a release and wish to bundle up
         your files from Subversion but don't want those pesky .svn
