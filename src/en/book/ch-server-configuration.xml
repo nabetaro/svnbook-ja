@@ -35,20 +35,52 @@
     <para>Apache is an extremely popular webserver; using the
       <command>mod_dav_svn</command> module, Apache can access a
       repository and make it available to clients via the
-      WebDAV/DeltaV protocol, which is an extension of HTTP.  In the
-      other corner is <command>svnserve</command>: a small, standalone
-      server program that speaks a custom protocol with clients.
-      <xref linkend="svn.serverconfig.overview.tbl-1"/> presents a
-      comparison of the two servers.</para>
+      WebDAV/DeltaV protocol, which is an extension of HTTP.  Because
+      Apache is an extremely extensible web server, it provides a
+      number of features <quote>for free</quote>, such as encrypted
+      SSL communication, logging, integration with a number of
+      third-party authentication systems, and limited built-in web
+      browsing of repositories.</para>
+
+    <para>In the other corner is <command>svnserve</command>: a small,
+      lightweight server program that speaks a custom protocol with
+      clients.  Because its protocol is explicitly designed for
+      Subversion and is stateful (unlike HTTP), it provides
+      significantly faster network operations&mdash;but at the cost of
+      some features as well.  It only understands CRAM-MD5
+      authentication, has no logging, no web-browsing, and no option
+      to encrypt network traffic.  It is, however, extremely easy to
+      set up and is often the best option for small teams just
+      starting out with Subversion.</para>
+
+    <para>A third option is to use <command>svnserve</command>
+      tunneled over an SSH connection.  Even though this scenario
+      still uses <command>svnserve</command>, it differs quite a bit
+      in features from a traditional <command>svnserve</command>
+      deployment.  SSH is used to encrypt all communication.  SSH is
+      also used exclusively to authenticate, so real system accounts
+      are required on the server host (unlike
+      vanilla <command>svnserve</command>, which has its own private
+      user accounts.)  Finally, because this setup requires that each
+      user spawn a private, temporary <command>svnserve</command>
+      process, it's equivalent (from a permissions point of view) to
+      allowing a group of local users to all access the repository
+      via <literal>file://</literal> URLs. Path-based access control
+      has no meaning, since each user is accessing the repository
+      database files directly.</para>
+
+    <para>Here's a quick summary of the three typical server
+      deployments.</para>
 
     <table id="svn.serverconfig.overview.tbl-1">
-      <title>Network Server Comparison</title>
+      <title>Comparison of Subversion Server Options</title>
       <tgroup cols="3">
         <thead>
           <row>
             <entry>Feature</entry>
             <entry>Apache + mod_dav_svn</entry>
             <entry>svnserve</entry>
+            <entry>svnserve over SSH</entry>
           </row>
         </thead>
         <tbody>
@@ -56,14 +88,15 @@
             <entry>Authentication options</entry>
             <entry>HTTP(S) basic auth, X.509 certificates, LDAP, NTLM, or
               any other mechanism available to Apache httpd</entry>
-            <entry>CRAM-MD5 or SSH</entry>
+            <entry>CRAM-MD5</entry>
+            <entry>SSH</entry>
           </row>
 
           <row>
             <entry>User account options</entry>
             <entry>private 'users' file</entry>
-            <entry>private 'users' file, or existing system (SSH)
-              accounts</entry>
+            <entry>private 'users' file</entry>
+            <entry>system accounts</entry>
           </row>
 
           <row>
@@ -72,12 +105,15 @@
               repository, or specified per-path.</entry>
             <entry>read/write access can be granted over whole
               repository, or specified per-path.</entry>
+            <entry>read/write access only grantable over whole
+              repository</entry>
           </row>
 
           <row>
             <entry>Encryption</entry>
             <entry>via optional SSL</entry>
-            <entry>via optional SSH tunnel</entry>
+            <entry>none</entry>
+            <entry>SSH tunneled</entry>
           </row>
 
           <row>
@@ -86,11 +122,13 @@
             optional <quote>high-level</quote> logging of general
             client operations</entry>
             <entry>no logging</entry>
+            <entry>no logging</entry>
           </row>
 
           <row>
             <entry>Interoperability</entry>
             <entry>partially usable by other WebDAV clients</entry>
+            <entry>only talks to svn clients</entry>
             <entry>only talks to svn clients</entry>
           </row>
 
@@ -99,36 +137,147 @@
             <entry>limited built-in support, or via 3rd-party tools
               such as ViewVC</entry>
             <entry>only via 3rd-party tools such as ViewVC</entry>
+            <entry>only via 3rd-party tools such as ViewVC</entry>
           </row>
 
           <row>
             <entry>Speed</entry>
             <entry>somewhat slower</entry>
             <entry>somewhat faster</entry>
+            <entry>somewhat faster</entry>
           </row>
 
           <row>
             <entry>Initial setup</entry>
             <entry>somewhat complex</entry>
-            <entry>fairly simple</entry>
+            <entry>extremely simple</entry>
+            <entry>moderately simple </entry>
           </row>
 
         </tbody>
       </tgroup>
     </table>
 
+  </sect1>
 
+  <sect1 id="svn.serverconfig.choosing">
 
-    <sect2 id="svn.serverconfig.overview.apache">
+    <title>Choosing a Server Configuration</title>
+
+    <para>So, which server should you use?  Which is best?</para>
+
+    <para>Obviously, there's no right answer to that question.  Every
+      team has different needs, and the different servers all
+      represent different sets of tradeoffs.  The Subversion project
+      itself doesn't endorse one server or another, or consider either
+      server more <quote>official</quote> than another.</para>
+
+    <para>Here are some reasons why you might choose one deployment
+      over another, as well as reasons you
+      might <emphasis>not</emphasis> choose one.</para>
+
+    <sect2 id="svn.serverconfig.choosing.svnserve">
+
+      <title>The <command>svnserve</command> Server</title>
+
+      <variablelist>
+        <varlistentry>
+          <term>Why you might want to use it:</term>
+          <listitem>
+            <itemizedlist>
+
+            <listitem><para>Quick and easy to set
+                up.</para></listitem>
+
+            <listitem><para>Network protocol is stateful and
+                noticeably faster than WebDAV.</para></listitem>
+
+            <listitem><para>No need to create system accounts on
+                server.</para></listitem>
+
+            <listitem><para>Password is not passed over the
+                network.</para></listitem>
+
+            </itemizedlist>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Why you might want to avoid it:</term>
+          <listitem>
+            <itemizedlist>
+
+            <listitem><para>Network protocol is not
+                encrypted.</para></listitem>
+
+            <listitem><para>Only one choice of authentication
+                method.</para></listitem>
+
+            <listitem><para>Password is stored in the clear on the
+                server.</para></listitem>
+
+            <listitem><para>No logging of any kind, not even
+                errors.</para></listitem>
+
+            </itemizedlist>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+    </sect2>
+
+    <sect2 id="svn.serverconfig.choosing.svn-ssh">
+
+      <title><command>svnserve</command> over SSH</title>
+
+      <variablelist>
+        <varlistentry>
+          <term>Why you might want to use it:</term>
+          <listitem>
+            <itemizedlist>
+
+            <listitem><para>Network protocol is stateful and
+                noticeably faster than WebDAV.</para></listitem>
+
+            <listitem><para>You can take advantage of existing ssh
+                accounts and user infrastructure.</para></listitem>
+
+            <listitem><para>All network traffic is
+                encrypted.</para></listitem>
+
+            </itemizedlist>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Why you might want to avoid it:</term>
+          <listitem>
+            <itemizedlist>
+
+            <listitem><para>Only one choice of authentication
+                method.</para></listitem>
+
+            <listitem><para>No logging of any kind, not even
+                errors.</para></listitem>
+
+            <listitem><para>Requires users to be in same system group, or
+                use a shared ssh key.</para></listitem>
+
+            <listitem><para>Can lead to file permissions
+                problems.</para></listitem>
+
+            </itemizedlist>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+    </sect2>
+
+    <sect2 id="svn.serverconfig.choosing.apache">
 
       <title>The Apache HTTP Server</title>
-
-      <para>The Apache HTTP Server is a well-established, full-featured
-        web server program.  But when you extend this server with the
-        <command>mod_dav_svn</command> Subversion server module, the
-        Apache HTTP Server becomes a Subversion server, too.  Clients
-        speak to server via HTTP or HTTPS, using the WebDAV/DeltaV
-        protocol.</para>
 
       <variablelist>
         <varlistentry>
@@ -182,135 +331,9 @@
 
     </sect2>
 
+    <sect2 id="svn.serverconfig.choosing.recommendations">
 
-    <sect2 id="svn.serverconfig.overview.svnserve">
-
-      <title>The <command>svnserve</command> Server</title>
-
-      <para><command>svnserve</command> is a lightweight server
-        process which can run either as a persistent daemon, or as
-        something automatically launched by inetd when necessary.
-        Clients authenticate via the CRAM-MD5 algorithm and speak a
-        network protocol that is custom to Subversion.</para>
-
-      <variablelist>
-        <varlistentry>
-          <term>Why you might want to use it:</term>
-          <listitem>
-            <itemizedlist>
-
-            <listitem><para>Quick and easy to set
-                up.</para></listitem>
-
-            <listitem><para>Network protocol is stateful and
-                noticeably faster than WebDAV.</para></listitem>
-
-            <listitem><para>No need to create system accounts on
-                server.</para></listitem>
-
-            <listitem><para>Password is not passed over the
-                network.</para></listitem>
-
-            </itemizedlist>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>Why you might want to avoid it:</term>
-          <listitem>
-            <itemizedlist>
-
-            <listitem><para>Network protocol is not
-                encrypted.</para></listitem>
-
-            <listitem><para>Only one choice of authentication
-                method.</para></listitem>
-
-            <listitem><para>Password is stored in the clear on the
-                server.</para></listitem>
-
-            <listitem><para>No logging of any kind, not even
-                errors.</para></listitem>
-
-            </itemizedlist>
-          </listitem>
-        </varlistentry>
-
-      </variablelist>
-
-    </sect2>
-
-    <sect2 id="svn.serverconfig.overview.svn-ssh">
-
-      <title><command>svnserve</command> over SSH</title>
-
-      <para><command>svnserve</command> can be invoked via SSH to
-        handle Subversion client communication tunneled across that
-        protocol.  Each Subversion client uses an existing
-        SSH-accessed system account to spawn a temporary
-        <command>svnserve</command> process (running as themselves) on
-        the server machine.  The <command>svnserve</command> process
-        accesses the repository, communicates with the client over the
-        SSH tunnel, then dies when the SSH connection is closed.
-        (There is no long-running <command>svnserve</command>
-        process.)</para>
-
-      <variablelist>
-        <varlistentry>
-          <term>Why you might want to use it:</term>
-          <listitem>
-            <itemizedlist>
-
-            <listitem><para>Network protocol is stateful and
-                noticeably faster than WebDAV.</para></listitem>
-
-            <listitem><para>You can take advantage of existing ssh
-                accounts and user infrastructure.</para></listitem>
-
-            <listitem><para>All network traffic is
-                encrypted.</para></listitem>
-
-            </itemizedlist>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>Why you might want to avoid it:</term>
-          <listitem>
-            <itemizedlist>
-
-            <listitem><para>Only one choice of authentication
-                method.</para></listitem>
-
-            <listitem><para>No logging of any kind, not even
-                errors.</para></listitem>
-
-            <listitem><para>Requires users to be in same system group, or
-                use a shared ssh key.</para></listitem>
-
-            <listitem><para>Can lead to file permissions
-                problems.</para></listitem>
-
-            </itemizedlist>
-          </listitem>
-        </varlistentry>
-
-      </variablelist>
-
-    </sect2>
-
-    <sect2 id="svn.serverconfig.overview.choosing-a-server">
-
-      <title>Choosing the Best Server Configuration</title>
-
-      <para>So, which server should you use?  Which is best?</para>
-
-      <para>Obviously, there's no right answer to that question.
-        Every team has different needs, and the different servers all
-        represent different sets of tradeoffs.  The Subversion project
-        itself doesn't endorse one server or another, or consider
-        either server more <quote>official</quote> than
-        another.</para>
+      <title>Recommendations</title>
 
       <para>In general, the authors of this book recommend a vanilla
         <command>svnserve</command> installation for small teams just
@@ -319,8 +342,8 @@
         Remember, you can always switch to a more complex server
         deployment as your needs change.</para>
 
-      <para>Here are some general recommendations, based on years of
-        supporting users:</para>
+      <para>Here are some general recommendations and tips, based on
+        years of supporting users:</para>
 
       <itemizedlist>
         <listitem>
