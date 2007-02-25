@@ -6,7 +6,7 @@ def usage(err_msg):
   stream = err_msg and sys.stderr or sys.stdout
   if err_msg:
     stream.write("ERROR: %s\n\n" % (err_msg))
-  stream.write("""Usage: %s [-r <revision>] [-u] [--dry-run]
+  stream.write("""Usage: %s [-r <revision> [--dry-run]] [-u]
 
 Options:
     -r: Revision to sync
