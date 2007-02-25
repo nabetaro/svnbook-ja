@@ -418,10 +418,10 @@
      
       <screen>
 $ svn --version
-svn, version 1.2.3 (r15833)
-   compiled Sep 13 2005, 22:45:22
+svn, version 1.4.3 (r23084)
+   compiled Jan 18 2007, 07:47:40
 
-Copyright (C) 2000-2005 CollabNet.
+Copyright (C) 2000-2006 CollabNet.
 Subversion is open source software, see http://subversion.tigris.org/
 This product includes software developed by CollabNet (http://www.Collab.Net/).
 
@@ -435,6 +435,7 @@ The following repository access (RA) modules are available:
 * ra_local : Module for accessing a repository on local disk.
   - handles 'file' scheme
 
+$
 </screen>
 
       <para>The public API exported by the RA Layer contains
@@ -540,6 +541,129 @@ The following repository access (RA) modules are available:
       </sidebar>
 
     </sect2>
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.developer.insidewc">
+    <title>Inside the Working Copy Administration Area</title>
+    
+    <para>As we mentioned earlier, each directory of a Subversion
+      working copy contains a special subdirectory called
+      <filename>.svn</filename> which houses administrative data about
+      that working copy directory.  Subversion uses the information in
+      <filename>.svn</filename> to keep track of things like:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Which repository location(s) are represented by the
+          files and subdirectories in the working copy
+          directory.</para>
+      </listitem>
+      <listitem>
+        <para>What revision of each of those files and directories are
+          currently present in the working copy.</para>
+      </listitem>
+      <listitem>
+        <para>Any user-defined properties that might be attached
+          to those files and directories.</para>
+      </listitem>
+      <listitem>
+        <para>Pristine (un-edited) copies of the working copy
+          files.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>The Subversion working copy administration area's layout and
+      contents are considered implementation details not really
+      intended for human consumption.  Developers are encouraged to
+      use Subversion's public APIs or provided tools to access and
+      manipulate the working copy data, as opposed to directly reading
+      or modifying the files of which the working copy administrative
+      area is comprised.  The file formats employed by the working
+      copy library for its administrative data do change from time to
+      time&mdash;a fact that the public APIs do a great job of
+      successfully hiding from the average user.  In this section, we
+      expose some of these implementation details sheerly to appease
+      your overwhelming curiousity.</para>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.developer.insidewc.entries">
+      <title>The Entries File</title>
+
+      <para>Perhaps the single most important file in the
+        <filename>.svn</filename> directory is the
+        <filename>entries</filename> file.  The entries file is a
+        single file which contains the bulk of the administrative
+        information about a versioned item in a working copy
+        directory.  It is this one file which tracks the repository
+        URLs, pristine revision, file checksums, pristine text and
+        property timestamps, scheduling and conflict state
+        information, last-known commit information (author, revision,
+        timestamp), local copy history&mdash;practically everything
+        that a Subversion client is interested in knowing about a
+        versioned (or to-be-versioned) resource!</para>
+
+      <para>Folks familiar with CVS's administrative directories will
+        have recognized at this point that Subversion's
+        <filename>.svn/entries</filename> file serves the purposes of,
+        among other things, CVS's <filename>CVS/Entries</filename>,
+        <filename>CVS/Root</filename>, and
+        <filename>CVS/Repository</filename> files combined.</para>
+
+      <para>The format of the <filename>.svn/entries</filename> file
+        has changed over time.  Originally an XML file, it now uses a
+        custom&mdash;though still human-readable&mdash;file format.
+        While XML was a great choice for early developers of
+        Subversion who were frequently debugging the file's contents
+        (and Subversion's behavior in light of them), the need for
+        easy developer debugging has diminished as Subversion has
+        matured, and has been replaced by the user's need for snappier
+        performance.  Of course, Subversion's working copy library
+        makes upgrading from one working copy format to another a
+        breeze&mdash;it reads the old formats, and writes the
+        new.</para>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.developer.insidewc.base-and-props">
+      <title>Pristine Copies and Property Files</title>
+
+      <para>As mentioned before, the <filename>.svn</filename>
+        directory also holds the pristine <quote>text-base</quote>
+        versions of files.  Those can be found in
+        <filename>.svn/text-base</filename>.  The benefits of these
+        pristine copies are multiple&mdash;network-free checks for
+        local modifications and difference reporting, network-free
+        reversion of modified or missing files, smaller transmission
+        of changes to the server&mdash;but comes at the cost of having
+        each versioned file stored at least twice on disk.  These
+        days, this seems to be a negligible penalty for most files.
+        However, the situation gets uglier as the size of your
+        versioned files grows.  Some attention is being given to
+        making the presence of the <quote>text-base</quote> an option.
+        Ironically though, it is as your versioned files' sizes get
+        larger that the existence of the <quote>text-base</quote>
+        becomes more crucial&mdash;who wants to transmit a huge file
+        across a network just because they want to commit a tiny
+        change to it?</para>
+
+      <para>Similar in purpose to the <quote>text-base</quote> files
+        are the property files and their pristine
+        <quote>prop-base</quote> copies, located in
+        <filename>.svn/props</filename> and
+        <filename>.svn/prop-base</filename> respectively.  Since
+        directories can have properties, too, there are also
+        <filename>.svn/dir-props</filename> and
+        <filename>.svn/dir-prop-base</filename> files.  Each of these
+        property files (<quote>working</quote> and <quote>base</quote>
+        versions) uses a simple <quote>hash-on-disk</quote> file
+        format for storing the property names and values.</para>
+
+    </sect2>
+
   </sect1>
 
   <!-- ================================================================= -->
@@ -1052,116 +1176,6 @@ if __name__ == '__main__':
         unceremonious program abortion.</para>
 
     </sect2>
-  </sect1>
-
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <sect1 id="svn.developer.insidewc">
-    <title>Inside the Working Copy Administration Area</title>
-    
-    <para>As we mentioned earlier, each directory of a Subversion
-      working copy contains a special subdirectory called
-      <filename>.svn</filename> which houses administrative data about
-      that working copy directory.  Subversion uses the information in
-      <filename>.svn</filename> to keep track of things like:</para>
-
-    <itemizedlist>
-      <listitem>
-        <para>Which repository location(s) are represented by the
-          files and subdirectories in the working copy
-          directory.</para>
-      </listitem>
-      <listitem>
-        <para>What revision of each of those files and directories are
-          currently present in the working copy.</para>
-      </listitem>
-      <listitem>
-        <para>Any user-defined properties that might be attached
-          to those files and directories.</para>
-      </listitem>
-      <listitem>
-        <para>Pristine (un-edited) copies of the working copy
-          files.</para>
-      </listitem>
-    </itemizedlist>
-
-    <para>The Subversion working copy administration area's layout and
-      contents are considered implementation details not really
-      intended for human consumption.  Developers are encouraged to
-      use Subversion's public APIs or provided tools to access and
-      manipulate the working copy data, as opposed to directly reading
-      or modifying the files of which the working copy administrative
-      area is comprised.  The file formats employed by the working
-      copy library for its administrative data do change from time to
-      time&mdash;a fact that the public APIs do a great job of
-      successfully hiding from the average user.  In this section, we
-      expose some of these implementation details sheerly to appease
-      your overwhelming curiousity.</para>
-
-    <!-- =============================================================== -->
-    <sect2 id="svn.developer.insidewc.entries">
-      <title>The Entries File</title>
-
-      <para>Perhaps the single most important file in the
-        <filename>.svn</filename> directory is the
-        <filename>entries</filename> file.  The entries file is a
-        single file which contains the bulk of the administrative
-        information about a versioned item in a working copy
-        directory.  It is this one file which tracks the repository
-        URLs, pristine revision, file checksums, pristine text and
-        property timestamps, scheduling and conflict state
-        information, last-known commit information (author, revision,
-        timestamp), local copy history&mdash;practically everything
-        that a Subversion client is interested in knowing about a
-        versioned (or to-be-versioned) resource!</para>
-
-      <para>Folks familiar with CVS's administrative directories will
-        have recognized at this point that Subversion's
-        <filename>.svn/entries</filename> file serves the purposes of,
-        among other things, CVS's <filename>CVS/Entries</filename>,
-        <filename>CVS/Root</filename>, and
-        <filename>CVS/Repository</filename> files combined.</para>
-
-    </sect2>
-
-    <!-- =============================================================== -->
-    <sect2 id="svn.developer.insidewc.base-and-props">
-      <title>Pristine Copies and Property Files</title>
-
-      <para>As mentioned before, the <filename>.svn</filename>
-        directory also holds the pristine <quote>text-base</quote>
-        versions of files.  Those can be found in
-        <filename>.svn/text-base</filename>.  The benefits of these
-        pristine copies are multiple&mdash;network-free checks for
-        local modifications and difference reporting, network-free
-        reversion of modified or missing files, smaller transmission
-        of changes to the server&mdash;but comes at the cost of having
-        each versioned file stored at least twice on disk.  These
-        days, this seems to be a negligible penalty for most files.
-        However, the situation gets uglier as the size of your
-        versioned files grows.  Some attention is being given to
-        making the presence of the <quote>text-base</quote> an option.
-        Ironically though, it is as your versioned files' sizes get
-        larger that the existence of the <quote>text-base</quote>
-        becomes more crucial&mdash;who wants to transmit a huge file
-        across a network just because they want to commit a tiny
-        change to it?</para>
-
-      <para>Similar in purpose to the <quote>text-base</quote> files
-        are the property files and their pristine
-        <quote>prop-base</quote> copies, located in
-        <filename>.svn/props</filename> and
-        <filename>.svn/prop-base</filename> respectively.  Since
-        directories can have properties, too, there are also
-        <filename>.svn/dir-props</filename> and
-        <filename>.svn/dir-prop-base</filename> files.  Each of these
-        property files (<quote>working</quote> and <quote>base</quote>
-        versions) uses a simple <quote>hash-on-disk</quote> file
-        format for storing the property names and values.</para>
-
-    </sect2>
-
   </sect1>
 
 </chapter>
