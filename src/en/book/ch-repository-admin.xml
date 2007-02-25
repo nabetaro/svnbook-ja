@@ -411,22 +411,9 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
         &mdash;a versioned filesystem implementation that uses the
         native OS filesystem to store data.</para>
 
-      <para>There are advantages and disadvantages to each of these
-        two back-end types, which we'll describe in a bit.  Neither
-        back-end is more <quote>official</quote> than the other,
-        though the newer FSFS is the default data store as of
-        Subversion 1.2.  Generally speaking, though, the programs
-        which access the repository are blissfully ignorant of this
-        implementation detail.  And fortunately, you aren't
-        necessarily stuck with your first choice of a data
-        store&mdash;in the event that you change your mind later,
-        Subversion provides ways of migrating your repository's data
-        into another repository that uses a different back-end data
-        store.</para>
-
-      <para><xref linkend="svn.reposadmin.basics.backends.tbl-1"/>
+      <para><xref linkend="svn.reposadmin.basics.backends.tbl-1" />
         gives a comparative overview of Berkeley DB and FSFS
-        repositories.  The next sections go into detail.</para>
+        repositories.</para>
 
       <table id="svn.reposadmin.basics.backends.tbl-1">
         <title>Repository Data Store Comparison</title>
@@ -440,11 +427,18 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           </thead>
           <tbody>
             <row>
+              <entry>Reliability:  data integrity</entry>
+              <entry>when properly deployed, extremely reliable;
+                Berkeley DB 4.4 brings auto-recovery</entry>
+              <entry>older versions had some rarely demonstrated, but
+                data-destroying bugs</entry>
+            </row>
+            <row>
               <entry>Reliability:  sensitivity to interruptions</entry>
               <entry>very; crashes and permission problems can leave the
                 database <quote>wedged</quote>, requiring journaled
-                recovery procedures.</entry>
-              <entry>quite insensitive.</entry>
+                recovery procedures</entry>
+              <entry>quite insensitive</entry>
             </row>
             <row>
               <entry>Accessibility:  usable from a read-only mount</entry>
@@ -458,17 +452,17 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
             </row>
             <row>
               <entry>Accessibility:  usable over network filesystems</entry>
-              <entry>no</entry>
+              <entry>generally, no</entry>
               <entry>yes</entry>
             </row>
             <row>
               <entry>Accessibility:  group permissions handling</entry>
               <entry>sensitive to user umask problems;  best if accessed
-                by only one user.</entry>
+                by only one user</entry>
               <entry>works around umask problems</entry>
             </row>
             <row>
-              <entry>Scalability:  repository size</entry>
+              <entry>Scalability:  repository disk usage</entry>
               <entry>slightly larger</entry>
               <entry>slightly smaller</entry>
             </row>
@@ -476,7 +470,7 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
               <entry>Scalability:  number of revision trees</entry>
               <entry>database;  no problems</entry>
               <entry>some older native filesystems don't scale well with
-                thousands of entries in a single directory.</entry>
+                thousands of entries in a single directory</entry>
             </row>
             <row>
               <entry>Scalability:  directories with many files</entry>
@@ -485,8 +479,8 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
             </row>
             <row>
               <entry>Performance:  checking out latest revision</entry>
-              <entry>faster</entry>
-              <entry>slower</entry>
+              <entry>slightly faster</entry>
+              <entry>slightly slower</entry>
             </row>
             <row>
               <entry>Performance:  large commits</entry>
@@ -495,15 +489,37 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
               <entry>faster overall, but finalization delay may cause 
                 client timeouts</entry>
             </row>
-            <row>
-              <entry>Maturity</entry>
-              <entry>in use since 2001</entry>
-              <entry>in use since 2004</entry>
-            </row>
           </tbody>
         </tgroup>      
       </table>
-      
+
+      <para>There are advantages and disadvantages to each of these
+        two back-end types.  Neither of them is more
+        <quote>official</quote> than the other, though the newer FSFS
+        is the default data store as of Subversion 1.2.  Both are
+        reliable enough to trust with your versioned data.  But as you
+        can see in <xref
+        linkend="svn.reposadmin.basics.backends.tbl-1" />, the FSFS
+        backend provides quite a bit more flexibility in terms of its
+        supported deployment scenarios.  More flexibility means you
+        have to work a little harder to find ways to deploy it
+        incorrectly.  Those reasons&mdash;plus the fact that not using
+        Berkeley DB means there's one fewer component in the
+        system&mdash;largely explain why today almost everyone uses
+        the FSFS backend when creating new repositories.</para>
+
+      <para>Fortunately, most programs which access Subversion
+        repositories are blissfully ignorant of which back-end data
+        store is in use.  And you aren't even necessarily stuck with
+        your first choice of a data store&mdash;in the event that you
+        change your mind later, Subversion provides ways of migrating
+        your repository's data into another repository that uses a
+        different back-end data store.  We talk more about that later
+        in this chapter.</para>
+
+      <para>The following subsections provide a more detailed look at
+        the available data store types.</para>
+
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.reposadmin.basics.backends.bdb">
         <title>Berkeley DB</title>
@@ -665,9 +681,8 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           size is a bit smaller.</para>
 
         <para>FSFS has different performance characteristics too.
-          When committing a directory with a huge number of files, FSFS
-          uses an O(N) algorithm to append entries, while Berkeley DB
-          uses an O(N^2) algorithm to rewrite the whole directory.  On
+          When committing a directory with a huge number of files,
+          FSFS is able to more quickly append directory entries.  On
           the other hand, FSFS writes the latest version of a file as
           a delta against an earlier version, which means that
           checking out the latest tree is a bit slower than fetching
@@ -693,14 +708,13 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
             <para>Oracle bought Sleepycat and its flagship software,
               Berkeley DB, on Valentine's Day in 2006.</para>
           </footnote>
-          FSFS is a much newer bit of engineering.  It hasn't been
-          used or stress-tested nearly as much, so many of these
-          assertions about speed and scalability are based on
-          speculations founded in the theoretical principles of the
-          design.  That said, FSFS has quickly become the back-end of
-          choice for some of the largest public and private Subversion
-          repositories, and promises a lower barrier to entry for
-          Subversion across the board.</para>
+          FSFS is a much newer bit of engineering.  Prior to
+          Subversion 1.4, it was still shaking out some pretty serious
+          data integrity bugs which, while only triggered in very rare
+          cases, nonetheless did occur.  That said, FSFS has quickly
+          become the back-end of choice for some of the largest public
+          and private Subversion repositories, and promises a lower
+          barrier to entry for Subversion across the board.</para>
 
       </sect3>
     </sect2>
@@ -793,7 +807,10 @@ $
           <command>svnadmin</command> tool should be sufficient for
           any changes necessary to your repository, or you can look to
           third-party tools (such as Berkeley DB's tool suite) for
-          tweaking relevant subsections of the repository.</para>
+          tweaking relevant subsections of the repository.  Do
+          <emphasis>not</emphasis> attempt manual manipulation of your
+          version control history by poking and prodding around in
+          your repository's data store files!</para>
       </warning>
 
     </sect2>
@@ -1210,18 +1227,27 @@ Available subcommands:
           the very least, binary differencing algorithms and data
           compression (optionally in a completely opaque database
           system), attempting manual tweaks is unwise, if not quite
-          difficult.  And once data has been stored in your
-          repository, Subversion generally doesn't provide an easy way
-          to remove that data.
+          difficult, and at any rate strongly discouraged.  And once
+          data has been stored in your repository, Subversion
+          generally doesn't provide an easy way to remove that data.
           <footnote>
-            <para>That, by the way, is a <emphasis>feature</emphasis>,
-              not a bug.</para>
+            <para>That's rather the reason you use version control at
+              all, right?</para>
           </footnote>
           But inevitably, there will be times when you would like to
           manipulate the history of your repository.  You might need
           to strip out all instances of a file that was accidentally
           added to the repository (and shouldn't be there for whatever
-          reason).  Or, perhaps you have multiple projects sharing a
+          reason).
+          <footnote>
+            <para>Conscious, cautious removal of certain bits of
+              versioned data is actually supported by real use-cases.
+              That's why an <quote>obliterate</quote> feature has been
+              one of the most highly requested Subversion features,
+              and one which the Subversion developers hope to soon
+              provide.</para>
+          </footnote>
+          Or, perhaps you have multiple projects sharing a
           single repository, and you decide to split them up into
           their own repositories.  To accomplish tasks like this,
           administrators need a more manageable and malleable
@@ -1839,7 +1865,7 @@ $ svnadmin list-unused-dblogs /path/to/repos | xargs rm
         
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.maint.recovery">
-      <title>Repository Recovery</title>
+      <title>Berkeley DB Recovery</title>
 
       <para>As mentioned in <xref
         linkend="svn.reposadmin.basics.backends.bdb"/>, a Berkeley DB
@@ -2358,9 +2384,10 @@ $
         shouldn't need to touch it directly again.</para>
 
       <screen>
-$ ssh admin@svn.example.com
-svn> svnadmin create /path/to/repositories/svn-mirror
-svn>
+$ ssh admin@svn.example.com \
+      "svnadmin create /path/to/repositories/svn-mirror"
+admin@svn.example.com's password: ********
+$
 </screen>
 
       <para>At this point, we have our repository, and due to our
@@ -2371,7 +2398,7 @@ svn>
         would-be committers.  To do so, we use a dedicated username
         for our process.  Only commits and revision property
         modifications performed by the special username
-        <literal>syncproc</literal> will be allowed.</para>
+        <literal>syncuser</literal> will be allowed.</para>
 
       <para>We'll use the repository's hook system both to allow the
         replication process to do what it needs to do, and to enforce
@@ -2382,7 +2409,7 @@ svn>
         in <xref
         linkend="svn.reposadmin.maint.replication.pre-revprop-change"
         />, and basically verifies that the user attempting the
-        property changes is our <literal>syncproc</literal> user.  If
+        property changes is our <literal>syncuser</literal> user.  If
         so, the change is allowed; otherwise, it is denied.</para>
 
       <example id="svn.reposadmin.maint.replication.pre-revprop-change">
@@ -2393,15 +2420,15 @@ svn>
 
 USER="$3"
 
-if [ "$USER" = "syncproc" ]; then exit 0; fi
+if [ "$USER" = "syncuser" ]; then exit 0; fi
 
-echo "Only the syncproc user may change revision properties" >&amp;2
+echo "Only the syncuser user may change revision properties" >&amp;2
 exit 1
 </programlisting>
       </example>
 
       <para>That covers revision property changes.  Now we need to
-        ensure that only the <literal>syncproc</literal> user is
+        ensure that only the <literal>syncuser</literal> user is
         permitted to commit new revisions to the repository.  We do
         this using a <filename>start-commit</filename> hook scripts
         like the one in <xref
@@ -2416,9 +2443,9 @@ exit 1
 
 USER="$2"
 
-if [ "$USER" = "syncproc" ]; then exit 0; fi
+if [ "$USER" = "syncuser" ]; then exit 0; fi
 
-echo "Only the syncproc user may commit new revisions" >&amp;2
+echo "Only the syncuser user may commit new revisions" >&amp;2
 exit 1
 </programlisting>
       </example>
@@ -2437,7 +2464,7 @@ exit 1
       <screen>
 $ svnsync initialize http://svn.example.com/svn-mirror \
                      http://svn.collab.net/repos/svn \
-                     --username syncprop --password syncpass
+                     --username syncuser --password syncpass
 Copied properties for revision 0.
 $
 </screen>
@@ -2481,7 +2508,7 @@ $
 
       <screen>
 $ svnsync synchronize http://svn.example.com/svn-mirror \
-                      --username syncprop --password syncpass
+                      --username syncuser --password syncpass
 Committed revision 1.
 Copied properties for revision 1.
 Committed revision 2.
@@ -2501,7 +2528,7 @@ Copied properties for revision 23408.
         revision, there is first a commit of that revision to the
         target repository, and then property changes follow.  This is
         because the initial commit is performed by (and attributed to)
-        the user <literal>syncproc</literal>, and datestamped with the
+        the user <literal>syncuser</literal>, and datestamped with the
         time as of that revision's creation.  Also, Subversion's
         underlying repository access interfaces don't provide a
         mechanism for setting arbitary revision properties as part of
@@ -2538,7 +2565,7 @@ Copied properties for revision 23408.
 
       <screen>
 $ svnsync copy-revprops http://svn.example.com/svn-mirror 12 \
-                        --username syncprop --password syncpass
+                        --username syncuser --password syncpass
 Copied properties for revision 12.
 $
 </screen>
