@@ -79,8 +79,8 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
       <varlistentry>
         <term>dav</term>
         <listitem>
-          <para>A directory provided to Apache and mod_dav_svn for
-            their private housekeeping data.</para>
+          <para>A directory provided to mod_dav_svn for its private
+            housekeeping data.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -215,11 +215,21 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
         to be sensitive to the layout of your repository rather than
         assuming that the whole repository is associated with a single
         group of people.  Also, remember that Subversion uses
-        repository-global revision numbers.  Some folks don't like the
-        fact that even though no changes have been made to their
-        project lately, the youngest revision number for the
+        repository-global revision numbers.  While those numbers don't
+        have any particular magical powers, some folks still don't
+        like the fact that even though no changes have been made to
+        their project lately, the youngest revision number for the
         repository keeps climbing because other projects are actively
-        adding new revisions.</para>
+        adding new revisions.
+        <footnote>
+          <para>Whether founded in ignorance or in poorly considered
+            concepts about how to derive legitimate software
+            development metrics, global revision numbers are a silly
+            thing to fear, and <emphasis>not</emphasis> the kind of
+            thing you should weigh when deciding how to arrange your
+            projects and repositories.</para>
+        </footnote>
+      </para>
 
       <para>A middle-ground approach can be taken, too.  For example,
         projects can be grouped by how well they relate to each other.
@@ -234,17 +244,18 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
         to repositories, you'll probably want to think about directory
         hierarchies within the repositories themselves.  Because
         Subversion uses regular directory copies for branching and
-        tagging (see <xref linkend="svn.branchmerge"/>), the Subversion
-        community recommends that you choose a repository location for
-        each <firstterm>project root</firstterm>&mdash;the
-        <quote>top-most</quote> directory which contains data related
-        to that project&mdash;and then create three subdirectories
-        beneath that root: <filename>trunk</filename>, meaning the
-        directory under which the main project development occurs;
+        tagging (see <xref linkend="svn.branchmerge"/>), the
+        Subversion community recommends that you choose a repository
+        location for each <firstterm>project
+        root</firstterm>&mdash;the <quote>top-most</quote> directory
+        which contains data related to that project&mdash;and then
+        create three subdirectories beneath that root:
+        <filename>trunk</filename>, meaning the directory under which
+        the main project development occurs;
         <filename>branches</filename>, which is a directory in which
         to create various named branches of the main development line;
-        <filename>tags</filename>, which is a directory of branches
-        that are created, and perhaps destroyed, but never
+        <filename>tags</filename>, which is a collection of tree
+        snapshots that are created, and perhaps destroyed, but never
         changed.
         <footnote>
           <para>The <filename>trunk</filename>, <filename>tags</filename>, 
@@ -363,8 +374,8 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
         Subversion server or directly), by whom (users behind your
         corporate firewall or the whole world out on the open
         Internet), what other services you'll be providing around
-        Subversion (repository browsing UIs, e-mail based commit
-        notification, etc.), your data backup strategy, and so
+        Subversion (repository browsing interfaces, e-mail based
+        commit notification, etc.), your data backup strategy, and so
         on.</para>
 
       <para>We cover server choice and configuration in <xref
@@ -420,6 +431,7 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
         <tgroup cols="3">
           <thead>
             <row>
+              <entry>Category</entry>
               <entry>Feature</entry>
               <entry>Berkeley DB</entry>
               <entry>FSFS</entry>
@@ -427,63 +439,67 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           </thead>
           <tbody>
             <row>
-              <entry>Reliability:  data integrity</entry>
+              <entry morerows="1">Reliability</entry>
+              <entry>Data integrity</entry>
               <entry>when properly deployed, extremely reliable;
                 Berkeley DB 4.4 brings auto-recovery</entry>
               <entry>older versions had some rarely demonstrated, but
                 data-destroying bugs</entry>
             </row>
             <row>
-              <entry>Reliability:  sensitivity to interruptions</entry>
+              <entry>Sensitivity to interruptions</entry>
               <entry>very; crashes and permission problems can leave the
                 database <quote>wedged</quote>, requiring journaled
                 recovery procedures</entry>
               <entry>quite insensitive</entry>
             </row>
             <row>
-              <entry>Accessibility:  usable from a read-only mount</entry>
+              <entry morerows="3">Accessibility</entry>
+              <entry>Usable from a read-only mount</entry>
               <entry>no</entry>
               <entry>yes</entry>
             </row>
             <row>
-              <entry>Accessibility:  platform-independent storage</entry>
+              <entry>Platform-independent storage</entry>
               <entry>no</entry>
               <entry>yes</entry>
             </row>
             <row>
-              <entry>Accessibility:  usable over network filesystems</entry>
+              <entry>Usable over network filesystems</entry>
               <entry>generally, no</entry>
               <entry>yes</entry>
             </row>
             <row>
-              <entry>Accessibility:  group permissions handling</entry>
+              <entry>Group permissions handling</entry>
               <entry>sensitive to user umask problems;  best if accessed
                 by only one user</entry>
               <entry>works around umask problems</entry>
             </row>
             <row>
-              <entry>Scalability:  repository disk usage</entry>
+              <entry morerows="2">Scalability</entry>
+              <entry>Repository disk usage</entry>
               <entry>larger (especially if logfiles aren't purged)</entry>
               <entry>smaller</entry>
             </row>
             <row>
-              <entry>Scalability:  number of revision trees</entry>
+              <entry>Number of revision trees</entry>
               <entry>database;  no problems</entry>
               <entry>some older native filesystems don't scale well with
                 thousands of entries in a single directory</entry>
             </row>
             <row>
-              <entry>Scalability:  directories with many files</entry>
+              <entry>Directories with many files</entry>
               <entry>slower</entry>
               <entry>faster</entry>
             </row>
             <row>
-              <entry>Performance:  checking out latest revision</entry>
-              <entry>slightly faster</entry>
-              <entry>slightly slower</entry>
+              <entry morerows="1">Reliability</entry>
+              <entry>Checking out latest revision</entry>
+              <entry>no meaningful difference</entry>
+              <entry>no meaningful difference</entry>
             </row>
             <row>
-              <entry>Performance:  large commits</entry>
+              <entry>Large commits</entry>
               <entry>slower overall, but cost is amortized across the
                 lifetime of the commit</entry>
               <entry>faster overall, but finalization delay may cause 
@@ -632,11 +648,11 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
             such recovery.  When a Subversion process attaches to a
             repository's Berkeley DB environment, it uses some process
             accounting mechanisms to detect any unclean disconnections
-            by previous processes, performs any necessary recover, and
-            then continues on as if nothing happened.  This doesn't
-            completely eliminate instances of repository wedging, but
-            it does drastically reduce the amount of human interaction
-            required to recover from them.</para>
+            by previous processes, performs any necessary recovery,
+            and then continues on as if nothing happened.  This
+            doesn't completely eliminate instances of repository
+            wedging, but it does drastically reduce the amount of
+            human interaction required to recover from them.</para>
         </note>
 
         <para>So while a Berkeley DB repository is quite fast and
@@ -823,11 +839,11 @@ $
         some repository event, such as the creation of a new revision
         or the modification of an unversioned property.  Some hooks
         (the so-called <quote>pre hooks</quote>) run in advance of a
-        high-level repository operation and provide a means by which
-        to both report what is about to happen and to prevent it from
+        repository operation and provide a means by which to both
+        report what is about to happen and to prevent it from
         happening at all.  Other hooks (the <quote>post hooks</quote>)
-        run after the completion of a repository event, and are
-        useful for reporting purposes only.  Each hook is handed enough
+        run after the completion of a repository event, and are useful
+        for reporting purposes only.  Each hook is handed enough
         information to tell what that event is (or was), the specific
         repository changes proposed (or completed), and the username
         of the person who triggered the event.</para>
@@ -1703,7 +1719,7 @@ The latest repos revision is 19.
           <para>This command may take many minutes to complete.</para>
         </listitem>
         <listitem>
-          <para>Restart the Subversion server.</para>
+          <para>Restart the server process.</para>
         </listitem>
       </orderedlist>
             
@@ -1737,7 +1753,7 @@ The latest repos revision is 19.
         various back-end data store files in a fashion generally
         understood by (and of interest to) only the Subversion
         developers themselves.  However, circumstances may arise that
-        call for all, or some subset, of that data to be copied to
+        call for all, or some subset, of that data to be copied or
         moved into another repository.</para>
 
       <para>Subversion provides such functionality by way of
@@ -1748,7 +1764,10 @@ The latest repos revision is 19.
         by whom, when, and so on.  This dump stream is the primary
         mechanism used to marshal versioned history&mdash;in whole or
         in part, with or without modification&mdash;between
-        repositories.</para>
+        repositories.  And Subversion provides the tools necessary for
+        creating and loading these dump streams&mdash;the
+        <command>svnadmin dump</command> and <command>svnadmin
+        load</command> subcommands, respectively.</para>
 
       <warning>
         <para>While the Subversion repository dump format contains
@@ -1769,10 +1788,17 @@ The latest repos revision is 19.
         previous versions of the repository, so users had to dump
         their repository data using the previous version of
         Subversion, and load it into a freshly created repository with
-        the new version of Subversion.  Other reasons for dumping and
-        loading including re-deploying a Berkeley DB repository on a
-        new OS or CPU architecture, or switching between the Berkeley
-        DB and FSFS back-ends.</para>
+        the new version of Subversion.  Now, these types of schema
+        changes haven't occured since Subversion's 1.0 release, and
+        the Subversion developers promise not to force users to dump
+        and load their repositories when upgrading between minor
+        versions (such as from 1.3 to 1.4) of Subversion.  But there
+        are still other reasons for dumping and loading, including
+        re-deploying a Berkeley DB repository on a new OS or CPU
+        architecture, switching between the Berkeley DB and FSFS
+        back-ends, or (as we'll cover in <xref
+        linkend="svn.reposadmin.maint.filtering" /> purging versioned
+        data from repository history.</para>
 
       <para>Whatever your reason for migration repository history,
         using the <command>svnadmin dump</command> and
@@ -2768,12 +2794,12 @@ $ svnadmin hotcopy --clean-logs /path/to/bdb-repos /path/to/bdb-repos-backup
       <para>The <command>svnsync</command> program (see <xref
         linkend="svn.reposadmin.maint.replication" />) actually
         provides a rather handy middle-ground approach.  If you are
-        regularly syncronizing a read-only mirror with your main
+        regularly synchronizing a read-only mirror with your main
         repository, then in a pinch, your read-only mirror is probably
         a good candidate for replacing that main repository if it
         falls over.  The primary disadvantage of this method is that
         only the versioned repository data gets
-        syncronized&mdash;repository configuration files,
+        synchronized&mdash;repository configuration files,
         user-specified repository path locks, and other items which
         might live in the physical repository directory but not
         <emphasis>inside</emphasis> the repository's virtual versioned
