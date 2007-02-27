@@ -1983,11 +1983,9 @@ $ svnadmin load newrepos &lt; dumpfile3
         that triggered the hook.  Or you might have a script that runs
         nightly to append dump file data for all the revisions that
         were added to the repository since the last time the script
-        ran.  Used like this, <command>svnadmin</command>'s
-        <literal>dump</literal> and <literal>load</literal> commands
-        can be a valuable means by which to backup changes to your
-        repository over time in case of a system crash or some other
-        catastrophic event.</para>
+        ran.  Used like this, <command>svnadmin dump</command> can be
+        one way to backup changes to your repository over time in case
+        of a system crash or some other catastrophic event.</para>
 
       <para>The dump format can also be used to merge the contents of
         several different repositories into a single repository.  By
@@ -2719,13 +2717,6 @@ $
         repository data that has changed since the previous
         backup.</para>
 
-      <para>We discussed in <xref
-        linkend="svn.reposadmin.maint.migrate" /> how to use
-        <command>svnadmin dump --incremental</command> to perform an
-        incremental backup based on the repository dump format.  We'll
-        not spend much time discussing that method any further
-        here.</para>
-
       <para>As far as full backups go, the naive approach might seem
         like a sane one, but unless you temporarily disable all other
         access to your repository, simply doing a recursive directory
@@ -2779,17 +2770,41 @@ $ svnadmin hotcopy --clean-logs /path/to/bdb-repos /path/to/bdb-repos-backup
         cause it to run nightly (or at whatever granularity of Time
         you deem safe enough for you).</para>
 
-      <para>There are advantages and disadvantages to both backup
-        types.  The easiest is by far the full backup, which will
-        always result in a perfect working replica of your repository.
-        Should something bad happen to your live repository, you can
-        restore from the backup with a simple recursive directory
-        copy.  Unfortunately, if you are maintaining multiple backups
-        of your repository, these full copies will each eat up just as
-        much disk space as your live repository.  Incremental backups,
-        by contrast, tend to be quicker to generate and smaller to
-        store.  But the restoration process can be a pain, often
-        involving applying multiple incremental backups.</para>
+      <para>Some administrators use a different backup mechanism built
+        around generating and storing repository dump data.  We
+        described in <xref linkend="svn.reposadmin.maint.migrate" />
+        how to use <command>svnadmin dump --incremental</command> to
+        perform an incremental backup of a given revision or range of
+        revisions.  And of course, there is a full backup variation of
+        this achieved by omitting the <option>--incremental</option>
+        option to that command.  There is some value in these methods
+        in that the format of your backed-up information is
+        flexible&mdash;it's not tied to a particular platform,
+        versioned filesystem type, or release of Subversion or
+        Berkeley DB.  But that flexibility comes at a cost, namely
+        that restoring that data can take a long time&mdash;longer
+        with each new revision committed to your repository.  Also, as
+        is the case with so many of the various backup methods,
+        revision property changes made to already-backed-up revisions
+        won't get picked up by a non-overlapping, incremental dump
+        generation.  For these reasons, we recommend against relying
+        solely on dump-based backup approaches.</para>
+
+      <para>As you can see, each of the various backup types and
+        methods has its advantages and disadvantages.  The easiest is
+        by far the full hot backup, which will always result in a
+        perfect working replica of your repository.  Should something
+        bad happen to your live repository, you can restore from the
+        backup with a simple recursive directory copy.  Unfortunately,
+        if you are maintaining multiple backups of your repository,
+        these full copies will each eat up just as much disk space as
+        your live repository.  Incremental backups, by contrast, tend
+        to be quicker to generate and smaller to store.  But the
+        restoration process can be a pain, often involving applying
+        multiple incremental backups.  And other methods have their
+        own peculiarities.  Administators need to find the balance
+        between the cost of making the backup and the cost of
+        restoring it.</para>
 
       <para>The <command>svnsync</command> program (see <xref
         linkend="svn.reposadmin.maint.replication" />) actually
@@ -2826,26 +2841,26 @@ $ svnadmin hotcopy --clean-logs /path/to/bdb-repos /path/to/bdb-repos-backup
         backup their entire repository, say, every time a commit
         occurred.  However, assuming that a given repository has some
         other redundancy mechanism in place with relatively fine
-        granularity (like per-commit emails), a hot backup of the
-        database might be something that a repository administrator
-        would want to include as part of a system-wide nightly backup.
-        For many repositories, archived commit emails provide
-        sufficient redundancy as restoration sources, at least for the
-        most recent few commits (and where the files being modified
-        are human-readable).  But it's your data&mdash;protect it as
-        much as you'd like.</para>
+        granularity (like per-commit emails or incremental dumps), a
+        hot backup of the database might be something that a
+        repository administrator would want to include as part of a
+        system-wide nightly backup.  It's your data&mdash;protect it
+        as much as you'd like.</para>
             
       <para>Often, the best approach to repository backups is a
-        diversified one.  You can leverage combinations of full and
-        incremental backups, plus archives of commit emails.  The
-        Subversion developers, for example, back up the Subversion
-        source code repository nightly, keep multiple archives of all
-        the commit and property change notification emails, and almost
-        certainly have the repository mirrored by various folks using
-        <command>svnsync</command>.  Your solution might be similar,
-        but should be catered to your needs and that delicate balance
-        of convenience with paranoia.  And while all of this might not
-        save your hardware from the iron fist of Fate,
+        diversified one which leverages combinations of the methods
+        described here.  The Subversion developers, for example, back
+        up the Subversion source code repository nightly using
+        <command>hot-backup.py</command> and an offsite
+        <command>rsync</command> of those full backups; keep multiple
+        archives of all the commit and property change notification
+        emails; and have repository mirrors maintained by various
+        volunteers using <command>svnsync</command>.  Your solution
+        might be similar, but should be catered to your needs and that
+        delicate balance of convenience with paranoia.  And whatever
+        you do, validate your backups from time to time&mdash;what
+        good is a spare tire that has a hole in it?  While all of this
+        might not save your hardware from the iron fist of Fate,
         <footnote>
           <para>You know&mdash;the collective term for all of her
             <quote>fickle fingers</quote>.</para>
