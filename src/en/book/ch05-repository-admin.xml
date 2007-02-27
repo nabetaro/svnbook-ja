@@ -1102,11 +1102,11 @@ Type 'svnlook --version' to see the program version and FS modules.
           subcommands can operate on either a revision or a
           transaction tree, printing information about the tree
           itself, or how it differs from the previous revision of the
-          repository.  You use the <option>--revision</option> and
-          <option>--transaction</option> options to specify which
+          repository.  You use the <option>--revision (-r)</option> and
+          <option>--transaction (-t)</option> options to specify which
           revision or transaction, respectively, to examine.  In the
-          absence of both the <option>--revision</option> and
-          <option>--transaction</option> options,
+          absence of both the <option>--revision (-r)</option> and
+          <option>--transaction (-t)</option> options,
           <command>svnlook</command> will examine the youngest (or
           <quote>HEAD</quote>) revision in the repository.  So the
           following two commands do exactly the same thing when 19 is
@@ -1115,7 +1115,7 @@ Type 'svnlook --version' to see the program version and FS modules.
 
         <screen>
 $ svnlook info /path/to/repos
-$ svnlook info /path/to/repos --revision 19
+$ svnlook info /path/to/repos -r 19
 </screen>
 
         <para>The only exception to these rules about subcommands is
@@ -1133,7 +1133,7 @@ $ svnlook youngest /path/to/repos
             are uncommitted ones.  Most repositories will have no such
             transactions, because transactions are usually either
             committed (in which case, you should access them as
-            revision with the <option>--revision</option> option) or
+            revision with the <option>--revision (-r)</option> option) or
             aborted and removed.</para>
         </note>
             
@@ -1472,7 +1472,7 @@ $
 
         <para>Each item in the resultant output can then be used with
           <command>svnlook</command> (and its
-          <option>--transaction</option> option) to determine who
+          <option>--transaction (-t)</option> option) to determine who
           created the transaction, when it was created, what types of
           changes were made in the transaction&mdash;information that
           is helpful in determining whether or not the transaction is
@@ -1514,7 +1514,7 @@ fi
 
 for TXN in `svnadmin lstxns ${REPOS}`; do 
   echo "---[ Transaction ${TXN} ]-------------------------------------------"
-  svnlook info "${REPOS}" --transaction "${TXN}"
+  svnlook info "${REPOS}" -t "${TXN}"
 done
 </programlisting>
         </example>
@@ -1918,14 +1918,14 @@ $ svnadmin dump myrepos | svnadmin load newrepos
 
       <para>We mentioned previously that <command>svnadmin
         dump</command> outputs a range of revisions.  Use the
-        <option>--revision</option> option to specify a single
+        <option>--revision (-r)</option> option to specify a single
         revision to dump, or a range of revisions.  If you omit this
         option, all the existing repository revisions will be
         dumped.</para>
 
       <screen>
-$ svnadmin dump myrepos --revision 23 &gt; rev-23.dumpfile
-$ svnadmin dump myrepos --revision 100:200 &gt; revs-100-200.dumpfile
+$ svnadmin dump myrepos -r 23 &gt; rev-23.dumpfile
+$ svnadmin dump myrepos -r 100:200 &gt; revs-100-200.dumpfile
 </screen>
 
       <para>As Subversion dumps each new revision, it outputs only
@@ -1961,9 +1961,9 @@ $ svnadmin dump myrepos --revision 100:200 &gt; revs-100-200.dumpfile
         one large one, like so:</para>
 
       <screen>
-$ svnadmin dump myrepos --revision 0:1000 &gt; dumpfile1
-$ svnadmin dump myrepos --revision 1001:2000 --incremental &gt; dumpfile2
-$ svnadmin dump myrepos --revision 2001:3000 --incremental &gt; dumpfile3
+$ svnadmin dump myrepos -r 0:1000 &gt; dumpfile1
+$ svnadmin dump myrepos -r 1001:2000 --incremental &gt; dumpfile2
+$ svnadmin dump myrepos -r 2001:3000 --incremental &gt; dumpfile3
 </screen>
 
       <para>These dump files could be loaded into a new repository
@@ -2522,9 +2522,38 @@ exit 1
         <command>svnsync</command> is to register in our target
         repository the fact that it will be a mirror of the source
         repository.  We do this using the <command>svnsync
-        initialize</command> subcommand.</para>
+        initialize</command> subcommand.  Note that the various
+        <command>svnsync</command> subcommands provide several of the
+        same authentication-related options that
+        <command>svn</command> does: <option>--username</option>,
+        <option>--password</option>,
+        <option>--non-interactive</option>,
+        <option>--config-dir</option>, and
+        <option>--no-auth-cache</option>.</para>
 
       <screen>
+$ svnsync help init
+initialize (init): usage: svnsync initialize DEST_URL SOURCE_URL
+
+Initialize a destination repository for synchronization from
+another repository.
+
+The destination URL must point to the root of a repository with
+no committed revisions.  The destination repository must allow
+revision property changes.
+
+You should not commit to, or make revision property changes in,
+the destination repository by any method other than 'svnsync'.
+In other words, the destination repository should be a read-only
+mirror of the source repository.
+
+Valid options:
+  --non-interactive        : do no interactive prompting
+  --no-auth-cache          : do not cache authentication tokens
+  --username arg           : specify a username ARG
+  --password arg           : specify a password ARG
+  --config-dir arg         : read user configuration files from directory ARG
+
 $ svnsync initialize http://svn.example.com/svn-mirror \
                      http://svn.collab.net/repos/svn \
                      --username syncuser --password syncpass
@@ -2543,6 +2572,20 @@ $
           point to the root directories of the target and source
           repositories, respectively.  The tool does not handle
           mirroring of repository subtrees.</para>
+      </note>
+
+      <note>
+        <para>The initial release of <command>svnsync</command> (in
+          Subversion 1.4) has a small shortcoming&mdash;the values
+          given to the <option>--username</option> and
+          <option>--password</option> command-line options get used
+          for authentication against both the source and destination
+          repositories.  Obviously, there's no guarantee that the
+          synchronizing user's credentials are the same in both
+          places.  In the event that they are not the same, users
+          trying to run <command>svnsync</command> in non-interactive
+          mode (with the <option>--non-interactive</option> option)
+          might experience problems.</para>
       </note>
 
       <para>And now comes the fun part.  With a single subcommand, we
@@ -2570,6 +2613,11 @@ $
         as new commits.</para>
 
       <screen>
+$ svnsync help synchronize
+synchronize (sync): usage: svnsync synchronize DEST_URL
+
+Transfer all pending revisions from source to destination.
+&hellip;
 $ svnsync synchronize http://svn.example.com/svn-mirror \
                       --username syncuser --password syncpass
 Committed revision 1.
@@ -2627,6 +2675,12 @@ Copied properties for revision 23408.
         properties for a particular revision.</para>
 
       <screen>
+$ svnsync help copy-revprops
+copy-revprops: usage: svnsync copy-revprops DEST_URL REV
+
+Copy all revision properties for revision REV from source to
+destination.
+&hellip;
 $ svnsync copy-revprops http://svn.example.com/svn-mirror 12 \
                         --username syncuser --password syncpass
 Copied properties for revision 12.
