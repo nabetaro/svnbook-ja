@@ -9,14 +9,21 @@ L10N_REVISION = revisjon
 COLLAB=https://svn.red-bean.com/svnbook
 
 BUILDTMP_DIR = build.tmp
-BOOKFILES = appa.xml appb.xml appc.xml book.xml ch00.xml ch01.xml \
-			ch02.xml ch03.xml ch04.xml ch05.xml ch06.xml ch07.xml \
-			ch08.xml ch09.xml copyright.xml foreword.xml
+BOOKFILES = app-svn-for-cvs-users.xml app-webdav.xml \
+			app-third-party-tools.xml book.xml ch-preface.xml \
+			ch-introduction.xml ch-basic-concepts.xml ch-guided-tour.xml \
+			ch-branching-and-merging.xml ch-repository-admin.xml \
+			ch-server-configuration.xml ch-advanced-topics.xml \
+			ch-developer-info.xml ch-reference.xml copyright.xml \
+			foreword.xml
 
 BDTMP = bd.tmp
-BDFILES = book.xml foreword.xml ch00.xml ch01.xml ch02.xml ch03.xml \
-          ch04.xml appa.xml ch05.xml ch06.xml ch07.xml ch08.xml \
-          ch09.xml appb.xml appc.xml copyright.xml
+BDFILES = book.xml foreword.xml ch-preface.xml ch-introduction.xml \
+		  ch-basic-concepts.xml ch-guided-tour.xml \
+		  ch-branching-and-merging.xml app-svn-for-cvs-users.xml \
+		  ch-repository-admin.xml ch-server-configuration.xml \
+		  ch-advanced-topics.xml ch-developer-info.xml ch-reference.xml \
+		  app-webdav.xml app-third-party-tools.xml copyright.xml
 
 build: dircheck htmlbook copytobuild
 
