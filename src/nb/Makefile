@@ -6,7 +6,7 @@ L10N_REVISION = revisjon
 
 # Stuff below here is added for building the Norwegian version.
 
-COLLAB=http://svn.red-bean.com/svnbook
+COLLAB=https://svn.red-bean.com/svnbook
 
 BUILDTMP_DIR = build.tmp
 BOOKFILES = appa.xml appb.xml appc.xml book.xml ch00.xml ch01.xml \
