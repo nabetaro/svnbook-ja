@@ -11,19 +11,21 @@ COLLAB=https://svn.red-bean.com/svnbook
 BUILDTMP_DIR = build.tmp
 BOOKFILES = app-svn-for-cvs-users.xml app-webdav.xml \
 			app-third-party-tools.xml book.xml ch-preface.xml \
-			ch-introduction.xml ch-basic-concepts.xml ch-guided-tour.xml \
+			app-quickstart.xml ch-basic-concepts.xml \
+			ch-customizing-svn.xml ch-guided-tour.xml \
 			ch-branching-and-merging.xml ch-repository-admin.xml \
 			ch-server-configuration.xml ch-advanced-topics.xml \
 			ch-developer-info.xml ch-reference.xml copyright.xml \
 			foreword.xml
 
 BDTMP = bd.tmp
-BDFILES = book.xml foreword.xml ch-preface.xml ch-introduction.xml \
+BDFILES = book.xml foreword.xml ch-preface.xml app-quickstart.xml \
 		  ch-basic-concepts.xml ch-guided-tour.xml \
-		  ch-branching-and-merging.xml app-svn-for-cvs-users.xml \
-		  ch-repository-admin.xml ch-server-configuration.xml \
-		  ch-advanced-topics.xml ch-developer-info.xml ch-reference.xml \
-		  app-webdav.xml app-third-party-tools.xml copyright.xml
+		  ch-branching-and-merging.xml ch-customizing-svn.xml \
+		  app-svn-for-cvs-users.xml ch-repository-admin.xml \
+		  ch-server-configuration.xml ch-advanced-topics.xml \
+		  ch-developer-info.xml ch-reference.xml app-webdav.xml \
+		  app-third-party-tools.xml copyright.xml
 
 build: dircheck htmlbook copytobuild
 
