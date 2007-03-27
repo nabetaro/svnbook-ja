@@ -95,7 +95,9 @@ engdir:
 	@if [ -d book/eng ]; then \
 		svn up -r`cat LAST_UPDATED` book/eng; \
 	else \
-		svn co -r`cat LAST_UPDATED` $(COLLAB)/trunk/src/en/book book/eng; \
+		: Temporary change while the ora-2e-reorg sync goes on. \
+		: svn co -r`cat LAST_UPDATED` $(COLLAB)/trunk/src/en/book book/eng; \
+		svn co -r`cat LAST_UPDATED` $(COLLAB)/branches/ora-2e-reorg/src/en/book@2597 book/eng; \
 	fi
 
 sync:
