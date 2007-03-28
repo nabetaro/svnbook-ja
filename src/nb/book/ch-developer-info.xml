@@ -2,26 +2,26 @@
   <title>Developer Information</title>
   
   <simplesect>
-    <para>Subversion is an open-source software project developed
-      under an Apache-style software license.  The project is
-      financially backed by CollabNet, Inc., a California-based
-      software development company.  The community that has formed
-      around the development of Subversion always welcomes new members
-      who can donate their time and attention to the project.
-      Volunteers are encouraged to assist in any way they can, whether
-      that means finding and diagnosing bugs, refining existing source
-      code, or fleshing out whole new features.</para>
-    
-    <para>This chapter is for those who wish to assist in the
-      continued evolution of Subversion by actually getting their
-      hands dirty with the source code.  We will cover some of the
-      software's more intimate details, the kind of technical
-      nitty-gritty that those developing Subversion itself&mdash;or
-      writing entirely new tools based on the Subversion
-      libraries&mdash;should be aware of.  If you don't foresee
-      yourself participating with the software at such a level, feel
-      free to skip this chapter with confidence that your experience
-      as a Subversion user will not be affected.</para>
+
+    <para>Subversion has a modular design, implemented as a collection
+      of C libraries.  Each library has a well-defined purpose and
+      interface, and those interfaces are available not only for
+      Subversion itself to use, but for any software that wishes to
+      embed or otherwise programmatically control Subversion.  Most of
+      those interfaces are available not only in C, but also in
+      higher-level languages such as Python or Java.</para>
+
+    <para>This chapter is for those who wish to interact with
+      Subversion through its public Application Programming Interface
+      (API) or various language bindings.  If you wish to write robust
+      wrapper scripts around Subversion functionality to simplify your
+      own life, are trying to develop more complex integrations
+      between Subversion and other pieces of software, or just have an
+      interest in Subversion's various library modules and what they
+      offer, this chapter is for you.  If, however, you don't foresee
+      yourself participating with Subversion at such a level, feel
+      free to skip this chapter with the confidence that your
+      experience as a Subversion user will not be affected.</para>
 
   </simplesect>
 
@@ -31,14 +31,13 @@
   <sect1 id="svn.developer.layerlib">
     <title>Layered Library Design</title>
 
-    <para>Subversion has a modular design, implemented as a collection
-      of C libraries.  Each library has a well-defined purpose and
-      interface, and most modules are said to exist in one of three
-      main layers&mdash;the Repository Layer, the Repository Access
-      (RA) Layer, or the Client Layer.  We will examine these layers
-      shortly, but first, see our brief inventory of Subversion's
-      libraries in <xref linkend="svn.developer.layerlib.tbl-1"/>.  For the sake
-      of consistency, we will refer to the libraries by their
+    <para>Each of Subversion's core libraries can be said to exist in
+      one of three main layers&mdash;the Repository Layer, the
+      Repository Access (RA) Layer, or the Client Layer.  We will
+      examine these layers shortly, but first, see our brief inventory
+      of Subversion's libraries in <xref
+      linkend="svn.developer.layerlib.tbl-1"/>.  For the sake of
+      consistency, we will refer to the libraries by their
       extensionless Unix library names (e.g.: libsvn_fs, libsvn_wc,
       mod_dav_svn).</para>
 
@@ -881,9 +880,11 @@ The following repository access (RA) modules are available:
         pools to the API functions that need them.  This means that
         users of the Subversion API must also link against APR, must
         call <function>apr_initialize()</function> to initialize the
-        APR subsystem, and then must acquire a pool for use with
-        Subversion API calls.  See <xref linkend="svn.developer.pools"/>
-        for more information.</para>
+        APR subsystem, and then must create and manage pools for use with
+        Subversion API calls, typically by using
+        <function>svn_pool_create()</function>,
+        <function>svn_pool_clear()</function>, and 
+        <function>svn_pool_destroy()</function>.</para>
 
     </sect2>
 
@@ -1423,396 +1424,6 @@ if __name__ == '__main__':
       clients.</para>
   </sect1>
 
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <sect1 id="svn.developer.pools">
-    <title>Programming with Memory Pools</title>
-
-    <para>Almost every developer who has used the C programming
-      language has at some point sighed at the daunting task of
-      managing memory usage.  Allocating enough memory to use, keeping
-      track of those allocations, freeing the memory when you no
-      longer need it&mdash;these tasks can be quite complex.  And of
-      course, failure to do those things properly can result in a
-      program that crashes itself, or worse, crashes the computer.
-      Fortunately, the APR library that Subversion depends on for
-      portability provides the <structname>apr_pool_t</structname>
-      type, which represents a pool from which the application may
-      allocate memory.</para>
-
-    <para>A memory pool is an abstract representation of a chunk of
-      memory allocated for use by a program.  Rather than requesting
-      memory directly from the OS using the standard
-      <function>malloc()</function> and friends, programs that link
-      against APR can simply request that a pool of memory be created
-      (using the <function>apr_pool_create()</function> function).
-      APR will allocate a moderately sized chunk of memory from the
-      OS, and that memory will be instantly available for use by the
-      program.  Any time the program needs some of the pool memory, it
-      uses one of the APR pool API functions, like
-      <function>apr_palloc()</function>, which returns a generic
-      memory location from the pool.  The program can keep requesting
-      bits and pieces of memory from the pool, and APR will keep
-      granting the requests.  Pools will automatically grow in size to
-      accommodate programs that request more memory than the original
-      pool contained, until of course there is no more memory
-      available on the system.</para>
-
-    <para>Now, if this were the end of the pool story, it would hardly
-      have merited special attention.  Fortunately, that's not the
-      case.  Pools can not only be created; they can also be cleared
-      and destroyed, using <function>apr_pool_clear()</function> and
-      <function>apr_pool_destroy()</function> respectively.  This
-      gives developers the flexibility to allocate several&mdash;or
-      several thousand&mdash;things from the pool, and then clean up
-      all of that memory with a single function call!  Further, pools
-      have hierarchy.  You can make <quote>subpools</quote> of any
-      previously created pool.  When you clear a pool, all of its
-      subpools are destroyed; if you destroy a pool, it and its
-      subpools are destroyed.</para>
-
-    <para>Before we go further, developers should be aware that they
-      probably will not find many calls to the APR pool functions we
-      just mentioned in the Subversion source code.  APR pools offer
-      some extensibility mechanisms, like the ability to have custom
-      <quote>user data</quote> attached to the pool, and mechanisms
-      for registering cleanup functions that get called when the pool
-      is destroyed.  Subversion makes use of these extensions in a
-      somewhat non-trivial way.  So, Subversion supplies (and most of
-      its code uses) the wrapper functions
-      <function>svn_pool_create()</function>,
-      <function>svn_pool_clear()</function>, and
-      <function>svn_pool_destroy()</function>.</para>
-
-    <para>While pools are helpful for basic memory management, the
-      pool construct really shines in looping and recursive scenarios.
-      Since loops are often unbounded in their iterations, and
-      recursions in their depth, memory consumption in these areas of
-      the code can become unpredictable.  Fortunately, using nested
-      memory pools can be a great way to easily manage these
-      potentially hairy situations.  The following example
-      demonstrates the basic use of nested pools in a situation that
-      is fairly common&mdash;recursively crawling a directory tree,
-      doing some task to each thing in the tree.</para>
-
-    <example id="svn.developer.pools.ex-1">
-      <title>Effective Pool Usage</title>
-      <programlisting>
-/* Recursively crawl over DIRECTORY, adding the paths of all its file
-   children to the FILES array, and doing some task to each path
-   encountered.  Use POOL for the all temporary allocations, and store
-   the hash paths in the same pool as the hash itself is allocated in.  */
-static apr_status_t 
-crawl_dir (apr_array_header_t *files,
-           const char *directory,
-           apr_pool_t *pool)
-{
-  apr_pool_t *hash_pool = files-&gt;pool;  /* array pool */
-  apr_pool_t *subpool = svn_pool_create (pool);  /* iteration pool */
-  apr_dir_t *dir;
-  apr_finfo_t finfo;
-  apr_status_t apr_err;
-  apr_int32_t flags = APR_FINFO_TYPE | APR_FINFO_NAME;
-
-  apr_err = apr_dir_open (&amp;dir, directory, pool);
-  if (apr_err)
-    return apr_err;
-
-  /* Loop over the directory entries, clearing the subpool at the top of
-     each iteration.  */
-  for (apr_err = apr_dir_read (&amp;finfo, flags, dir);
-       apr_err == APR_SUCCESS;
-       apr_err = apr_dir_read (&amp;finfo, flags, dir))
-    {
-      const char *child_path;
-
-      /* Clear the per-iteration SUBPOOL.  */
-      svn_pool_clear (subpool);
-
-      /* Skip entries for "this dir" ('.') and its parent ('..').  */
-      if (finfo.filetype == APR_DIR)
-        {
-          if (finfo.name[0] == '.'
-              &amp;&amp; (finfo.name[1] == '\0'
-                  || (finfo.name[1] == '.' &amp;&amp; finfo.name[2] == '\0')))
-            continue;
-        }
-
-      /* Build CHILD_PATH from DIRECTORY and FINFO.name.  */
-      child_path = svn_path_join (directory, finfo.name, subpool);
-
-      /* Do some task to this encountered path. */
-      do_some_task (child_path, subpool);
-
-      /* Handle subdirectories by recursing into them, passing SUBPOOL
-         as the pool for temporary allocations.  */
-      if (finfo.filetype == APR_DIR)
-        {
-          apr_err = crawl_dir (files, child_path, subpool);
-          if (apr_err)
-            return apr_err;
-        }
-
-      /* Handle files by adding their paths to the FILES array.  */
-      else if (finfo.filetype == APR_REG)
-        {
-          /* Copy the file's path into the FILES array's pool.  */
-          child_path = apr_pstrdup (hash_pool, child_path);
-
-          /* Add the path to the array.  */
-          (*((const char **) apr_array_push (files))) = child_path;
-        }
-    }
-
-  /* Destroy SUBPOOL.  */
-  svn_pool_destroy (subpool);
-
-  /* Check that the loop exited cleanly. */
-  if (apr_err)
-    return apr_err;
-
-  /* Yes, it exited cleanly, so close the dir. */
-  apr_err = apr_dir_close (dir);
-  if (apr_err)
-    return apr_err;
-
-  return APR_SUCCESS;
-}
-</programlisting>
-    </example>
-
-    <para>The previous example demonstrates effective pool usage in
-      <emphasis>both</emphasis> looping and recursive situations.
-      Each recursion begins by making a subpool of the pool passed to
-      the function.  This subpool is used for the looping region, and
-      cleared with each iteration.  The result is memory usage is
-      roughly proportional to the depth of the recursion, not to total
-      number of file and directories present as children of the
-      top-level directory.  When the first call to this recursive
-      function finally finishes, there is actually very little data
-      stored in the pool that was passed to it.  Now imagine the extra
-      complexity that would be present if this function had to
-      <function>alloc()</function> and <function>free()</function>
-      every single piece of data used!</para>
-    
-    <para>Pools might not be ideal for every application, but they are
-      extremely useful in Subversion.  As a Subversion developer,
-      you'll need to grow comfortable with pools and how to wield them
-      correctly.  Memory usage bugs and bloating can be difficult to
-      diagnose and fix regardless of the API, but the pool construct
-      provided by APR has proven a tremendously convenient,
-      time-saving bit of functionality.</para>
-
-  </sect1>
-
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <sect1 id="svn.developer.contrib">
-    <title>Contributing to Subversion</title>
-    
-    <para>The official source of information about the Subversion
-      project is, of course, the project's website at
-      <ulink url="http://subversion.tigris.org/"/>.  There you can
-      find information about getting access to the source code and
-      participating on the discussion lists.  The Subversion community
-      always welcomes new members.  If you are interested in
-      participating in this community by contributing changes to the
-      source code, here are some hints on how to get started.</para>
-
-    <!-- =============================================================== -->
-    <sect2 id="svn.developer.contrib.join">
-      <title>Join the Community</title>
-      
-      <para>The first step in community participation is to find a way
-        to stay on top of the latest happenings.  To do this most
-        effectively, you will want to subscribe to the main developer
-        discussion list (<email>dev@subversion.tigris.org</email>) and
-        commit mail list (<email>svn@subversion.tigris.org</email>).
-        By following these lists even loosely, you will have access
-        to important design discussions, be able to see actual changes
-        to Subversion source code as they occur, and be able to
-        witness peer reviews of those changes and proposed changes.
-        These email based discussion lists are the primary
-        communication media for Subversion development.  See the
-        Mailing Lists section of the website for other
-        Subversion-related lists you might be interested in.</para>
-
-      <para>But how do you know what needs to be done?  It is quite
-        common for a programmer to have the greatest intentions of
-        helping out with the development, yet be unable to find a good
-        starting point.  After all, not many folks come to the
-        community having already decided on a particular itch they
-        would like to scratch.  But by watching the developer
-        discussion lists, you might see mentions of existing bugs or
-        feature requests fly by that particularly interest you.  Also,
-        a great place to look for outstanding, unclaimed tasks is the
-        Issue Tracking database on the Subversion website.  There you
-        will find the current list of known bugs and feature requests.
-        If you want to start with something small, look for issues
-        marked as <quote>bite-sized</quote>.</para>
-      
-    </sect2>
-    
-    <!-- =============================================================== -->
-    <sect2 id="svn.developer.contrib.get-code">
-      <title>Get the Source Code</title>
-      
-      <para>To edit the code, you need to have the code.  This means
-        you need to check out a working copy from the public
-        Subversion source repository.  As straightforward as that
-        might sound, the task can be slightly tricky.  Because
-        Subversion's source code is versioned using Subversion itself,
-        you actually need to <quote>bootstrap</quote> by getting a
-        working Subversion client via some other method.  The most
-        common methods include downloading the latest binary
-        distribution (if such is available for your platform), or
-        downloading the latest source tarball and building your own
-        Subversion client.  If you build from source, make sure to
-        read the <filename>INSTALL</filename> file in the top level of
-        the source tree for instructions.</para>
-
-      <para>After you have a working Subversion client, you are now
-        poised to checkout a working copy of the Subversion source
-        repository from <ulink
-         url="http://svn.collab.net/repos/svn/trunk/"/>:
-        <footnote>
-          <para>Note that the URL checked out in the example above
-            ends not with <literal>svn</literal>, but with a
-            subdirectory thereof called <literal>trunk</literal>.  See
-            our discussion of Subversion's branching and tagging model
-            for the reasoning behind this.</para>
-        </footnote></para>
-
-      <screen>
-$ svn checkout http://svn.collab.net/repos/svn/trunk subversion
-A    subversion/HACKING
-A    subversion/INSTALL
-A    subversion/README
-A    subversion/autogen.sh
-A    subversion/build.conf
-&hellip;
-</screen>
-
-      <para>The above command will checkout the bleeding-edge, latest
-        version of the Subversion source code into a subdirectory
-        named <filename>subversion</filename> in your current working
-        directory.  Obviously, you can adjust that last argument as
-        you see fit.  Regardless of what you call the new working copy
-        directory, though, after this operation completes, you will
-        now have the Subversion source code.  Of course, you will
-        still need to fetch a few helper libraries (apr, apr-util,
-        etc.)&mdash;see the <filename>INSTALL</filename> file in the
-        top level of the working copy for details.</para>
-
-    </sect2>
-
-    <!-- =============================================================== -->
-    <sect2 id="svn.developer.contrib.hacking">
-      <title>Become Familiar with Community Policies</title>
-      
-      <para>Now that you have a working copy containing the latest
-        Subversion source code, you will most certainly want to take a
-        cruise through the <quote>Hacker's Guide to Subversion</quote>,
-        which is available either as the
-        <filename>www/hacking.html</filename> file in the working copy,
-        or on the Subversion website at <ulink
-          url="http://subversion.tigris.org/hacking.html"/>.  This guide
-        contains general instructions for contributing to Subversion,
-        including how to properly format your source code for
-        consistency with the rest of the codebase, how to describe your
-        proposed changes with an effective change log message, how to
-        test your changes, and so on.  Commit privileges on the
-        Subversion source repository are earned&mdash;a government by
-        meritocracy.
-        <footnote>
-          <para>While this may superficially appear as some sort of
-            elitism, this <quote>earn your commit privileges</quote>
-            notion is about efficiency&mdash;whether it costs more in
-            time and effort to review and apply someone else's changes
-            that are likely to be safe and useful, versus the
-            potential costs of undoing changes that are
-            dangerous.</para>
-        </footnote>
-        The <quote>Hacker's Guide</quote> is an invaluable resource when
-        it comes to making sure that your proposed changes earn the
-        praises they deserve without being rejected on
-        technicalities.</para>
-
-    </sect2>
-
-    <!-- =============================================================== -->
-    <sect2 id="svn.developer.contrib.code-and-test">
-      <title>Make and Test Your Changes</title>
-      
-      <para>With the code and community policy understanding in hand,
-        you are ready to make your changes.  It is best to try to make
-        smaller but related sets of changes, even tackling larger
-        tasks in stages, instead of making huge, sweeping
-        modifications.  Your proposed changes will be easier to
-        understand (and therefore easier to review) if you disturb
-        the fewest lines of code possible to accomplish your task
-        properly.  After making each set of proposed changes, your
-        Subversion tree should be in a state in which the software
-        compiles with no warnings.</para>
-
-      <para>Subversion has a fairly thorough
-        <footnote>
-          <para>You might want to grab some popcorn.
-            <quote>Thorough</quote>, in this instance, translates to
-            somewhere in the neighborhood of thirty minutes of
-            non-interactive machine churn.</para>
-        </footnote>
-        regression test suite, and your proposed changes are expected
-        to not cause any of those tests to fail.  By running
-        <command>make check</command> (in Unix) from the top of the
-        source tree, you can sanity-check your changes.  The fastest
-        way to get your code contributions rejected (other than
-        failing to supply a good log message) is to submit changes
-        that cause failure in the test suite.</para>
-
-      <!-- ### TODO: Describe building and testing on Windows. -->
-
-      <para>In the best-case scenario, you will have actually added
-        appropriate tests to that test suite which verify that your
-        proposed changes work as expected.  In fact,
-        sometimes the best contribution a person can make is solely
-        the addition of new tests.  You can write regression tests for
-        functionality that currently works in Subversion as a way to
-        protect against future changes that might trigger failure in
-        those areas.  Also, you can write new tests that demonstrate
-        known failures.  For this purpose, the Subversion test suite
-        allows you to specify that a given test is expected to fail
-        (called an <literal>XFAIL</literal>), and so long as
-        Subversion fails in the way that was expected, a test result
-        of <literal>XFAIL</literal> itself is considered a success.
-        Ultimately, the better the test suite, the less time wasted on
-        diagnosing potentially obscure regression bugs.</para>
-
-    </sect2>
-
-    <!-- =============================================================== -->
-    <sect2 id="svn.developer.contrib.submit">
-      <title>Donate Your Changes</title>
-      
-      <para>After making your modifications to the source code,
-        compose a clear and concise log message to describe those
-        changes and the reasons for them.  Then, send an email to the
-        developers list containing your log message and the output of
-        <command>svn diff</command> (from the top of your Subversion
-        working copy).  If the community members consider your changes
-        acceptable, someone who has commit privileges (permission to
-        make new revisions in the Subversion source repository) will
-        add your changes to the public source code tree.  Recall that
-        permission to directly commit changes to the repository is
-        granted on merit&mdash;if you demonstrate comprehension of
-        Subversion, programming competency, and a <quote>team
-        spirit</quote>, you will likely be awarded that
-        permission.</para>
-
-    </sect2>
-  </sect1>
 </chapter>
 
 <!--
