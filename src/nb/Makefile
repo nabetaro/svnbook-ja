@@ -93,11 +93,11 @@ bookdiff:
 
 engdir:
 	@if [ -d book/eng ]; then \
-		svn up -r`cat LAST_UPDATED` book/eng; \
+		svn up -r`cat LAST_SYNC` book/eng; \
 	else \
 		: Temporary change while the ora-2e-reorg sync goes on. \
-		: svn co -r`cat LAST_UPDATED` $(COLLAB)/trunk/src/en/book book/eng; \
-		svn co -r`cat LAST_UPDATED` $(COLLAB)/branches/ora-2e-reorg/src/en/book@2597 book/eng; \
+		: svn co -r`cat LAST_SYNC` $(COLLAB)/trunk/src/en/book book/eng; \
+		svn co -r`cat LAST_SYNC` $(COLLAB)/branches/ora-2e-reorg/src/en/book@2597 book/eng; \
 	fi
 
 sync:
@@ -115,8 +115,8 @@ sync:
 		echo "Note: Merging up to r$(HEAD) instead of actual repository HEAD"; \
 	fi;
 	$(MAKE) editmode
-	svn merge -r$$(cat LAST_UPDATED):$$(cat HEADREV) $(COLLAB)/trunk/src/en .
-	mv HEADREV LAST_UPDATED
+	svn merge -r$$(cat LAST_SYNC):$$(cat HEADREV) $(COLLAB)/trunk/src/en .
+	mv HEADREV LAST_SYNC
 	$(MAKE) commitmode
 	rmdir sync.LOCK
 
