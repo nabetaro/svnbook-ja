@@ -7,233 +7,42 @@
     support for mounting <quote>shares</quote> exported by WebDAV
     servers.</para>
 
-  <para>If you use Apache/mod_dav_svn as your Subversion network
-    server, then to some extent, you are also running a WebDAV server.
-    This appendix gives some background on the nature of this
-    protocol, how Subversion uses it, and how well Subversion
-    interoperates with other software that is WebDAV-aware.</para>
+  <para>If you use Apache as your Subversion network server, then to
+    some extent you are also running a WebDAV server.  This appendix
+    gives some background on the nature of this protocol, how
+    Subversion uses it, and how well Subversion interoperates with
+    other software that is WebDAV-aware.</para>
 
 
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.webdav.basic">
-    <title>Basic WebDAV Concepts</title> 
+    <title>What is WebDAV?</title>
 
-    <para>This section provides a very brief, very general overview to
-      the ideas behind WebDAV.  It should lay the foundation for
-      understanding WebDAV compatibility issues between clients and
-      servers.</para>
-    
-    <!-- =============================================================== -->
-    <sect2 id="svn.webdav.basic.original">
-      <title>Original WebDAV</title>
-      
-      <para>RFC 2518 defines a set of concepts and accompanying
-        extension methods to HTTP 1.1 that make the web into a more
-        universal read/write medium.  The basic idea is that a
-        WebDAV-compliant web server can act like a generic file
-        server; clients can mount shared folders that behave much like
-        NFS or SMB filesystems.</para>
-      
-      <para>The tragedy, though, is that the RFC 2518 WebDAV
-        specification does not provide any sort of model for version
-        control, despite the <quote>V</quote> in DAV.  Basic WebDAV
-        clients and servers assume only one version of each file or
-        directory exists, and can be repeatedly overwritten.</para>
+    <para><firstterm>DAV</firstterm> stands for <quote>Distributed
+      Authoring and Versioning</quote>.  RFC 2518 defines a set of
+      concepts and accompanying extension methods to HTTP 1.1 that
+      make the web into a more universal read/write medium.  The basic
+      idea is that a WebDAV-compliant web server can act like a
+      generic file server; clients can <quote>mount</quote> shared
+      folders over HTTP that behave much like other network
+      filesystems (such as NFS or SMB.)</para>
 
-      <para>Here are the concepts and terms introduced in basic
-        WebDAV:</para>
+    <para>The tragedy, though, is that despite the acronym, the RFC
+      specification doesn't actually describe any sort of version
+      control.  Basic WebDAV clients and servers assume only one
+      version of each file or directory exists, and can be repeatedly
+      overwritten.</para>
 
-      <variablelist>
-
-        <varlistentry>
-          <term>Resources</term>
-          <listitem>
-            <para> WebDAV lingo refers to any server-side object
-              (that can be described with a URI) as a
-              <firstterm>resource</firstterm>.</para>
-          </listitem>
-        </varlistentry>
-        
-        <varlistentry>
-          <term>New write methods</term>
-          <listitem>
-            <para>Beyond the standard HTTP <literal>PUT</literal>
-              method (which creates or overwrites a web resource),
-              WebDAV defines new <literal>COPY</literal> and
-              <literal>MOVE</literal> methods for duplicating or
-              rearranging resources.</para>
-          </listitem>
-        </varlistentry>
-        
-        <varlistentry>
-          <term>Collections</term>
-          <listitem>
-            <para>A <firstterm>collection</firstterm> is the WebDAV
-              term for a grouping of resources.  In most cases, it
-              is analogous to a directory.  Whereas file resources
-              can be written or created with a
-              <literal>PUT</literal> method, collection resources
-              are created with the new <literal>MKCOL</literal>
-              method.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>Properties</term>
-          <listitem>
-            <para>This is the same idea present in
-              Subversion&mdash;metadata attached to files and
-              collections.  A client can list or retrieve properties
-              attached to a resource with the new
-              <literal>PROPFIND</literal> method, and can change
-              them with the <literal>PROPPATCH</literal> method.
-              Some properties are wholly created and controlled by
-              users (e.g. a property called <quote>color</quote>),
-              and others are wholly created and controlled by the
-              WebDAV server (e.g. a property that contains the last
-              modification time of a file).  The former kind are
-              called <firstterm>dead properties</firstterm>, and the
-              latter kind are called <firstterm>live
-                properties</firstterm>.</para>
-          </listitem>
-        </varlistentry>
-        
-        <varlistentry>
-          <term>Locking</term>
-          <listitem>
-            <para>A WebDAV server may decide to offer a locking
-              feature to clients&mdash;this part of the
-              specification is optional, although most WebDAV
-              servers do offer the feature.  If present, then
-              clients can use the new <literal>LOCK</literal> and
-              <literal>UNLOCK</literal> methods to mediate access to
-              a resource.  In most cases these methods are used to
-              create exclusive write locks (as discussed in <xref
-                linkend="svn.basic.vsn-models.lock-unlock"/>), although shared write
-              locks are also possible in some server
-              implementations.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>Access control</term>
-          <listitem>             
-            <para>A more recent specification (RFC 3744) defines a
-              system for defining access control lists (ACLs) on
-              WebDAV resources.  Some clients and servers have begun
-              to implement this feature.</para>
-          </listitem>
-        </varlistentry>
-        
-      </variablelist>
-        
-    </sect2>
-    
-    <!-- =============================================================== -->
-    <sect2 id="svn.webdav.basic.deltav">
-      <title>DeltaV Extensions</title>
-      
-      <para>Because RFC 2518 left out versioning concepts, another
-        committee was left with the responsibility of writing RFC
-        3253, which adds versioning to WebDAV,
-        a.k.a. <quote>DeltaV</quote>.  WebDAV/DeltaV clients and
-        servers are often called just <quote>DeltaV</quote> programs,
-        since DeltaV implies the existence of basic WebDAV.</para>
-
-      <para>DeltaV introduces a whole slew of new acronyms, but don't
-        be intimidated.  The ideas are fairly straightforward:</para>
-
-      <variablelist>
-        
-        <varlistentry>
-          <term>Per-resource versioning</term>
-          <listitem>
-            <para>Like CVS and other version-control systems,
-              DeltaV assumes that each resource has a potentially
-              infinite number of states.  A client begins by placing
-              a resource under version control using the new
-              <literal>VERSION-CONTROL</literal> method.</para>
-          </listitem>
-        </varlistentry>
-        
-        <varlistentry>
-          <term>Server-side working-copy model</term>
-          <listitem>
-            <para>Some DeltaV servers support the ability to create
-              a virtual workspace on the server, where all of your
-              work is performed.  Clients use the
-              <literal>MKWORKSPACE</literal> method to create a
-              private area, then indicate they want to change
-              specific resources by <quote>checking them out</quote>
-              into the workspace, editing them, and <quote>checking
-              them in</quote> again.  In HTTP terms, the sequence of
-              methods would be <literal>CHECKOUT</literal>,
-              <literal>PUT</literal>,
-              <literal>CHECKIN</literal>.</para>
-          </listitem>
-        </varlistentry>
-        
-        <varlistentry>
-          <term>Client-side working-copy model</term>
-          <listitem>
-            <para>Some DeltaV servers also support the idea that the
-              client may have a private working copy on local disk.
-              When the client wants to commit changes to the server,
-              it begins by creating a temporary server transaction
-              (called an <firstterm>activity</firstterm>) with the
-              <literal>MKACTIVITY</literal> method.  The client then
-              performs a <literal>CHECKOUT</literal> on each
-              resource it wishes to change and sends
-              <literal>PUT</literal> requests.  Finally, the client
-              performs a <literal>CHECKIN</literal> resource, or
-              sends a <literal>MERGE</literal> request to check in
-              all resources at once.</para>
-          </listitem>
-        </varlistentry>
-        
-        <varlistentry>
-          <term>Configurations</term>
-          <listitem>
-            <para>DeltaV allows you define flexible collections of
-              resources called <quote>configurations</quote>, which
-              don't necessarily correspond to particular
-              directories.  A configuration can be made to point to
-              specific versions of files, and then a
-              <quote>baseline</quote> snapshot can be made, much
-              like a tag.</para>
-          </listitem>
-        </varlistentry>
-        
-        <varlistentry>
-          <term>Extensibility</term>
-          <listitem>
-            <para>DeltaV defines a new method,
-              <literal>REPORT</literal>, which allows the client and
-              server to perform customized data exchanges.  While
-              DeltaV defines a number of standardized history reports
-              that a client can request, the server is also free
-              to define custom reports.  The client sends a
-              <literal>REPORT</literal> request with a
-              properly-labeled XML body full of custom data; assuming
-              the server understands the specific report-type, it
-              responds with an equally custom XML body.  This
-              technique is very similar to XML-RPC.</para>
-          </listitem>
-        </varlistentry>
-        
-      </variablelist>
-        
-    </sect2>
-      
-  </sect1>
-  
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <sect1 id="svn.webdav.svn-and-deltav">
-    <title>Subversion and DeltaV</title> 
+    <para>Because RFC 2518 left out versioning concepts, another
+      committee was left with the responsibility of writing RFC 3253 a
+      few years later.  The new RFC adds versioning concepts to
+      WebDAV, placing the <quote>V</quote> back in <quote>DAV</quote>
+      &mdash; hence the term <quote>DeltaV</quote>.  WebDAV/DeltaV
+      clients and servers are often called just <quote>DeltaV</quote>
+      programs, since DeltaV implies the existence of basic
+      WebDAV.</para>
 
     <para>The original WebDAV standard has been widely successful.
       Every modern computer operating system has a general WebDAV
@@ -257,39 +66,30 @@
       Finally, some have argued that DeltaV remains unpopular because
       there's still no open-source server product which implements
       it.</para>
-   
+
     <para>When Subversion was still in its design phase, it seemed
-      like a great idea to use Apache httpd as the main network
-      server.  It already had a module to provide WebDAV services.
-      DeltaV was a relatively new specification.  The hope was that
-      the Subversion server module (mod_dav_svn) would eventually
+      like a great idea to use Apache as a network server.  It already
+      had a module to provide WebDAV services.  DeltaV was a
+      relatively new specification.  The hope was that the Subversion
+      server module (<command>mod_dav_svn</command>) would eventually
       evolve into an open-source DeltaV reference implementation.
       Unfortunately, DeltaV has a very specific versioning model that
       doesn't quite line up with Subversion's model.  Some concepts
       were mappable, others were not.</para>
 
-    <para>The upshot is that</para>
+    <para>What does this mean, then?</para>
 
-    <orderedlist>
+    <para>First, the Subversion client is not a fully-implemented
+      DeltaV client.  It needs certain types of things from the server
+      that DeltaV itself cannot provide, and thus is largely dependent
+      on a number of Subversion-specific
+      HTTP <literal>REPORT</literal> requests that
+      only <command>mod_dav_svn</command> understands.</para>
 
-      <listitem>
-        <para>The Subversion client is not a fully-implemented DeltaV
-          client.</para>
-        
-        <para>The client needs certain things from the server that
-          DeltaV cannot provide, and thus is largely dependent on a
-          number of Subversion-specific <literal>REPORT</literal>
-          requests that only mod_dav_svn understands.</para>
-      </listitem>
-
-      <listitem>
-        <para>mod_dav_svn is not a fully-implemented DeltaV server.</para>
-
-        <para>Many portions of the DeltaV specification were irrelevant to
-          Subversion, and thus left unimplemented.</para>
-      </listitem>
-      
-    </orderedlist>
+    <para>Second, <command>mod_dav_svn</command> is not a
+      fully-realized DeltaV server.  Many portions of the DeltaV
+      specification were irrelevant to Subversion, and thus left
+      unimplemented.</para>
 
     <para>There is still some debate in the developer community as to
       whether or not it's worthwhile to remedy either of these
@@ -297,10 +97,10 @@
       design to match DeltaV, so there's probably no way the client
       can ever learn to get everything it needs from a general DeltaV
       server.  On the other hand,
-      mod_dav_svn <emphasis>could</emphasis> be further developed to
-      implement all of DeltaV, but it's hard to find motivation to do
-      so&mdash;there are almost no DeltaV clients to interoperate
-      with.</para>
+      <command>mod_dav_svn</command> <emphasis>could</emphasis> be
+      further developed to implement all of DeltaV, but it's hard to
+      find motivation to do so&mdash;there are almost no DeltaV
+      clients to interoperate with.</para>
 
   </sect1>
 
@@ -325,10 +125,10 @@
       <literal>PUT</literal>, <literal>CHECKIN</literal>.  But if the
       DeltaV server supports autoversioning, then write-requests from
       basic WebDAV clients are accepted.  The server behaves as if the
-      client had issued the proper series of versioning requests,
-      performing a commit under the hood.  In other words, it allows a
-      DeltaV server to interoperate with ordinary WebDAV
-      clients that don't understand versioning.</para>
+      client <emphasis>had</emphasis> issued the proper series of
+      versioning requests, performing a commit under the hood.  In
+      other words, it allows a DeltaV server to interoperate with
+      ordinary WebDAV clients that don't understand versioning.</para>
 
     <para>Because so many operating systems already have integrated
       WebDAV clients, the use case for this feature borders on
@@ -343,9 +143,10 @@
 
     <para>This scenario isn't fiction: it's real and it works, as of
       Subversion 1.2 and later.  To activate autoversioning in
-      mod_dav_svn, use the <literal>SVNAutoversioning</literal>
-      directive within the <filename>httpd.conf</filename> Location
-      block, like so:</para>
+      <command>mod_dav_svn</command>, use
+      the <literal>SVNAutoversioning</literal> directive within
+      the <filename>httpd.conf</filename> Location block, like
+      so:</para>
 
     <screen>
 &lt;Location /repos&gt;
@@ -365,7 +166,7 @@
       number of automatically committed revisions.  For example, when
       saving data, many clients will do a <literal>PUT</literal> of a
       0-byte file (as a way of reserving a name) followed by another
-      <literal>PUT</literal> with the real filedata.  The single
+      <literal>PUT</literal> with the real file data.  The single
       file-write results in two separate commits.  Also consider that
       many applications auto-save every few minutes, resulting in even
       more commits.</para>
@@ -383,21 +184,20 @@
 
     <para>Another feature that may be a useful complement
       for <literal>SVNAutoversioning</literal> comes from
-      Apache's <literal>mod_mime</literal> module.  If a generic
-      WebDAV client adds a new file to the repository, there's no
-      opportunity for the user to set the
-      the <literal>svn:mime-type</literal> property.  This might cause
-      the file to appear as <quote>generic</quote> icon when viewed
-      within a WebDAV shared folder, not having an association with
-      any application.  One remedy is to have a sysadmin (or other
-      Subversion-knowledgable person) check out a working copy and
-      manually set the <literal>svn:mime-type</literal> property on
-      necessary files. But there's potentially no end to such cleanup
-      tasks.  Instead, you can use
-      the <literal>ModMimeUsePathInfo</literal> directive in
-      your Subversion <literal>&lt;Location&gt;</literal>
+      Apache's <literal>mod_mime</literal> module.  If a WebDAV client
+      adds a new file to the repository, there's no opportunity for
+      the user to set the the <literal>svn:mime-type</literal>
+      property.  This might cause the file to appear as generic icon
+      when viewed within a WebDAV shared folder, not having an
+      association with any application.  One remedy is to have a
+      sysadmin (or other Subversion-knowledgable person) check out a
+      working copy and manually set
+      the <literal>svn:mime-type</literal> property on necessary
+      files. But there's potentially no end to such cleanup tasks.
+      Instead, you can use the <literal>ModMimeUsePathInfo</literal>
+      directive in your Subversion <literal>&lt;Location&gt;</literal>
       block:</para>
- 
+
     <screen>
 &lt;Location /repos&gt;
   DAV svn
@@ -423,7 +223,7 @@
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.webdav.clients">
-    <title>Client Interoperability</title> 
+    <title>Client Interoperability</title>
 
     <para>All WebDAV clients fall into one of three
       categories&mdash;standalone applications, file-explorer
@@ -441,7 +241,10 @@
         <thead>
           <row>
             <entry>Software</entry>
-            <entry>Category</entry>
+            <entry>Type</entry>
+            <entry>Windows</entry>
+            <entry>Mac</entry>
+            <entry>Linux</entry>
             <entry>Description</entry>
           </row>
         </thead>
@@ -449,53 +252,80 @@
           <row>
             <entry>Adobe Photoshop</entry>
             <entry>Standalone WebDAV applications</entry>
+            <entry>X</entry>
+            <entry></entry>
+            <entry></entry>
             <entry>Image editing software, allowing direct opening
               from, and writing to, WebDAV URLs</entry>
           </row>
           <row>
             <entry>Cadaver</entry>
             <entry>Standalone WebDAV applications</entry>
+            <entry></entry>
+            <entry>X</entry>
+            <entry>X</entry>
             <entry>Command-line WebDAV client supporting file
               transfer, tree, and locking operations</entry>
           </row>
           <row>
             <entry>DAV Explorer</entry>
             <entry>Standalone WebDAV applications</entry>
-            <entry>GUI tool for exploring WebDAV shares</entry>
+            <entry>X</entry>
+            <entry>X</entry>
+            <entry>X</entry>
+            <entry>Java GUI tool for exploring WebDAV shares</entry>
           </row>
           <row>
             <entry>davfs2</entry>
             <entry>WebDAV filesystem implementation</entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>X</entry>
             <entry>Linux file system driver that allows you to mount a
               WebDAV share</entry>
           </row>
           <row>
             <entry>GNOME Nautilus</entry>
             <entry>File-explorer WebDAV extensions</entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>X</entry>
             <entry>GUI file explorer able to perform tree
               operations on a WebDAV share</entry>
           </row>
           <row>
             <entry>KDE Konqueror</entry>
             <entry>File-explorer WebDAV extensions</entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>X</entry>
             <entry>GUI file explorer able to perform tree
               operations on a WebDAV share</entry>
           </row>
           <row>
             <entry>Mac OS X</entry>
             <entry>WebDAV filesystem implementation</entry>
-            <entry>Operating system with built-in support for mounting
-              WebDAV shares locally</entry>
+            <entry></entry>
+            <entry>X</entry>
+            <entry></entry>
+            <entry>Operating system has built-in support for mounting
+              WebDAV shares.</entry>
           </row>
           <row>
             <entry>Macromedia Dreamweaver</entry>
             <entry>Standalone WebDAV applications</entry>
+            <entry>X</entry>
+            <entry></entry>
+            <entry></entry>
             <entry>Web production software able to directly read from
               and write to WebDAV URLs</entry>
           </row>
           <row>
             <entry>Microsoft Office</entry>
             <entry>Standalone WebDAV applications</entry>
+            <entry>X</entry>
+            <entry></entry>
+            <entry></entry>
             <entry>Office productivity suite with several components
               able to directly read from and write to WebDAV
               URLs</entry>
@@ -503,25 +333,34 @@
           <row>
             <entry>Microsoft Web Folders</entry>
             <entry>File-explorer WebDAV extensions</entry>
+            <entry>X</entry>
+            <entry></entry>
+            <entry></entry>
             <entry>GUI file explorer program able to perform tree
               operations on a WebDAV share</entry>
           </row>
           <row>
             <entry>Novell NetDrive</entry>
             <entry>WebDAV filesystem implementation</entry>
+            <entry>X</entry>
+            <entry></entry>
+            <entry></entry>
             <entry>Drive-mapping program for assigning Windows drive
               letters to a mounted remote WebDAV share</entry>
           </row>
           <row>
             <entry>SRT WebDrive</entry>
             <entry>WebDAV filesystem implementation</entry>
+            <entry>X</entry>
+            <entry></entry>
+            <entry></entry>
             <entry>File transfer software which, among other things,
               allows the assignment of Windows drive letters to a
               mounted remote WebDAV share</entry>
           </row>
-          
+
         </tbody>
-      </tgroup>      
+      </tgroup>
     </table>
 
     <!-- =============================================================== -->
@@ -536,7 +375,7 @@
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.webdav.clients.standalone.windows">
         <title>Microsoft Office, Dreamweaver, Photoshop</title> 
-  
+
         <para>On Windows, there are several well-known applications
           that contain integrated WebDAV client functionality, such as
           Microsoft's Office,
@@ -548,7 +387,7 @@
           Adobe's Photoshop, and Macromedia's Dreamweaver programs.
           They're able to directly open and save to URLs, and tend to
           make heavy use of WebDAV locks when editing a file.</para>
-  
+
         <para>Note that while many of these programs also exist for
           the Mac OS X, they do not appear to support WebDAV directly
           on that platform.  In fact, on Mac OS X, the
@@ -557,26 +396,26 @@
           WebDAV features were deliberately left out of Macintosh
           versions of these programs, since OS X already provides such
           excellent low-level filesystem support for WebDAV.</para>
-  
+
       </sect3>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.webdav.clients.standalone.free">
         <title>Cadaver, DAV Explorer</title>
-  
+
         <para>Cadaver is a bare-bones Unix commandline program for
           browsing and changing WebDAV shares.  Like the Subversion
           client, it uses the neon HTTP library&mdash;not surprisingly,
           both neon and cadaver are written by the same author.  Cadaver
           is free software (GPL license) and is available at <ulink
           url="http://www.webdav.org/cadaver/"/>.</para>
-  
+
         <para>Using cadaver is similar to using a commandline FTP
           program, and thus it's extremely useful for basic WebDAV
           debugging.  It can be used to upload or download files in a
           pinch, and also to examine properties, copy, move, lock or
           unlock files:</para>
-        
+
         <screen>
 $ cadaver http://host/repos
 dav:/repos/&gt; ls
@@ -602,15 +441,16 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
           advantages of being portable and being a more user-friendly GUI
           application.  It's also one of the first clients to support
           the new WebDAV Access Control Protocol (RFC 3744).</para>
-  
+
         <para>Of course, DAV Explorer's ACL support is useless in this
-          case, since mod_dav_svn doesn't support it.  The fact that
-          both Cadaver and DAV Explorer support some limited DeltaV
-          commands isn't particularly useful either, since they don't
-          allow <literal>MKACTIVITY</literal> requests.  But it's not
-          relevant anyway; we're assuming all of these clients are
-          operating against an autoversioning repository.</para>
-  
+          case, since <command>mod_dav_svn</command> doesn't support
+          it.  The fact that both Cadaver and DAV Explorer support
+          some limited DeltaV commands isn't particularly useful
+          either, since they don't allow <literal>MKACTIVITY</literal>
+          requests.  But it's not relevant anyway; we're assuming all
+          of these clients are operating against an autoversioning
+          repository.</para>
+
       </sect3>
     </sect2>
 
@@ -632,13 +472,13 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.webdav.clients.file-explorer-extensions.windows">
-        <title>Microsoft Web Folders</title> 
-  
+        <title>Microsoft Web Folders</title>
+
         <para>Microsoft was one of the original backers of the WebDAV
           specification, and first started shipping a client in Windows
           98, known as <quote>Web Folders</quote>.  This client was also
           shipped in Windows NT4 and 2000.</para>
-  
+
         <para>The original Web Folders client was an extension to
           Explorer, the main GUI program used to browse filesystems.  It
           works well enough.  In Windows 98, the feature might need to
@@ -646,7 +486,7 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
           inside <quote>My Computer</quote>.  In Windows 2000, simply
           add a new <quote>network place</quote>, enter the URL, and the
           WebDAV share will pop up for browsing.</para>
-  
+
         <para>With the release of Windows XP, Microsoft started shipping
           a new implementation of Web Folders, known as the <quote>WebDAV
           mini-redirector</quote>.  The new implementation is a
@@ -663,22 +503,22 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
           the original author of Apache's WebDAV module, recommends
           against trying to use XP Web Folders against an Apache
           server.</para>
-  
+
         <para>It turns out that the original
           <quote>Explorer-only</quote> Web Folders implementation isn't
           dead in XP, it's just buried.  It's still possible to find it
           by using this technique:</para>
-  
+
         <orderedlist>
-  
+
           <listitem>
             <para>Go to 'Network Places'.</para>
           </listitem>
-  
+
           <listitem>
             <para>Add a new network place.</para>
           </listitem>
-  
+
           <listitem>
             <para>When prompted, enter the URL of the repository, but
               <emphasis>include a port number</emphasis> in the URL.
@@ -686,13 +526,13 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
               entered as <literal>http://host:80/repos</literal> instead.
             </para>
           </listitem>
-  
+
           <listitem>
             <para>Respond to any authentication prompts.</para>
           </listitem>
-  
+
         </orderedlist>
-  
+
         <para>There are a number of other rumored workarounds to the
           problems, but none of them seem to work on all versions and
           patchlevels of Windows XP.  In our tests, only the previous
@@ -716,31 +556,32 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.webdav.clients.file-explorer-extensions.linux-de">
-        <title>Nautilus, Konqueror</title> 
-  
+        <title>Nautilus, Konqueror</title>
+
         <para>Nautilus is the official file manager/browser for the
           GNOME desktop (<ulink url="http://www.gnome.org"/>), and
           Konqueror is the manager/browser for the KDE desktop (<ulink
           url="http://www.kde.org"/>).  Both of these applications have
           an explorer-level WebDAV client built-in, and operate just
           fine against an autoversioning repository.</para>
-  
+
         <para>In GNOME's Nautilus, from the <guimenu>File
           menu</guimenu>, select <guimenuitem>Open
           location</guimenuitem> and enter the URL.  The repository
           should then be displayed like any other filesystem.</para>
-  
+
         <para>In KDE's Konqueror, you need to use the
           <literal>webdav://</literal> scheme when entering the URL in
-          the location bar.  If you enter an <literal>http://</literal>
-          URL, Konqueror will behave like an ordinary web browser.
-          You'll likely see the generic HTML directory listing produced
-          by mod_dav_svn.  By entering
+          the location bar.  If you enter
+          an <literal>http://</literal> URL, Konqueror will behave
+          like an ordinary web browser.  You'll likely see the generic
+          HTML directory listing produced
+          by <command>mod_dav_svn</command>.  By entering
           <literal>webdav://host/repos</literal> instead of
           <literal>http://host/repos</literal>, Konqueror becomes a
           WebDAV client and displays the repository as a
           filesystem.</para>
-  
+
       </sect3>
     </sect2>
 
@@ -760,8 +601,8 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.webdav.clients.fs-impl.windows">
-        <title>WebDrive, NetDrive</title> 
-  
+        <title>WebDrive, NetDrive</title>
+
         <para>Both WebDrive and NetDrive are excellent commercial
           products which allow a WebDAV share to be attached as drive
           letters in Windows.  We've had nothing but success with
@@ -774,12 +615,12 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
           Netware license.  (If any of that sounds odd to you, you're
           not alone.  See this page on Novell's website: <ulink
           url="http://www.novell.com/coolsolutions/qna/999.html"/>)</para>
-  
+
       </sect3>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.webdav.clients.fs-impl.macosx">
-        <title>Mac OS X</title> 
+        <title>Mac OS X</title>
 
         <para>Apple's OS X operating system has an integrated
           filesystem-level WebDAV client.  From the Finder, select the
@@ -794,39 +635,40 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
 $ mount -t webdav http://svn.example.com/repos/project /some/mountpoint
 $
 </screen>
-  
-        <para>Note that if your mod_dav_svn is older than version 1.2,
-          OS X will refuse to mount the share as read-write; it will
-          appear as read-only.  This is because OS X insists on
-          locking support for read-write shares, and the ability to lock
-          files first appeared in Subversion 1.2.</para>
-  
+
+        <para>Note that if your <command>mod_dav_svn</command> is
+          older than version 1.2, OS X will refuse to mount the share
+          as read-write; it will appear as read-only.  This is because
+          OS X insists on locking support for read-write shares, and
+          the ability to lock files first appeared in Subversion
+          1.2.</para>
+
         <para>One more word of warning: OS X's WebDAV client can
           sometimes be overly sensitive to HTTP redirects.  If OS X is
           unable to mount the repository at all, you may need to enable
           the BrowserMatch directive in the Apache server's
           <filename>httpd.conf</filename>:</para>
-  
+
         <screen>
 BrowserMatch "^WebDAVFS/1.[012]" redirect-carefully
 </screen>
-  
+
       </sect3>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.webdav.clients.fs-impl.linux">
-        <title>Linux davfs2</title> 
-  
+        <title>Linux davfs2</title>
+
         <para>Linux davfs2 is a filesystem module for the Linux kernel,
           whose development is located at <ulink
           url="http://dav.sourceforge.net/"/>.  Once installed, a WebDAV
           network share can be mounted with the usual Linux mount
           command:</para>
-  
+
         <screen>
 $ mount.davfs http://host/repos /mnt/dav
 </screen>
-  
+
       </sect3>
     </sect2>
   </sect1>
@@ -834,7 +676,7 @@ $ mount.davfs http://host/repos /mnt/dav
 </appendix>
 
 <!--
-local variables: 
+local variables:
 sgml-parent-document: ("book.xml" "appendix")
 end:
 -->
