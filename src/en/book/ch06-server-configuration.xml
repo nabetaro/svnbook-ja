@@ -594,7 +594,7 @@ svn stream tcp nowait svnowner /usr/bin/svnserve svnserve -i
           runs in the background, can start at boot time
           automatically, and can be started and stopped using the same
           consistent administration interface as other
-          services. </para>
+          Windows services. </para>
 
         <para>You'll need to define the new service using the
           command-line tool <command>SC.EXE</command>.  Much like
@@ -604,7 +604,7 @@ svn stream tcp nowait svnowner /usr/bin/svnserve svnserve -i
 
         <screen>
 C:\&gt; sc create svn
-        binpath= "C:\svn\bin\svnserve.exe --service [args]"
+        binpath= "C:\svn\bin\svnserve.exe --service -r C:\repos"
         displayname= "Subversion Server"
         depend= Tcpip
         start= auto
@@ -613,18 +613,20 @@ C:\&gt; sc create svn
         <para>This defines a new Windows service
           named <quote>svn</quote>, and which executes a
           particular <command>svnserve.exe</command> command when
-          started.  There are a number of caveats in the prior
-          example, however.</para>
+          started (in this case, rooted
+          at <filename>C:\repos</filename>.)  There are a number of
+          caveats in the prior example, however.</para>
 
         <para>First, notice that the <command>svnserve.exe</command>
-          program is always invoked with
-          the <option>--service</option> option.  You must always
-          specify this option, and you may <emphasis>not</emphasis>
-          specify other conflicting options such
-          as <option>--daemon (-d)</option>, <option>--tunnel</option>,
-          or <option>--inetd (-i)</option>.  Options such
-          as <option>-r</option> or <option>--listen-port</option> are
-          fine.  Second, be careful about spaces when invoking
+          program must always be invoked with
+          the <option>--service</option> option.  Any other options to
+          <command>svnserve</command> must then be specified on the
+          same line, but you cannot add conflicting options such
+          as <option>--daemon
+          (-d)</option>, <option>--tunnel</option>, or <option>--inetd
+          (-i)</option>.  Options such as <option>-r</option>
+          or <option>--listen-port</option> are fine, though.  Second, be
+          careful about spaces when invoking
           the <command>SC.EXE</command> command: the
           <literal>key= value</literal> patterns must have no
           spaces between <literal>key=</literal> and exactly one
@@ -637,7 +639,7 @@ C:\&gt; sc create svn
 
         <screen>
 C:\&gt; sc create svn
-        binpath= "\"C:\program files\svn\bin\svnserve.exe\" --service [args]"
+        binpath= "\"C:\program files\svn\bin\svnserve.exe\" --service -r C:\repos"
         displayname= "Subversion Server"
         depend= Tcpip
         start= auto
