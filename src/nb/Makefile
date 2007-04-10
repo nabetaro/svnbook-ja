@@ -9,23 +9,26 @@ L10N_REVISION = revisjon
 COLLAB=https://svn.red-bean.com/svnbook
 
 BUILDTMP_DIR = build.tmp
-BOOKFILES = app-svn-for-cvs-users.xml app-webdav.xml \
-			app-third-party-tools.xml book.xml ch-preface.xml \
-			app-quickstart.xml ch-fundamental-concepts.xml \
-			ch-customizing-svn.xml ch-basic-usage.xml \
-			ch-branching-and-merging.xml ch-repository-admin.xml \
-			ch-server-configuration.xml ch-advanced-topics.xml \
-			ch-developer-info.xml ch-reference.xml copyright.xml \
-			foreword.xml
+BOOKFILES = \
+	book.xml \
+	foreword.xml \
+	ch-preface.xml \
+	ch-fundamental-concepts.xml \
+	ch-basic-usage.xml \
+	ch-advanced-topics.xml \
+	ch-branching-and-merging.xml \
+	ch-repository-admin.xml \
+	ch-server-configuration.xml \
+	ch-customizing-svn.xml \
+	ch-developer-info.xml \
+	ch-reference.xml \
+	app-quickstart.xml \
+	app-svn-for-cvs-users.xml \
+	app-webdav.xml \
+	app-third-party-tools.xml \
+	copyright.xml
 
 BDTMP = bd.tmp
-BDFILES = book.xml foreword.xml ch-preface.xml app-quickstart.xml \
-		  ch-fundamental-concepts.xml ch-basic-usage.xml \
-		  ch-branching-and-merging.xml ch-customizing-svn.xml \
-		  app-svn-for-cvs-users.xml ch-repository-admin.xml \
-		  ch-server-configuration.xml ch-advanced-topics.xml \
-		  ch-developer-info.xml ch-reference.xml app-webdav.xml \
-		  app-third-party-tools.xml copyright.xml
 
 build: dircheck htmlbook copytobuild
 
@@ -49,6 +52,9 @@ editmode:
 
 commitmode:
 	$(MAKE) convfiles CONV_PARAM=
+
+status:
+	./bin/genstat --directory book --full --precision 2 $(BOOKFILES) >TRANSLATION-STATUS
 
 convfiles:
 	@for _prc in $(BOOKFILES); do \
@@ -74,7 +80,7 @@ bookdiff:
 	}
 	$(MAKE) engdir
 	cp -a book/eng $(BDTMP)/
-	@for _ptd in $(BDFILES); do \
+	@for _ptd in $(BOOKFILES); do \
 		cat $(BDTMP)/eng/$$_ptd | bin/clean_files -e >>$(BDTMP)/eng.txt; \
 		cat book/$$_ptd | bin/clean_files -e >>$(BDTMP)/norw.txt; \
 	done
