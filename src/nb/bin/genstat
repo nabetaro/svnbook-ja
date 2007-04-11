@@ -25,7 +25,9 @@ our %Opt = (
     'directory' => "",
     'full' => 0,
     'help' => 0,
+    'lines' => 0,
     'precision' => $STD_PRECISION,
+    'size' => 0,
     'verbose' => 0,
     'version' => 0,
     # }}}
@@ -45,7 +47,9 @@ GetOptions(
     "directory|d=s" => \$Opt{'directory'},
     "full|f" => \$Opt{'full'},
     "help|h" => \$Opt{'help'},
+    "lines|l" => \$Opt{'lines'},
     "precision|p=i" => \$Opt{'precision'},
+    "size|s" => \$Opt{'size'},
     "verbose|v+" => \$Opt{'verbose'},
     "version" => \$Opt{'version'},
     # }}}
@@ -131,7 +135,8 @@ sub read_file {
         my $total_lines = count_lines(strip_english($Data));
         my $est_size = length(strip_english($Data));
         $All{'total'} += $est_size;
-        printf("* %s - %u byte%s, %u line%s\n",
+        printf($Opt{'size'} ? "* %s - %u byte%s, %u line%s\n"
+                            : "* %s\n",
             $File,
             $est_size,
             $est_size == 1 ? "" : "s",
@@ -154,15 +159,20 @@ sub file_entry {
     my $perc_untrans = block("percent", strip_english($Data), $Marker);
     D("perc_untrans = '$perc_untrans'");
     my $block_count = block("count", strip_english($Data), $Marker);
+    my $block_lines = block("lines", strip_english($Data), $Marker);
     my $block_size = block("size", strip_english($Data), $Marker);
     $All{$Marker} += $block_size;
     if ($perc_untrans != 0) {
-        $Retval .= sprintf("    $Title: %.$Opt{'precision'}f%% - %u block%s\n",
+        $Retval .= sprintf("    $Title: %.$Opt{'precision'}f%% - %u line%s in %u block%s\n",
             $perc_untrans,
+            $block_lines,
+            $block_lines == 1 ? "" : "s",
             $block_count,
             $block_count == 1 ? "" : "s"
         );
-        $Retval .= line_numbers($Data, $Marker);
+        if ($Opt{'lines'}) {
+            $Retval .= line_numbers($Data, $Marker);
+        }
     } else {
         $Retval .= ("    Translation complete\n") if ($Marker eq "TR");
     }
@@ -235,6 +245,25 @@ sub block {
     } elsif ($What eq "count") {
         # Return number of blocks
         $Retval = ($Txt =~ s/<!-- \@$Marker {{ .*? \@$Marker }} -->//gs);
+    } elsif ($What eq "lines") {
+        # Return number of lines in all blocks with a specific marker
+        $Retval = 0;
+        while ($Txt =~
+            /^
+                (.*?)
+                (<!--\s\@$Marker\s{{\s-->)
+                (\n?)
+                (.*?)
+                (\n?)
+                (<!--\s\@$Marker\s}}\s-->)
+                (.*)
+            $/sx
+        ) {
+            my ($lf1, $Content, $lf2, $Rest) = ($3, $4, $5, $7);
+            $Retval += count_lines("$Content$lf2");
+            $Txt = $Rest;
+        }
+        ($Retval < 1) && ($Retval = 1);
     } elsif ($What eq "size") {
         # Return number of bytes the blocks occupy
         $Txt =~ s/<!-- \@$Marker {{ .*? \@$Marker }} -->//gs;
@@ -300,8 +329,12 @@ Options:
     TRANSLATION-STATUS file.
   -h, --help
     Show this help.
+  -l, --lines
+    Include line number ranges for blocks.
   -p, --precision x
     Use x decimal places in percent calculations. Default: $STD_PRECISION.
+  -s, --size
+    Include estimated size and number of lines per file.
   -v, --verbose
     Increase level of verbosity. Can be repeated.
   --version
