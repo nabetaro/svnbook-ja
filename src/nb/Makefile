@@ -8,7 +8,6 @@ L10N_REVISION = revisjon
 
 COLLAB=https://svn.red-bean.com/svnbook
 
-BUILDTMP_DIR = build.tmp
 BOOKFILES = \
 	book.xml \
 	foreword.xml \
@@ -30,22 +29,8 @@ BOOKFILES = \
 
 BDTMP = bd.tmp
 
-build: dircheck htmlbook copytobuild
-
-dircheck:
-	mkdir $(BUILDTMP_DIR)
-	rmdir $(BUILDTMP_DIR)
-
 htmlbook:
 	$(MAKE) clean && $(MAKE) all-html
-
-copytobuild:
-	svn co http://svn.sunbase.org/repos/svnbook_nb/build $(BUILDTMP_DIR)
-	find $(BUILDTMP_DIR) -type f | grep -v '/\.svn/' | xargs rm
-	cp -a $(BOOK_HTML_CHUNK_DIR) $(BUILDTMP_DIR)/
-	cp -a $(BOOK_HTML_TARGET) $(BUILDTMP_DIR)/
-	cp -a $(BOOK_IMAGES) $(BUILDTMP_DIR)/images/
-	cp -a $(BOOK_DIR)/styles.css $(BUILDTMP_DIR)/
 
 editmode:
 	$(MAKE) convfiles CONV_PARAM=-e
