@@ -228,10 +228,13 @@ $ svn <replaceable>command</replaceable> -r <replaceable>OPERATIVE-REV</replacea
 
       </itemizedlist>
 
-      <para>Not that even when you don't explicitly supply a
-        peg-revision, it's still present.  For your convenience, it
-        defaults to <literal>BASE</literal> for working copy items,
-        and to <literal>HEAD</literal> for repository URLs.</para>
+      <para>Note that even when you don't explicitly supply a peg
+        revision or operative revision, they are still present.  For
+        your convenience, the default peg revision is
+        <literal>BASE</literal> for working copy items and
+        <literal>HEAD</literal> for repository URLs.  And when no
+        operative revision is provided, it defaults to being the same
+        revision as the peg revision.</para>
         
     </sidebar>
 
@@ -281,6 +284,23 @@ svn: Unable to find repository location for 'concept/IDEA' in revision 1
       working copy paths, and of <literal>HEAD</literal> when applied
       to URLs.</para>
 
+    <para>The perceptive reader is probably wondering at this point if
+      the peg revision syntax causes problems for working copy paths
+      or URLs that actually have ampersand characters in them.  After
+      all, how does <command>svn</command> know whether
+      <literal>news@11</literal> is the name of a directory in my
+      tree, or just a syntax for <quote>revision 11 of
+      <filename>news</filename></quote>?  Thankfully, while
+      <command>svn</command> will always assume the latter, there is a
+      trivial workaround.  You need only append an ampersand to the
+      end of the path, such as <literal>news@11@</literal>.
+      <command>svn</command> only cares about the last ampersand in
+      the argument, and it is not considered illegal to omit a literal
+      peg revision specifier after that ampersand.  This workaround
+      even applies to paths that end in an ampersand&mdash;you would
+      use <literal>filename@@</literal> to talk about a file named
+      <filename>filename@</filename>.</para>
+
     <para>Let's ask the other question, then&mdash;in revision 1, what
       were the contents of whatever file occupied the address
       <filename>concepts/IDEA</filename> at the time?  We'll use an
@@ -295,15 +315,21 @@ we need to employ over-the-top input validation and data verification
 mechanisms.
 </screen>
 
-    <para>This appears to be the right output.  The text even mentions
-      frabbing naggily worts, so this is almost certainly the file
-      which describes the software now called Frabnaggilywort.  In
-      fact, we can verify this using the combination of an explicit
-      peg revision and explicit operative revision.  We know that in
-      <literal>HEAD</literal>, the Frabnaggilywort project is located
-      in the <filename>frabnaggilywort</filename> directory.  So we
-      specify that we want to see how the line of history identified
-      in <literal>HEAD</literal> as the path
+    <para>Notice that we didn't provide an operative revision this
+      time.  That's because when no operative revision is specified,
+      Subversion assumes a default operative revision that's the same
+      as the peg revision.</para>
+
+    <para>As you can see, the output from our operation appears to be
+      correct.  The text even mentions frabbing naggily worts, so this
+      is almost certainly the file which describes the software now
+      called Frabnaggilywort.  In fact, we can verify this using the
+      combination of an explicit peg revision and explicit operative
+      revision.  We know that in <literal>HEAD</literal>, the
+      Frabnaggilywort project is located in the
+      <filename>frabnaggilywort</filename> directory.  So we specify
+      that we want to see how the line of history identified in
+      <literal>HEAD</literal> as the path
       <filename>frabnaggilywort/IDEA</filename> looked in revision
       1.</para>
 
@@ -1865,6 +1891,18 @@ $
       book&mdash;the HTML, PDF, or PostScript files generated as the
       result of a conversion of some source DocBook XML files to a
       more legible output format.</para>
+
+    <warning>
+      <para>Subversion's support for ignorable file patterns extends
+        only to the one-time process of adding unversioned
+        files and directories to version control.  Once an object is
+        under Subversion's watchkeep, the ignore pattern mechanisms no
+        longer apply to it.  In other words, don't expect Subversion
+        to avoid committing changes you've made to a versioned file
+        simply because that file's name matches an ignore
+        pattern&mdash;Subversion <emphasis>always</emphasis> notices
+        all of its versioned resources.</para>
+    </warning>
 
     <sidebar>
       <title>Ignore Patterns for CVS Users</title>
