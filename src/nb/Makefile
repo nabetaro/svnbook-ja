@@ -25,7 +25,8 @@ BOOKFILES = \
 	app-svn-for-cvs-users.xml \
 	app-webdav.xml \
 	app-third-party-tools.xml \
-	copyright.xml
+	copyright.xml \
+	index.xml
 
 BDTMP = bd.tmp
 
