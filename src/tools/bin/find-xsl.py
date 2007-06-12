@@ -20,6 +20,8 @@ candidate_xsldirs = (
     '/usr/share/sgml/docbook/xsl-stylesheets-*',
     # Mac OS X + fink
     '/sw/share/xml/xsl/docbook-xsl',
+    # Mac OS X + MacPorts
+    '/opt/local/share/xsl/docbook-xsl',
     # Please add your OS's location here if not listed!
     )
 #######################################################
