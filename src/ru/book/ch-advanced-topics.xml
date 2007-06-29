@@ -251,17 +251,17 @@ $ svn diff -r BASE:14 foo.c
         spaces.)</para>
 
       <screen>
-$ svn checkout -r {2002-02-17}
+$ svn checkout -r {2006-02-17}
 $ svn checkout -r {15:30}
 $ svn checkout -r {15:30:00.200000}
-$ svn checkout -r {"2002-02-17 15:30"}
-$ svn checkout -r {"2002-02-17 15:30 +0230"}
-$ svn checkout -r {2002-02-17T15:30}
-$ svn checkout -r {2002-02-17T15:30Z}
-$ svn checkout -r {2002-02-17T15:30-04:00}
-$ svn checkout -r {20020217T1530}
-$ svn checkout -r {20020217T1530Z}
-$ svn checkout -r {20020217T1530-0500}
+$ svn checkout -r {"2006-02-17 15:30"}
+$ svn checkout -r {"2006-02-17 15:30 +0230"}
+$ svn checkout -r {2006-02-17T15:30}
+$ svn checkout -r {2006-02-17T15:30Z}
+$ svn checkout -r {2006-02-17T15:30-04:00}
+$ svn checkout -r {20060217T1530}
+$ svn checkout -r {20060217T1530Z}
+$ svn checkout -r {20060217T1530-0500}
 &hellip;
 </screen>
       
@@ -271,9 +271,9 @@ $ svn checkout -r {20020217T1530-0500}
         number:</para>
 
       <screen>
-$ svn log --revision {2002-11-28}
+$ svn log -r {2006-11-28}
 ------------------------------------------------------------------------
-r12 | ira | 2002-11-27 12:31:51 -0600 (Wed, 27 Nov 2002) | 6 lines
+r12 | ira | 2006-11-27 12:31:51 -0600 (Mon, 27 Nov 2006) | 6 lines
 &hellip;
 </screen>
 
@@ -286,38 +286,38 @@ r12 | ira | 2002-11-27 12:31:51 -0600 (Wed, 27 Nov 2002) | 6 lines
         <!-- @ENGLISH {{{
         <para>If you specify a single date as a revision without
           specifying a time of day (for example
-          <literal>2002-11-27</literal>), you may think that Subversion
+          <literal>2006-11-27</literal>), you may think that Subversion
           should give you the last revision that took place on the
           27th of November.  Instead, you'll get back a revision from
           the 26th, or even earlier.  Remember that Subversion will
           find the <emphasis>most recent revision of the
           repository</emphasis> as of the date you give.  If you give
           a date without a timestamp, like
-          <literal>2002-11-27</literal>, Subversion assumes a time of
+          <literal>2006-11-27</literal>, Subversion assumes a time of
           00:00:00, so looking for the most recent revision won't
           return anything on the day of the 27th.</para>
         @ENGLISH }}} -->
         <para>Указав при обращении к правке только дату, без указания
-          времени (например, <literal>2002-11-27</literal>), возможно
+          времени (например, <literal>2006-11-27</literal>), возможно
           вы подумаете, что Subversion выдаст вам последнюю правку за 27
           ноября. А вместо этого можете получить правку за 26 число или
           даже более раннюю. Помните, что Subversion будет искать
           <emphasis>наиболее отвечающую</emphasis> указанной вами дате
           правку хранилища. Если вы укажите дату без указания времени,
-          например <literal>2002-11-27</literal>, Subversion примет за
+          например <literal>2006-11-27</literal>, Subversion примет за
           временную метку 00:00:00 и таким образом поиск ближайшей к 27
           числу ревизии не даст ничего относящегося к 27 ноября.</para>
 
         <!-- @ENGLISH {{{
         <para>If you want to include the 27th in your search, you can
-          either specify the 27th with the time (<literal>{"2002-11-27
+          either specify the 27th with the time (<literal>{"2006-11-27
           23:59"}</literal>), or just specify the next day
-          (<literal>{2002-11-28}</literal>).</para>
+          (<literal>{2006-11-28}</literal>).</para>
         @ENGLISH }}} -->
         <para>Если вам необходимо найти именно 27 число, вы можете либо
-          указать 27 число с временной меткой (<literal>{"2002-11-27
+          указать 27 число с временной меткой (<literal>{"2006-11-27
           23:59"}</literal>) либо просто использовать в запросе следующий
-          день (<literal>{2002-11-28}</literal>).</para>
+          день (<literal>{2006-11-28}</literal>).</para>
 
       </sidebar>
 
@@ -329,9 +329,7 @@ r12 | ira | 2002-11-27 12:31:51 -0600 (Wed, 27 Nov 2002) | 6 lines
         найдет все правки между обеими датами включительно:</para>
         
       <screen>
-$ svn log -r {2002-11-28}
-------------------------------------------------------------------------
-r12 | ira | 2002-11-27 12:31:51 -0600 (Wed, 27 Nov 2002) | 6 lines
+$ svn log -r {2006-11-20}:{2006-11-29}
 &hellip;
 </screen>
         
@@ -348,316 +346,6 @@ r12 | ira | 2002-11-27 12:31:51 -0600 (Wed, 27 Nov 2002) | 6 lines
     </sect2>
       
   </sect1>
-
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <sect1 id="svn.advanced.pegrevs">
-    <title>Peg and Operative Revisions</title>
-
-    <para>We make use of the ability to copy, move, rename, and
-      completely replace files and directories on our computers all
-      the time.  And your version control system shouldn't get in the
-      way of your doing these things with your version-controlled
-      files and directories, either.  Subversion's file management
-      support is quite liberating, affording almost as much
-      flexibility for versioned files as you'd expect when
-      manipulating your unversioned ones.  But that flexibility means
-      that across the lifetime of your repository, a given versioned
-      object might have many paths, and a given path might represent
-      several entirely different versioned objects.  And this
-      introduces a certain level of complexity to your interactions
-      with those paths and objects.</para>
-
-    <para>Subversion is pretty smart about noticing when an object's
-      version history includes such <quote>changes of address</quote>.
-      For example, if you ask for the revision history log of a
-      particular file that was renamed last week, Subversion happily
-      provides all those logs&mdash;the revision in which the rename
-      itself happened, plus the logs of relevant revisions both before
-      and after that rename.  So, most of the time, you don't even
-      have to think about such things.  But occasionally, Subversion
-      needs your help to clear up ambiguities.</para>
-
-    <para>The simplest example of this occurs when a directory or file
-      is deleted from version control, and then a new directory or
-      file is created with the same name and added to version control.
-      Clearly the thing you deleted and the thing you later added
-      aren't the same thing.  They merely happen to have had the same
-      path, <filename>/trunk/object</filename> for example.  What,
-      then, does it mean to ask Subversion about the history of
-      <filename>/trunk/object</filename>?  Are you asking about the
-      thing currently at that location, or the old thing you deleted
-      from that location?  Are you asking about the operations that
-      have happened to <emphasis>all</emphasis> the objects that have
-      ever lived at that path?  Clearly, Subversion needs a hint about
-      what you really want.</para>
-
-    <para>And thanks to moves, versioned object history can get far
-      more twisted than that, even.  For example, you might have a
-      directory named <filename>concept</filename>, containing some
-      nascent software project you've been toying with.  Eventually,
-      though, that project matures to the point that the idea seems to
-      actually have some wings, so you do the unthinkable and decide
-      to give the project a name.
-      <footnote>
-        <para><quote>You're not supposed to name it.  Once you name it,
-          you start getting attached to it.</quote> &mdash; Mike
-          Wazowski</para>
-      </footnote>
-      Let's say you called your software Frabnaggilywort.  At this
-      point, it makes sense to rename the directory to reflect the
-      project's new name, so <filename>concept</filename> is renamed
-      to <filename>frabnaggilywort</filename>.  Life goes on,
-      Frabnaggilywort releases a 1.0 version, and is downloaded and
-      used daily by hordes of people aiming to improve their
-      lives.</para>
-    
-    <para>It's a nice story, really, but it doesn't end there.
-      Entrepreneur that you are, you've already got another think in
-      the tank.  So you make a new directory,
-      <filename>concept</filename>, and the cycle begins again.  In
-      fact, the cycle begins again many times over the years, each
-      time starting with that old <filename>concept</filename>
-      directory, then sometimes seeing that directory renamed as the
-      idea cures, sometimes seeing it deleted when you scrap the idea.
-      Or, to get really sick, maybe you rename
-      <filename>concept</filename> to something else for a while, but
-      later rename the thing back to <filename>concept</filename> for
-      some reason.</para>
-
-    <para>When scenarios like these occur, attempting to instruct
-      Subversion to work with these re-used paths can be a little like
-      instructing a motorist in Chicago's West Suburbs to drive east
-      down Roosevelt Road and turn left onto Main Street.  In a mere
-      twenty minutes, you can cross <quote>Main Street</quote> in
-      Wheaton, Glen Ellyn, and Lombard.  And no, they aren't the same
-      street.  Our motorist&mdash;and our Subversion&mdash;need a
-      little more detail in order to do the right thing.</para>
-
-    <para>In version 1.1, Subversion introduced a way for you to tell
-      it exactly which Main Street you meant.  It's called the
-      <firstterm>peg revision</firstterm>, and it is a revision
-      provided to Subversion for the sole purpose of identifying a
-      unique line of history.  Because at most one versioned object
-      may occupy a path at any given time&mdash;or, more precisely, in
-      any one revision&mdash;the combination of a path and a peg
-      revision is all that is needed to refer to a specific line of
-      history.  Peg revisions are specified to the Subversion
-      command-line client using <firstterm>at syntax</firstterm>, so
-      called because the syntax involves appending an <quote>at
-      sign</quote> (<literal>@</literal>) and the peg revision to the
-      end of the path with which the revision is associated.</para>
-
-    <para>But what of the <option>--revision (-r)</option> of which
-      we've spoken so much in this book?  That revision (or set of
-      revisions) is called the <firstterm>operative
-      revision</firstterm> (or <firstterm>operative revision
-      range</firstterm>).  Once a particular line of history has been
-      identified using a path and peg revision, Subversion performs
-      the requested operation using the operative revision(s).  To map
-      this to our Chicagoland streets analogy, if we are told to go to
-      606 N. Main Street in Wheaton,
-      <footnote>
-        <para>606 N. Main Street, Wheaton, Illinois, is the home of
-          the Wheaton History Center.  Get it&mdash;<quote>History
-          Center</quote>?  It seemed appropriate&hellip;.</para>
-      </footnote>
-      we can think of <quote>Main Street</quote> as our path and
-      <quote>Wheaton</quote> as our peg revision.  These two pieces of
-      information identify a unique path which can travelled (north or
-      south on Main Street), and will keep us from travelling up and
-      down the wrong Main Street in search of our destination.  Now we
-      throw in <quote>606 N.</quote> as our operative revision, of
-      sorts, and we know <emphasis>exactly</emphasis> where to
-      go.</para>
-
-    <sidebar>
-      <title>The peg revision algorithm</title>
-      
-      <para>The Subversion command-line performs the peg revision
-        algorithm any time it needs to resolve possible ambiguities in
-        the paths and revisions provided to it.  Here's an example of
-        such an invocation for the purposes of illustrating that
-        algorithm.</para>
-
-      <screen>
-$ svn <replaceable>command</replaceable> -r <replaceable>OPERATIVE-REV</replaceable> item@<replaceable>PEG-REV</replaceable>
-</screen>
-      
-      <para>The algorithm has three simple steps:</para>
-
-      <itemizedlist>
-        
-        <listitem>
-          <para>Locate <replaceable>item</replaceable> in the revision
-            identified by <replaceable>PEG-REV</replaceable>.  There
-            can be only one such object.</para>
-        </listitem>
-
-        <listitem>
-          <para>Trace the object's history backwards (through any
-            possible renames) to its ancestor in the
-            revision <replaceable>OPERATIVE-REV</replaceable>.</para>
-        </listitem>
-
-        <listitem>
-          <para>Perform the requested action on that ancestor,
-            wherever it is located, or whatever its name might
-            be or have been at that time.</para>
-        </listitem>
-
-      </itemizedlist>
-
-      <para>Note that even when you don't explicitly supply a peg
-        revision or operative revision, they are still present.  For
-        your convenience, the default peg revision is
-        <literal>BASE</literal> for working copy items and
-        <literal>HEAD</literal> for repository URLs.  And when no
-        operative revision is provided, it defaults to being the same
-        revision as the peg revision.</para>
-        
-    </sidebar>
-
-    <para>Say that long ago we created our repository, and in revision 1
-      added our first <filename>concept</filename> directory, plus an
-      <filename>IDEA</filename> file in that directory talking about
-      the concept.  After several revisions in which real code was
-      added and tweaked, we, in revision 20, renamed this directory to
-      <filename>frabnaggilywort</filename>.  By revision 27, we had a
-      new concept, a new <filename>concept</filename> directory to
-      hold it, and a new <filename>IDEA</filename> file to describe
-      it.  And then five years and twenty thousand revisions flew by,
-      just like they would in any good romance story.</para>
-
-    <para>Now, years later, we wonder what the
-      <filename>IDEA</filename> file looked like back in revision 1.
-      But Subversion needs to know if we are asking about how the
-      <emphasis>current</emphasis> file looked back in revision 1, or
-      are we asking for the contents of whatever file lived at
-      <filename>concepts/IDEA</filename> in revision 1?  Certainly
-      those questions have different answers, and because of peg
-      revisions, you can ask either of them.  To find out how the
-      current <filename>IDEA</filename> file looked in that old
-      revision, you run:</para>
-
-    <screen>
-$ svn cat -r 1 concept/IDEA 
-subversion/libsvn_client/ra.c:775: (apr_err=20014)
-svn: Unable to find repository location for 'concept/IDEA' in revision 1
-</screen>
-
-    <para>Of course, in this example, the current
-      <filename>IDEA</filename> file didn't exist yet in revision 1,
-      so Subversion gives an error.  The command above is shorthand
-      for a longer notation which explicitly lists a peg revision.
-      The expanded notation is:</para>
-
-    <screen>
-$ svn cat -r 1 concept/IDEA@BASE
-subversion/libsvn_client/ra.c:775: (apr_err=20014)
-svn: Unable to find repository location for 'concept/IDEA' in revision 1
-</screen>
-
-    <para>And when executed, it has the expected results.  Peg revisions
-      generally default to a value of <literal>BASE</literal> (the
-      revision currently present in the working copy) when applied to
-      working copy paths, and of <literal>HEAD</literal> when applied
-      to URLs.</para>
-
-    <para>The perceptive reader is probably wondering at this point if
-      the peg revision syntax causes problems for working copy paths
-      or URLs that actually have at signs in them.  After
-      all, how does <command>svn</command> know whether
-      <literal>news@11</literal> is the name of a directory in my
-      tree, or just a syntax for <quote>revision 11 of
-      <filename>news</filename></quote>?  Thankfully, while
-      <command>svn</command> will always assume the latter, there is a
-      trivial workaround.  You need only append an at sign to the
-      end of the path, such as <literal>news@11@</literal>.
-      <command>svn</command> only cares about the last at sign in
-      the argument, and it is not considered illegal to omit a literal
-      peg revision specifier after that at sign.  This workaround
-      even applies to paths that end in an at sign&mdash;you would
-      use <literal>filename@@</literal> to talk about a file named
-      <filename>filename@</filename>.</para>
-
-    <para>Let's ask the other question, then&mdash;in revision 1, what
-      were the contents of whatever file occupied the address
-      <filename>concepts/IDEA</filename> at the time?  We'll use an
-      explicit peg revision to help us out.</para>
-
-    <screen>
-$ svn cat concept/IDEA@1
-The idea behind this project is to come up with a piece of software
-that can frab a naggily wort.  Frabbing naggily worts is tricky
-business, and doing it incorrectly can have serious ramifications, so
-we need to employ over-the-top input validation and data verification
-mechanisms.
-</screen>
-
-    <para>Notice that we didn't provide an operative revision this
-      time.  That's because when no operative revision is specified,
-      Subversion assumes a default operative revision that's the same
-      as the peg revision.</para>
-
-    <para>As you can see, the output from our operation appears to be
-      correct.  The text even mentions frabbing naggily worts, so this
-      is almost certainly the file which describes the software now
-      called Frabnaggilywort.  In fact, we can verify this using the
-      combination of an explicit peg revision and explicit operative
-      revision.  We know that in <literal>HEAD</literal>, the
-      Frabnaggilywort project is located in the
-      <filename>frabnaggilywort</filename> directory.  So we specify
-      that we want to see how the line of history identified in
-      <literal>HEAD</literal> as the path
-      <filename>frabnaggilywort/IDEA</filename> looked in revision
-      1.</para>
-
-    <screen>
-$ svn cat -r 1 frabnaggilywort/IDEA@HEAD
-The idea behind this project is to come up with a piece of software
-that can frab a naggily wort.  Frabbing naggily worts is tricky
-business, and doing it incorrectly can have serious ramifications, so
-we need to employ over-the-top input validation and data verification
-mechanisms.
-</screen>
-
-    <para>And the peg and operative revisions need not be so trivial,
-      either.  For example, say <filename>frabnaggilywort</filename>
-      had been deleted from <literal>HEAD</literal>, but we know it
-      existed in revision 20, and we want to see the diffs for its
-      <filename>IDEA</filename> file between revisions 4 and 10.  We
-      can use the peg revision 20 in conjunction with the URL that
-      would have held Frabnaggilywort's <filename>IDEA</filename> file
-      in revision 20, and then use 4 and 10 as our operative revision
-      range.</para>
-
-    <screen>
-$ svn diff -r 4:10 http://svn.red-bean.com/projects/frabnaggilywort/IDEA@20
-Index: frabnaggilywort/IDEA
-===================================================================
---- frabnaggilywort/IDEA	(revision 4)
-+++ frabnaggilywort/IDEA	(revision 10)
-@@ -1,5 +1,5 @@
--The idea behind this project is to come up with a piece of software
--that can frab a naggily wort.  Frabbing naggily worts is tricky
--business, and doing it incorrectly can have serious ramifications, so
--we need to employ over-the-top input validation and data verification
--mechanisms.
-+The idea behind this project is to come up with a piece of
-+client-server software that can remotely frab a naggily wort.
-+Frabbing naggily worts is tricky business, and doing it incorrectly
-+can have serious ramifications, so we need to employ over-the-top
-+input validation and data verification mechanisms.
-</screen>
-
-    <para>Fortunately, most folks aren't faced with such complex
-      situations.  But when you are, remember that peg revisions are
-      that extra hint Subversion needs to clear up ambiguity.</para>
-
-  </sect1>
-
 
   <!-- ================================================================= -->
   <!-- ================================================================= -->
@@ -940,7 +628,7 @@ This fixes a nasty segfault in the wort frabbing process
         подкоманды <command>propset</command>.</para>
 
       <screen>
-$ svn propset copyright '(c) 2003 Red-Bean Software' calc/button.c
+$ svn propset copyright '(c) 2006 Red-Bean Software' calc/button.c
 property 'copyright' set on 'calc/button.c'
 $
 </screen>
@@ -1045,7 +733,7 @@ $
         можно сделать вот так:</para>
 
       <screen>
-$ svn propset copyright '(c) 2002 Red-Bean Software' calc/*
+$ svn propset copyright '(c) 2006 Red-Bean Software' calc/*
 property 'copyright' set on 'calc/Makefile'
 property 'copyright' set on 'calc/button.c'
 property 'copyright' set on 'calc/integer.c'
@@ -1083,7 +771,7 @@ Properties on 'calc/button.c':
   copyright
   license
 $ svn propget copyright calc/button.c
-(c) 2003 Red-Bean Software
+(c) 2006 Red-Bean Software
 </screen>
 
       <!-- @ENGLISH {{{
@@ -1100,9 +788,9 @@ $ svn propget copyright calc/button.c
       <screen>
 $ svn proplist --verbose calc/button.c
 Properties on 'calc/button.c':
-  copyright : (c) 2003 Red-Bean Software
+  copyright : (c) 2006 Red-Bean Software
   license : ================================================================
-Copyright (c) 2003 Red-Bean Software.  All rights reserved.
+Copyright (c) 2006 Red-Bean Software.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions
@@ -1134,18 +822,18 @@ $ svn propset license '' calc/button.c
 property 'license' set on 'calc/button.c'
 $ svn proplist --verbose calc/button.c
 Properties on 'calc/button.c':
-  copyright : (c) 2003 Red-Bean Software
+  copyright : (c) 2006 Red-Bean Software
   license :
 $
 </screen>
 
       <!-- @ENGLISH {{{
-      <para>You need to use the <command>propdel</command> command to
-        delete properties altogether.  The syntax is similar to the
-        преимущестпреимуществ:</para>
+      <para>You need to use the <command>propdel</command> subcommand
+        to delete properties altogether.  The syntax is similar to the
+        other property commands:</para>
       @ENGLISH }}} -->
       <para>Для полного удаления свойств необходимо использовать
-        команду <command>propdel</command>. Ее синтаксис такой же
+        подкоманду <command>propdel</command>. Ее синтаксис такой же
         как и у других команд работы со свойствами:</para>
 
       <screen>
@@ -1153,7 +841,7 @@ $ svn propdel license calc/button.c
 property 'license' deleted from 'calc/button.c'.
 $ svn proplist --verbose calc/button.c
 Properties on 'calc/button.c':
-  copyright : (c) 2003 Red-Bean Software
+  copyright : (c) 2006 Red-Bean Software
 $
 </screen>
 
@@ -1304,7 +992,7 @@ $ svn diff calc/button.c
 Property changes on: calc/button.c
 ___________________________________________________________________
 Name: copyright
-   + (c) 2003 Red-Bean Software
+   + (c) 2006 Red-Bean Software
 
 $
 </screen>
@@ -1406,16 +1094,6 @@ $
         unfortunately mean that to fully apply a patch generated by
         <command>svn diff</command>, any property modifications will
         need to be applied by hand.</para>
-
-      <para>As you can see, the presence of property modifications has
-        no outstanding effect on the typical Subversion workflow.
-        Your general patterns of updating your working copy, checking
-        the status of your files and directories, reporting on the
-        modifications you have made, and committing those
-        modifications to the repository are completely immune to the
-        presence or absence of properties.  The <command>svn</command>
-        program has some additional subcommands for actually making
-        property changes, but that is the only noticeable asymmetry.</para>
       @ENGLISH }}} -->
       <para>Кроме того нужно помнить о нестандартном подходе, используемом
         Subversion при выводе различий для свойств. Безусловно, можно
@@ -1426,14 +1104,6 @@ $
         это значит, что для полного применения отличий, сгенерированных
         <command>svn diff</command>, изменения свойств нужно вносить в
         ручную.</para>
-
-      <para>Как видите, наличие измененных свойств никак не отражается
-        на привычном рабочем цикле. Операции обновления рабочей копии,
-        проверки статуса файлов и директорий, вывод сообщений о сделанных
-        изменениях и фиксация этих изменений в хранилище никак не зависят от
-        наличия или отсутствия свойств. У <command>svn</command> просто
-        имеется несколько дополнительных подкоманд для внесения изменений в
-        свойства однако это просто достойное внимания отличие.</para>
 
     </sect2>
 
@@ -1537,67 +1207,76 @@ $
     <sect2 id="svn.advanced.props.special.mime-type">
       <title>File Content Type</title>
 
-      <para>Software programs on most modern operating systems make
-        assumptions about the type and format of the contents of a
-        file by the file's name, specifically its file extension.  For
-        example, files whose names end in <filename>.txt</filename>
-        are generally assumed to be human-readable, able to be
-        understood by simple perusal rather than requiring complex
-        processing to decipher.  Files whose names end in
-        <filename>.png</filename>, on the other hand, are assumed to
-        be of the Portable Network Graphics type&mdash;not
-        human-readable at all, and sensible only when interpreted by
-        software which understands the PNG format and can render the
-        information in that format as a raster image.</para>
+      <para>Subversion joins the ranks of the many applications which
+        recognize and make use of Multipurpose Internet Mail
+        Extensions (MIME) content types.  Besides being a
+        general-purpose storage location for a file's content type,
+        the value of the <literal>svn:mime-type</literal> file
+        property determines some behavioral characteristics of
+        Subversion itself.</para>
 
-      <para>Unfortunately, some of those extensions have changed
-        meanings over time.  When personal computers first appeared, a
-        file named <filename>README.DOC</filename> would have almost
-        certainly been a plaintext file, just like today's
-        <filename>.txt</filename> files.  But by the mid-1990's,
-        you could almost bet that a file of that name would not be a
-        plaintext file at all, but instead a Microsoft Word document
-        with a proprietary, non-human-readable format.  But this
-        change didn't occur overnight&mdash;there was certainly a
-        period of confusion for computer users over what exactly they
-        had in hand when they saw a <filename>.DOC</filename> file.
-        <footnote>
-          <para>You think that was rough?  During that same era,
-            WordPerfect also used <filename>.DOC</filename> for their
-            proprietary file format's preferred extension!</para>
-        </footnote>
-      </para>
+      <sidebar>
+        <title>Identifying File Types</title>
+    
+        <para>Software programs on most modern operating systems make
+          assumptions about the type and format of the contents of a
+          file by the file's name, specifically its file extension.
+          For example, files whose names end in
+          <filename>.txt</filename> are generally assumed to be
+          human-readable, able to be understood by simple perusal
+          rather than requiring complex processing to decipher.  Files
+          whose names end in <filename>.png</filename>, on the other
+          hand, are assumed to be of the Portable Network Graphics
+          type&mdash;not human-readable at all, and sensible only when
+          interpreted by software which understands the PNG format and
+          can render the information in that format as a raster
+          image.</para>
 
-      <para>The popularity of computer networking cast still more
-        doubt on the mapping between a file's name and its content.
-        With information being served across networks and generated
-        dynamically by server-side scripts, there was often no real
-        file <foreignphrase>per se</foreignphrase> to speak of, and
-        therefore no file name.  Web servers, for example, needed some
-        other way to tell browsers what they were downloading so the
-        browser could do something intelligent with that information,
-        whether that was to display the data using a program
-        registered to handle that data type, or to prompt the user for
-        where on the client machine to store the downloaded
-        data.</para>
+        <para>Unfortunately, some of those extensions have changed
+          meanings over time.  When personal computers first appeared,
+          a file named <filename>README.DOC</filename> would have
+          almost certainly been a plaintext file, just like today's
+          <filename>.txt</filename> files.  But by the mid-1990's, you
+          could almost bet that a file of that name would not be a
+          plaintext file at all, but instead a Microsoft Word document
+          with a proprietary, non-human-readable format.  But this
+          change didn't occur overnight&mdash;there was certainly a
+          period of confusion for computer users over what exactly
+          they had in hand when they saw a <filename>.DOC</filename>
+          file.
+          <footnote>
+            <para>You think that was rough?  During that same era,
+              WordPerfect also used <filename>.DOC</filename> for their
+              proprietary file format's preferred extension!</para>
+          </footnote>
+        </para>
 
-      <para>Eventually, a standard emerged for, among other things,
-        describing the contents of a data stream.  In 1996, RFC2045
-        was published, the first of five RFCs describing Multipurpose
-        Internet Mail Extensions (MIME).  In it, this RFC describes
-        the concept of media types and subtypes, and recommends a
-        syntax for the representation of those types.  Today, MIME
-        media types&mdash;or, MIME types&mdash; are used almost
-        universally across e-mail applications, Web servers, and other
-        software as the <foreignphrase>de facto</foreignphrase>
-        mechanism for clearing up the file content confusion.</para>
+        <para>The popularity of computer networking cast still more
+          doubt on the mapping between a file's name and its content.
+          With information being served across networks and generated
+          dynamically by server-side scripts, there was often no real
+          file <foreignphrase>per se</foreignphrase> to speak of, and
+          therefore no file name.  Web servers, for example, needed
+          some other way to tell browsers what they were downloading
+          so the browser could do something intelligent with that
+          information, whether that was to display the data using a
+          program registered to handle that data type, or to prompt
+          the user for where on the client machine to store the
+          downloaded data.</para>
 
-      <para>Subversion joins the ranks of applications which recognize
-        and make use of MIME types.  Besides being a general-purpose
-        storage location for a file's content type, the value of the
-        <literal>svn:mime-type</literal> file property determines some
-        behavioral characteristics of Subversion itself.</para>
+        <para>Eventually, a standard emerged for, among other things,
+          describing the contents of a data stream.  In 1996, RFC2045
+          was published, the first of five RFCs describing MIME.  In
+          it, this RFC describes the concept of media types and
+          subtypes, and recommends a syntax for the representation of
+          those types.  Today, MIME media types&mdash;or, MIME
+          types&mdash; are used almost universally across e-mail
+          applications, Web servers, and other software as the
+          <foreignphrase>de facto</foreignphrase> mechanism for
+          clearing up the file content confusion.</para>
 
+      </sidebar>
+    
       <para>For example, one of the benefits that Subversion typically
         provides is contextual, line-based merging of changes received
         from the server during an update into your working file.  But
@@ -1819,7 +1498,7 @@ $
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.advanced.props.special.ignore">
-    <title>Selective Versioning</title>
+    <title>Ignoring Unversioned Items</title>
 
     <para>In any given working copy there is a good chance that
       alongside all those versioned files and directories are other
@@ -1847,7 +1526,7 @@ $
       directories&mdash;its output can get quite noisy where many of
       these things exist.</para>
 
-    <para>So Subversion provides a pair of ways for telling it which
+    <para>So Subversion provides two ways for telling it which
       files you would prefer that it simply disregard.  One of the
       ways involves the use of Subversion's runtime configuration
       system (see <xref linkend="svn.advanced.confarea" />), and
@@ -1895,7 +1574,7 @@ $
       <para>Subversion's support for ignorable file patterns extends
         only to the one-time process of adding unversioned
         files and directories to version control.  Once an object is
-        under Subversion's watchkeep, the ignore pattern mechanisms no
+        under Subversion's control, the ignore pattern mechanisms no
         longer apply to it.  In other words, don't expect Subversion
         to avoid committing changes you've made to a versioned file
         simply because that file's name matches an ignore
@@ -2006,6 +1685,7 @@ $ svn status
 
     <screen>
 $ svn status --no-ignore
+ M     calc
  M     calc/button.c
 I      calc/calculator
 ?      calc/data.c
@@ -2081,7 +1761,7 @@ I      calc/debug_log.3.gz
           <para>This keyword describes the last time the file was
             known to have been changed in the repository, and
             looks something like <literal>$Date:
-            2002-07-22 21:42:37 -0700 (Mon, 22 Jul 2002)
+            2006-07-22 21:42:37 -0700 (Sat, 22 Jul 2006)
             $</literal>.  It may also be specified as
             <literal>LastChangedDate</literal>.</para>
         </listitem>
@@ -2123,10 +1803,10 @@ I      calc/debug_log.3.gz
         <listitem>
           <para>This keyword is a compressed combination of the
             other keywords.  Its substitution looks something like
-            <literal>$Id: calc.c 148 2002-07-28 21:30:43Z sally
+            <literal>$Id: calc.c 148 2006-07-28 21:30:43Z sally
             $</literal>, and is interpreted to mean that the file
             <filename>calc.c</filename> was last changed in revision
-            148 on the evening of July 28, 2002 by the user
+            148 on the evening of July 28, 2006 by the user
             <literal>sally</literal>.</para>
         </listitem>
       </varlistentry>
@@ -2202,7 +1882,7 @@ $
 
     <screen>
 Here is the latest report from the front lines.
-$LastChangedDate: 2002-07-22 21:42:37 -0700 (Mon, 22 Jul 2002) $
+$LastChangedDate: 2006-07-22 21:42:37 -0700 (Sat, 22 Jul 2006) $
 $Rev$
 Cumulus clouds are appearing more frequently as summer approaches.
 </screen>
@@ -2218,7 +1898,28 @@ Cumulus clouds are appearing more frequently as summer approaches.
     <sidebar>
       <title>Where's $GlobalRev$?</title>
 
-      <para>### TODO:  Write me</para>
+      <para>New users are often confused by how the
+        <literal>$Rev$</literal> keyword works.  Since the repository
+        has a single, globally increasing revision number, many people
+        assume that it is this number which is reflected by the
+        <literal>$Rev$</literal> keyword's value.  But
+        <literal>$Rev$</literal> expands to show the last revision in
+        which the file <emphasis>changed</emphasis>, not the last
+        revision to which it was updated.  Understanding this clears
+        the confusion, but frustration often remains&mdash;without the
+        support of a Subversion keyword to do so, how can you
+        automatically get the global revision number into your
+        files?</para>
+
+      <para>To do this, you need external processing.  Subversion
+        ships with a tool called <command>svnversion</command> which
+        was designed for just this purpose.
+        <command>svnversion</command> crawls your working copy and
+        generates as output the revision(s) it finds.  You can use
+        this program, plus some additionally tooling, to embed that
+        revision information into your files.  For more information on
+        <command>svnversion</command>, see <xref
+        linkend="svn.ref.svnversion"/>.</para>
 
     </sidebar>
 
@@ -2471,7 +2172,7 @@ $Date:: 2006-03-15 0#$:  Date of last commit
         can cause a repository to be <quote>wedged</quote>, as
         described in <xref linkend="svn.reposadmin.maint.recovery"/>.</para> 
 
-      <para>You can generally forget about these other sorts of lock,
+      <para>You can generally forget about these other kinds of locks
         until something goes wrong that requires you to care about
         them.  In this book, <quote>lock</quote> means the first sort
         unless the contrary is either clear from context or explicitly
@@ -2554,13 +2255,13 @@ Node Kind: file
 Schedule: normal
 Last Changed Author: frank
 Last Changed Rev: 1950
-Last Changed Date: 2005-03-15 12:43:04 -0600 (Tue, 15 Mar 2005)
-Text Last Updated: 2005-06-08 19:23:07 -0500 (Wed, 08 Jun 2005)
-Properties Last Updated: 2005-06-08 19:23:07 -0500 (Wed, 08 Jun 2005)
+Last Changed Date: 2006-03-15 12:43:04 -0600 (Wed, 15 Mar 2006)
+Text Last Updated: 2006-06-08 19:23:07 -0500 (Thu, 08 Jun 2006)
+Properties Last Updated: 2006-06-08 19:23:07 -0500 (Thu, 08 Jun 2006)
 Checksum: 3b110d3b10638f5d1f4fe0f436a5a2a5
 Lock Token: opaquelocktoken:0c0f600b-88f9-0310-9e48-355b44d4a58e
 Lock Owner: harry
-Lock Created: 2005-06-14 17:20:31 -0500 (Tue, 14 Jun 2005)
+Lock Created: 2006-06-14 17:20:31 -0500 (Wed, 14 Jun 2006)
 Lock Comment (1 line):
 Editing file for tomorrow's release.
 
@@ -2711,10 +2412,10 @@ Revision: 105
 Node Kind: file
 Last Changed Author: sally
 Last Changed Rev: 32
-Last Changed Date: 2005-01-25 12:43:04 -0600 (Tue, 25 Jan 2005)
+Last Changed Date: 2006-01-25 12:43:04 -0600 (Sun, 25 Jan 2006)
 Lock Token: opaquelocktoken:fc2b4dee-98f9-0310-abf3-653ff3226e6b
 Lock Owner: harry
-Lock Created: 2005-02-16 13:29:18 -0500 (Wed, 16 Feb 2005)
+Lock Created: 2006-02-16 13:29:18 -0500 (Thu, 16 Feb 2006)
 Lock Comment (1 line):
 Need to make a quick tweak to this image.
 $
@@ -2766,7 +2467,7 @@ $ svnadmin lslocks /usr/local/svn/repos
 Path: /project2/images/banana.jpg
 UUID Token: opaquelocktoken:c32b4d88-e8fb-2310-abb3-153ff1236923
 Owner: frank
-Created: 2005-06-15 13:29:18 -0500 (Wed, 15 Jun 2005)
+Created: 2006-06-15 13:29:18 -0500 (Thu, 15 Jun 2006)
 Expires:
 Comment (1 line):
 Still improving the yellow color.
@@ -2774,7 +2475,7 @@ Still improving the yellow color.
 Path: /project/raisin.jpg
 UUID Token: opaquelocktoken:fc2b4dee-98f9-0310-abf3-653ff3226e6b
 Owner: harry
-Created: 2005-02-16 13:29:18 -0500 (Wed, 16 Feb 2005)
+Created: 2006-02-16 13:29:18 -0500 (Thu, 16 Feb 2006)
 Expires:
 Comment (1 line):
 Need to make a quick tweak to this image.
@@ -2938,7 +2639,7 @@ $
         something is strange when she opens the file for editing.
         Many applications alert users immediately when a read-only
         file is opened for editing.  And nearly all applications would
-        at least prevert her from saving changes to the file.  This
+        at least prevent her from saving changes to the file.  This
         reminds her to lock the file before editing, whereby she
         discovers the pre-existing lock:</para>
 
@@ -2952,7 +2653,7 @@ svn: Lock request failed: 423 Locked (http://svn.example.com)
 $ svn info http://svn.example.com/repos/project/raisin.jpg | grep Lock
 Lock Token: opaquelocktoken:fc2b4dee-98f9-0310-abf3-653ff3226e6b
 Lock Owner: harry
-Lock Created: 2005-06-08 07:29:18 -0500 (Thu, 08 June 2005)
+Lock Created: 2006-06-08 07:29:18 -0500 (Thu, 08 June 2006)
 Lock Comment (1 line):
 Making some tweaks.  Locking for the next two hours.
 $
@@ -3025,7 +2726,7 @@ $
       <firstterm>externals definitions</firstterm>.  An externals
       definition is a mapping of a local directory to the
       URL&mdash;and possibly a particular revision&mdash;of a
-      versioned object.  In Subversion, you declare externals
+      versioned directory.  In Subversion, you declare externals
       definitions in groups using the <literal>svn:externals</literal>
       property.  You can create or modify this property using
       <command>svn propset</command> or <command>svn
@@ -3038,7 +2739,7 @@ $
     <para>Ксчастью, Subversion предоставляет поддержку 
       <firstterm>внешних определений</firstterm>.  Внешние определения 
       это отображение локальной папки в URL &mdash; и возможно 
-      конкретной ревизии &mdash; версионировнанного ресурса. В 
+      конкретной ревизии &mdash; версионировнанной директории. В 
       Subversion вы декларируете внешние определения в группах используя 
       свойство <literal>svn:externals</literal>. Вы можете создать или 
       изменить это свойство используя <command>svn propset</command> или 
@@ -3204,19 +2905,12 @@ Fetching external item into calc/third-party/skins
       relative local target subdirectory will, of course, move with
       renamed directory).  This can be confusing&mdash;even
       frustrating&mdash;in certain situations.  For example, say you
-      have a top-level directory named <filename>project</filename>.
-      If you create an externals definition on one subdirectory of
-      your <filename>project</filename> directory which tracks the
-      latest revision of some other subdirectory of that same tree,
-      and then you use <command>svn move</command> to rename the
-      <filename>project</filename> directory
-      <filename>/branches/my-branch</filename>, the externals
-      definitions on items in your new branch will still refer to
-      versioned objects in the <filename>project</filename> directory,
-      even though that directory no longer exists.  Be aware, too,
-      that if you need to re-parent your working copy (using
-      <command>svn switch --><!--relocate</command>), externals definitions
-      will <emphasis>not</emphasis> also be re-parented.</para>
+      have a top-level directory named
+      <filename>my-project</filename>, and you've created an externals
+      definition on one of its subdirectories
+      (<filename>my-project/some-dir</filename>) which tracks the
+      latest revision of another of its subdirectories
+      (<filename>my-project/external-dir</filename>).</para>
     @ENGLISH }}} -->
     <para>Поддержка существующих внешних определений в Subversion 
       сегодня может вводить в заблуждение. Во первых, внешние определения 
@@ -3229,27 +2923,77 @@ Fetching external item into calc/third-party/skins
       Subversion продолжает по-прежнему оперировать на неотстоединенных 
       (non-disjoint) рабочих копиях. Та что, например, если вы хотите 
       зафиксировать изменения которые вы сделали в одной или более 
-      внешней рабочей копии, вы должны явно выполнить <command>svn 
-        commit</command> на этих рабочих копиях &mdash; фиксация 
-      первичной рабочей копии не выполняется рекурсивно на любых внешних 
+      внешней рабочей копии, вы должны явно выполнить
+      <command>svn commit</command> на этих рабочих копиях &mdash; фиксация
+      первичной рабочей копии не выполняется рекурсивно на любых внешних
       определениях.</para>
 
-    <para>Также, так как определения используют абсолютные URL, 
-      перемещение или копирование папки к которой они присоединены не 
-      будет иметь влияния когда извлекаются как внешние (через 
-      относительную локальную целевую подпапку, конечно, перемещение с 
-      переименованием папки). Это может сбивать с толку &mdash; даже 
-      потрясать &mdash; в некоторых ситуациях. Например, если вы 
-      используете внешнее определение на папке в вашей линии разработки
-      <filename>/trunk</filename> которая указывает на другую область в 
-      той же линии, и затем вы используете <command>svn copy</command> 
-      для ветвления этой линии в некоторое новое место 
-      <filename>/branches/my-branch</filename>, внешние определения на 
-      элементах в вашей новой ветке будут продолжать ссылаться на 
-      версионированные ресурсы в <filename>/trunk</filename>.  Также 
-      знайте, что если вы нуждаетесь в re-parent рабочей копии 
-      (используя <command>svn switch --relocate</command>), внешние 
-      определения <emphasis>не</emphasis> будут re-parented.</para>
+    <para>Кроме того, так как подобные определения используют абсолютные URL,
+      перемещение или копирование папки к которой они присоединены не
+      будет влиять на то, что будет вытаскиваться из хранилища как
+      внешнее определение (при этом, локальные поддирекотрии, назначенные
+      как целевые для внешних определений, при переименовании родительской
+      директории будут, естественно, перемещенны вместе с ней).
+      В определенных ситуациях это может сбивать с толку и запутывать.
+      Например, у вас есть корневая директория <filename>my-project</filename>
+      и одну из её поддиректорий (<filename>my-project/some-dir</filename>)
+      вы делаете внешним определением, отслеживающим изменения другой
+      поддиректории (<filename>my-project/external-dir</filename>).</para>
+
+    <screen>
+$ svn co http://svn.example.com/projects .
+A    my-project
+A    my-project/some-dir
+A    my-project/external-dir
+&hellip;
+Fetching external item into 'my-project/some-dir/subdir'
+Checked out external at revision 11.
+
+Checked out revision 11.
+$ svn pget svn:externals my-project/some-dir
+subdir http://svn.example.com/projects/my-project/external-dir
+
+$
+</screen>
+
+    <para>Now you use <command>svn move</command> to rename the
+      <filename>my-project</filename> directory.  At this point, your
+      externals definition will still refer to a path under the
+      <filename>my-project</filename> directory, even though that
+      directory no longer exists.</para>
+
+    <screen>
+$ svn mv -q my-project renamed-project
+$ svn ci -m "Rename my-project to renamed-project."
+Deleting       my-project
+Adding         my-renamed-project
+
+Committed revision 12.
+$ svn up
+
+Fetching external item into 'renamed-project/some-dir/subdir'
+svn: Target path does not exist
+$
+</screen>
+
+    <para>Also, the fact that externals definitions use absolute URLs
+      can cause problems with repositories that are available via
+      multiple URL schemes.  For example, if your Subversion server is
+      configured to allow everyone to checkout the repository over
+      <literal>http://</literal> or <literal>https://</literal>, but
+      only allow commits to come in via <literal>https://</literal>,
+      you have an interesting problem on your hands.  If your
+      externals definitions use the <literal>http://</literal> form
+      of the repository URLs, you won't be able to commit anything
+      from the working copies created by those externals.  On the
+      other hand, if they use the <literal>https://</literal> form of
+      the URLs, anyone who might be checking out via
+      <literal>http://</literal> because their client doesn't support
+      <literal>https://</literal> will be unable to fetch the external
+      items.  Be aware, too, that if you need to re-parent your
+      working copy (using <command>svn switch --relocate</command>),
+      externals definitions will <emphasis>not</emphasis> also be
+      re-parented.</para>
 
     <!-- @ENGLISH {{{    
     <para>Finally, there might be times when you would prefer that
@@ -3259,12 +3003,318 @@ Fetching external item into calc/third-party/skins
       you can pass the <option>--><!--ignore-externals</option> option to
       the subcommand.</para>
     @ENGLISH }}} -->
-    <para>В заключение может быть случаи когда вы будете предпочитать 
-      чтобы подкоманды <command>svn</command> не распознавали или 
-      оперировали другим способом с внешними рабочими копиями созданными 
-      как результат обработки внешних определений. В этих случаях, вы 
-      можете передавать параметр <option>--ignore-externals</option> в 
-      подкоманду.</para>
+    <para>Наконец, могут буть ситуации в которых предпочтительно, чтобы
+      подкоманды <command>svn</command> не идентифицировали и не оперировали
+      над рабочими копиями, созданными как внешние определения. Для таких
+      случаев, при вызове подкоманды можно использовать параметр
+      <option>--ignore-externals</option>.</para>
+
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.advanced.pegrevs">
+    <title>Peg and Operative Revisions</title>
+
+    <para>We make use of the ability to copy, move, rename, and
+      completely replace files and directories on our computers all
+      the time.  And your version control system shouldn't get in the
+      way of your doing these things with your version-controlled
+      files and directories, either.  Subversion's file management
+      support is quite liberating, affording almost as much
+      flexibility for versioned files as you'd expect when
+      manipulating your unversioned ones.  But that flexibility means
+      that across the lifetime of your repository, a given versioned
+      object might have many paths, and a given path might represent
+      several entirely different versioned objects.  And this
+      introduces a certain level of complexity to your interactions
+      with those paths and objects.</para>
+
+    <para>Subversion is pretty smart about noticing when an object's
+      version history includes such <quote>changes of address</quote>.
+      For example, if you ask for the revision history log of a
+      particular file that was renamed last week, Subversion happily
+      provides all those logs&mdash;the revision in which the rename
+      itself happened, plus the logs of relevant revisions both before
+      and after that rename.  So, most of the time, you don't even
+      have to think about such things.  But occasionally, Subversion
+      needs your help to clear up ambiguities.</para>
+
+    <para>The simplest example of this occurs when a directory or file
+      is deleted from version control, and then a new directory or
+      file is created with the same name and added to version control.
+      Clearly the thing you deleted and the thing you later added
+      aren't the same thing.  They merely happen to have had the same
+      path, <filename>/trunk/object</filename> for example.  What,
+      then, does it mean to ask Subversion about the history of
+      <filename>/trunk/object</filename>?  Are you asking about the
+      thing currently at that location, or the old thing you deleted
+      from that location?  Are you asking about the operations that
+      have happened to <emphasis>all</emphasis> the objects that have
+      ever lived at that path?  Clearly, Subversion needs a hint about
+      what you really want.</para>
+
+    <para>And thanks to moves, versioned object history can get far
+      more twisted than that, even.  For example, you might have a
+      directory named <filename>concept</filename>, containing some
+      nascent software project you've been toying with.  Eventually,
+      though, that project matures to the point that the idea seems to
+      actually have some wings, so you do the unthinkable and decide
+      to give the project a name.
+      <footnote>
+        <para><quote>You're not supposed to name it.  Once you name it,
+          you start getting attached to it.</quote> &mdash; Mike
+          Wazowski</para>
+      </footnote>
+      Let's say you called your software Frabnaggilywort.  At this
+      point, it makes sense to rename the directory to reflect the
+      project's new name, so <filename>concept</filename> is renamed
+      to <filename>frabnaggilywort</filename>.  Life goes on,
+      Frabnaggilywort releases a 1.0 version, and is downloaded and
+      used daily by hordes of people aiming to improve their
+      lives.</para>
+    
+    <para>It's a nice story, really, but it doesn't end there.
+      Entrepreneur that you are, you've already got another think in
+      the tank.  So you make a new directory,
+      <filename>concept</filename>, and the cycle begins again.  In
+      fact, the cycle begins again many times over the years, each
+      time starting with that old <filename>concept</filename>
+      directory, then sometimes seeing that directory renamed as the
+      idea cures, sometimes seeing it deleted when you scrap the idea.
+      Or, to get really sick, maybe you rename
+      <filename>concept</filename> to something else for a while, but
+      later rename the thing back to <filename>concept</filename> for
+      some reason.</para>
+
+    <para>When scenarios like these occur, attempting to instruct
+      Subversion to work with these re-used paths can be a little like
+      instructing a motorist in Chicago's West Suburbs to drive east
+      down Roosevelt Road and turn left onto Main Street.  In a mere
+      twenty minutes, you can cross <quote>Main Street</quote> in
+      Wheaton, Glen Ellyn, and Lombard.  And no, they aren't the same
+      street.  Our motorist&mdash;and our Subversion&mdash;need a
+      little more detail in order to do the right thing.</para>
+
+    <para>In version 1.1, Subversion introduced a way for you to tell
+      it exactly which Main Street you meant.  It's called the
+      <firstterm>peg revision</firstterm>, and it is a revision
+      provided to Subversion for the sole purpose of identifying a
+      unique line of history.  Because at most one versioned object
+      may occupy a path at any given time&mdash;or, more precisely, in
+      any one revision&mdash;the combination of a path and a peg
+      revision is all that is needed to refer to a specific line of
+      history.  Peg revisions are specified to the Subversion
+      command-line client using <firstterm>at syntax</firstterm>, so
+      called because the syntax involves appending an <quote>at
+      sign</quote> (<literal>@</literal>) and the peg revision to the
+      end of the path with which the revision is associated.</para>
+
+    <para>But what of the <option>--revision (-r)</option> of which
+      we've spoken so much in this book?  That revision (or set of
+      revisions) is called the <firstterm>operative
+      revision</firstterm> (or <firstterm>operative revision
+      range</firstterm>).  Once a particular line of history has been
+      identified using a path and peg revision, Subversion performs
+      the requested operation using the operative revision(s).  To map
+      this to our Chicagoland streets analogy, if we are told to go to
+      606 N. Main Street in Wheaton,
+      <footnote>
+        <para>606 N. Main Street, Wheaton, Illinois, is the home of
+          the Wheaton History Center.  Get it&mdash;<quote>History
+          Center</quote>?  It seemed appropriate&hellip;.</para>
+      </footnote>
+      we can think of <quote>Main Street</quote> as our path and
+      <quote>Wheaton</quote> as our peg revision.  These two pieces of
+      information identify a unique path which can travelled (north or
+      south on Main Street), and will keep us from travelling up and
+      down the wrong Main Street in search of our destination.  Now we
+      throw in <quote>606 N.</quote> as our operative revision, of
+      sorts, and we know <emphasis>exactly</emphasis> where to
+      go.</para>
+
+    <sidebar>
+      <title>The peg revision algorithm</title>
+      
+      <para>The Subversion command-line performs the peg revision
+        algorithm any time it needs to resolve possible ambiguities in
+        the paths and revisions provided to it.  Here's an example of
+        such an invocation for the purposes of illustrating that
+        algorithm.</para>
+
+      <screen>
+$ svn <replaceable>command</replaceable> -r <replaceable>OPERATIVE-REV</replaceable> item@<replaceable>PEG-REV</replaceable>
+</screen>
+      
+      <para>The algorithm has three simple steps:</para>
+
+      <itemizedlist>
+        
+        <listitem>
+          <para>Locate <replaceable>item</replaceable> in the revision
+            identified by <replaceable>PEG-REV</replaceable>.  There
+            can be only one such object.</para>
+        </listitem>
+
+        <listitem>
+          <para>Trace the object's history backwards (through any
+            possible renames) to its ancestor in the
+            revision <replaceable>OPERATIVE-REV</replaceable>.</para>
+        </listitem>
+
+        <listitem>
+          <para>Perform the requested action on that ancestor,
+            wherever it is located, or whatever its name might
+            be or have been at that time.</para>
+        </listitem>
+
+      </itemizedlist>
+
+      <para>Note that even when you don't explicitly supply a peg
+        revision or operative revision, they are still present.  For
+        your convenience, the default peg revision is
+        <literal>BASE</literal> for working copy items and
+        <literal>HEAD</literal> for repository URLs.  And when no
+        operative revision is provided, it defaults to being the same
+        revision as the peg revision.</para>
+        
+    </sidebar>
+
+    <para>Say that long ago we created our repository, and in revision 1
+      added our first <filename>concept</filename> directory, plus an
+      <filename>IDEA</filename> file in that directory talking about
+      the concept.  After several revisions in which real code was
+      added and tweaked, we, in revision 20, renamed this directory to
+      <filename>frabnaggilywort</filename>.  By revision 27, we had a
+      new concept, a new <filename>concept</filename> directory to
+      hold it, and a new <filename>IDEA</filename> file to describe
+      it.  And then five years and twenty thousand revisions flew by,
+      just like they would in any good romance story.</para>
+
+    <para>Now, years later, we wonder what the
+      <filename>IDEA</filename> file looked like back in revision 1.
+      But Subversion needs to know if we are asking about how the
+      <emphasis>current</emphasis> file looked back in revision 1, or
+      are we asking for the contents of whatever file lived at
+      <filename>concepts/IDEA</filename> in revision 1?  Certainly
+      those questions have different answers, and because of peg
+      revisions, you can ask either of them.  To find out how the
+      current <filename>IDEA</filename> file looked in that old
+      revision, you run:</para>
+
+    <screen>
+$ svn cat -r 1 concept/IDEA 
+svn: Unable to find repository location for 'concept/IDEA' in revision 1
+</screen>
+
+    <para>Of course, in this example, the current
+      <filename>IDEA</filename> file didn't exist yet in revision 1,
+      so Subversion gives an error.  The command above is shorthand
+      for a longer notation which explicitly lists a peg revision.
+      The expanded notation is:</para>
+
+    <screen>
+$ svn cat -r 1 concept/IDEA@BASE
+svn: Unable to find repository location for 'concept/IDEA' in revision 1
+</screen>
+
+    <para>And when executed, it has the expected results.  Peg revisions
+      generally default to a value of <literal>BASE</literal> (the
+      revision currently present in the working copy) when applied to
+      working copy paths, and of <literal>HEAD</literal> when applied
+      to URLs.</para>
+
+    <para>The perceptive reader is probably wondering at this point if
+      the peg revision syntax causes problems for working copy paths
+      or URLs that actually have at signs in them.  After
+      all, how does <command>svn</command> know whether
+      <literal>news@11</literal> is the name of a directory in my
+      tree, or just a syntax for <quote>revision 11 of
+      <filename>news</filename></quote>?  Thankfully, while
+      <command>svn</command> will always assume the latter, there is a
+      trivial workaround.  You need only append an at sign to the
+      end of the path, such as <literal>news@11@</literal>.
+      <command>svn</command> only cares about the last at sign in
+      the argument, and it is not considered illegal to omit a literal
+      peg revision specifier after that at sign.  This workaround
+      even applies to paths that end in an at sign&mdash;you would
+      use <literal>filename@@</literal> to talk about a file named
+      <filename>filename@</filename>.</para>
+
+    <para>Let's ask the other question, then&mdash;in revision 1, what
+      were the contents of whatever file occupied the address
+      <filename>concepts/IDEA</filename> at the time?  We'll use an
+      explicit peg revision to help us out.</para>
+
+    <screen>
+$ svn cat concept/IDEA@1
+The idea behind this project is to come up with a piece of software
+that can frab a naggily wort.  Frabbing naggily worts is tricky
+business, and doing it incorrectly can have serious ramifications, so
+we need to employ over-the-top input validation and data verification
+mechanisms.
+</screen>
+
+    <para>Notice that we didn't provide an operative revision this
+      time.  That's because when no operative revision is specified,
+      Subversion assumes a default operative revision that's the same
+      as the peg revision.</para>
+
+    <para>As you can see, the output from our operation appears to be
+      correct.  The text even mentions frabbing naggily worts, so this
+      is almost certainly the file which describes the software now
+      called Frabnaggilywort.  In fact, we can verify this using the
+      combination of an explicit peg revision and explicit operative
+      revision.  We know that in <literal>HEAD</literal>, the
+      Frabnaggilywort project is located in the
+      <filename>frabnaggilywort</filename> directory.  So we specify
+      that we want to see how the line of history identified in
+      <literal>HEAD</literal> as the path
+      <filename>frabnaggilywort/IDEA</filename> looked in revision
+      1.</para>
+
+    <screen>
+$ svn cat -r 1 frabnaggilywort/IDEA@HEAD
+The idea behind this project is to come up with a piece of software
+that can frab a naggily wort.  Frabbing naggily worts is tricky
+business, and doing it incorrectly can have serious ramifications, so
+we need to employ over-the-top input validation and data verification
+mechanisms.
+</screen>
+
+    <para>And the peg and operative revisions need not be so trivial,
+      either.  For example, say <filename>frabnaggilywort</filename>
+      had been deleted from <literal>HEAD</literal>, but we know it
+      existed in revision 20, and we want to see the diffs for its
+      <filename>IDEA</filename> file between revisions 4 and 10.  We
+      can use the peg revision 20 in conjunction with the URL that
+      would have held Frabnaggilywort's <filename>IDEA</filename> file
+      in revision 20, and then use 4 and 10 as our operative revision
+      range.</para>
+
+    <screen>
+$ svn diff -r 4:10 http://svn.red-bean.com/projects/frabnaggilywort/IDEA@20
+Index: frabnaggilywort/IDEA
+===================================================================
+--- frabnaggilywort/IDEA	(revision 4)
++++ frabnaggilywort/IDEA	(revision 10)
+@@ -1,5 +1,5 @@
+-The idea behind this project is to come up with a piece of software
+-that can frab a naggily wort.  Frabbing naggily worts is tricky
+-business, and doing it incorrectly can have serious ramifications, so
+-we need to employ over-the-top input validation and data verification
+-mechanisms.
++The idea behind this project is to come up with a piece of
++client-server software that can remotely frab a naggily wort.
++Frabbing naggily worts is tricky business, and doing it incorrectly
++can have serious ramifications, so we need to employ over-the-top
++input validation and data verification mechanisms.
+</screen>
+
+    <para>Fortunately, most folks aren't faced with such complex
+      situations.  But when you are, remember that peg revisions are
+      that extra hint Subversion needs to clear up ambiguity.</para>
 
   </sect1>
 

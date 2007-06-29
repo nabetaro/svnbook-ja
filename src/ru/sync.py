@@ -99,7 +99,7 @@ def main():
     elif o == '-u':
       return update_status_file()
   os.popen('mkdir book'+os.sep+'working')
-  os.system('cp book/*xml book/working')
+  os.system('cp book/*.xml book/working')
   cmd = string.Template(
       'svn $a -r $r1:$r2 http://svn.red-bean.com/svnbook/trunk/src/en/book/$t')
   print ('########################################################################')
