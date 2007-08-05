@@ -85,34 +85,6 @@
       В <xref linkend="svn.serverconfig.overview.tbl-1"/> дано сравнение этих
       двух серверов.</para>
 
-<!-- @ENGLISH {{{
-    <para>Note that Subversion, as an open-source project, does not
-      officially endorse any server as <quote>primary</quote> or
-      <quote>official</quote>.  Neither network implementation is
-      treated as a second-class citizen; each server has advantages
-      and disadvantages.  In fact, it's possible for different servers
-      to run in parallel, each accessing your repositories in its own
-      way, and each without hindering the other (see <xref
-      linkend="svn.serverconfig.multimethod"/>).  <xref
-      linkend="svn.serverconfig.overview.tbl-1"/> gives a brief overview and
-      comparison of the two available Subversion servers&mdash;as an
-      administrator, it's up to you to choose whatever works best for
-      you and your users.</para>
-@ENGLISH }}} -->
-    <para>Обратите внимание, что Subversion, как проект с открытым
-      исходным кодом, ни одному из серверов не дает статуса
-      <quote>основного</quote> или <quote>официального</quote>.
-      Ни одно из сетевых решений не является "третьесортным"; у каждого
-      сервера есть свои достоинства и недостатки. Фактически, можно
-      запустить параллельно разные сервера, каждый из которых будет
-      взаимодействовать с хранилищем по-своему, и ни один из них не будет
-      "первым" или "главным" (смотрите <xref
-      linkend="svn.serverconfig.multimethod"/>). <xref
-      linkend="svn.serverconfig.overview.tbl-1"/> представляет краткий
-      обзор и сравнение двух доступных Subversion-серверов &mdash; как для
-      администратора; это поможет вам выбрать сервер, наиболее подходящий
-      вам и вашим пользователям.</para>
-
     <table id="svn.serverconfig.overview.tbl-1">
 <!-- @ENGLISH {{{
       <title>Network Server Comparison</title>
@@ -160,17 +132,16 @@
           <row>
 <!-- @ENGLISH {{{
             <entry>Authorization options</entry>
-            <entry>blanket read/write access, or per-directory
-              read/write control</entry>
-            <entry>blanket read/write access, or per-directory write
-              (but not read) control using a pre-commit hook</entry>
+            <entry>read/write access can be granted over whole
+              repository, or specified per-path.</entry>
+            <entry>read/write access can be granted over whole
+              repository, or specified per-path.</entry>
 @ENGLISH }}} -->
             <entry>Настройки прав доступа</entry>
-            <entry>общий доступ для чтения/записи, или по-каталоговый
-              доступ для чтения/записи</entry>
-            <entry>общий доступ для чтения/записи, или по-каталоговый
-              доступ для записи (но не для чтения), используя сценарий,
-              вызываемый перед фиксацией</entry>
+            <entry>доступ на чтение/запись устанавливается сразу на всё
+              хранилище, или настраивается по-каталогово</entry>
+            <entry>доступ на чтение/запись устанавливается сразу на всё
+              хранилище, или настраивается по-каталогово</entry>
           </row>
 
           <row>
@@ -185,14 +156,22 @@
           </row>
 
           <row>
+            <entry>Logging</entry>
+            <entry>full Apache logs of each HTTP request, with
+            optional <quote>high-level</quote> logging of general
+            client operations</entry>
+            <entry>no logging</entry>
+          </row>
+
+          <row>
 <!-- @ENGLISH {{{
             <entry>Interoperability</entry>
             <entry>partially usable by other WebDAV clients</entry>
-            <entry>not interoperable</entry>
+            <entry>only talks to svn clients</entry>
 @ENGLISH }}} -->
-            <entry>Interoperability</entry>
+            <entry>Интероперабельность</entry>
             <entry>частично, используя другие WevDAV-клиенты</entry>
-            <entry>не поддерживается.</entry>
+            <entry>только для svn клиентов</entry>
           </row>
 
           <row>
@@ -200,12 +179,12 @@
             <entry>Web viewing</entry>
             <entry>limited built-in support, or via 3rd-party tools
               such as ViewVC</entry>
-            <entry>via 3rd-party tools such as ViewVC</entry>
+            <entry>only via 3rd-party tools such as ViewVC</entry>
 @ENGLISH }}} -->
-            <entry>Просмотр через web</entry>
-            <entry>встроенная ограниченная поддержка, или используя
-              программы сторонних разработчиков, такие, как ViewVS</entry>
-            <entry>используя программы сторонних разработчиков, такие,
+            <entry>Просмотр через веб</entry>
+            <entry>ограниченная встроенная поддержка, или использование
+              программ сторонних разработчиков, таких, как ViewVS</entry>
+            <entry>только при помощи программ сторонних разработчиков, таких,
               как ViewVS</entry>
           </row>
 
@@ -234,6 +213,297 @@
         </tbody>
       </tgroup>
     </table>
+
+
+
+    <sect2 id="svn.serverconfig.overview.apache">
+
+      <title>The Apache HTTP Server</title>
+
+      <variablelist>
+
+        <varlistentry>
+          <term>How it works:</term>
+          <listitem>
+            <para>Install and configure and standard Apache 2.0
+              server, then activate a special subversion-server module.
+              Clients speak to server via HTTP or HTTPS, using the WebDAV
+              protocol.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Why you might want to use it:</term>
+          <listitem>
+            <itemizedlist>
+
+              <listitem><para>Allows Subversion to use any of the
+                  numerous authentication systems already integrated
+                  with Apache.</para></listitem>
+
+              <listitem><para>No need to create system accounts on
+                  server.</para></listitem>
+
+              <listitem><para>Full Apache logging.</para></listitem>
+
+              <listitem><para>Network traffic can be encrypted via
+                  SSL.</para></listitem>
+
+              <listitem><para>HTTP(S) can usually go through corporate
+                  firewalls.</para></listitem>
+
+              <listitem><para>Built-in repository browsing via web
+                  browser.</para></listitem>
+
+              <listitem><para>Repository can be mounted as a network
+                  drive for transparent version control. (See
+                  <xref
+                  linkend="svn.webdav.autoversioning"/>.)</para></listitem>
+
+            </itemizedlist>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Why you might want to avoid it:</term>
+          <listitem>
+            <itemizedlist>
+
+            <listitem><para>Noticeably slower than svnserve, because
+                HTTP is a stateless protocol and requires more
+                turnarounds.</para></listitem>
+
+            <listitem><para>Initial setup can be complex.</para></listitem>
+
+            </itemizedlist>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+    </sect2>
+
+
+    <sect2 id="svn.serverconfig.overview.svnserve">
+
+      <title>The <command>svnserve</command> Server</title>
+
+      <variablelist>
+
+        <varlistentry>
+          <term>How it works:</term>
+          <listitem>
+            <para>A lightweight serve process which can run either as
+              a persistent daemon, or as something automatically
+              launched by inetd when necessary.  Clients authenticate
+              via CRAM-MD5 algorithm and speak a custom network
+              protocol.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Why you might want to use it:</term>
+          <listitem>
+            <itemizedlist>
+
+            <listitem><para>Quick and easy to set
+                up.</para></listitem>
+
+            <listitem><para>Network protocol is stateful and
+                noticeably faster than WebDAV.</para></listitem>
+
+            <listitem><para>No need to create system accounts on
+                server.</para></listitem>
+
+            <listitem><para>Password is not passed over the
+                network.</para></listitem>
+
+            </itemizedlist>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Why you might want to avoid it:</term>
+          <listitem>
+            <itemizedlist>
+
+            <listitem><para>Network protocol is not
+                encrypted.</para></listitem>
+
+            <listitem><para>Only one choice of authentication
+                method.</para></listitem>
+
+            <listitem><para>Password is stored in the clear on the
+                server.</para></listitem>
+
+            <listitem><para>No logging of any kind, not even
+                errors.</para></listitem>
+
+            </itemizedlist>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+    </sect2>
+
+    <sect2 id="svn.serverconfig.overview.svn-ssh">
+
+      <title><command>svnserve</command> over SSH</title>
+
+      <variablelist>
+
+        <varlistentry>
+          <term>How it works:</term>
+          <listitem>
+            <para> Each client uses an existing SSH (system) account
+              to spawn a temporary <command>svnserve</command> process
+              (running as themselves) on the server machine.  The
+              <command>svnserve</command> process accesses the
+              repository, communicates with the client over the SSH
+              tunnel, then dies when the SSH connection is closed.
+              (There is no long-running <command>svnserve</command>
+              process.)</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Why you might want to use it:</term>
+          <listitem>
+            <itemizedlist>
+
+            <listitem><para>Network protocol is stateful and
+                noticeably faster than WebDAV.</para></listitem>
+
+            <listitem><para>You can take advantage of existing ssh
+                accounts and user infrastructure.</para></listitem>
+
+            <listitem><para>All network traffic is
+                encrypted.</para></listitem>
+
+            </itemizedlist>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Why you might want to avoid it:</term>
+          <listitem>
+            <itemizedlist>
+
+            <listitem><para>Only one choice of authentication
+                method.</para></listitem>
+
+            <listitem><para>No logging of any kind, not even
+                errors.</para></listitem>
+
+            <listitem><para>Requires users to be in same system group, or
+                use a shared ssh key.</para></listitem>
+
+            <listitem><para>Can lead to file permissions
+                problems.</para></listitem>
+
+            </itemizedlist>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+    </sect2>
+
+    <sect2 id="svn.serverconfig.overview.choosing-a-server">
+
+      <title>Choosing the Best Server Configuration</title>
+
+      <para>So, which server should you use?  Which is best?</para>
+
+      <para>Obviously, there's no right answer to that question.
+        Every team has different needs, and the different servers all
+        represent different sets of tradeoffs.  The Subversion project
+        itself doesn't endorse one server or another, or consider
+        either server more <quote>official</quote> than
+        another.</para>
+
+      <para>In general, the authors of this book recommend a vanilla
+        <command>svnserve</command> installation for small teams just
+        trying to get started with a Subversion server; it's the
+        simplest to set up, and has the fewest maintenance issues.
+        Remember, you can always switch to a more complex server
+        deployment as your needs change.</para>
+
+      <para>Here are some general recommendations, based on years of
+        supporting users:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>If you're trying to set up the simplest possible
+            server for your group, then a
+            vanilla <command>svnserve</command> installation is the
+            easiest, fastest route.  Note, however, that your
+            repository data will be transmitted in the clear over the
+            network.  If your deployment is entirely within your
+            company's LAN or VPN, this isn't an issue.  If the
+            repository is exposed to the wide-open internet, then you
+            might want to make sure the repository's contents aren't
+            sensitive (e.g. it contains only open-source code.)</para>
+        </listitem>
+
+        <listitem>
+          <para>If you need to integrate with existing identity
+            systems (LDAP, Active Directory, NTLM, X.509, etc.), then
+            an Apache-based server is your only real option.
+            Similarly, if you absolutely need server-side logs of
+            either server errors or client activities, then an
+            Apache-based server is required.</para>
+        </listitem>
+
+        <listitem>
+           <para>If you've decided to use either Apache or stock
+             <command>svnserve</command>, create a
+             single <literal>svn</literal> user on your system, and
+             run either Apache or svnserve as that user.  Be sure to
+             make the repository directory wholly owned by
+             the <literal>svn</literal> user as well.  These keeps the
+             repository data nicely siloed and protected by operating
+             system filesystem permissions, changeable by only the
+             Subverion server process itself.</para>
+        </listitem>
+
+        <listitem>
+          <para>If you have an existing infrastructure heavily based
+            on SSH accounts, and if your users already have system
+            accounts on your server machine, then it makes sense to
+            deploy an svnserve-over-ssh solution.  Otherwise, we don't
+            recommend this option to the general public.  It's
+            generally considered safer to have your users access the
+            repository via (imaginary) accounts managed
+            by <command>svnserve</command> or Apache, rather than by
+            full-blown system accounts.  If your deep desire for
+            encrypted communication still draws you to this option, we
+            recommend using Apache with SSL instead.</para>
+        </listitem>
+
+        <listitem>
+          <para>Do <emphasis>not</emphasis> be seduced by the simple
+            idea of having all of your users access a repository
+            directly via <literal>file:///</literal> URLs.  Even if
+            the repository is readily available to everyone via
+            network share, this is a bad idea.  It removes any layers
+            of protection between the users and the repository: users
+            can accidentally (or intentionally) corrupt the repository
+            database, it becomes hard to take the repository 'offline'
+            for inspection or upgrade, and it can lead to a mess of
+            file-permissions problems (see
+            <xref linkend="svn.serverconfig.multimethod"/>.)  Note
+            that this is also one of the reasons we warn against
+            accessing repositories via <literal>svn+ssh://</literal>
+            URLs &mdash; from a security standpoint, it's effectively
+            the same as local users accessing
+            via <literal>file:///</literal>, and can entail all the
+            same problems if the administrator isn't careful.)</para>
+        </listitem>
+      </itemizedlist>
+
+    </sect2>
 
   </sect1>
 
@@ -867,8 +1137,7 @@ $               # svnserve is now running, listening on port 3690
         back to the client.  When <command>svnserve</command> is
         invoked by a tunnel agent like this, be sure that the
         authenticated user has full read and write access to the
-        repository database files. (See <xref
-        linkend="svn.serverconfig.svnserve.invoking.sb-1"/>.)  It's essentially the same as
+        repository database files.  It's essentially the same as
         a local user accessing the repository via
         <literal>file:///</literal> URLs.</para>
       @ENGLISH }}} -->
@@ -885,62 +1154,9 @@ $               # svnserve is now running, listening on port 3690
       	перенаправится по некоторому тунелю к клиенту. Когда
       	<command>svnserve</command> запущен подобным туннельным агентом
       	убедитесь в том что аутентифицированый пользователь имеет полный
-       	доступ на чтение и запись к файлам базы данных хранилища (см.
-        <xref linkend="svn.serverconfig.svnserve.invoking.sb-1"/>).
+       	доступ на чтение и запись к файлам базы данных хранилища.
         По сути, это соответствует обращению к хранилищу локального
         пользователя через URL вида <literal>file:///</literal>.</para>
-
-      <sidebar id="svn.serverconfig.svnserve.invoking.sb-1">
-        <!-- @ENGLISH {{{
-        <title>Servers and Permissions:  A Word of Warning</title>
-        @ENGLISH }}} -->
-        <title>Серверы и права: Предупреждение</title>
-
-        <!-- @ENGLISH {{{
-        <para>First, remember that a Subversion repository is a
-          collection of database files; any process which accesses the
-          repository directly needs to have proper read and write
-          permissions on the entire repository.  If you're not
-          careful, this can lead to a number of headaches, especially
-          if you're using a Berkeley DB database rather than FSFS.  Be
-          sure to read <xref linkend="svn.serverconfig.multimethod"/>.</para>
-        @ENGLISH }}} -->
-        <para>Во-первых, запомните, что хранилище Subversion &mdash;
-    	    это набор файлов базы данных; любой процесс, обращающийся напрямую
-      	  хранилищу должен иметь соответствующие разрешения
-      	  на чтение и запись для всего хранилища. Если не быть внимательным,
-      	  в последствии это может привести к ряду проблем, особенно если
-      	  вместо FSFS используется базу данных Berkeley DB. Обратите внимание
-      	  на <xref linkend="svn.serverconfig.multimethod"/>.</para>
-
-        <!-- @ENGLISH {{{
-        <para>Secondly, when configuring <command>svnserve</command>,
-          Apache <command>httpd</command>, or any other server
-          process, keep in mind that you might not want to launch the
-          server process as the user <literal>root</literal> (or as
-          any other user with unlimited permissions).  Depending on
-          the ownership and permissions of the repositories you're
-          exporting, it's often prudent to use a
-          different&mdash;perhaps custom&mdash;user.  For example,
-          many administrators create a new user named
-          <literal>svn</literal>, grant that user exclusive ownership
-          and rights to the exported Subversion repositories, and only
-          run their server processes as that user.</para>
-        @ENGLISH }}} -->
-       <para>Во-вторых, при настройке <command>svnserve</command>,
-         Apache <command>httpd</command> или любого другого сервера
-         помните о том, что не нужно запускать сервер от имени
-         пользователя <literal>root</literal> (или любого другого
-         пользователя с неограниченными правами). В зависимости от
-         настроек владения и разрешений на хранилища, как правило,
-         благоразумнее использовать другую &mdash; возможно, специально
-         для этого созданную &mdash; учетную запись. Например, многие
-         администраторы создают учетную запись с именем <literal>svn</literal>,
-         предоставляют этому пользователю эксклюзивные права владения на
-         хранилища Subversion и запускают серверные процессы только от
-         имени этого пользователя.</para>
-      </sidebar>
-
 
       <!-- @ENGLISH {{{
       <para>Once the <command>svnserve</command> program is running,
@@ -1270,41 +1486,31 @@ anon-access = none
 auth-access = write
 </screen>
 
-        <!-- @ENGLISH {{{
-        <para>Notice that <command>svnserve</command> only understands
-          <quote>blanket</quote> access control.  A user either has
-          universal read/write access, universal read access, or no
-          access.  There is no detailed control over access to
-          specific paths within the repository.  For many projects and
-          sites, this level of access control is more than adequate.
-          However, if you need per-directory access control, you'll
-          need to use either use Apache with
-          <command>mod_authz_svn</command> (see <xref
-          linkend="svn.serverconfig.httpd.authz.perdir"/>) or use a
-          <command>pre-commit</command> hook script to control write
-          access (see <xref linkend="svn.reposadmin.create.hooks"/>).  The
-          Subversion distribution comes with
-          <command>commit-access-control.pl</command> and the more
-          sophisticated <command>svnperms.py</command> scripts for use
-          in pre-commit scripts.</para>
-        @ENGLISH }}} -->
-        <para>Обратите внимание, что <command>svnserve</command> понимает
-          только общие правила управления доступом. То есть пользователь может
-          иметь либо универсальный доступ на чтение/запись, либо универсальный
-          доступ на чтение, либо не иметь никакого доступа. И нет более
-          детального контроля доступа к определенным путям хранилища. Для
-          многих проектов этот уровень контроля является более чем
-          приемлемым. Однако если вам потребуется выставить доступ к каждому
-          каталогу, тогда вам необходимо использовать Apache с
-          <command>mod_authz_svn</command> (см. <xref
-          linkend="svn.serverconfig.httpd.authz.perdir"/>) или использовать
-          <command>pre-commit</command> хук скрипт для управления доступом на
-          запись (см. <xref linkend="svn.reposadmin.create.hooks"/>).
-          в место <command>svnserve</command>, в качестве серверного процесса.
-          Subversion распространяется  со скриптами
-          <command>commit-access-control.pl</command> и более сложным
-          <command>svnperms.py</command> которые могут быть использованы в
-          предфиксирующих скриптах.</para>
+        <para>The server process not only understands
+        these <quote>blanket</quote> access controls to the
+        repository, but also finer-grained access restrictions placed
+        on specific files and directories within the repository.  To
+        make use of this feature, you need to define a file containing
+        more detailed rules, and then set
+        the <literal>authz-db</literal> variable to point to it:</para>
+
+        <screen>
+[general]
+password-db = userfile
+realm = example realm
+
+# Specific access rules for specific locations
+authz-db = authzfile
+</screen>
+
+        <para>The syntax of the <filename>authzfile</filename> file is
+          discussed in detail in
+          <xref linkend="svn.serverconfig.pathbasedauthz"/>.  Note
+          that the <literal>authz-db</literal> variable isn't mutually
+          exclusive with the <literal>anon-access</literal>
+          and <literal>auth-access</literal> variables;  if all the
+          variables are defined at once, then <emphasis>all</emphasis>
+          of the rules must be satisfied before access is allowed.</para>
 
       </sect3>
     </sect2>
@@ -1449,7 +1655,7 @@ baz
         tunneling, the <filename>svnserve.conf</filename> file can
         still be used to block access, by simply setting
         <literal>auth-access = read</literal> or <literal>auth-access
-        = none</literal>.</para>
+        = none</literal>.
       @ENGLISH }}} -->
       <para>Когда выполняется через тунелирование, идентификация первоначально
         управляется правами операционной системы на файлы базы данных
@@ -1462,7 +1668,15 @@ baz
         тунелирования файл <filename>svnserve.conf</filename> может продолжать
         использоваться для блокирования доступа, простой установкой
         <literal>auth-access = read</literal> или <literal>auth-access
-        = none</literal>.</para>
+        = none</literal>.
+
+        <footnote>
+          <para>Note that using any sort
+            of <command>svnserve</command>-enforced access control at
+            all is a bit pointless;  the user already has direct access to
+            the repository database.</para>
+        </footnote>
+      </para>
 
       <!-- @ENGLISH {{{
       <para>You'd think that the story of SSH tunneling would end
@@ -2045,7 +2259,7 @@ ServerName svn.example.com
         appropriately, that allows Apache to work with those files.
         Apache, when used as a Subversion server, will also need the
         correct permissions to read and write to your Subversion
-        repository.  (See <xref linkend="svn.serverconfig.svnserve.invoking.sb-1"/>.)</para>
+        repository.</para>
 
       <para>You will need to determine a permission system setup that
         satisfies Subversion's requirements without messing up any
@@ -2577,161 +2791,11 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           </programlisting>
         </example>
 
-        <para>Once your basic <literal>Location</literal> block is
-          configured, you can create an access file and define some
-          authorization rules in it.</para>
-
-        <para>The syntax of the access file is the same familiar one
-          used by <command>svnserve.conf</command> and the runtime
-          configuration files.  Lines that start with a hash
-          (<literal>#</literal>) are ignored.  In its simplest form,
-          each section names a repository and path within it, and the
-          authenticated usernames are the option names within each
-          section.  The value of each option describes the user's
-          level of access to the repository path: either
-          <literal>r</literal> (read-only) or <literal>rw</literal>
-          (read-write).  If the user is not mentioned at all, no
-          access is allowed.</para>
-
-        <para>To be more specific: the value of the section-names are
-          either of the form <literal>[repos-name:path]</literal> or
-          the form <literal>[path]</literal>.  If you're using the
-          <literal>SVNParentPath</literal> directive, then it's
-          important to specify the repository names in your sections.
-          If you omit them, then a section like
-          <literal>[/some/dir]</literal> will match the path
-          <filename>/some/dir</filename> in <emphasis>every</emphasis>
-          repository.  If you're using the <literal>SVNPath</literal>
-          directive, however, then it's fine to only define paths in
-          your sections&mdash;after all, there's only one
-          repository.</para>
-
-        <screen>
-[calc:/branches/calc/bug-142]
-harry = rw
-sally = r
-</screen>
-
-        <para>In this first example, the user <literal>harry</literal> has
-          full read and write access on the
-          <filename>/branches/calc/bug-142</filename> directory in the
-          <literal>calc</literal> repository, but the user
-          <literal>sally</literal> has read-only access.  Any other
-          users are blocked from accessing this directory.</para>
-
-        <para>Of course, permissions are inherited from
-          parent to child directory.  That means that we can specify a
-          subdirectory with a different access policy for
-          Sally:</para>
-
-        <screen>
-[calc:/branches/calc/bug-142]
-harry = rw
-sally = r
-
-# give sally write access only to the 'testing' subdir
-[calc:/branches/calc/bug-142/testing]
-sally = rw
-</screen>
-
-        <para>Now Sally can write to the <filename>testing</filename>
-          subdirectory of the branch, but can still only read other
-          parts.  Harry, meanwhile, continues to have complete
-          read-write access to the whole branch.</para>
-
-        <para>It's also possible to explicitly deny permission to
-          someone via inheritance rules, by setting the username
-          variable to nothing:</para>
-
-        <screen>
-[calc:/branches/calc/bug-142]
-harry = rw
-sally = r
-
-[calc:/branches/calc/bug-142/secret]
-harry =
-</screen>
-
-        <para>In this example, Harry has read-write access to the
-          entire <filename>bug-142</filename> tree, but has absolutely no
-          access at all to the <filename>secret</filename>
-          subdirectory within it.</para>
-
-        <para>The thing to remember is that the most specific path
-          always matches first.  The <command>mod_authz_svn</command>
-          module tries to match the path itself, and then the parent
-          of the path, then the parent of that, and so on.  The net
-          effect is that mentioning a specific path in the accessfile
-          will always override any permissions inherited from parent
-          directories.</para>
-
-        <para>By default, nobody has any access to the repository at
-          all.  That means that if you're starting with an empty file,
-          you'll probably want to give at least read permission to all
-          users at the root of the repository.  You can do this by
-          using the asterisk variable (<literal>*</literal>), which
-          means <quote>all users</quote>:</para>
-
-        <screen>
-[/]
-* = r
-</screen>
-
-        <para>This is a common setup; notice that there's no
-          repository name mentioned in the section name.  This makes
-          all repositories world readable to all users, whether you're
-          using <literal>SVNPath</literal> or
-          <literal>SVNParentPath</literal>.  Once all users have
-          read-access to the repositories, you can give explicit
-          <literal>rw</literal> permission to certain users on specific
-          subdirectories within specific repositories.</para>
-
-        <para>The asterisk variable (<literal>*</literal>) is also
-          worth special mention here: it's the
-          <emphasis>only</emphasis> pattern which matches an anonymous
-          user.  If you've configured your <literal>Location</literal>
-          block to allow a mixture of anonymous and authenticated
-          access, all users start out accessing Apache anonymously.
-          <command>mod_authz_svn</command> looks for a
-          <literal>*</literal> value defined for the path being
-          accessed;  if it can't find one, then Apache demands real
-          authentication from the client.</para>
-
-        <para>The access file also allows you to define whole groups
-          of users, much like the Unix <filename>/etc/group</filename>
-          file:</para>
-
-        <screen>
-[groups]
-calc-developers = harry, sally, joe
-paint-developers = frank, sally, jane
-everyone = harry, sally, joe, frank, sally, jane
-</screen>
-
-        <para>Groups can be granted access control just like users.
-          Distinguish them with an <quote>at</quote> (<literal>@</literal>)
-          prefix:</para>
-
-        <screen>
-[calc:/projects/calc]
-@calc-developers = rw
-
-[paint:/projects/paint]
-@paint-developers = rw
-jane = r
-</screen>
-
-        <para>Groups can also be defined to contain other
-          groups:</para>
-
-        <screen>
-[groups]
-calc-developers = harry, sally, joe
-paint-developers = frank, sally, jane
-everyone = @calc-developers, @paint-developers
-</screen>
-
-        <para>&hellip;and that's pretty much all there is to it.</para>
+        <para>Once you've settled on one of these three
+          basic <filename>httpd.conf</filename> templates, you need to
+          create your file containing access rules for particular
+          paths within the repository.  This is described in
+          <xref linkend="svn.serverconfig.pathbasedauthz"/>.</para>
 
       </sect3>
 
@@ -2955,6 +3019,242 @@ everyone = @calc-developers, @paint-developers
       </sect3>
 
     </sect2>
+
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.serverconfig.pathbasedauthz">
+
+    <title>Path-Based Authorization</title>
+
+    <para>Both Apache and <command>svnserve</command> are capable of
+      granting (or denying) permissions to users.  Typically this is
+      done over the entire repository: a user can read the repository
+      (or not), and she can write to the repository (or not).  It's
+      also possible, however, to define finer-grained access rules.
+      One set of users may have permssion to write to a certain
+      directory in the repository, but not others; another directory
+      might not even be readable by all but a few special
+      people.</para>
+
+    <para>Both servers use a common file format to describe these
+      path-based access rules.  In the case of Apache, one needs to
+      load the <command>mod_authz_svn</command> module and then add
+      the <literal>AuthzSVNAccessFile</literal> directive (within
+      the <filename>httpd.conf</filename> file) pointing to your own
+      rules-file.  (For a full explanation, see
+      <xref linkend="svn.serverconfig.httpd.authz.perdir"/>.)  If
+      you're using <command>svnserve</command>, then you need to make
+      the <literal>authz-db</literal> variable
+      (within <filename>svnserve.conf</filename>) point to your
+      rules-file.</para>
+
+    <sidebar>
+      <title>Best practice: do you really need path-based access
+        control?</title>
+
+      <para>A lot of administrators setting up Subversion for the
+        first time tend to jump into path-based access control without
+        giving it a lot of thought.  The administrator usually knows
+        which teams of people are working on which projects, so it's
+        easy to jump in and grant certain teams access to certain
+        directories and not others.  It seems like a natural thing,
+        and it appeases the administrator's desire to maintain tight
+        control of the repository.</para>
+
+      <para>Note, though, that there are often invisible costs
+        associated with this feature.  Most of the time, while certain
+        users <emphasis>shouldn't</emphasis> be committing changes to
+        certain parts of the repository, that social contract doesn't
+        need to be technologically enforced.  Teams can sometimes
+        spontaneously collaborate with each other; someone may want to
+        help someone else out by committing to an area she doesn't
+        normally work on.  By preventing this sort of thing at the
+        server level, you're setting up barriers to unexpected
+        collaboration.  You're also creating a bunch of rules that
+        need to be maintained as projects develop, new users are
+        added, and so on.  It's a bunch of extra work to maintain.</para>
+
+        <para>Remember that this is a version control system!  Even if
+        somebody accidentally commits a change to something they
+        shouldn't, it's easy to undo the change.  And if a user
+        commits to the wrong place with deliberate malice, then it's a
+        social problem anyway, and that the problem needs to be dealt
+        with outside of Subversion.</para>
+
+      <para>So before you begin restricting users' access rights, ask
+        yourself if there's a real, honest need for this, or if it's
+        just something that <quote>sounds good</quote> to an
+        administrator.  Remember that there's very little risk
+        involved, and that it's bad to become dependent on technology
+        as a crutch for social problems.<footnote><para>A common theme
+        in this book!</para></footnote>.</para>
+
+      <para>As an example to ponder, consider that the Subversion
+        project itself has always a notion of who is allowed to commit
+        where, but it's always been enforced socially.  This is a good
+        model of community trust, especially for open-source projects.
+        Of course, sometimes there <emphasis>are</emphasis> truly
+        legitimate needs for path-based access control; within
+        corporations, for example, certain types of data really can be
+        sensitive, and access needs to be genuinely restricted to
+        small groups of people.</para>
+
+    </sidebar>
+
+    <para>Once your server knows where to find your rules-file, it's
+      time to define the rules.</para>
+
+    <para>The syntax of the file is the same familiar one used
+      by <command>svnserve.conf</command> and the runtime
+      configuration files.  Lines that start with a hash
+      (<literal>#</literal>) are ignored.  In its simplest form, each
+      section names a repository and path within it, and the
+      authenticated usernames are the option names within each
+      section.  The value of each option describes the user's level of
+      access to the repository path: either
+      <literal>r</literal> (read-only) or <literal>rw</literal>
+      (read-write).  If the user is not mentioned at all, no access is
+      allowed.</para>
+
+    <para>To be more specific: the value of the section-names are
+      either of the form <literal>[repos-name:path]</literal> or the
+      form <literal>[path]</literal>.  If you're using the
+      <literal>SVNParentPath</literal> directive, then it's important
+      to specify the repository names in your sections.  If you omit
+      them, then a section like
+      <literal>[/some/dir]</literal> will match the path
+      <filename>/some/dir</filename> in <emphasis>every</emphasis>
+      repository.  If you're using the <literal>SVNPath</literal>
+      directive, however, then it's fine to only define paths in your
+      sections&mdash;after all, there's only one repository.</para>
+
+    <screen>
+[calc:/branches/calc/bug-142]
+harry = rw
+sally = r
+</screen>
+
+    <para>In this first example, the user <literal>harry</literal> has
+      full read and write access on the
+      <filename>/branches/calc/bug-142</filename> directory in the
+      <literal>calc</literal> repository, but the user
+      <literal>sally</literal> has read-only access.  Any other users
+      are blocked from accessing this directory.</para>
+
+    <para>Of course, permissions are inherited from parent to child
+      directory.  That means that we can specify a subdirectory with a
+      different access policy for Sally:</para>
+
+    <screen>
+[calc:/branches/calc/bug-142]
+harry = rw
+sally = r
+
+# give sally write access only to the 'testing' subdir
+[calc:/branches/calc/bug-142/testing]
+sally = rw
+</screen>
+
+    <para>Now Sally can write to the <filename>testing</filename>
+      subdirectory of the branch, but can still only read other parts.
+      Harry, meanwhile, continues to have complete read-write access
+      to the whole branch.</para>
+
+    <para>It's also possible to explicitly deny permission to someone
+      via inheritance rules, by setting the username variable to
+      nothing:</para>
+
+    <screen>
+[calc:/branches/calc/bug-142]
+harry = rw
+sally = r
+
+[calc:/branches/calc/bug-142/secret]
+harry =
+</screen>
+
+    <para>In this example, Harry has read-write access to the
+      entire <filename>bug-142</filename> tree, but has absolutely no
+      access at all to the <filename>secret</filename> subdirectory
+      within it.</para>
+
+    <para>The thing to remember is that the most specific path always
+      matches first.  The <command>mod_authz_svn</command> module
+      tries to match the path itself, and then the parent of the path,
+      then the parent of that, and so on.  The net effect is that
+      mentioning a specific path in the accessfile will always
+      override any permissions inherited from parent
+      directories.</para>
+
+    <para>By default, nobody has any access to the repository at all.
+      That means that if you're starting with an empty file, you'll
+      probably want to give at least read permission to all users at
+      the root of the repository.  You can do this by using the
+      asterisk variable (<literal>*</literal>), which means <quote>all
+      users</quote>:</para>
+
+    <screen>
+[/]
+* = r
+</screen>
+
+    <para>This is a common setup; notice that there's no repository
+      name mentioned in the section name.  This makes all repositories
+      world readable to all users, whether you're
+      using <literal>SVNPath</literal> or
+      <literal>SVNParentPath</literal>.  Once all users have
+      read-access to the repositories, you can give explicit
+      <literal>rw</literal> permission to certain users on specific
+      subdirectories within specific repositories.</para>
+
+    <para>The asterisk variable (<literal>*</literal>) is also worth
+      special mention here: it's the
+      <emphasis>only</emphasis> pattern which matches an anonymous
+      user.  If you've configured your <literal>Location</literal>
+      block to allow a mixture of anonymous and authenticated access,
+      all users start out accessing Apache anonymously.
+      <command>mod_authz_svn</command> looks for a
+      <literal>*</literal> value defined for the path being accessed;
+      if it can't find one, then Apache demands real authentication
+      from the client.</para>
+
+    <para>The access file also allows you to define whole groups of
+      users, much like the Unix <filename>/etc/group</filename>
+      file:</para>
+
+    <screen>
+[groups]
+calc-developers = harry, sally, joe
+paint-developers = frank, sally, jane
+everyone = harry, sally, joe, frank, sally, jane
+</screen>
+
+    <para>Groups can be granted access control just like users.
+      Distinguish them with an <quote>at</quote>
+      (<literal>@</literal>) prefix:</para>
+
+    <screen>
+[calc:/projects/calc]
+@calc-developers = rw
+
+[paint:/projects/paint]
+@paint-developers = rw
+jane = r
+</screen>
+
+    <para>Groups can also be defined to contain other groups:</para>
+
+    <screen>
+[groups]
+calc-developers = harry, sally, joe
+paint-developers = frank, sally, jane
+everyone = @calc-developers, @paint-developers
+</screen>
+
+    <para>&hellip;and that's pretty much all there is to it.</para>
 
   </sect1>
 
