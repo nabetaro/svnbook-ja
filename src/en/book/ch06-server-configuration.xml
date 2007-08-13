@@ -2561,6 +2561,36 @@ everyone = @calc-developers, @paint-developers
 
   </sect1>
 
+  <!-- TODO(sussman):  this sidebar needs to be changed for svn 1.5,
+  making it clear that it's a neon behavior, and ??probably?? not the
+  case when using serf... -->
+  <sidebar>
+    <title>Partial Readabliity and Checkouts</title>
+
+    <para>If you're using Apache as your Subversion server and have
+      made certain subdirectories of your repository unreadable to
+      certain users, then you need to be aware of a possible
+      non-optimal behavior with <command>svn
+      checkout</command>.</para>
+
+    <para>When the client requests a checkout or update over HTTP, it
+      makes a single server request, and receives a single (often
+      large) server response.  When the server receives the request,
+      that is the <emphasis>only</emphasis> opportunity Apache has to
+      demand user authentication.  This has some odd side-effects.
+      For example, if a certain subdirectory of the repository is only
+      readable by user Sally, and user Harry checks out a parent
+      directory, his client will respond to the initial authentication
+      challenge as Harry.  As the server generates the large response,
+      there's no way it can re-send an authentication challenge when
+      it reaches the special subdirectory;  thus the subdirectory is
+      skipped altogether, rather than asking the user to
+      re-authenticate as Sally at the right moment.  In a similar way,
+      if the root of the repository is anonymously world-readable,
+      then the entire checkout will be done without
+      authentication&mdash;again, skipping the unreadable directory,
+      rather than asking for authentication partway through.</para>
+  </sidebar>
 
   <!-- ================================================================= -->
   <!-- ================================================================= -->
