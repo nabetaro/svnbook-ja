@@ -125,7 +125,7 @@ $ svn list file:///usr/local/svn/repos
 </screen>
 
       <para>You'll learn more about tags and branches in <xref
-      linkend="svn.branchmerge"/>.  For details and how to setup
+      linkend="svn.branchmerge"/>.  For details and how to set up
       multiple projects, see <xref
       linkend="svn.branchmerge.maint.layout"/> and <xref
       linkend="svn.reposadmin.projects.chooselayout"/> to read more
@@ -210,7 +210,7 @@ Checked out revision 8810.
       URL:</para>
 
     <screen>
-$ svn checkout -r 8810 \
+$ svn checkout \
       http://svn.collab.net/repos/svn/trunk/subversion/tests/cmdline/
 A    cmdline/revert_tests.py
 A    cmdline/diff_tests.py
@@ -223,15 +223,14 @@ Checked out revision 8810.
 
     <para>Since Subversion uses a <quote>copy-modify-merge</quote>
       model instead of <quote>lock-modify-unlock</quote> (see <xref
-      linkend="svn.basic.vsn-models"/>), you're already able to start
+      linkend="svn.basic.vsn-models"/>), you can start right in 
       making changes to the files and directories in your working
       copy.  Your working copy is just like any other collection of
       files and directories on your system.  You can edit and change
       them, move them around, you can even delete the entire working
       copy and forget about it.</para>
 
-      <note>
-
+      <warning>
         <para>While your working copy is <quote>just like any other
           collection of files and directories on your system</quote>,
           you can edit files at will, but you must tell Subversion
@@ -241,11 +240,12 @@ Checked out revision 8810.
           <command>svn move</command> instead of the copy and move
           commands provided by your operating system.  We'll talk more
           about them later in this chapter.</para>
-      </note>
+      </warning>
 
-    <para>Unless you're ready to commit a new file or directory, or
-      changes to existing ones, there's no need to further notify the
-      Subversion server that you've done anything.</para>
+    <para>Unless you're ready to commit the addition of a new file or
+      directory, or changes to existing ones, there's no need to
+      further notify the Subversion server that you've done
+      anything.</para>
 
     <sidebar>
       <title>What's with the <filename>.svn</filename> directory?</title>
@@ -258,6 +258,13 @@ Checked out revision 8810.
         change anything in the administrative area!  Subversion
         depends on it to manage your working copy.</para>
 
+      <para>If you accidentally remove the <filename>.svn</filename>
+        subdirectory, the easiest way to fix the problem is to remove
+        the entire containing directory (a normal system deletion,
+        not <command>svn delete</command>), then run <command>svn
+        update</command> from a parent directory.  The Subversion
+        client will re-download the directory you've deleted, with a
+        new <filename>.svn</filename> area as well.</para>
     </sidebar>
 
     <para>While you can certainly check out a working copy with the
@@ -266,7 +273,7 @@ Checked out revision 8810.
       copy in the new directory that you name.  For example:</para>
 
     <screen>
-$  svn -r 8810  checkout http://svn.collab.net/repos/svn/trunk subv
+$  svn checkout http://svn.collab.net/repos/svn/trunk subv
 A    subv/Makefile.in
 A    subv/ac-helpers
 A    subv/ac-helpers/install.sh
@@ -288,14 +295,17 @@ Checked out revision 8810.
 
       <para>When you perform a Subversion operation that requires you
         to authenticate, by default Subversion caches your
-        authentication credentials on disk.  If you're concerned about
-        caching your Subversion passwords,<footnote><para>Of course,
-        you're not terribly worried&mdash;first because you know that
-        you can't <emphasis>really</emphasis> delete anything from
-        Subversion and, secondly, because your Subversion password
-        isn't the same as any of the other three million passwords you
-        have, right?  Right?</para></footnote> you can disable caching
-        either permanently or on a case-by-case basis.</para>
+        authentication credentials on disk.  This is done for
+        convenience, so that you don't have to continually re-enter
+        your password for future operations.  If you're concerned
+        about caching your Subversion passwords,<footnote><para>Of
+        course, you're not terribly worried&mdash;first because you
+        know that you can't <emphasis>really</emphasis> delete
+        anything from Subversion and, secondly, because your
+        Subversion password isn't the same as any of the other three
+        million passwords you have, right?  Right?</para></footnote>
+        you can disable caching either permanently or on a
+        case-by-case basis.</para>
 
       <para>To disable password caching for a particular one-time
         command, pass the <option >--no-auth-cache</option > switch on
@@ -438,7 +448,7 @@ Updated to revision 2.
         to each item to let you know what actions Subversion performed
         to bring your working copy up-to-date.  To find out what these
         letters mean, see <xref linkend
-        ="svn.ref.svn.c.update"/></para>
+        ="svn.ref.svn.c.update"/>.</para>
 
     </sect2>
 
@@ -467,8 +477,8 @@ Updated to revision 2.
         text files&mdash;and just as efficiently too.  For tree
         changes, you can ask Subversion to <quote>mark</quote> files
         and directories for scheduled removal, addition, copying, or
-        moving.  While these changes may take place immediately in
-        your working copy, no additions or removals will happen in the
+        moving.  These changes may take place immediately in your
+        working copy, but no additions or removals will happen in the
         repository until you commit them.</para>
 
       <para>Here is an overview of the five Subversion subcommands
@@ -487,9 +497,9 @@ Updated to revision 2.
 
         <para>When a symlink is committed into a Subversion
           repository, Subversion remembers that the file was in fact a
-          symlink, as well as to what object the symlink
+          symlink, as well as the object to which the symlink
           <quote>points</quote>.  When that symlink is checked out to
-          another working copy on a supporting system, Subversion
+          another working copy on a non-Windows system, Subversion
           reconstructs a real filesystem-level symbolic link from the
           versioned symlink.  But that doesn't in any way limit the
           usability of working copies on systems such as Windows which
@@ -528,14 +538,16 @@ Updated to revision 2.
               If <filename>foo</filename> is a directory, it is not
               deleted, but Subversion schedules it for deletion.  When
               you commit your changes, <filename>foo</filename> will
-              be removed from your working copy and the repository.
+              be entirely removed from your working copy and the
+              repository.
               <footnote><para>Of course, nothing is ever totally
               deleted from the repository&mdash;just from the
               <literal>HEAD</literal> of the repository.  You can get
               back anything you delete by checking out (or updating
-              your working copy) a revision earlier than the one in
-              which you deleted it. Also see <xref
-              linkend="svn.branchmerge.commonuses.resurrect"/>></para></footnote></para>
+              your working copy to) a revision earlier than the one in
+              which you deleted it. Also see
+              <xref linkend="svn.branchmerge.commonuses.resurrect"/>.
+            </para></footnote></para>
           </listitem>
         </varlistentry>
 
@@ -623,11 +635,11 @@ Updated to revision 2.
       <sidebar>
         <title>Look Ma! No Network!</title>
 
-        <para>The commands (<command>svn status</command>,
+        <para>The commands <command>svn status</command>,
           <command>svn diff</command>, and <command>svn
-          revert</command>) can be used without any network access
-          (assuming, of course, that your repository is across the
-          network and not local).  This makes it easy to manage your
+          revert</command> can be used without any network access even
+          if your repository <emphasis>is</emphasis> across the
+          network.  This makes it easy to manage your
           changes-in-progress when you are somewhere without a network
           connection, such as travelling on an airplane, riding a
           commuter train or hacking on the beach.<footnote><para>And
@@ -654,7 +666,7 @@ Updated to revision 2.
       <para>Subversion has been optimized to help you with this task,
         and is able to do many things without communicating with the
         repository.  In particular, your working copy contains a
-        secret cached <quote>pristine</quote> copy of each version
+        hidden cached <quote>pristine</quote> copy of each version
         controlled file within the <filename>.svn</filename> area.
         Because of this, Subversion can quickly show you how your
         working files have changed, or even allow you to undo your
@@ -780,16 +792,15 @@ A                0         ?     ?        stuff/things/bloo.h
 </screen>
 
         <para>This is the <quote>long form</quote> output of
-          <command>svn status</command>.  The first column remains the
-          same, but the second column shows the working-revision of
-          the item.  The third and fourth columns show the revision in
-          which the item last changed, and who changed it (these
-          columns are not to be confused with the columns of
-          characters that we just discussed).</para>
+          <command>svn status</command>.  The leters in the first
+          column mean the same as before, but the second column shows
+          the working-revision of the item.  The third and fourth
+          columns show the revision in which the item last changed,
+          and who changed it.</para>
 
-        <para>None of the above invocations to <command>svn
-          status</command> contact the repository, they work only
-          locally by comparing the metadata in the
+        <para>None of the prior invocations to <command>svn
+          status</command> contact the repository&mdash;instead, they
+          compare the metadata in the
           <filename>.svn</filename> directory with the working copy.
           Finally, there is the <option>--show-updates (-u)</option>
           option, which contacts the repository and adds information
@@ -814,7 +825,7 @@ Status against revision:   46
           commit, or the repository will reject your commit for being
           out-of-date.  (More on this subject later.)</para>
 
-          <para><command>svn status</command> displays much more
+          <para><command>svn status</command> can display much more
             information about the files and directories in your
             working copy than we've shown here&mdash;for an exhaustive
             description of svn status and its output, see <xref
@@ -830,8 +841,8 @@ Status against revision:   46
           <command>svn diff</command> command.  You can find out
           <emphasis>exactly</emphasis> how you've modified things by
           running <command>svn diff</command> with no arguments, which
-          prints out file changes in unified diff
-          format:</para>
+          prints out file changes in <firstterm>unified diff
+          format</firstterm>:</para>
 
         <screen>
 $ svn diff
@@ -882,11 +893,11 @@ Index: stuff/things/bloo.h
           scheduled for deletion are displayed as all deleted
           text.</para>
 
-        <para>Output is displayed in <firstterm>unified diff
-          format</firstterm>.  That is, removed lines are prefaced
-          with a <literal>-</literal> and added lines are prefaced
-          with a <literal>+</literal>.  <command>svn diff</command>
-          also prints filename and offset information useful to the
+        <para>Output is displayed in unified diff format.  That is,
+          removed lines are prefaced with <literal>-</literal> and
+          added lines are prefaced with
+          <literal>+</literal>.  <command>svn diff</command> also
+          prints filename and offset information useful to the
           <command>patch</command> program, so you can generate
           <quote>patches</quote> by redirecting the diff output to a
           file:</para>
@@ -1015,9 +1026,9 @@ Updated to revision 46.
         changes.</para>
 
       <para>But the <computeroutput>C</computeroutput> stands for
-        conflict.  This means that the changes from the server overlapped
-        with your own, and now you have to manually choose between
-        them.</para>
+        <computeroutput>c</computeroutput>onflict.  This means that the
+        changes from the server overlapped with your own, and now you
+        have to manually choose between them.</para>
 
       <para>Whenever a conflict occurs, three things typically occur
         to assist you in noticing and resolving that conflict:</para>
@@ -1359,7 +1370,7 @@ Committed revision 4.
           decide that you want to cancel your commit, you can just
           quit your editor without saving changes.  If you've already
           saved your commit message, simply delete the text, save
-          again, then quit.</para>
+          again, then abort.</para>
 
         <screen>
 $ svn commit
@@ -1387,6 +1398,10 @@ svn: Your file or directory 'sandwich.txt' is probably out-of-date
 &hellip;
 </screen>
 
+      <para>(The exact wording of this error message depends on the
+        network protocol and server you're using, but the idea is the
+        same in all cases.)</para>
+
       <para>At this point, you need to run <command>svn
         update</command>, deal with any merges or conflicts that
         result, and attempt your commit again.</para>
@@ -1396,7 +1411,7 @@ svn: Your file or directory 'sandwich.txt' is probably out-of-date
         to manage your repository and working copy, but most of your
         day-to-day use of Subversion will involve only the commands
         that we've discussed so far in this chapter.  We will,
-        however, cover a few more commands that you'll use just fairly
+        however, cover a few more commands that you'll use fairly
         often.</para>
 
     </sect2>
@@ -1443,9 +1458,8 @@ svn: Your file or directory 'sandwich.txt' is probably out-of-date
         <varlistentry>
           <term><command>svn cat</command></term>
           <listitem>
-            <para>This is used to retrieve any file as it existed in a
-              particular revision number and display it on your
-              screen.</para>
+            <para>Retrieves a file as it existed in a particular
+              revision number and display it on your screen.</para>
           </listitem>
         </varlistentry>
 
@@ -1591,15 +1605,15 @@ $
       <itemizedlist>
 
         <listitem>
-          <para>Examine local changes</para>
+          <para>Examining local changes</para>
         </listitem>
 
         <listitem>
-          <para>Compare your working copy to the repository</para>
+          <para>Comparing your working copy to the repository</para>
         </listitem>
 
         <listitem>
-          <para>Compare repository to repository</para>
+          <para>Comparing repository to repository</para>
         </listitem>
 
       </itemizedlist>
@@ -1700,13 +1714,9 @@ Index: rules.txt
 $
 </screen>
 
-        <para>Not only can you use <command>svn diff</command> to
-          compare files in your working copy to the repository, but if
-          you supply a URL argument, you can examine the differences
-          between items in the repository without even having a
-          working copy.  This is especially useful if you wish to
-          inspect changes in a file when you don't have a working copy
-          on your local machine:</para>
+        <para>Lastly, you can compare repository revisions even when
+          you don't have a working copy on your local machine, just by
+          including the appropriate URL on the command line:</para>
 
         <screen>
 $ svn diff -c 5 http://svn.example.com/repos/example/trunk/text/rules.txt
@@ -1823,7 +1833,7 @@ $ svn update -r 1729 # Updates an existing working copy to r1729
 &hellip;
 </screen>
 
-      <warning>
+      <tip>
         <para>Many Subversion newcomers attempt to use the above
           <command>svn update</command> example to <quote>undo</quote>
           committed changes, but this won't work as you can't commit
@@ -1831,13 +1841,15 @@ $ svn update -r 1729 # Updates an existing working copy to r1729
           the changed files have newer revisions.  See <xref
           linkend="svn.branchmerge.commonuses.resurrect"/> for a
           description of how to <quote>undo</quote> a commit.</para>
-          </warning>
+      </tip>
 
       <para>Lastly, if you're building a release and wish to bundle up
-        your files from Subversion but don't want those pesky .svn
-        directories in the way, then you can use svn export to create
-        a local copy of all or part of your repository sans .svn
-        directories.  As with <command>svn update</command> and
+        your files from Subversion but don't want those
+        pesky <filename>.svn</filename> directories in the way, then
+        you can use <command>svn export</command> to create a local
+        copy of all or part of your repository
+        sans <filename>.svn</filename> directories.  As
+        with <command>svn update</command> and
         <command>svn checkout</command>, you can also pass the
         <option>--revision</option> switch to <command>svn
         export</command>:</para>
@@ -1859,7 +1871,7 @@ $ svn export http://svn.example.com/svn/repos1 -r 1729
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.tour.cleanup">
-    <title>Sometimes You Just Need to Cleanup</title>
+    <title>Sometimes You Just Need to Clean Up</title>
 
     <para>When Subversion modifies your working copy (or any
       information within <filename>.svn</filename>), it tries to do
@@ -1867,7 +1879,7 @@ $ svn export http://svn.example.com/svn/repos1 -r 1729
       Subversion writes its intentions to a log file.  Next it
       executes the commands in the log file to apply the requested
       change, holding a lock on the relevant part of the working
-      copy while it works &mdash; to prevent other Subversion clients
+      copy while it works&mdash;to prevent other Subversion clients
       from accessing the working copy in mid-change.  Finally,
       Subversion removes the log file.  Architecturally, this is
       similar to a journaled filesystem.  If a Subversion operation

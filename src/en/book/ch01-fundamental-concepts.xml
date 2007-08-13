@@ -51,11 +51,10 @@
       <emphasis>previous</emphasis> states of the filesystem.  For
       example, a client can ask historical questions like, <quote>What
       did this directory contain last Wednesday?</quote> or <quote>Who
-      was the last person to change this file, and what changes did
-      he make?</quote> These are the sorts of questions that are at
-      the heart of any <firstterm>version control system</firstterm>:
-      systems that are designed to record and track changes to data
-      over time.
+      was the last person to change this file, and what changes did he
+      make?</quote> These are the sorts of questions that are at the
+      heart of any <firstterm>version control system</firstterm>:
+      systems that are designed to track changes to data over time.
     </para>
   </sect1>
 
@@ -187,8 +186,8 @@
     <sect2 id="svn.basic.vsn-models.copy-merge">
       <title>The Copy-Modify-Merge Solution</title>
       
-      <para>Subversion, CVS, and a number of other version control
-        systems use a <firstterm>copy-modify-merge</firstterm> model as an
+      <para>Subversion, CVS, and many other version control systems
+        use a <firstterm>copy-modify-merge</firstterm> model as an
         alternative to locking.  In this model, each user's client
         contacts the project repository and creates a personal
         <firstterm>working copy</firstterm>&mdash;a local reflection
@@ -253,9 +252,9 @@
         and semantic conflicts increase.  No system can force users to
         communicate perfectly, and no system can detect semantic
         conflicts.  So there's no point in being lulled into a false
-        promise that a locking system will somehow prevent conflicts;
-        in practice, locking seems to inhibit productivity more than
-        anything else.</para>
+        sense of security that a locking system will somehow prevent
+        conflicts; in practice, locking seems to inhibit productivity
+        more than anything else.</para>
       
       <sidebar id="svn.basic.vsn-models.copy-merge.sb-1">
         <title>When Locking is Necessary</title>
@@ -277,7 +276,7 @@
 
         <para>While Subversion is still primarily a copy-modify-merge
           system, it still recognizes the need to lock an occasional
-          file ands provide mechanisms for this.  This feature is
+          file and thus provide mechanisms for this.  This feature is
           discussed later in this book, in
           <xref linkend="svn.advanced.locking"/>.</para>
 
@@ -457,13 +456,73 @@ $ ls -A calc
 Makefile  integer.c  button.c  .svn/
 </screen>
 
-      <para>The list of letter A's indicates that Subversion is adding
-        a number of items to your working copy.  You now have a
-        personal copy of the repository's <filename>/calc</filename>
-        directory, with one additional
-        entry&mdash;<filename>.svn</filename>&mdash;which holds the
-        extra information needed by Subversion, as mentioned
+      <para>The list of letter A's in the left margin indicates that
+        Subversion is adding a number of items to your working copy.
+        You now have a personal copy of the
+        repository's <filename>/calc</filename> directory, with one
+        additional entry&mdash;<filename>.svn</filename>&mdash;which
+        holds the extra information needed by Subversion, as mentioned
         earlier.</para>
+ 
+      <para>Suppose you make changes to <filename>button.c</filename>.
+        Since the <filename>.svn</filename> directory remembers the
+        file's original modification date and contents, Subversion can
+        tell that you've changed the file.  However, Subversion does
+        not make your changes public until you explicitly tell it to.
+        The act of publishing your changes is more commonly known as
+        <firstterm>committing</firstterm> (or <firstterm>checking
+        in</firstterm>) changes to the repository.</para>
+
+      <para>To publish your changes to others, you can use
+        Subversion's <command>commit</command> command.</para>
+
+      <screen>
+$ svn commit button.c -m "Fixed a typo in button.c."
+Sending        button.c
+Transmitting file data .
+Committed revision 57.
+</screen>
+
+      <para>Now your changes to <filename>button.c</filename> have
+        been committed to the repository, with a note describing your
+        change (namely, that you fixed a typo).  If another user
+        checks out a working copy of <filename>/calc</filename>, they
+        will see your changes in the latest version of the
+        file.</para>
+
+      <para>Suppose you have a collaborator, Sally, who checked out a
+        working copy of <filename>/calc</filename> at the same time
+        you did.  When you commit your change to
+        <filename>button.c</filename>, Sally's working copy is left
+        unchanged; Subversion only modifies working copies at the
+        user's request.</para>
+
+      <para>To bring her project up to date, Sally can ask
+        Subversion to <firstterm>update</firstterm> her working copy,
+        by using the Subversion <command>update</command> command.
+        This will incorporate your changes into her working copy, as
+        well as any others that have been committed since she checked
+        it out.</para>
+
+      <screen>
+$ pwd
+/home/sally/calc
+
+$ ls -A 
+.svn/ Makefile integer.c button.c
+
+$ svn update
+U    button.c
+Updated to revision 57.
+</screen>
+
+      <para>The output from the <command>svn update</command> command
+        indicates that Subversion updated the contents of
+        <filename>button.c</filename>.  Note that Sally didn't need to
+        specify which files to update; Subversion uses the information
+        in the <filename>.svn</filename> directory, and further
+        information in the repository, to decide which files need to
+        be brought up to date.</para>
 
       <sidebar id="svn.basic.in-action.wc.sb-1">
         <title>Repository URLs</title>
@@ -522,66 +581,6 @@ Makefile  integer.c  button.c  .svn/
         <xref linkend="svn.serverconfig"/>.</para>
 
       </sidebar>
- 
-      <para>Suppose you make changes to <filename>button.c</filename>.
-        Since the <filename>.svn</filename> directory remembers the
-        file's modification date and original contents, Subversion can
-        tell that you've changed the file.  However, Subversion does
-        not make your changes public until you explicitly tell it to.
-        The act of publishing your changes is more commonly known as
-        <firstterm>committing</firstterm> (or <firstterm>checking
-        in</firstterm>) changes to the repository.</para>
-
-      <para>To publish your changes to others, you can use
-        Subversion's <command>commit</command> command.</para>
-
-      <screen>
-$ svn commit button.c -m "Fixed a typo in button.c."
-Sending        button.c
-Transmitting file data .
-Committed revision 57.
-</screen>
-
-      <para>Now your changes to <filename>button.c</filename> have
-        been committed to the repository, with a note describing your
-        change (namely, that you fixed a typo).  If another user
-        checks out a working copy of <filename>/calc</filename>, they
-        will see your changes in the latest version of the
-        file.</para>
-
-      <para>Suppose you have a collaborator, Sally, who checked out a
-        working copy of <filename>/calc</filename> at the same time
-        you did.  When you commit your change to
-        <filename>button.c</filename>, Sally's working copy is left
-        unchanged; Subversion only modifies working copies at the
-        user's request.</para>
-
-      <para>To bring her project up to date, Sally can ask
-        Subversion to <firstterm>update</firstterm> her working copy,
-        by using the Subversion <command>update</command> command.
-        This will incorporate your changes into her working copy, as
-        well as any others that have been committed since she checked
-        it out.</para>
-
-      <screen>
-$ pwd
-/home/sally/calc
-
-$ ls -A 
-.svn/ Makefile integer.c button.c
-
-$ svn update
-U    button.c
-Updated to revision 57.
-</screen>
-
-      <para>The output from the <command>svn update</command> command
-        indicates that Subversion updated the contents of
-        <filename>button.c</filename>.  Note that Sally didn't need to
-        specify which files to update; Subversion uses the information
-        in the <filename>.svn</filename> directory, and further
-        information in the repository, to decide which files need to
-        be brought up to date.</para>
       
     </sect2>
     
@@ -593,8 +592,8 @@ Updated to revision 57.
       <para>An <command>svn commit</command> operation publishes
         changes to any number of files and directories as a single
         atomic transaction.  In your working copy, you can change
-        files' contents, create, delete, rename and copy files and
-        directories, and then commit a complete set of changes as an
+        files' contents; create, delete, rename and copy files and
+        directories; then commit a complete set of changes as an
         atomic transaction.</para>
 
       <para>By <quote>atomic transaction</quote>, we mean simply this:
@@ -892,7 +891,7 @@ calc/Makefile:6
           contained in a subdirectory, or perhaps you'd like to figure
           out when a bug first came into existence in a specific file.
           This is the <quote>time machine</quote> aspect of a version
-          control system &mdash; the feature which allows you to move
+          control system&mdash;the feature which allows you to move
           any portion of your working copy forward and backward in
           history.</para>
 
