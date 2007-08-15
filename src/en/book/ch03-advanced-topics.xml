@@ -5,7 +5,7 @@
     start to finish, you should by now have acquired enough
     knowledge to use the Subversion client to perform the most
     common version control operations.  You understand how to
-    checkout a working copy from a Subversion repository.  You are
+    check out a working copy from a Subversion repository.  You are
     comfortable with submitting and receiving changes using the
     <command>svn commit</command> and <command>svn update</command>
     functions.  You've probably even developed a reflex which causes
@@ -15,7 +15,7 @@
 
   <para>But the Subversion feature set doesn't stop at <quote>common
     version control operations</quote>.  It has other bits of
-    functionality that extend beyond just communicating file and
+    functionality besides just communicating file and
     directory changes to and from a central repository.</para>
 
   <para>This chapter highlights some of Subversion's features that,
@@ -44,14 +44,14 @@
       <emphasis>do</emphasis> require a revision specifier, you
       generally supply a revision number that you saw in a commit
       email, in the output of some other Subversion operation, or in
-      some other context that would yield meaning to that particular
+      some other context that would give meaning to that particular
       number.</para>
 
     <para>But occasionally, you need to pinpoint a moment in time for
       which you don't already have a revision number memorized or
       handy.  So besides the integer revision numbers,
       <command>svn</command> allows as input some additional forms of
-      revision specifiers&mdash;revision keywords, and revision
+      revision specifiers&mdash;<firstterm>revision keywords</firstterm>, and revision
       dates.</para>
 
     <note>
@@ -90,7 +90,7 @@
       </indexterm>
 
       <para>The Subversion client understands a number of
-        <firstterm>revision keywords</firstterm>.  These keywords can
+        revision keywords.  These keywords can
         be used instead of integer arguments to the
         <option>--revision (-r)</option> switch, and are resolved into
         specific revision numbers by Subversion:</para>
@@ -258,9 +258,14 @@ $ svn log -r {2006-11-20}:{2006-11-29}
           unversioned, modifiable property of the revision (see <xref
           linkend="svn.advanced.props" />, revision timestamps can be
           changed to represent complete falsifications of true
-          chronology, or even removed altogether.  This will wreak
-          havoc on the internal date-to-revision conversion that
-          Subversion performs.</para>
+          chronology, or even removed altogether.  Subversion's
+          ability to correctly convert revision dates into real
+          revision numbers depends on revision datestamps maintaining
+          a sequential ordering&mdash;the younger the revision, the
+          younger its timestamp.  If this ordering isn't maintained,
+          you will likely find that trying to use dates to specify
+          revision ranges in your repository doesn't always return the
+          data you might have expected.</para>
       </warning>
         
     </sect2>
@@ -302,6 +307,17 @@ $ svn log -r {2006-11-20}:{2006-11-29}
       typical commit and update operations&mdash;you don't have to
       change your basic processes to accommodate them.</para>
 
+    <note>
+      <para>Subversion has reserved the set of properties whose names
+        begin with <literal>svn:</literal> as its own.  While there
+        are only a handful of such properties in use today, you should
+        avoid creating custom properties for your own needs whose names
+        begin with this prefix.  Otherwise, you run the risk that a
+        future release of Subversion will grow support for a feature
+        or behavior driven by a property of the same name but with
+        perhaps an entirely different interpretation.</para>
+    </note>
+
     <para>Properties show up elsewhere in Subversion, too.  Just as
       files and directories may have arbitrary property names and
       values attached to them, each revision as a whole may have
@@ -332,9 +348,7 @@ $ svn log -r {2006-11-20}:{2006-11-29}
       users of Subversion, and to Subversion itself&mdash;of property
       support.  You'll learn about the property-related
       <command>svn</command> subcommands, and how property
-      modifications affect your normal Subversion workflow.
-      Hopefully, you'll be convinced that Subversion properties can
-      enhance your version control experience.</para>
+      modifications affect your normal Subversion workflow.</para>
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.props.why">
@@ -343,9 +357,7 @@ $ svn log -r {2006-11-20}:{2006-11-29}
       <para>Just as Subversion uses properties to store extra
         information about the files, directories, and revisions that
         it contains, you might also find properties to be of similar
-        use.  Some part of the processes around Subversion's usage
-        to which you adhere, or maybe some additional tooling around
-        Subversion that you use, might find utility in having a place
+        use.  You might find it useful to have a place
         close to your versioned data to hang custom metadata about
         that data.</para>
 
@@ -380,7 +392,7 @@ $ svn log -r {2006-11-20}:{2006-11-29}
         But your automation scripts know better.  They know that they
         can use <command>svn</command> (or better yet, they can use
         the Subversion language bindings&mdash;see <xref
-        linkend="svn.developer.usingapi.otherlangs" />) to dig out the
+        linkend="svn.developer.usingapi" />) to dig out the
         extra information that your site needs to display without
         having to read an index file or play path manipulation
         games.</para>
@@ -402,8 +414,8 @@ $ svn log -r {2006-11-20}:{2006-11-29}
 
         <para>For all their utility, Subversion properties&mdash;or,
           more accurately, the available interfaces to them&mdash;have
-          a major shortcoming which diminishes their practicality.
-          While it is a simple matter to set a custom property,
+          a major shortcoming:
+          while it is a simple matter to <emphasis>set</emphasis> a custom property,
           <emphasis>finding</emphasis> that property later is whole
           different ball of wax.</para>
 
@@ -453,7 +465,7 @@ This fixes a nasty segfault in the wort frabbing process
         add or modify file and directory properties.  For properties
         with short, human-readable values, perhaps the simplest way to
         add a new property is to specify the property name and value
-        on the command-line of the <command>propset</command>
+        on the command line of the <command>propset</command>
         subcommand.</para>
 
       <screen>
@@ -465,7 +477,7 @@ $
       <para>But we've been touting the flexibility that Subversion
         offers for your property values.  And if you are planning to
         have a multi-line textual, or even binary, property value, you
-        probably do not want to supply that value on the command-line.
+        probably do not want to supply that value on the command line.
         So the <command>propset</command> subcommand takes a
         <option>--file (-F)</option> option for specifying the name of
         a file which contains the new property value.</para>
@@ -503,7 +515,7 @@ $
         Subversion detects that you've actually changed the existing
         value of the property, it will accept that as the new property
         value.  If you exit your editor without making any changes, no
-        property modification will occur.</para>
+        property modification will occur:</para>
 
       <screen>
 $ svn propedit copyright calc/button.c  ### exit the editor without changes
@@ -534,8 +546,8 @@ $
         command will list the names of properties that exist on a
         path.  Once you know the names of the properties on the node,
         you can request their values individually using <command>svn
-        propget</command>.  This command will, given a path (or set of
-        paths) and a property name, print the value of the property to
+        propget</command>.  This command will, given a property name and a path (or set of
+        paths), print the value of the property to
         the standard output stream.</para>
 
       <screen>
@@ -642,9 +654,9 @@ $
       <para>Note that the ability to modify these unversioned
         properties must be explicitly added by the repository
         administrator (see <xref linkend="svn.reposadmin.create.hooks" />).
-        Since the properties aren't versioned, you run the risk of
+        That's because the properties aren't versioned, so you run the risk of
         losing information if you aren't careful with your edits.
-        The repository administrator can setup methods to protect
+        The repository administrator can set up methods to protect
         against this loss, and by default, modification of
         unversioned properties is disabled.</para>
 
@@ -673,7 +685,7 @@ $
         workflow.  As we mentioned earlier, file and directory
         properties are versioned, just like your file contents.  As a
         result, Subversion provides the same opportunities for
-        merging&mdash;in cleanly or conflicting fashions&mdash;someone
+        merging&mdash;cleanly or with conflicts&mdash;someone
         else's modifications into your own.</para>
 
       <para>And as with file contents, your property changes are local
@@ -681,7 +693,7 @@ $
         repository with <command>svn commit</command>.  Your property
         changes can be easily unmade, too&mdash;the <command>svn
         revert</command> command will restore your files and
-        directories to their un-edited states, contents, properties,
+        directories to their un-edited states&mdash;contents, properties,
         and all.  Also, you can receive interesting information about
         the state of your file and directory properties by using the
         <command>svn status</command> and <command>svn diff</command>
@@ -702,7 +714,7 @@ $
       <para>Notice how the <command>status</command> subcommand
         displays <literal>M</literal> in the second column instead of
         the first.  That is because we have modified the properties on
-        <filename>calc/button.c</filename>, but not modified its
+        <filename>calc/button.c</filename>, but not its
         textual contents.  Had we changed both, we would have seen
         <literal>M</literal> in the first column, too (see <xref
         linkend="svn.tour.cycle.examine.status" />).</para>
@@ -757,8 +769,8 @@ $
         still run <command>svn diff</command> and redirect the output
         to create a usable patch file.  The <command>patch</command>
         program will ignore property patches&mdash;as a rule, it
-        ignores any noise it can't understand.  This does
-        unfortunately mean that to fully apply a patch generated by
+        ignores any noise it can't understand.  This does,
+        unfortunately, mean that to fully apply a patch generated by
         <command>svn diff</command>, any property modifications will
         need to be applied by hand.</para>
 
@@ -773,10 +785,10 @@ $
         in this and other chapters&mdash;textual diff and merge
         support, keyword substitution, newline translation, etc.  But
         to get the full benefit of properties, they must be set on the
-        right files and directories.  Unfortunately, that can be a
-        step easily forgotten in the routine of things, especially
+        right files and directories.  Unfortunately, that
+        step can be easily forgotten in the routine of things, especially
         since failing to set a property doesn't usually result in an
-        obvious error condition (at least compared to, say, failing to
+        obvious error (at least compared to, say, failing to
         add a file to version control).  To help your properties get
         applied to the places that need them, Subversion provides a
         couple of simple but useful features.</para>
@@ -809,11 +821,11 @@ $
         flexible automatic property setting feature which allows you
         to create mappings of filename patterns to property names and
         values.  Once again, these mappings affect adds and imports,
-        and not only can override the default MIME type decision made
+        and can not only override the default MIME type decision made
         by Subversion during those operations, but can also set
         additional Subversion or custom properties, too.  For example,
         you might create a mapping that says that any time you add
-        JPEG files&mdash;ones that match the pattern
+        JPEG files&mdash;ones whose names match the pattern
         <literal>*.jpg</literal>&mdash;Subversion should automatically
         set the <literal>svn:mime-type</literal> property on those
         files to <literal>image/jpeg</literal>.  Or perhaps any files
@@ -821,7 +833,7 @@ $
         <literal>svn:eol-style</literal> set to
         <literal>native</literal>, and <literal>svn:keywords</literal>
         set to <literal>Id</literal>.  Automatic property support is
-        perhaps the handiest property related tool in the Subversion
+        perhaps the handiest property-related tool in the Subversion
         toolbox.  See <xref
         linkend="svn.advanced.confarea.opts.config"/> for more about
         configuring that support.</para>
@@ -875,7 +887,7 @@ $
       <sidebar>
         <title>Identifying File Types</title>
     
-        <para>Software programs on most modern operating systems make
+        <para>Various programs on most modern operating systems make
           assumptions about the type and format of the contents of a
           file by the file's name, specifically its file extension.
           For example, files whose names end in
@@ -890,13 +902,13 @@ $
           image.</para>
 
         <para>Unfortunately, some of those extensions have changed
-          meanings over time.  When personal computers first appeared,
+          their meanings over time.  When personal computers first appeared,
           a file named <filename>README.DOC</filename> would have
           almost certainly been a plaintext file, just like today's
           <filename>.txt</filename> files.  But by the mid-1990's, you
           could almost bet that a file of that name would not be a
           plaintext file at all, but instead a Microsoft Word document
-          with a proprietary, non-human-readable format.  But this
+          in a proprietary, non-human-readable format.  But this
           change didn't occur overnight&mdash;there was certainly a
           period of confusion for computer users over what exactly
           they had in hand when they saw a <filename>.DOC</filename>
@@ -912,7 +924,7 @@ $
           doubt on the mapping between a file's name and its content.
           With information being served across networks and generated
           dynamically by server-side scripts, there was often no real
-          file per se to speak of, and therefore no file name.  Web
+          file per se, and therefore no file name.  Web
           servers, for example, needed some other way to tell browsers
           what they were downloading so the browser could do something
           intelligent with that information, whether that was to
@@ -922,13 +934,13 @@ $
 
         <para>Eventually, a standard emerged for, among other things,
           describing the contents of a data stream.  In 1996, RFC2045
-          was published, the first of five RFCs describing MIME.  In
-          it, this RFC describes the concept of media types and
-          subtypes, and recommends a syntax for the representation of
-          those types.  Today, MIME media types&mdash;or, MIME
-          types&mdash;are used almost universally across e-mail
-          applications, Web servers, and other software as the de
-          facto mechanism for clearing up the file content
+          was published, the first of five RFCs describing MIME.  It
+          describes the concept of media types and subtypes, and
+          recommends a syntax for the representation of those types.
+          Today, MIME media types&mdash;or <quote>MIME
+          types</quote>&mdash;are used almost universally across
+          e-mail applications, Web servers, and other software as the
+          de facto mechanism for clearing up the file content
           confusion.</para>
 
       </sidebar>
@@ -957,7 +969,7 @@ $
         set, then the Subversion Apache module will use its value to
         populate the <literal>Content-type:</literal> HTTP header when
         responding to GET requests.  This gives your web browser a
-        crucial clue about how to display a file when using it to
+        crucial clue about how to display a file when you use it to
         peruse your Subversion repository's contents.</para>
 
     </sect2>
@@ -1019,19 +1031,19 @@ $
         character to denote the end of a line.</para>
 
       <para>Not all of the various tools on these operating systems
-        are prepared to understand files that contain line endings
+        understand files that contain line endings
         in a format that differs from the <firstterm>native line
         ending style</firstterm> of the operating system on which
-        they are running.  Common results are that Unix programs
+        they are running.  So, typically, Unix programs
         treat the <literal>CR</literal> character present in Windows
         files as a regular character (usually rendered as
-        <literal>^M</literal>), and that Windows programs combine
+        <literal>^M</literal>), and Windows programs combine
         all of the lines of a Unix file into one giant line because
         no carriage return-linefeed (or <literal>CRLF</literal>)
-        character combination was found to denote the end of
-        line.</para>
+        character combination was found to denote the ends of
+        the lines.</para>
 
-      <para>This sensitivity to foreign EOL markers can become
+      <para>This sensitivity to foreign EOL markers can be
         frustrating for folks who share a file across different
         operating systems.  For example, consider a source code
         file, and developers that edit this file on both Windows and
@@ -1135,8 +1147,8 @@ $
     <para>In any given working copy there is a good chance that
       alongside all those versioned files and directories are other
       files and directories which are neither versioned nor intended
-      to be.  Text editors litter directories with backup files.  Code
-      compilation processes generate intermediate&mdash;or even
+      to be.  Text editors litter directories with backup files.
+      Software compilers generate intermediate&mdash;or even
       final&mdash;files which you typically wouldn't bother to
       version.  And users themselves drop various other files and
       directories wherever they see fit, often in version control
@@ -1172,15 +1184,16 @@ $
 
     <para>The Subversion runtime configuration system provides an
       option, <literal>global-ignores</literal>, whose value is a
-      whitespace-delimited collection of file patterns (or globs).
-      These patterns are applied to files which are candidates for
-      addition to version control, as well as to unversioned files
-      which the <command>svn status</command> command notices.  If the
-      filenames match one of the patterns, Subversion will basically
-      act as if the file didn't exist at all.  This is really useful
-      for file patterns which are nearly universally of the variety
-      that you don't want to version, such as editor backup files like
-      Emacs' <literal>*~</literal> and <literal>.*~</literal>
+      whitespace-delimited collection of file patterns (also known as
+      <firstterm>globs</firstterm>).  The Subversion client checks
+      these patterns against the names of the files which are
+      candidates for addition to version control, as well as to
+      unversioned files which the <command>svn status</command>
+      command notices.  If any file's name matches one of the
+      patterns, Subversion will basically act as if the file didn't
+      exist at all.  This is really useful for the kinds of files that
+      you almost never want to version, such as editor backup files
+      like Emacs' <literal>*~</literal> and <literal>.*~</literal>
       files.</para>
 
     <para>When found on a versioned directory, the
@@ -1202,7 +1215,7 @@ $
       result of a conversion of some source DocBook XML files to a
       more legible output format.</para>
 
-    <warning>
+    <note>
       <para>Subversion's support for ignorable file patterns extends
         only to the one-time process of adding unversioned
         files and directories to version control.  Once an object is
@@ -1212,7 +1225,7 @@ $
         simply because that file's name matches an ignore
         pattern&mdash;Subversion <emphasis>always</emphasis> notices
         all of its versioned objects.</para>
-    </warning>
+    </note>
 
     <sidebar>
       <title>Ignore Patterns for CVS Users</title>
@@ -1352,9 +1365,9 @@ I      calc/debug_log.3.gz
     <para>Subversion has the ability to substitute
       <firstterm>keywords</firstterm>&mdash;pieces of useful,
       dynamic information about a versioned file&mdash;into the
-      contents of the file itself.  Keywords generally describe
-      information about the last time the file was known to be
-      modified.  Because this information changes each time the
+      contents of the file itself.  Keywords generally provide
+      information about the last modification made to the file.
+      Because this information changes each time the
       file changes, and more importantly, just
       <emphasis>after</emphasis> the file changes, it is a hassle
       for any process except the version control system to keep
@@ -1366,7 +1379,7 @@ I      calc/debug_log.3.gz
       could burden every author of that document to, just before
       committing their changes, also tweak the part of the
       document that describes when it was last changed.  But
-      sooner or later, someone would forget to do that.  Instead
+      sooner or later, someone would forget to do that.  Instead,
       simply ask Subversion to perform keyword substitution on the
       <literal>LastChangedDate</literal> keyword.  You control
       where the keyword is inserted into your document by placing
@@ -1392,7 +1405,7 @@ I      calc/debug_log.3.gz
         <listitem>
           <para>This keyword describes the last time the file was
             known to have been changed in the repository, and
-            looks something like <literal>$Date:
+            is of the form <literal>$Date:
             2006-07-22 21:42:37 -0700 (Sat, 22 Jul 2006)
             $</literal>.  It may also be specified as
             <literal>LastChangedDate</literal>.</para>
@@ -1443,6 +1456,16 @@ I      calc/debug_log.3.gz
         </listitem>
       </varlistentry>
     </variablelist>
+
+    <para>Several of the previous descriptions use the phrase
+      <quote>last known</quote> or similar wording.  Keep in mind that
+      keyword expansion is a client-side operation, and your client
+      only <quote>knows</quote> about changes which have occurred in
+      the repository when you update your working copy to include
+      those changes.  If you never update your working copy, your
+      keywords will never expand to different values even if those
+      versioned files are being changed regularly in the
+      repository.</para>
 
     <para>Simply adding keyword anchor text to your file does
       nothing special.  Subversion will never attempt to perform
@@ -1548,7 +1571,7 @@ Cumulus clouds are appearing more frequently as summer approaches.
         was designed for just this purpose.
         <command>svnversion</command> crawls your working copy and
         generates as output the revision(s) it finds.  You can use
-        this program, plus some additionally tooling, to embed that
+        this program, plus some additional tooling, to embed that
         revision information into your files.  For more information on
         <command>svnversion</command>, see <xref
         linkend="svn.ref.svnversion"/>.</para>
@@ -1647,7 +1670,9 @@ $Date:: 2006-03-15 0#$:  Date of last commit
         that certain applications, when asked to load the file,
         would notice the broken UTF-8 text and deem the entire
         file corrupt, refusing to operate on the file
-        altogether.</para> 
+        altogether.  So, when limiting keywords to a fixed size,
+        choose a size that allows for this type of byte-wise
+        expansion.</para> 
     </warning>
 
   </sect1>
@@ -1720,12 +1745,12 @@ $Date:: 2006-03-15 0#$:  Date of last commit
       cracked windshield!</para>
 
     <para>Clearly, things would have gone more smoothly if Harry and
-      Sally had serialized their modifications to the image.  If, say,
+      Sally had serialized their modifications to the image&mdash;if, say,
       Harry had waited to draw his windshield cracks on Sally's
       now-red car, or if Sally had tweaked the color of a car whose
       windshield was already cracked.  As is discussed in <xref
-      linkend="svn.basic.vsn-models.copy-merge" />, much of these
-      types problems go away entirely where perfect communication
+      linkend="svn.basic.vsn-models.copy-merge" />, most of these
+      types of problems go away entirely where perfect communication
       between Harry and Sally exists.
       <footnote>
         <para>Communication wouldn't have been such bad medicine for
@@ -1734,8 +1759,8 @@ $Date:: 2006-03-15 0#$:  Date of last commit
       </footnote>
       But as one's version control system is, in fact, one form of
       communication, it follows that having that software facilitate
-      the serialization of non-parallelizable energies is no bad
-      thing.  And this where Subversion's implementation of the
+      the serialization of non-parallelizable editing efforts is no
+      bad thing.  This where Subversion's implementation of the
       lock-modify-unlock model steps into the spotlight.  This is
       where we talk about Subversion's <firstterm>locking</firstterm>
       feature, which is similar to the <quote>reserved
@@ -1754,9 +1779,10 @@ $Date:: 2006-03-15 0#$:  Date of last commit
           confident that energy invested on unmergeable changes won't
           be wasted&mdash;his commit of those changes will succeed.</para>
       </listitem>
+      
       <listitem>
         <para><emphasis>Aiding communication</emphasis>.  By alerting
-          other users that serialization is in effect for particular
+          other users that serialization is in effect for a particular
           versioned object, those other users can reasonably expect
           that the object is about to be changed by someone else,
           and they, too, can avoid wasting their time and energy on
@@ -1932,7 +1958,7 @@ $
           token prevents one piece of Subversion-related software from
           undermining the work of another.  (In our example, if you
           really need to change the file from an alternate working
-          copy, you would need to break the lock and re-lock the
+          copy, you would need to <firstterm>break</firstterm> the lock and re-lock the
           file.)</para>
 
       </sidebar>
@@ -1983,7 +2009,7 @@ $
         long.  If Harry haphazardly locks thirty files in a directory
         named <filename>images</filename> because he's unsure of which
         files he needs to change, yet only only changes four of those
-        file, when he runs <command>svn commit images</command>, the
+        files, when he runs <command>svn commit images</command>, the
         process will still release all thirty locks.</para>
 
       <para>This behavior of automatically releasing locks can be
@@ -2151,7 +2177,7 @@ $
         authorization requirements are ignored, and the remote lock is
         broken.</para>
         
-      <para>Of course, simply breaking a lock may not be enough.  In
+      <para>Simply breaking a lock may not be enough.  In
         the running example, Sally may not only want to break Harry's
         long-forgotten lock, but re-lock the file for her own use.
         She can accomplish this by running <command>svn unlock
@@ -2175,7 +2201,7 @@ $
         may be in for a surprise.  Harry's working copy still contains
         the original lock token, but that lock no longer exists.  The
         lock token is said to be <firstterm>defunct</firstterm>.  The
-        lock represented by the lock-token has either been broken (no
+        lock represented by the lock token has either been broken (no
         longer in the repository), or stolen (replaced with a
         different lock).  Either way, Harry can see this by asking
         <command>svn status</command> to contact the
@@ -2260,19 +2286,19 @@ $
         is a special property, <literal>svn:needs-lock</literal>.  If
         that property is attached to a file (regardless of its value,
         which is irrelevant), then Subversion will try to use
-        filesystem-level permissions to make the file read-only,
-        unless, of course, the user has explicitly locked the file.
-        When a lock-token is present (as a result of running
+        filesystem-level permissions to make the file read-only&mdash;unless,
+        of course, the user has explicitly locked the file.
+        When a lock token is present (as a result of running
         <command>svn lock</command>), the file becomes read-write.
         When the lock is released, the file becomes read-only
         again.</para>
 
       <para>The theory, then, is that if the image file has this
         property attached, then Sally would immediately notice
-        something is strange when she opens the file for editing.
-        Many applications alert users immediately when a read-only
-        file is opened for editing.  And nearly all applications would
-        at least prevent her from saving changes to the file.  This
+        something is strange when she opens the file for editing:
+        many applications alert users immediately when a read-only
+        file is opened for editing, and nearly all would
+        prevent her from saving changes to the file.  This
         reminds her to lock the file before editing, whereby she
         discovers the pre-existing lock:</para>
 
@@ -2334,7 +2360,7 @@ $
       made out of a number of different checkouts.  For example, you
       may want different subdirectories to come from different
       locations in a repository, or perhaps from different
-      repositories altogether.  You could certainly setup such a
+      repositories altogether.  You could certainly set up such a
       scenario by hand&mdash;using <command>svn checkout</command> to
       create the sort of nested working copy structure you are trying
       to achieve.  But if this layout is important for everyone who
@@ -2344,7 +2370,7 @@ $
     <para>Fortunately, Subversion provides support for
       <firstterm>externals definitions</firstterm>.  An externals
       definition is a mapping of a local directory to the
-      URL&mdash;and possibly a particular revision&mdash;of a
+      URL&mdash;and ideally a particular revision&mdash;of a
       versioned directory.  In Subversion, you declare externals
       definitions in groups using the <literal>svn:externals</literal>
       property.  You can create or modify this property using
@@ -2353,7 +2379,7 @@ $
       />).  It can be set on any versioned directory, and its value is
       a multi-line table of subdirectories (relative to the versioned
       directory on which the property is set), optional revision
-      flags, and a fully qualified, absolute Subversion repository
+      flags, and fully qualified, absolute Subversion repository
       URLs.</para>
 
     <screen>
@@ -2370,22 +2396,19 @@ third-party/skins/toolkit -r21 http://svn.red-bean.com/repos/skin-maker
       once one person has made the effort to define those nested
       working copy checkouts, no one else has to
       bother&mdash;Subversion will, upon checkout of the original
-      working copy, also checkout the external working copies.</para>
+      working copy, also check out the external working copies.</para>
 
-    <note>
+    <warning>
       <para>The relative target subdirectories of externals
-        definitions needn't already exist on your or other users'
+        definitions <emphasis>must not</emphasis> already exist on your or other users'
         systems&mdash;Subversion will create them when it checks out
-        the external working copy.  In fact, you should
-        <emphasis>not</emphasis> try to use externals definitions to
-        populate directories that are already under version
-        control.</para>
-    </note>
+        the external working copy.</para>
+    </warning>
 
     <para>Note the previous externals definition example.  When
       someone checks out a working copy of the
       <filename>calc</filename> directory, Subversion also continues
-      to checkout the items found in its externals definition.</para>
+      to check out the items found in its externals definition.</para>
 
     <screen>
 $ svn checkout http://svn.example.com/repos/calc
@@ -2425,7 +2448,7 @@ Fetching external item into calc/third-party/skins
     </tip>
 
     <tip>
-      <para>You should strongly consider using explicit revision
+      <para>You should seriously consider using explicit revision
         numbers in all of your externals definitions.  Doing so means
         that you get to decide when to pull down a different snapshot
         of external information, and exactly which snapshot to pull.
@@ -2450,7 +2473,7 @@ Fetching external item into calc/third-party/skins
       themselves.</para>
 
     <para>The support that exists for externals definitions in
-      Subversion today can be a little misleading, though.  First, an
+      Subversion is less than ideal, though.  First, an
       externals definition can only point to directories, not files.
       Second, the externals definition cannot point to relative paths
       (paths like <filename>../../skins/myskin</filename>).  Third, the
@@ -2514,10 +2537,10 @@ svn: Target path does not exist
 $
 </screen>
 
-    <para>Also, the fact that externals definitions use absolute URLs
+    <para>Also, the absolute URLs that externals definitions use
       can cause problems with repositories that are available via
       multiple URL schemes.  For example, if your Subversion server is
-      configured to allow everyone to checkout the repository over
+      configured to allow everyone to check out the repository over
       <literal>http://</literal> or <literal>https://</literal>, but
       only allow commits to come in via <literal>https://</literal>,
       you have an interesting problem on your hands.  If your
@@ -2534,9 +2557,8 @@ $
       re-parented.</para>
 
     <para>Finally, there might be times when you would prefer that
-      <command>svn</command> subcommands would not recognize or
-      otherwise operate on the external working copies created as the
-      result of externals definition handling.  In those instances,
+      <command>svn</command> subcommands would not recognize, or
+      otherwise operate upon, the external working copies.   In those instances,
       you can pass the <option>--ignore-externals</option> option to
       the subcommand.</para>
   </sect1>
@@ -2547,7 +2569,7 @@ $
   <sect1 id="svn.advanced.pegrevs">
     <title>Peg and Operative Revisions</title>
 
-    <para>We make use of the ability to copy, move, rename, and
+    <para>We copy, move, rename, and
       completely replace files and directories on our computers all
       the time.  And your version control system shouldn't get in the
       way of your doing these things with your version-controlled
@@ -2594,7 +2616,7 @@ $
       to give the project a name.
       <footnote>
         <para><quote>You're not supposed to name it.  Once you name it,
-          you start getting attached to it.</quote>&mdash; Mike
+          you start getting attached to it.</quote>&mdash;Mike
           Wazowski</para>
       </footnote>
       Let's say you called your software Frabnaggilywort.  At this
@@ -2618,7 +2640,7 @@ $
       later rename the thing back to <filename>concept</filename> for
       some reason.</para>
 
-    <para>When scenarios like these occur, attempting to instruct
+    <para>In scenarios like these, attempting to instruct
       Subversion to work with these re-used paths can be a little like
       instructing a motorist in Chicago's West Suburbs to drive east
       down Roosevelt Road and turn left onto Main Street.  In a mere
@@ -2670,14 +2692,15 @@ $
       <para>The Subversion command-line performs the peg revision
         algorithm any time it needs to resolve possible ambiguities in
         the paths and revisions provided to it.  Here's an example of
-        such an invocation for the purposes of illustrating that
-        algorithm.</para>
+        such an invocation:</para>
 
       <screen>
 $ svn <replaceable>command</replaceable> -r <replaceable>OPERATIVE-REV</replaceable> item@<replaceable>PEG-REV</replaceable>
 </screen>
       
-      <para>The algorithm has three simple steps:</para>
+      <para>If <replaceable>OPERATIVE-REV</replaceable> is older than
+        <replaceable>PEG-REV</replaceable>, then the algorithm is as
+        follows:</para>
 
       <itemizedlist>
         
@@ -2689,14 +2712,56 @@ $ svn <replaceable>command</replaceable> -r <replaceable>OPERATIVE-REV</replacea
 
         <listitem>
           <para>Trace the object's history backwards (through any
-            possible renames) to its ancestor in the
-            revision <replaceable>OPERATIVE-REV</replaceable>.</para>
+            possible renames) to its ancestor in the revision
+            <replaceable>OPERATIVE-REV</replaceable>.</para>
         </listitem>
 
         <listitem>
           <para>Perform the requested action on that ancestor,
             wherever it is located, or whatever its name might
             be or have been at that time.</para>
+        </listitem>
+
+      </itemizedlist>
+
+      <para>But what if <replaceable>OPERATIVE-REV</replaceable> is
+        <emphasis>younger</emphasis> than
+        <replaceable>PEG-REV</replaceable>?  Well, that adds some
+        complexity to the theoretical problem of locating the path in
+        <replaceable>OPERATIVE-REV</replaceable>, because the path's
+        history could have forked multiple times (thanks to copy
+        operations) between <replaceable>PEG-REV</replaceable> and
+        <replaceable>OPERATIVE-REV</replaceable>.  And that's not
+        all&mdash;Subversion doesn't store enough information to
+        performantly trace an object's history forward, anyway.  So
+        the algorithm is a little different:</para>
+
+      <itemizedlist>
+        
+        <listitem>
+          <para>Locate <replaceable>item</replaceable> in the revision
+            identified by <replaceable>OPERATIVE-REV</replaceable>.  There
+            can be only one such object.</para>
+        </listitem>
+
+        <listitem>
+          <para>Trace the object's history backwards (through any
+            possible renames) to its ancestor in the revision
+            <replaceable>PEG-REV</replaceable>.</para>
+        </listitem>
+
+        <listitem>
+          <para>Verify that the object's location (path-wise) in
+            <replaceable>PEG-REV</replaceable> is the same as it is in
+            <replaceable>OPERATIVE-REV</replaceable>.  If that's the
+            case, then at least the two locations are known to be
+            directly related, so perform the requested action on the
+            location in <replaceable>OPERATIVE-REV</replaceable>.
+            Otherwise, relatedness was not established, so error out
+            with a loud complaint that no viable location was found.
+            (Someday, we expect that Subversion will be able to handle
+            this usage scenario with more flexibility and
+            grace.)</para>
         </listitem>
 
       </itemizedlist>
@@ -2726,8 +2791,8 @@ $ svn <replaceable>command</replaceable> -r <replaceable>OPERATIVE-REV</replacea
       <filename>IDEA</filename> file looked like back in revision 1.
       But Subversion needs to know if we are asking about how the
       <emphasis>current</emphasis> file looked back in revision 1, or
-      are we asking for the contents of whatever file lived at
-      <filename>concepts/IDEA</filename> in revision 1?  Certainly
+      if we are asking for the contents of whatever file lived at
+      <filename>concepts/IDEA</filename> in revision 1.  Certainly
       those questions have different answers, and because of peg
       revisions, you can ask either of them.  To find out how the
       current <filename>IDEA</filename> file looked in that old
@@ -2749,11 +2814,7 @@ $ svn cat -r 1 concept/IDEA@BASE
 svn: Unable to find repository location for 'concept/IDEA' in revision 1
 </screen>
 
-    <para>And when executed, it has the expected results.  Peg revisions
-      generally default to a value of <literal>BASE</literal> (the
-      revision currently present in the working copy) when applied to
-      working copy paths, and of <literal>HEAD</literal> when applied
-      to URLs.</para>
+    <para>And when executed, it has the expected results.</para>
 
     <para>The perceptive reader is probably wondering at this point if
       the peg revision syntax causes problems for working copy paths
@@ -2881,8 +2942,8 @@ Index: frabnaggilywort/IDEA
         particular protocol is used to contact the server (see <xref
         linkend="svn.basic.in-action.wc.sb-1"/>).</para>
 
-      <tip><para>Users can run <command>svn --version</command> to see
-        which URL schemas and protocols the client knows how to
+      <tip><para>Run <command>svn --version</command> to see
+        which URL schemes and protocols the client knows how to
         use.</para>
       </tip>
 
@@ -2914,10 +2975,6 @@ Index: frabnaggilywort/IDEA
         the client was not authenticated (in other words, the server
         never issued an authentication challenge), then the revision's
         <literal>svn:author</literal> property is empty.
-        <footnote>
-          <para>This problem is actually a FAQ, resulting from
-            a misconfigured server setup.</para>
-        </footnote>
       </para>
 
     </sect2>
@@ -2927,8 +2984,8 @@ Index: frabnaggilywort/IDEA
       <title>Client Credentials Caching</title>
 
       <para>Many servers are configured to require authentication on
-        every request.  This can become a big annoyance to users, who
-        are forced to type their passwords over and over again.
+        every request.  This would be a big annoyance to users, if
+        they were forced to type their passwords over and over again.
         Fortunately, the Subversion client has a remedy for
         this&mdash;a built-in system for caching authentication
         credentials on disk.  By default, whenever the command-line
@@ -2958,7 +3015,7 @@ Index: frabnaggilywort/IDEA
         concerns, and so Subversion works with available mechanisms
         provided by the operating system and environment to try to
         minimize the risk of leaking this information.  Here's a
-        breakdown of what this means on for users on the most common
+        breakdown of what this means for users on the most common
         platforms:</para>
 
       <itemizedlist>
@@ -3033,7 +3090,8 @@ Username:  joe
         credentials used in any Subversion interactions you perform on
         the affected computer.  This can be extended to cover all
         users on the computer, too, by modifying the system-wide
-        runtime configuration area.</para>
+        runtime configuration area (described in <xref
+        linkend="svn.advanced.confarea.layout" />).</para>
 
       <screen>
 [auth]
