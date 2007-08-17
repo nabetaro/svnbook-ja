@@ -6336,9 +6336,29 @@ $ svnlook youngest /tmp/repos/
     <title><command>svnsync</command></title>
     
     <para><command>svnsync</command> is the Subversion remote
-      repository mirroring tool.</para>
+      repository mirroring tool.  Put simply, it allows you to replay
+      the revisions of one repository into another one.</para>
 
-    <para>### TODO ###</para>
+    <para>In any mirroring scenario, there are two repositories: the
+      source repository, and the mirror (or <quote>sink</quote>)
+      repository.  The source repository is the repository from which
+      <command>svnsync</command> pulls revisions.  The mirror
+      repository is the destination for the revisions pulled from the
+      source repository.  Each of the repositories may be local or
+      remote&mdash;they are only ever addressed by their URLs.</para>
+
+    <para>The <command>svnsync</command> process requires only read
+      access to the source repository; it never attempts to modify it.
+      But obviously, <command>svnsync</command> requires both read and
+      write access to the mirror repository.</para>
+
+    <warning>
+      <para><command>svnsync</command> is very sensitive to changes
+        made in the mirror repository that weren't made as part of a
+        mirroring operation.  To prevent this from happening, it's
+        best if the <command>svnsync</command> process is the only
+        process permitted to modify the mirror repository.</para>
+    </warning>
 
     <!-- =============================================================== -->
     <sect2 id="svn.ref.svnsync.sw">
@@ -6430,15 +6450,15 @@ $ svnlook youngest /tmp/repos/
         <refsect1>
           <title>Description</title>
 
-          <para>The destination URL must point to the root of a
-            repository with no committed revisions.  The destination
-            repository must allow revision property changes.</para>
-
-          <para>You should not commit to, or make revision property
-            changes in, the destination repository by any method other
-            than 'svnsync'.  In other words, the destination
-            repository should be a read-only mirror of the source
-            repository.</para>
+          <para><command>svnsync initialize</command> verifies that a
+            repository meets the requirements of a new mirror
+            repository&mdash;that it has no previous existing version
+            history, and that it allows revision property
+            modifications&mdash;and records the initial administrative
+            information which associates the mirror repository with
+            the source repository.  This is the first
+            <command>svnsync</command> operation you run on a would-be
+            mirror repository.</para>
         </refsect1>
 
         <refsect1>
@@ -6476,8 +6496,8 @@ $ svnlook youngest /tmp/repos/
 
         <refnamediv>
           <refname>svnsync synchronize</refname>
-          <refpurpose>Transfer all pending revisions from source to
-            destination.</refpurpose>
+          <refpurpose>Transfer all pending revisions from the source
+            repository to the mirror repository.</refpurpose>
         </refnamediv>
         <refsect1>
           <title>Synopsis</title>
@@ -6486,7 +6506,15 @@ $ svnlook youngest /tmp/repos/
         <refsect1>
           <title>Description</title>
 
-          <para>### TODO ###</para>
+          <para>The <command>svnsync synchronize</command> command
+            does all the heavy lifting of a repository mirroring
+            operation.  After consulting with the mirror repository to
+            see which revisions have already been copied into it, it
+            then begins copying any not-yet-mirrored revisions from
+            the source repository.</para>
+
+          <para><command>svnsync synchronize</command> can be
+            gracefully cancelled and restarted.</para>
         </refsect1>
 
         <refsect1>
@@ -6524,17 +6552,30 @@ $ svnlook youngest /tmp/repos/
 
         <refnamediv>
           <refname>svnsync copy-revprops</refname>
-          <refpurpose>Copy all revision properties for revision REV
-            from source to destination.</refpurpose>
+          <refpurpose>Copy all revision properties for a given
+            revision from the source repository to the mirror
+            repository.</refpurpose>
         </refnamediv>
         <refsect1>
           <title>Synopsis</title>
-          <programlisting>svnsync initialize DEST_URL SOURCE_URL</programlisting>
+          <programlisting>svnsync copy-revprops DEST_URL REV</programlisting>
         </refsect1>
         <refsect1>
           <title>Description</title>
 
-          <para>### TODO ###</para>
+          <para>Because Subversion revision properties can be changed
+            at any time, it's possible that the properties for some
+            revision might be changed after that revision has already
+            been synchronized to another repository.  Because the
+            <command>svnsync synchronize</command> command operates
+            only on the range of revisions that have not yet been
+            synchronized, it won't notice a revision property change
+            outside that range.  Left as is, this causes a deviation
+            in the values of that revision's properties between the
+            source and mirror repositories.  <command>svnsync
+            copy-revprops</command> is the answer to this problem.
+            Use it to re-synchronize the revision properties for a
+            particular revision.</para>
         </refsect1>
 
         <refsect1>
