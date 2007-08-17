@@ -104,12 +104,12 @@
       <quote>main line</quote> of development is going to take
       place.</para>
 
-    <para>Let's say that you've been given the task of performing a
-      radical reorganization of the project.  It will take a long time
-      to write, and will affect all the files in the project.  The
-      problem here is that you don't want to interfere with Sally, who
-      is in the process of fixing small bugs here and there.  She's
-      depending on the fact that the latest version of the project (in
+    <para>Let's say that you've been given the task of implementing
+      radical new project feature.  It will take a long time to write,
+      and will affect all the files in the project.  The problem here
+      is that you don't want to interfere with Sally, who is in the
+      process of fixing small bugs here and there.  She's depending on
+      the fact that the latest version of the project (in
       <filename>/calc/trunk</filename>) is always usable.  If you
       start committing your changes bit-by-bit, you'll surely break
       things for Sally.</para>
@@ -225,19 +225,21 @@ $ svn copy http://svn.example.com/repos/calc/trunk \
 Committed revision 341.
 </screen>
 
-      <para>There's really no difference between these two methods.
-        Both procedures create a new directory in revision 341, and
-        the new directory is a copy of
-        <filename>/calc/trunk</filename>.  This is shown in
+      <para>From the repository's point of view, there's really no
+        difference between these two methods.  Both procedures create
+        a new directory in revision 341, and the new directory is a
+        copy of <filename>/calc/trunk</filename>.  This is shown in
         <xref linkend="svn.branchmerge.using.create.dia-1"/>.  Notice
-        that the second method, however, performs
-        an <emphasis>immediate</emphasis> commit.
+        that the second method, however, performs an
+        <emphasis>immediate</emphasis> commit in constant time.
+
         <footnote>
-          <para>Subversion does not support copying between different
-            repositories.  When using URLs with <command>svn
-            copy</command> or <command>svn move</command>, you can
-            only copy items within the same repository.</para>
+        <para>Subversion does not support copying between different
+        repositories.  When using URLs with <command>svn
+        copy</command> or <command>svn move</command>, you can only
+        copy items within the same repository.</para> 
         </footnote>
+        
         It's an easier procedure, because it doesn't require you to
         check out a large portion of the repository.  In fact, this
         technique doesn't even require you to have a working copy at
@@ -302,8 +304,8 @@ Checked out revision 341.
 
       <para>There's nothing special about this working copy; it simply
         mirrors a different directory in the repository.  When you
-        commit changes, however, Sally won't ever see them when she
-        updates.  Her working copy is of
+        commit changes, however, Sally won'tsee them when she
+        updates, because her working copy is of
         <filename>/calc/trunk</filename>.  (Be sure to read <xref
         linkend="svn.branchmerge.switchwc"/> later in this chapter: the
         <command>svn switch</command> command is an alternate way of
@@ -637,7 +639,7 @@ done
           way to represent changes to <emphasis>trees</emphasis>, such
           as the addition, removal, or renaming of files and
           directories.  Nor can the <command>patch</command> program
-          notice changes to property changes.  If Sally's change had,
+          notice changes to properties.  If Sally's change had,
           say, added a new directory, the output of <command>svn
           diff</command> wouldn't have mentioned it at
           all.  <command>svn diff</command> only outputs the limited
@@ -897,7 +899,7 @@ $ svn status
           compare the wrong two trees, creating a delta that doesn't
           apply cleanly.  <command>svn merge</command> will do its
           best to apply as much of the delta as possible, but some
-          parts may be impossible.  Just like the Unix
+          parts may be impossible.  Just as the Unix
           <command>patch</command> command sometimes complains about
           <quote>failed hunks</quote>, <command>svn merge</command>
           will complain about <quote>skipped targets</quote>:</para>
@@ -1002,20 +1004,18 @@ A  foo.c
         <para>Most merges involve comparing trees that are ancestrally
           related to one another, and therefore <command>svn
           merge</command> defaults to this behavior.  Occasionally,
-          however, you may want the <literal>merge</literal> command to
-          compare two unrelated trees.  For example, you may have
+          however, you may want the <literal>merge</literal> command
+          to compare two unrelated trees.  For example, you may have
           imported two source-code trees representing different vendor
           releases of a software project (see <xref
-          linkend="svn.advanced.vendorbr"/>).
-          If you asked <command>svn merge</command> to compare the two
-          trees, you'd see the entire first tree being deleted,
-          followed by an add of the entire second tree!</para>
-
-        <para>In these situations, you'll want <command>svn
-          merge</command> to do a path-based comparison only, ignoring
-          any relations between files and directories.  Add the
-          <option>--ignore-ancestry</option> option to your merge
-          command, and it will behave just like <command>svn
+          linkend="svn.advanced.vendorbr"/>).  If you asked
+          <command>svn merge</command> to compare the two trees, you'd
+          see the entire first tree being deleted, followed by an add
+          of the entire second tree!  In these situations, you'll want
+          <command>svn merge</command> to do a path-based comparison
+          only, ignoring any relations between files and directories.
+          Add the <option>--ignore-ancestry</option> option to your
+          merge command, and it will behave just like <command>svn
           diff</command>.  (And conversely, the
           <option>--notice-ancestry</option> option will cause
           <command>svn diff</command> to behave like the
@@ -1414,7 +1414,7 @@ Committed revision 350.
         particular revision tree, and the second coordinate is a path
         within that tree.  So every version of your file or directory
         can be defined by a specific coordinate pair.  (Remember the
-        familiar <quote>peg revision</quote> syntax&mdash;foo.c@224
+        <quote>peg revision</quote> syntax&mdash;foo.c@224
         &mdash;mentioned back in
         <xref linkend="svn.advanced.pegrevs"/>.) </para>
 
@@ -1735,7 +1735,7 @@ A  newdirectory/newfile
     <para>The <command>svn switch</command> command transforms an
       existing working copy to reflect a different branch.  While this
       command isn't strictly necessary for working with branches, it
-      provides a nice shortcut to users.  In our earlier example,
+      provides a nice shortcut.  In our earlier example,
       after creating your private branch, you checked out a fresh
       working copy of the new repository directory.  Instead, you can
       simply ask Subversion to change your working copy of
@@ -1768,8 +1768,8 @@ URL: http://svn.example.com/repos/calc/branches/my-calc-branch
 
     <para>The <command>svn switch</command> command also takes a
       <option>--revision</option> (<option>-r</option>) option, so you
-      need not always move your working copy to the <quote>tip</quote>
-      of the branch.</para>
+      need not always move your working copy to the
+      <literal>HEAD</literal> of the branch.</para>
 
     <para>Of course, most projects are more complicated than our
       <filename>calc</filename> example, containing multiple
@@ -2003,9 +2003,40 @@ Committed revision 352.
         tree changes, symlink changes or changes in properties), you can
         instead use <command>svn copy</command> to <quote>upload</quote>
         your working copy to a private area of the repository.  Your
-        collaborator can then either checkout a verbatim copy of your
+        collaborator can then either check out a verbatim copy of your
         working copy, or use <command>svn merge</command> to receive
         your exact changes.</para>
+
+      <para>While this is a nice method for uploading a quick snapshot
+        of your working copy, note that this is <emphasis>not</emphasis>
+        a good way to initially create a branch.  Branch creation should
+        be an event onto itself, and this method conflates the creation
+        of a branch with extra changes to files, all within a single revision.
+        This makes it very difficult (later on) to identify a single
+        revision number as a branch point.</para>
+
+      <tip>
+        <para>Have you ever found yourself making some complex edits
+          (in your <filename>/trunk</filename> working copy) and
+          suddenly realized, <quote>hey, these changes ought to be in
+          their own branch?</quote>  A great technique to do this can
+          be summarized in two steps:</para>
+
+          <screen>
+$ svn copy http://svn.example.com/repos/calc/trunk \
+           http://svn.example.com/repos/calc/branches/newbranch
+Committed revision 353.
+
+$ svn switch http://svn.example.com/repos/calc/branches/newbranch
+At revision 353.
+</screen>
+
+        <para>The <command>svn switch</command> command, like
+          <command>svn update</command>, preserves your local edits.
+          At this point, your working copy is now a reflection of the
+          newly created branch, and your next <command>svn
+          commit</command> invocation will send your changes
+          there.</para> </tip>
 
     </sect2>
 
@@ -2229,7 +2260,7 @@ Committed revision 377.
       the vendor's data that you decide to absorb into your project is
       called a <firstterm>vendor drop</firstterm>.</para> 
 
-    <para>Vendor branches provide two key benefits.  First, by storing
+    <para>Vendor branches provide two benefits.  First, by storing
       the currently supported vendor drop in your own version control
       system, the members of your project never need to question
       whether they have the right version of the vendor's data.  They
@@ -2321,7 +2352,7 @@ $ svn copy http://svn.example.com/repos/vendor/libcomplex/1.0  \
         changes made to libcomplex between versions 1.0 and 1.1 to our
         modified copy of it.</para>
 
-      <para>To perform this upgrade, we checkout a copy of our vendor
+      <para>To perform this upgrade, we check out a copy of our vendor
         branch, and replace the code in the
         <filename>current</filename> directory with the new libcomplex
         1.1 source code.  We quite literally copy new files on top of
@@ -2472,8 +2503,8 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
         one version and not the other, and the script will perform the
         new import without incident.  If, however, there are
         discrepancies in the file layouts between versions,
-        <command>svn_load_dirs.pl</command> will prompt you for how
-        you would like to resolve those differences.  For example, you
+        <command>svn_load_dirs.pl</command> will ask you how
+        to resolve those differences.  For example, you
         will have the opportunity to tell the script that you know
         that the file <filename>math.c</filename> in version 1.0 of
         libcomplex was renamed to <filename>arithmetic.c</filename> in
