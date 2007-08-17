@@ -264,7 +264,7 @@
             <listitem><para>Requires users to be in same system group, or
                 use a shared ssh key.</para></listitem>
 
-            <listitem><para>Can lead to file permissions
+            <listitem><para>If used improperly, can lead to file permissions
                 problems.</para></listitem>
 
             </itemizedlist>
@@ -339,7 +339,7 @@
         <command>svnserve</command> installation for small teams just
         trying to get started with a Subversion server; it's the
         simplest to set up, and has the fewest maintenance issues.
-        Remember, you can always switch to a more complex server
+        You can always switch to a more complex server
         deployment as your needs change.</para>
 
       <para>Here are some general recommendations and tips, based on
@@ -476,7 +476,7 @@ $               # svnserve is now running, listening on port 3690
           <option>--listen-host=</option> options to customize the
           exact port and hostname to <quote>bind</quote> to.</para>
 
-      <para>Once the <command>svnserve</command> program is running,
+      <para>Once we successfully start <command>svnserve</command> as above,
         it makes every repository on your system available to the
         network.  A client needs to specify an
         <emphasis>absolute</emphasis> path in the repository URL.  For
@@ -510,9 +510,14 @@ $ svn checkout svn://host.example.com/project1
       <sect3 id="svn.serverconfig.svnserve.invoking.inetd">
         <title><command>svnserve</command> via <command>inetd</command></title>
 
-        <para>If you want <command>inetd</command> launch the process,
-          then you can pass the <option>-i</option>
-          (<option>--inetd</option>) option:</para>
+        <para>If you want <command>inetd</command> to launch the
+          process, then you need to pass the <option>-i</option>
+          (<option>--inetd</option>) option.  In the example, we've shown the
+          output from running <literal>svnserve -i</literal> at the
+          command line, but note that isn't how you actually start the
+          daemon; see the paragraphs following the example for how to
+          configure <command>inetd</command> to
+          start <command>svnserve</command>.</para>
 
       <screen>
 $ svnserve -i
@@ -563,8 +568,12 @@ svn stream tcp nowait svnowner /usr/bin/svnserve svnserve -i
           such as <command>RSH</command> or <command>SSH</command> has
           successfully authenticated a user and is now invoking a
           private <command>svnserve</command> process <emphasis>as
-          that user</emphasis>.  The <command>svnserve</command>
-          program behaves normally (communicating via
+          that user</emphasis>.  (Note that you, the user, will
+          rarely, if ever, have reason to invoke
+          <command>svnserve</command> with the <option>-t</option> at
+          the command line; instead, the <command>SSH</command> daemon
+          does so for you.)  The <command>svnserve</command> program
+          behaves normally (communicating via
           <emphasis>stdin</emphasis> and <emphasis>stdout</emphasis>),
           and assumes that the traffic is being automatically
           redirected over some sort of tunnel back to the client.
@@ -652,7 +661,7 @@ C:\&gt; sc create svn
           embedded spaces.</para>
 
         <para>Once the service is defined, it can stopped, started, or
-          queried using standard GUI tools (The Services
+          queried using standard GUI tools (the Services
           administrative control panel), or at the command line as
           well:</para>
 
@@ -665,7 +674,7 @@ C:\&gt; net start svn
           deleting its definition:  <literal>sc delete svn</literal>.
           Just be sure to stop the service first!
           The <command>SC.EXE</command> program has many other
-          subcommands and options, run <literal>sc /?</literal> to
+          subcommands and options; run <literal>sc /?</literal> to
           learn more about it.</para>
 
       </sect3>
@@ -734,7 +743,7 @@ C:\&gt; net start svn
         <literal>]</literal>), comments begin with hashes
         (<literal>#</literal>), and each section contains
         specific variables that can be set (<literal>variable =
-        value</literal>).  Let's walk through this file and learn how
+        value</literal>).  Let's walk through these files and learn how
         to use them.</para>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
@@ -743,8 +752,9 @@ C:\&gt; net start svn
 
         <para>For now, the <literal>[general]</literal> section of the
           <filename>svnserve.conf</filename> has all the variables you
-          need.  Begin by defining a file which contains usernames and
-          passwords, and an authentication realm:</para>
+          need.  Begin by changing the values of those variables:
+          choose a name for a file which will contain your usernames
+          and passwords, and choose an authentication realm:</para>
 
         <screen>
 [general]
@@ -797,7 +807,7 @@ sally = barpassword
           and <literal>auth-access</literal> can be set to the values
           <literal>none</literal>, <literal>read</literal>, or
           <literal>write</literal>.  Setting the value to
-          <literal>none</literal> restricts all access of any kind;
+          <literal>none</literal> prohibits both reading and writing;
           <literal>read</literal> allows read-only access to the
           repository, and <literal>write</literal> allows complete
           read/write access to the repository.  For example:</para>
@@ -901,7 +911,7 @@ baz
         <command>ssh</command>, the tunnel-agent.
         <command>svnserve</command> is aware that it's running as the
         user <literal>harry</literal>, and if the client performs a
-        commit, the authenticated username will be attributed as the
+        commit, the authenticated username will be used as the
         author of the new revision.</para>
 
       <para>The important thing to understand here is that the
@@ -954,7 +964,9 @@ baz
         here, but it doesn't.  Subversion allows you to create custom
         tunnel behaviors in your run-time <filename>config</filename>
         file (see <xref linkend="svn.advanced.confarea"/>).  For example,
-        suppose you want to use RSH instead of SSH.  In the
+        suppose you want to use RSH instead of SSH<footnote><para>We
+        don't actually recommend this, since RSH is notably less
+        secure than SSH.</para></footnote>.  In the
         <literal>[tunnels]</literal> section of your
         <filename>config</filename> file, simply define it like
         this:</para>
@@ -1042,9 +1054,9 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
 </screen>
 
         <para>The first field describes the type of key, the second
-          field is the uuencoded key itself, and the third field is a
-          comment.  However, it's a lesser known fact that the entire
-          line can be preceded by a <literal>command</literal>
+          field is the base64-encoded key itself, and the third field
+          is a comment.  However, it's a lesser known fact that the
+          entire line can be preceded by a <literal>command</literal>
           field:</para>
 
         <screen>
@@ -1357,8 +1369,9 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
         whether to look for a file <filename>repos/foo.c</filename> in
         the <literal>DocumentRoot</literal>, or whether to delegate
         <command>mod_dav_svn</command> to return
-        <filename>foo.c</filename> from the Subversion
-        repository.</para>
+        <filename>foo.c</filename> from the Subversion repository.
+        The result is often an error from the server of the form
+        <literal>301 Moved Permanently</literal>.</para>
 
       <sidebar>
         <title>Server Names and the COPY Request</title>
@@ -1437,7 +1450,7 @@ ServerName svn.example.com
 
       <itemizedlist>
         <listitem>
-          <para>anyone can use their Subversion client to checkout a
+          <para>anyone can use their Subversion client to check out a
             working copy of a repository URL (or any of its
             subdirectories),</para>
         </listitem>
@@ -1467,8 +1480,7 @@ ServerName svn.example.com
           username and password to verify that a user is who she says
           she is.  Apache provides an <command>htpasswd</command>
           utility for managing the list of acceptable usernames and
-          passwords, those to whom you wish to grant special access to
-          your Subversion repository.  Let's grant commit access to
+          passwords.  Let's grant commit access to
           Sally and Harry.  First, we need to add them to the password
           file.</para>
 
@@ -1555,7 +1567,7 @@ $
           <footnote>
             <para>While self-signed server certificates are still
               vulnerable to a <quote>man in the middle</quote> attack,
-              such an attack is still much more difficult for a casual
+              such an attack is much more difficult for a casual
               observer to pull off, compared to sniffing unprotected
               passwords.</para>
           </footnote>
@@ -1630,13 +1642,13 @@ Certificate information:
 
         <para>This dialogue should look familiar; it's essentially the
           same question you've probably seen coming from your web
-          browser (which is just another HTTP client like Subversion!).
+          browser (which is just another HTTP client like Subversion).
           If you choose the (p)ermanent option, the server certificate
           will be cached in your private run-time
           <filename>auth/</filename> area in just the same way your
           username and password are cached (see <xref
           linkend="svn.serverconfig.netmodel.credcache"/>).  If cached,
-          Subversion will automatically remember to trust this certificate
+          Subversion will automatically trust this certificate
           in future negotiations.</para>
 
         <para>Your run-time <filename>servers</filename> file also gives
@@ -2202,7 +2214,7 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
         <title>Apache Logging</title>
 
         <para>Because Apache is an HTTP server at heart, it contains
-          fantastically flexible logging feature.  It's beyond the
+          fantastically flexible logging features.  It's beyond the
           scope of this book to discuss all ways logging can be
           configured, but we should point out that even the most
           generic <filename>httpd.conf</filename> file will cause
@@ -2675,7 +2687,7 @@ umask 002
       these newly created files won't necessarily be owned by that
       same group, which then creates more permissions problems for
       your users.  A good workaround is to set the group SUID bit on
-      the repository's <filename>db</filename> directory.  This causes
+      the repository's <filename>db</filename> directory. This causes
       all newly-created log files to have the same group owner as the
       parent directory.</para>
 
@@ -2711,19 +2723,24 @@ umask 002
       <itemizedlist>
         <listitem>
           <para>All of your SSH users need to be able to read and
-            write to the repository.  Put all the SSH users into a
-            single group.  Make the repository wholly owned by that
-            group, and set the group permissions to read/write.</para>
+            write to the repository, so: put all the SSH users into a
+            single group. </para>
         </listitem>
-
+        <listitem>
+          <para>
+            Make the repository wholly owned by that group.
+            </para></listitem>
+        <listitem><para>Set the group permissions to read/write.</para></listitem>
         <listitem>
           <para>Your users need to use a sane umask when accessing the
-            repository.  Make sure that <command>svnserve</command>
+            repository, so:  make sure that <command>svnserve</command>
             (<filename>/usr/bin/svnserve</filename>, or wherever
             it lives in <literal>$PATH</literal>) is actually a
             wrapper script which sets <command>umask 002</command> and
             executes the real <command>svnserve</command>
-            binary.  Take similar measures when using
+            binary.  </para></listitem>
+                     
+        <listitem><para>Take similar measures when using
             <command>svnlook</command> and
             <command>svnadmin</command>.  Either run them with a sane
             umask, or wrap them as described above.</para>
