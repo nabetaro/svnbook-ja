@@ -59,6 +59,16 @@ $ svn status -v myfile
         </varlistentry>
         
         <varlistentry>
+          <term><option>--change</option> (<option>-c</option>)
+            <replaceable>ARG</replaceable></term>
+          <listitem>
+            <para>Used as a means to refer to a specific
+              <quote>change</quote> (aka a revision), this option is
+              syntactic sugar for <quote>-r ARG-1:ARG</quote>.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
           <term><option>--config-dir</option>
             <replaceable>DIR</replaceable></term>
           <listitem>
@@ -82,6 +92,9 @@ $ svn status -v myfile
               You can pass options to the diff program with the
               <option>--extensions</option> option (more on that later
               in this section).</para>
+
+            <!-- TODO(fitz): Document -u -b -w and - -ignore-eol-style -->
+
           </listitem>
         </varlistentry>
       
@@ -240,9 +253,9 @@ $ svn status -v myfile
             <replaceable>MESSAGE</replaceable>
           </term>
           <listitem>
-            <para>Indicates that you will specify a commit message
-              on the command line, following this option.  For
-              example:</para>
+            <para>Indicates that you will specify a either a log
+              message or a lock comment on the command line, following
+              this option.  For example:</para>
             
             <screen>
 $ svn commit -m "They don't make Sunday."
@@ -586,6 +599,7 @@ $ svn log -r 1729:{2002-02-17}
 --non-recursive (-N)
 --quiet (-q)
 --config-dir DIR
+--no-ignore
 --auto-props
 --no-auto-props
 --force
@@ -687,14 +701,46 @@ A         otherdir/docs/baz.doc
           <title>Options</title>
 
           <screen>
---revision (-r) REV
---username USER
---password PASS
+--revision (-r) ARG
+--verbose (-v)
+--incremental
+--xml
+--extensions (-x) ARG
+--force
+--username ARG
+--password ARG
 --no-auth-cache
 --non-interactive
---config-dir DIR
---verbose (-v)
+--config-dir ARG
 </screen>
+
+<!--
+
+TODO(fitz): doc this:
+  - -incremental            : give output suitable for concatenation
+  - -xml                    : output in XML
+  -x [- -extensions] arg    : Default: '-u'. When Subversion is invoking an
+                             external diff program, ARG is simply passed along
+                             to the program. But when Subversion is using its
+                             default internal diff implementation, or when
+                             Subversion is displaying blame annotations, ARG
+                             could be any of the following:
+                                -u (- -unified):
+                                   Output 3 lines of unified context.
+                                -b (- -ignore-space-change):
+                                   Ignore changes in the amount of white space.
+                                -w (- -ignore-all-space):
+                                   Ignore all white space.
+                                - -ignore-eol-style:
+                                   Ignore changes in EOL style
+  - -force                  : force operation to run
+
+-->
+
+
+
+
+
         </refsect1>
 
         <refsect1>
@@ -1456,49 +1502,64 @@ D         over-there
 
         <refnamediv>
           <refname>svn diff</refname>
-          <refpurpose>Display the differences between two paths or
-          two revisions of one path.</refpurpose>
+          <refpurpose>Display the differences between two revisions or paths.</refpurpose>
         </refnamediv>
         <refsect1>
           <title>Synopsis</title>
-          <programlisting>diff [-r N[:M]] [TARGET[@REV]...]</programlisting>
-          <programlisting>diff [-r N[:M]] --old OLD-TGT[@OLDREV] [--new NEW-TGT[@NEWREV]] [PATH...]</programlisting>
+          <programlisting>diff [-c M | -r N[:M]] [TARGET[@REV]...]</programlisting>
+          <programlisting>diff [-r N[:M]] --old=OLD-TGT[@OLDREV] [--new=NEW-TGT[@NEWREV]] [PATH...]</programlisting>
           <programlisting>diff OLD-URL[@OLDREV] NEW-URL[@NEWREV]</programlisting>
+
         </refsect1>
         <refsect1>
           <title>Description</title>
 
-          <para>Display the differences between two paths.  The three
-            different ways you can use <command>svn diff</command>
-            are:</para>
 
-          <para><command>svn diff [-r N[:M]] [--old OLD-TGT] [--new
-            NEW-TGT] [PATH...]</command> displays the differences
-            between <replaceable>OLD-TGT</replaceable> and
-            <replaceable>NEW-TGT</replaceable>.  If
-            <replaceable>PATH</replaceable>s are given, they are
-            treated as relative to <replaceable>OLD-TGT</replaceable>
-            and <replaceable>NEW-TGT</replaceable> and the output is
-            restricted to differences in only those paths.
+          <para>Display the differences between two paths.  The ways
+            you can use <command>svn diff</command> are:</para>
+
+          <para>Use just <command>svn diff'</command>to display local
+            modifications in a working copy.</para>
+
+          <para>Display the changes made to
+            <replaceable>TARGET</replaceable>s as they are seen in
+            <replaceable>REV</replaceable> between two revisions.
+            <replaceable>TARGET</replaceable>s may be all working copy
+            paths or all <replaceable>URL</replaceable>s.  If
+            <replaceable>TARGET</replaceable>s are working copy paths,
+            <replaceable>N</replaceable> defaults to
+            <literal>BASE</literal> and <replaceable>M</replaceable>
+            to the working copy; if <replaceable>URL</replaceable>s,
+            <replaceable>N</replaceable> must be specified and
+            <replaceable>M</replaceable> defaults to
+            <literal>HEAD</literal>.  The <quote>-c M</quote> option
+            is equivalent to <quote>-r N:M</quote> where <literal>N =
+            M-1</literal>.  Using <quote>-c -M</quote> does the
+            reverse: <quote>-r M:N</quote> where <literal>N =
+            M-1</literal>.</para>
+
+          <para>Display the differences between
+            <replaceable>OLD-TGT</replaceable> as it was seen in
+            <replaceable>OLDREV</replaceable> and
+            <replaceable>NEW-TGT</replaceable> as it was seen ain
+            <replaceable>NEWREV</replaceable>.
+            <replaceable>PATH</replaceable>s, if given, are relative
+            to <replaceable>OLD-TGT</replaceable> and
+            <replaceable>NEW-TGT</replaceable> and restrict the output
+            to differences for those paths.
             <replaceable>OLD-TGT</replaceable> and
             <replaceable>NEW-TGT</replaceable> may be working copy
-            paths or
-            <replaceable>URL</replaceable><literal>[@</literal><replaceable>REV</replaceable><literal>]</literal>.
-            <replaceable>OLD-TGT</replaceable> defaults to the current
-            working directory and <replaceable>NEW-TGT</replaceable>
-            defaults to <replaceable>OLD-TGT</replaceable>.
-            <replaceable>N</replaceable> defaults to
-            <literal>BASE</literal> or, if
-            <replaceable>OLD-TGT</replaceable> is a URL, to
-            <literal>HEAD</literal>.  <replaceable>M</replaceable>
-            defaults to the current working version or, if
-            <replaceable>NEW-TGT</replaceable> is a URL, to
-            <literal>HEAD</literal>.  <command>svn diff -r N</command>
-            sets the revision of <replaceable>OLD-TGT</replaceable> to
-            <replaceable>N</replaceable>, <command>svn diff -r
-            N:M</command> also sets the revision of
-            <replaceable>NEW-TGT</replaceable> to
+            paths or <replaceable>URL[@REV]</replaceable>.
+            <replaceable>NEW-TGT</replaceable> defaults to
+            <replaceable>OLD-TGT</replaceable> if not specified.
+            <quote>-r N</quote> makes OLDREV default to N, -r N:M
+            makes <replaceable>OLDREV</replaceable> default to
+            <replaceable>N</replaceable> and
+            <replaceable>NEWREV</replaceable> default to
             <replaceable>M</replaceable>.</para>
+
+          <para>Shorthand for <command>svn diff --old=OLD-URL[@OLDREV]
+            --new=NEW-URL[@NEWREV]</command></para>
 
           <para><command>svn diff -r N:M URL</command> is shorthand
             for <command>svn diff -r N:M --old=URL
@@ -1588,19 +1649,23 @@ D         over-there
           <title>Options</title>
 
           <screen>
---revision (-r) REV
---old OLD-TARGET
---new NEW-TARGET
---extensions (-x) "ARGS"
+--revision (-r) ARG
+--change (-c) ARG
+--old ARG
+--new ARG
 --non-recursive (-N)
 --diff-cmd CMD
+--extensions (-x) "ARGS"
+--no-diff-deleted
 --notice-ancestry
+--summarize
+--force
 --username USER
 --password PASS
 --no-auth-cache
 --non-interactive
---no-diff-deleted
 --config-dir DIR
+
 </screen>
         </refsect1>
 
@@ -1618,6 +1683,18 @@ Index: COMMITTERS
 --- COMMITTERS	(revision 4404)
 +++ COMMITTERS	(working copy)
 </screen>
+
+          <para>See what changed in the file
+            <literal>COMMITTERS</literal> revision 9115:</para>
+
+          <screen>
+$ svn diff -c 9115 COMMITTERS 
+Index: COMMITTERS
+===================================================================
+--- COMMITTERS	(revision 3900)
++++ COMMITTERS	(working copy)
+</screen>
+
 
           <para>See how your working copy's modifications compare
             against an older revision:</para>
@@ -1808,6 +1885,11 @@ A  my-export/quiz
 Exported revision 15.
 </screen>
 
+          <para>You can specify <literal>LR</literal>,
+            <literal>CR</literal>, or <literal>CRLF</literal> as a
+            line ending type with the <option>--native-eol</option>
+            option.</para>
+
         </refsect1>
       </refentry>
 
@@ -1858,8 +1940,6 @@ Exported revision 15.
           <title>Options</title>
 
           <screen>
---version
---quiet (-q)
 --config-dir DIR
 </screen>
         </refsect1>
@@ -1986,7 +2066,7 @@ Committed revision 16.
         </refnamediv>
         <refsect1>
           <title>Synopsis</title>
-          <programlisting>svn info [TARGET...]</programlisting>
+          <programlisting>svn info [TARGET[@REV]...]</programlisting>
         </refsect1>
         <refsect1>
           <title>Description</title>
@@ -2162,15 +2242,23 @@ My test lock comment
             repository URL of the current working copy
             directory.</para>
 
-          <para>With <option>--verbose</option>, the following fields show
-            the status of the item:</para>
+          <para>With <option>--verbose</option>, <command>svn
+            list</command> shows the following fields for each
+            item:</para>
 
           <itemizedlist>
             <listitem><para>Revision number of the last
-            commit</para></listitem> <listitem><para>Author of the
-            last commit</para></listitem> <listitem><para>Size (in
-            bytes)</para></listitem> <listitem><para>Date and time of
-            the last commit</para></listitem>
+              commit</para></listitem>
+
+            <listitem><para>Author of the last commit</para></listitem>
+
+            <listitem><para>If locked, the letter <quote>O</quote> (See <xref
+              linkend="svn.ref.svn.c.info"/> for details).</para></listitem>
+
+            <listitem><para>Size (in bytes)</para></listitem>
+
+            <listitem><para>Date and time of the last
+              commit</para></listitem>
           </itemizedlist>
 
           <para>With <option>--xml</option>, output is in XML format (with
@@ -2362,6 +2450,7 @@ $ svn lock http://svn.red-bean.com/repos/test/tree.jpg
           <title>Synopsis</title>
           <programlisting>svn log [PATH]</programlisting>
           <programlisting>svn log URL [PATH...]</programlisting>
+          <programlisting>svn log URL[@REV] [PATH...]</programlisting>
         </refsect1>
         <refsect1>
           <title>Description</title>
@@ -2605,7 +2694,7 @@ Made a change.
         </refnamediv>
         <refsect1>
           <title>Synopsis</title>
-          <programlisting>svn merge -r N:M SOURCE[@REV] [WCPATH]</programlisting>
+          <programlisting>svn merge [-c M | -r N:M] SOURCE[@REV] [WCPATH]</programlisting>
           <programlisting>svn merge sourceURL1[@N] sourceURL2[@M] [WCPATH]</programlisting>
           <programlisting>svn merge sourceWCPATH1@N sourceWCPATH2@M [WCPATH]</programlisting>
         </refsect1>
@@ -2618,6 +2707,12 @@ Made a change.
             <replaceable>M</replaceable>.  These are the two sources
             to be compared.  The revisions default to
             <literal>HEAD</literal> if omitted.</para>
+
+          <para>The <literal>-c M</literal> option is equivalent to
+            <literal>-r N:M</literal> where <replaceable>N =
+            M-1</replaceable>.  Using <literal>-c -M</literal> does
+            the reverse: <literal>-r M:N</literal> where
+            <replaceable>N = M-1</replaceable>.</para>
 
           <para>In the third form, <replaceable>SOURCE</replaceable>
             can be a URL or working copy item, in which case the
@@ -2661,11 +2756,13 @@ Made a change.
 
           <screen>
 --revision (-r) REV
+--change (-c) REV
 --non-recursive (-N)
 --quiet (-q)
 --force
 --dry-run
 --diff3-cmd CMD
+--extensions (-x) ARG
 --ignore-ancestry
 --username USER
 --password PASS
@@ -2873,7 +2970,7 @@ Committed revision 26.
           <screen>
 --message (-m) TEXT
 --file (-F) FILE
---revision (-r) REV
+--revision (-r) REV (<emphasis>Deprecated</emphasis>)
 --quiet (-q)
 --force
 --username USER
@@ -2926,15 +3023,17 @@ Committed revision 27.
         <refsect1>
           <title>Synopsis</title>
           <programlisting>svn propdel PROPNAME [PATH...]</programlisting>
-          <programlisting>svn propdel PROPNAME --revprop -r REV [URL]</programlisting>
+          <programlisting>svn propdel PROPNAME --revprop -r REV [TARGET]</programlisting>
         </refsect1>
         <refsect1>
           <title>Description</title>
 
           <para>This removes properties from files, directories, or
-            revisions.  The first form removes versioned properties
-            in your working copy, while the second removes unversioned
-            remote properties on a repository revision.</para>
+            revisions.  The first form removes versioned properties in
+            your working copy, while the second removes unversioned
+            remote properties on a repository revision
+            (<replaceable>TARGET</replaceable> only determines which
+            repository to access).</para>
         </refsect1>
 
         <refsect1>
@@ -3005,7 +3104,7 @@ property 'release-date' deleted from repository revision '26'
         <refsect1>
           <title>Synopsis</title>
           <programlisting>svn propedit PROPNAME PATH...</programlisting>
-          <programlisting>svn propedit PROPNAME --revprop -r REV [URL]</programlisting>
+          <programlisting>svn propedit PROPNAME --revprop -r REV [TARGET]</programlisting>
         </refsect1>
         <refsect1>
           <title>Description</title>
@@ -3013,7 +3112,9 @@ property 'release-date' deleted from repository revision '26'
           <para>Edit one or more properties using your favorite
             editor.  The first form edits versioned properties in
             your working copy, while the second edits unversioned
-            remote properties on a repository revision.</para>
+            remote properties on a repository revision
+            (<replaceable>TARGET</replaceable> only determines which
+            repository to access).</para>
         </refsect1>
 
         <refsect1>
@@ -3163,7 +3264,7 @@ Began journal.
         <refsect1>
           <title>Synopsis</title>
           <programlisting>svn proplist [TARGET[@REV]...]</programlisting>
-          <programlisting>svn proplist --revprop -r REV [URL]</programlisting>
+          <programlisting>svn proplist --revprop -r REV [TARGET]</programlisting>
         </refsect1>
         <refsect1>
           <title>Description</title>
@@ -3171,7 +3272,9 @@ Began journal.
           <para>List all properties on files, directories, or
             revisions.  The first form lists versioned properties in
             your working copy, while the second lists unversioned remote
-            properties on a repository revision.</para>
+            properties on a repository revision
+            (<replaceable>TARGET</replaceable> only determines which
+            repository to access).</para>
         </refsect1>
 
         <refsect1>
@@ -3250,7 +3353,7 @@ Properties on 'foo.c':
         <refsect1>
           <title>Synopsis</title>
           <programlisting>svn propset PROPNAME [PROPVAL | -F VALFILE] PATH...</programlisting>
-          <programlisting>svn propset PROPNAME --revprop -r REV [PROPVAL | -F VALFILE] [URL]</programlisting>
+          <programlisting>svn propset PROPNAME --revprop -r REV [PROPVAL | -F VALFILE] [TARGET]</programlisting>
         </refsect1>
 
         <refsect1>
@@ -3261,7 +3364,9 @@ Properties on 'foo.c':
             or revisions.  The first example creates a versioned, local
             property change in the working copy, and the second
             creates an unversioned, remote property change on a
-            repository revision.</para>
+            repository revision
+            (<replaceable>TARGET</replaceable> only determines which
+            repository to access).</para>
 
           <tip>
             <para>Subversion has a number of <quote>special</quote>
@@ -4347,6 +4452,8 @@ $ svn unlock http://svn.red-bean.com/repos/test/tree.jpg
 --revision (-r) REV
 --non-recursive (-N)
 --quiet (-q)
+--no-ignore
+--incremental
 --diff3-cmd CMD
 --username USER
 --password PASS
