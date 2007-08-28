@@ -54,6 +54,14 @@ src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
 
 """
 
+analytics_data = """
+<script src="http://www.google-analytics.com/urchin.js" type="text/javascript"></script>
+<script type="text/javascript">
+_uacct = "UA-557726-1";
+urchinTracker();
+</script>
+"""
+
 adsense_css = """
 /* Added for AdSense Support */
 body
@@ -112,6 +120,20 @@ def add_adsense_bottom_html(file):
         return
     raise Exception, "Never found <div class=\"nav_footer\"> tag in file '%s'" % (file)
 
+def add_analytics_bug(file):
+    lines = open(file, 'r').readlines()
+    for i in range(len(lines)):
+        start_offset = lines[i].find('</body>')
+        if start_offset == -1:
+            continue
+        lines[i] = '%s%s%s' \
+                   % (lines[i][0:start_offset],
+                      analytics_data,
+                      lines[i][start_offset:])
+        open(file, 'w').writelines(lines)
+        return
+    raise Exception, "Never found </body> tag in file '%s'" % (file)
+    
 def add_adsense_css(file):
     open(file, 'a').write(adsense_css)
 
@@ -132,10 +154,11 @@ def main():
                 add_adsense_bottom_html(os.path.join(book_dir, child))
             except:
                 pass
+            try:
+                add_analytics_bug(os.path.join(book_dir, child))
+            except:
+                pass
     add_adsense_css(stylesheet)
 
 if __name__ == "__main__":
     main()
-        
-        
-        
