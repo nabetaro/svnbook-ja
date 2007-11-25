@@ -888,7 +888,7 @@ authz-db = authzfile
 
     <!-- =============================================================== -->
     <sect2 id="svn.serverconfig.svnserve.sasl">
-      <title>Authenticating with SASL</title>
+      <title>Using <command>svnserve</command> with SASL</title>
 
       <para>For many teams, the built-in CRAM-MD5 authentication is
         all they need from <command>svnserve</command>.  However, if
@@ -900,25 +900,178 @@ authz-db = authzfile
       <sidebar>
         <title>What is SASL?</title>
         <para>The Cyrus Simple Authentication and Security Layer is
-              open-source software written by Carnegie Mellon
-              University.  It adds generic authentication and
-              encryption capabilities to any network protocol, and as
-              of Subversion 1.5 and later, <command>svnserve</command>
-              knows how to make use of this library.  It may or may
-              not be available to you: if you're building Subversion
-              yourself, you'll need to have at least version 2.1 of
-              SASL installed on your system and you'll need to make
-              sure that it's detected during Subversion's build
-              process.  If you're using a pre-built Subversion binary
-              package, you'll have to check with the package
-              maintainer as to whether SASL support was compiled in.
-              SASL also comes with a number of pluggable modules that
-              represent different authentication systems: Kerberos
-              (GSSAPI), NTLM, PAM, One-Time-Passwords, DIGEST-MD5,
-              LDAP, Secure-Remote-Password, and others.  Certain
-              mechanisms may or may not be available to you; be sure
-              to check which modules are provided.</para>
+          open-source software written by Carnegie Mellon University.
+          It adds generic authentication and encryption capabilities
+          to any network protocol, and as of Subversion 1.5 and later,
+          both the <command>svnserve</command> server
+          and <command>svn</command> client know how to make use of
+          this library.  It may or may not be available to you: if
+          you're building Subversion yourself, you'll need to have at
+          least version 2.1 of SASL installed on your system and
+          you'll need to make sure that it's detected during
+          Subversion's build process.  If you're using a pre-built
+          Subversion binary package, you'll have to check with the
+          package maintainer as to whether SASL support was compiled
+          in.  SASL comes with a number of pluggable modules that
+          represent different authentication systems: Kerberos
+          (GSSAPI), NTLM, One-Time-Passwords (OTP), DIGEST-MD5, LDAP,
+          Secure-Remote-Password (SRP), and others.  Certain
+          mechanisms may or may not be available to you; be sure to
+          check which modules are provided.</para>
+
+        <para>You can download Cyrus SASL (both code and
+          documentation) from
+          <ulink url="http://asg.web.cmu.edu/sasl/sasl-library.html"/>.</para>
       </sidebar>
+
+      <para>Normally, when a subversion client connects
+        to <command>svnserve</command>, the server sends a greeting
+        which advertises a list of capabilities it supports, and the
+        client responds with a similar list of capabilities.  If the
+        server is configured to require authentication, it then sends
+        a challenge which lists the authentication mechanisms
+        available; the client responds by choosing one of the
+        mechanisms, and then authentication is carried out in some
+        number of roundtrip messages.  Even when SASL capabilities
+        aren't present, the client and server inherently know how to
+        use the CRAM-MD5 and ANONYMOUS mechanisms (see
+        <xref linkend="svn.serverconfig.svnserve.auth"/>).  If server
+        and client were linked against SASL, then a number of other
+        authentication mechanisms may also be available.  However,
+        you'll need to explicitly configure SASL on the server-side to
+        advertise them.</para>
+
+      <sect3 id="svn.serverconfig.svnserve.sasl.authn">
+        <title>Authenticating with SASL</title>
+
+        <para>To activate specific SASL mechanisms on the server, you'll
+          need to do two things.  First, create
+          a <literal>[sasl]</literal> section in your
+          repository's <filename>svnserve.conf</filename> file, with
+          this key-value pair:</para>
+
+        <screen>
+          use-sasl = true
+</screen>
+
+        <para>Second, create a file
+          called <filename>subversion.conf</filename> in a place where
+          the SASL library can find it&mdash;typically in the
+          directory where SASL plugins are located.  You'll have to
+          locate the plugin directory on your particular system, such
+          as <filename>/usr/lib/sasl2/</filename>
+          or <filename>/etc/sasl2/</filename>.  (Note that this
+          is <emphasis>not</emphasis>
+          the <filename>svnserve.conf</filename> file that lives
+          within a repository!)</para>
+
+        <para>On a Windows server, you'll have to also edit the
+          registry (using a tool like <command>regedit</command>) to
+          tell SASL where to find things.  Create a registry key
+          named <literal>[HKEY_LOCAL_MACHINE\SOFTWARE\Carnegie
+          Mellon\Project Cyrus\SASL Library]</literal>, and place two
+          keys inside it: a key called <literal>SearchPath</literal>
+          (whose value is a path containing the
+          SASL <filename>.dll</filename> plugins), and a key
+          called <literal>ConfFile</literal> (whose value is a path
+          containing the <filename>subversion.conf</filename>
+          file.)</para>
+
+        <para>Because SASL provides so many different kinds of
+          authentication mechanisms, it would be foolish (and far
+          beyond the scope of this book) to try and describe every
+          possible server-side configuration.  Instead, we recommend
+          that you read the documentation supplied in
+          the <filename>doc/</filename> subdirectory of the SASL
+          source code.  It goes into great detail about each mechanism
+          and how to configure the server appropriately for each.  For
+          the purposes of this discussion, we'll just demonstrate a
+          simple example of configuring the DIGEST-MD5 mechanism.  For
+          example, if your <filename>subversion.conf</filename>
+          contains:</para>
+
+        <screen>
+pwcheck_method: auxprop
+auxprop_plugin: sasldb
+mech_list: DIGEST-MD5
+</screen>
+
+        <para>...then you've told SASL to advertise the DIGEST-MD5
+          mechanism to clients, and to check user passwords against a
+          private password database (typically stored
+          in <filename>/etc/sasldb2</filename>).  A system
+          administrator can then use
+          the <command>saslpasswd2</command> program to add or modify
+          usernames and passwords in the database:</para>
+
+        <screen>
+$ saslpasswd2 -c -u realm username
+</screen>
+
+        <para>A few words of warning: first, make sure that the
+          "realm" argument to <command>saslpasswd2</command> matches
+          the same "realm" you've defined in your
+          repository's <filename>svnserve.conf</filename> file; if
+          they don't match, authentication will fail.  Also, due to a
+          shortcoming in SASL, the common realm must be a string with
+          no space characters.  Finally, if you decide to go with the
+          standard SASL password database, make sure that
+          the <command>svnserve</command> program has read access to
+          the file (and possibly write access as well, if you're using
+          a mechanism such as OTP.)</para>
+
+        <para>This is just one simple way of configuring SASL.  Many
+          other authentication mechanisms available, and passwords can
+          be stored in other places such as in LDAP or a SQL database.
+          Consult the full SASL documentation for details.</para>
+
+        <para>Remember that if you configure your server to only allow
+          certain SASL authentication mechanisms, this can also have
+          the effect of forcing all of connecting clients to have SASL
+          support as well.  Any Subversion client built without SASL
+          support (which includes all pre-1.5 clients) will be unable
+          to authenticate.  On the one hand, this sort of restriction
+          may be exactly what you want (<quote>my clients must all use
+          Kerberos!</quote>).  However, if you still want non-SASL
+          clients to be able to authenticate, be sure to advertise the
+          CRAM-MD5 mechanism as an option.  All clients are able to
+          use CRAM-MD5, whether they have SASL support or not.</para>
+
+        </sect3>
+
+      <sect3 id="svn.serverconfig.svnserve.sasl.encryption">
+        <title>SASL Encryption</title>
+
+        <para>SASL is also able to perform data-encryption if a
+          particular mechanism supports it.  The built-in CRAM-MD5
+          mechanism doesn't support encryption, but DIGEST-MD5 does,
+          and mechanisms like SRP actually require use of the OpenSSL
+          library .  To enable or disable different levels of
+          encryption, you can set two values in your
+          repository's <filename>svnserve.conf</filename> file:</para>
+
+        <screen>
+[sasl]
+use-sasl = true
+min-encryption = 128
+max-encryption = 256
+</screen>
+
+        <para>The <literal>min-encryption</literal>
+          and <literal>max-encryption</literal> variables control the
+          level of encryption demanded by the server.  To disable
+          encryption completely, set both values to 0.  To enable
+          simple checksumming of data (i.e. prevent tampering and
+          guarantee data integrity without encryption), set both
+          values to 1.  If you wish to allow&mdash;but not
+          require&mdash;encryption, set the minimum value to 0, and
+          the maximum value to some bit-length.  To require encryption
+          unconditionally, set both values to numbers greater than 1.
+          In our example above, we require clients to do at least
+          128-bit encryption, but no more than 256-bit
+          encryption.</para>
+
+        </sect3>
 
       </sect2>
 
@@ -926,13 +1079,13 @@ authz-db = authzfile
     <sect2 id="svn.serverconfig.svnserve.sshauth">
       <title>Tunneling over SSH</title>
 
-      <para><command>svnserve</command>'s built-in authentication can
-        be very handy, because it avoids the need to create real
-        system accounts.  On the other hand, some administrators
-        already have well-established SSH authentication frameworks in
-        place.  In these situations, all of the project's users
-        already have system accounts and the ability to <quote>SSH
-        into</quote> the server machine.</para>
+      <para><command>svnserve</command>'s built-in authentication (and
+        SASL support) can be very handy, because it avoids the need to
+        create real system accounts.  On the other hand, some
+        administrators already have well-established SSH
+        authentication frameworks in place.  In these situations, all
+        of the project's users already have system accounts and the
+        ability to <quote>SSH into</quote> the server machine.</para>
 
       <para>It's easy to use SSH in conjunction with
         <command>svnserve</command>.  The client simply uses the
