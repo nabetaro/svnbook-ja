@@ -100,7 +100,7 @@ ufficiale della SVN.org il cui URL è:
 
 http://svn.red-bean.com/svnbook/trunk/src/it
 
-La stessa repository può essere comodamente esplorata/monitorate tramite il
+La stessa repository può essere comodamente esplorata/monitorata tramite il
 link:
 
 http://viewvc.red-bean.com/svnbook/trunk/src/it/
@@ -114,7 +114,7 @@ SW CONSIGLIATO
 --------------------------------------------------------------------------------
 In questa sezione saranno descritti i TOOL consigliati e le procedure da
 utilizzare per effettuare /validare la traduzione a seconda delle piattaforme
-che verranno Utilizzate.
+che verranno utilizzate.
 
 Client SVN
 ----------
@@ -175,7 +175,7 @@ Supponiamo di avere la seguente directory:
 
 c:\user\prj\svn-book\DEV\src
 
-ed utilizzare il client command line 'svn'.
+e di utilizzare il client command line 'svn'.
 Nel caso di un client diverso (jsvn, tortoise svn) la procedura va adattata.
 
 I comandi da eseguire sono:
@@ -199,7 +199,7 @@ Notepad -> save as.
 
 - Prima di effettuare un commit, validarli (vedi sezione seguente)
 - Commit dei files
-Per verificare quali files necessitano commit è sufficente usare  il comando
+Per verificare quali files necessitano commit è sufficiente usare  il comando
 svn status
 
 Effettuare il commit dei src modificati tramite il comando:
@@ -246,6 +246,7 @@ pacchetti:
     - make
     - libxml2
     - subversion
+	- diffutils
 
 Cosa fare:
 Effettuare il checkout di
@@ -260,12 +261,13 @@ In caso di errori, risolvere il problema partendo dal primo segnalato.
 (*1) Per chi non fosse pratico di Cygwin: è una sorta di porting sotto Windows
 di un ambiente Unix/Linux. Si basa su un meccanismo di installazione molto
 particolare: collegandosi al sito cygwin è possibile selezionare i componenti
-che servono da una lista molto ampia. Nel nostro caso il set minimo per la sola
+che servono da una lista molto ampia. Nel nostro caso, il set minimo per la sola
 validazione, i componenti da selezionare sono:
 Devel->make
 Devel->libxml2
 Devel->Subversion (il primo della lista, basta solo il client command line)
 Shells->bash (in realtà è presente di default, non va selezionato)
+Utils->diffutils
 
 Nel caso non abbiate una connessione abbastanza veloce, oppue abbiate fretta,
 non esitate a scrivere presso la mail list svn-it chiedendo se qualche anima di
@@ -282,6 +284,19 @@ usata da Cygwin come home dir, nel tipico esempio nel caso si usi Windows e
 l'utente Administrator.
 Se si usa un altro utente, ovviamente si deve cambiare la dir.
 
+In alternativa si può configurare Cygwin in modo da aprire la shell di comandi
+direttamente nella directory:
+
+c:\user\prj\svn-book\DEV\src\it
+
+invece che nella home dell'utente loggato.
+Per ottenere questo risultato basta aprire il file:
+
+C:\cygwin\home\Administrator\.bash_profile
+
+con un editor di testo ed aggiungere, in fondo, la riga:
+
+cd  c:\user\prj\svn-book\DEV\src\it (con il percorso eventualmente racchiuso tra virgolette)
 
 DAI SRC XML AD HTML
 --------------------------------------------------------------------------------
@@ -312,7 +327,7 @@ Scaricare l'ultimo pacchetto 'docbook-xsl' dall'indirizzo
     http://sourceforge.net/project/showfiles.php?group_id=21935
 
 una volta scaricato, scompattare l'archivio e rinominarlo in src/tools/xsl
-I passi dovrebbe essere qualcosa come:
+I passi dovrebbero essere qualcosa come:
 
     $ cd src/tools
     $ tar zxvf docbook-xsl-X.YY.Z.tar.gz
@@ -333,7 +348,7 @@ a markup. Recuperare libxslt, una libreria C per XSLT,
     Per Windows
     -----------
     Usando cygwin, si può scaricare il pacchetto utilizzando il programma di
-    setup. Devel->libxslt
+    setup. Doc->libxslt
 
 
 Generazione delle pagine HTML
@@ -350,9 +365,109 @@ Nota che è un processo piuttosto pesante e può impiegare parecchi minuti.
 
 DAI SRC XML A PDF
 --------------------------------------------------------------------------------
-...da completare (benvenuti i contributi di qualche anima volenterosa:-)
+Per Windows (mediante Cygwin)
+-----------------------------
+1)	Prima di tutto occorre assicurarsi che lo script:
+ 
+	c:\user\prj\svn-book\DEV\src\it\tools\bin\run-fop.sh
+	
+	sia salvato in un formato riconoscibile dalla shell bash di Cygwin.
+	Quindi, se avete effettuato il checkout della cartella 'tools' mediante un client svn per Windows 
+	(es.: TortoiseSVN), è necessario modificare lo script in modo che il carattere 'carriage return'
+	utilizzato sia unix-like.
+	In caso contrario si otterrebbero errori del tipo: "/r command not found" quando si tentasse di generare
+	il file pdf.
+	a) 	Dato che si sta per modificare un file sotto versionamento è consigliabile effettuare un export della
+		cartella 'tools' e sostituirla a quella versionata nella posizione:
+		
+		c:/user/prj/svn-book/DEV/src/it/tools
+		
+		In tal modo si evita di committare per sbaglio modifiche alla cartella tools.
+	b)	A questo punto basta utilizzare la utility dos2unix già presente nell'installazione di Cygwin fatta al punto
+		precedente (v. VALIDAZIONE DEI SRC XML).
+		Il comando da lanciare è: 
+	
+		$ cd src/tools/bin
+		$ dos2unix -U run-fop.sh
+		
+2)	All'indirizzo: http://xmlgraphics.apache.org/fop/ potete trovare Apache FOP (Formatting Objects Processor),
+	il software necessario per produrre il file pdf a partire dai source xml.
+	La procedura seguente spiegherà come fare funzionare la versione 0.20.5, 
+	che è la stessa utilizzata per le nightly builds, e non la più aggiornata (ad oggi la 0.94).
+	Scaricare la versione per windows all'indirizzo:
 
+    http://archive.apache.org/dist/xmlgraphics/fop/binaries/fop-0.20.5-bin.zip
 
+	una volta scaricato, scompattare l'archivio e rinominarlo in src/tools/fop
+	Il processo di build si aspetta di trovarlo in quella posizione.
+	
+	Per permettere alla shell di eseguire lo script src/tools/fop/fop.sh occorre aggiungere alla variabile
+	d'ambiente di windows: PATH il percorso:
+	
+	c:/user/prj/svn-book/DEV/src/it/tools/fop
+
+3)	Per il funzionamento della versione 0.20.5 di fop è necessario installare una versione un po' vecchia del
+	java runtime environment, contenuta nel pacchetto: j2sdk-1.4.2, reperibile all'indirizzo:
+	
+	http://java.sun.com/j2se/1.4.2/download.html
+	
+	alla voce "J2SE v 1.4.2_16  SDK".
+	
+	Una volta installata è necessario creare altre due variabili d'ambiente di windows:
+	
+	JAVA_HOME: contenente il path alla directory di installazione 'C:\j2sdk1.4.2_16'
+	LOCALCLASSPATH: contenente il path 'C:\j2sdk1.4.2_16\bin'
+
+4)	Bisogna quindi procurarsi la class library: jimi.
+	Effettuare il download dello zip all'indirizzo: 
+	
+	http://java.sun.com/products/jimi/
+	
+	Scompattarlo e copiare l'archivio: Jimi\examples\AppletDemo\JimiProClasses.jar
+	in c:/user/prj/svn-book/DEV/src/it/tools/fop/lib/JimiProClasses.jar
+
+	Aggiungere alla variabile d'ambiente: LOCALCLASSPATH, il percorso:
+	
+	c:/user/prj/svn-book/DEV/src/it/tools/fop/lib/JimiProClasses.jar
+	
+5)	Durante il processo di build viene generato un file intermedio: svn-book.fo in src/it/book.
+	Quando FOP si trova a processare file '.fo' troppo grandi si possono avere errori di memoria insufficiente,
+	con messaggi del tipo:
+	
+	Exception in thread "main" java.lang.OutOfMemoryError
+	
+	Per ovviare a questo problema posizionarsi nella root dell'utente Cygwin:
+	
+	$ cd ~
+	
+	e creare il file .foprc che verrà processato da FOP:
+	
+	$ cat > ~/.foprc << "EOF"
+	> FOP_OPTS="-Xmx500m"
+	> EOF
+	
+	dove il valore assegnato alla variabile FOP_OPTS prevede al posto di 500 la quantità di ram (in Megabyte)
+	disponibile	sul vostro pc, secondo la sintassi: "-Xmx[RAM_Installed]m".
+	
+6)	Infine posizionarsi nella directory src/it e lanciare il comando:
+	
+	$ make pdf
+	
+	La console produrrà innumerevoli righe di output, tra cui numerosi errori del tipo:
+	
+	[ERROR] property - "background-position-horizontal" is not implemented yet.
+	(dovuti all'utilizzo della versione 0.20.5)
+	
+	e warning del tipo:
+	[INFO] area contents overflows area in line
+	
+	Nonostante ciò verrà prodotto il file src/it/svn-book.pdf.
+	
+	NOTA:
+	L'elenco degli errori e dei warning visualizzati a console durante la generazione è praticamente identico
+	a quello riportato nei log relativi alle nigthly build (v. NIGHTLY BUILDS)
+	
+	
 DAI SRC XML A CHM
 --------------------------------------------------------------------------------
 ...da completare (benvenuti i contributi di qualche anima volenterosa:-)
