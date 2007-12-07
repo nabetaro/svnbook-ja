@@ -142,8 +142,8 @@
       development, in the repository.  This allows you to save your
       half-broken work frequently without interfering with others, yet
       you can still selectively share information with your
-      collaborators.  You'll see exactly how this works later
-      on.</para>
+      collaborators.  You'll see exactly how this works as we go.
+      </para>
 
     <!-- =============================================================== -->
     <sect2 id="svn.branchmerge.using.create">
@@ -165,57 +165,11 @@
         begins its life as a copy of
         <filename>/calc/trunk</filename>.</para>
 
-      <para>There are two different ways to make a copy.  We'll
-        demonstrate the messy way first, just to make the concept
-        clear.  To begin, check out a working copy of the project's
-        root directory, <filename>/calc</filename>:</para>
-
-      <screen>
-$ svn checkout http://svn.example.com/repos/calc bigwc
-A  bigwc/trunk/
-A  bigwc/trunk/Makefile
-A  bigwc/trunk/integer.c
-A  bigwc/trunk/button.c
-A  bigwc/branches/
-Checked out revision 340.
-</screen>
-
-      <para>Making a copy is now simply a matter of passing two
-        working-copy paths to the <command>svn copy</command>
-        command:</para>
-
-      <screen>
-$ cd bigwc
-$ svn copy trunk branches/my-calc-branch
-$ svn status
-A  +   branches/my-calc-branch
-</screen>
-
-      <para>In this case, the <command>svn copy</command> command
-        recursively copies the <filename>trunk</filename> working
-        directory to a new working directory,
-        <filename>branches/my-calc-branch</filename>.  As you can see
-        from the <command>svn status</command> command, the new
-        directory is now scheduled for addition to the repository.
-        But also notice the <quote>+</quote> sign next to the letter
-        A.  This indicates that the scheduled addition is a
-        <emphasis>copy</emphasis> of something, not something new.
-        When you commit your changes, Subversion will create
-        <filename>/calc/branches/my-calc-branch</filename> in the
-        repository by copying <filename>/calc/trunk</filename>, rather
-        than resending all of the working copy data over the
-        network:</para>
-
-      <screen>
-$ svn commit -m "Creating a private branch of /calc/trunk."
-Adding         branches/my-calc-branch
-Committed revision 341.
-</screen>
-
-      <para>And now here's the easier method of creating a branch,
-        which we should have told you about in the first
-        place: <command>svn copy</command> is able to operate directly
-        on two URLs.</para>
+      <para>At this point, you've probably seen <command>svn
+        copy</command> used to copy one file to another within a
+        working copy.  But it can also be used to do
+        a <quote>remote</quote> copy entirely within the repository.
+        Just copy one URL to another:</para>
 
       <screen>
 $ svn copy http://svn.example.com/repos/calc/trunk \
@@ -225,25 +179,27 @@ $ svn copy http://svn.example.com/repos/calc/trunk \
 Committed revision 341.
 </screen>
 
-      <para>From the repository's point of view, there's really no
-        difference between these two methods.  Both procedures create
-        a new directory in revision 341, and the new directory is a
-        copy of <filename>/calc/trunk</filename>.  This is shown in
-        <xref linkend="svn.branchmerge.using.create.dia-1"/>.  Notice
-        that the second method, however, performs an
-        <emphasis>immediate</emphasis> commit in constant time.
-
+      <para>This command causes a near-instantaneous commit in the
+        repository, creating a new directory in revision 341.  The new
+        directory is a copy of <filename>/calc/trunk</filename>.  This
+        is shown in
+        <xref linkend="svn.branchmerge.using.create.dia-1"/>.
         <footnote>
         <para>Subversion does not support copying between different
         repositories.  When using URLs with <command>svn
         copy</command> or <command>svn move</command>, you can only
         copy items within the same repository.</para> 
         </footnote>
-        
-        It's an easier procedure, because it doesn't require you to
-        check out a large portion of the repository.  In fact, this
-        technique doesn't even require you to have a working copy at
-        all.  This is the way most users create branches.</para>
+
+        While it's also possible to create a branch by
+        using <command>svn copy</command> to duplicate a directory
+        within the working copy, this technique isn't recommended.  It
+        can be quite slow, in fact!  Copying a directory on the
+        client-side is a linear-time operation, in that it actually
+        has to duplicate every file and subdirectory on local disk.
+        Copying a directory on the server, however, is a constant-time
+        operation, and it's the way most people create
+        branches.</para>
 
       <figure id="svn.branchmerge.using.create.dia-1">
         <title>Repository with new copy</title>
@@ -258,12 +214,12 @@ Committed revision 341.
           repository growing huge&mdash;Subversion doesn't actually
           duplicate any data.  Instead, it creates a new directory
           entry that points to an <emphasis>existing</emphasis> tree.
-          If you're a Unix user, this is the same concept as a
-          hard-link.  As further changes are made to files and
-          directories beneath the copied directory, Subversion
-          continues to employ this hard-link concept where it can.  It
-          only duplicates data when it is necessary to disambiguate
-          different versions of objects.</para>
+          If you're an experience Unix user, you'll recognize this as
+          the same concept behind a hard-link.  As further changes are
+          made to files and directories beneath the copied directory,
+          Subversion continues to employ this hard-link concept where
+          it can.  It only duplicates data when it is necessary to
+          disambiguate different versions of objects.</para>
 
         <para>This is why you'll often hear Subversion users talk
           about <quote>cheap copies</quote>.  It doesn't matter how
@@ -434,7 +390,7 @@ Changed paths:
 
     <!-- =============================================================== -->
     <sect2 id="svn.branchmerge.using.concepts">
-      <title>The Key Concepts Behind Branches</title> 
+      <title>The Key Concepts Behind Branching</title> 
 
       <para>There are two important lessons that you should remember
         from this section.  First, Subversion has no internal concept
@@ -444,13 +400,18 @@ Changed paths:
         attach that meaning to it.  You may think of the directory
         differently, or treat it differently, but to Subversion it's
         just an ordinary directory that happens to carry some extra
-        historical information.  Second, because of this copy
-        mechanism, Subversion's branches exist as <emphasis>normal
-        filesystem directories</emphasis> in the repository.  This is
-        different from other version control systems, where branches
-        are typically defined by adding
+        historical information.</para>
+
+      <para>Second, because of this copy mechanism, Subversion's
+        branches exist as <emphasis>normal filesystem
+        directories</emphasis> in the repository.  This is different
+        from other version control systems, where branches are
+        typically defined by adding
         extra-dimensional <quote>labels</quote> to collections of
-        files.</para>
+        files.  The location of your branch directory doesn't matter
+        to Subversion.  Most teams follow a convention of putting all
+        branches into a <filename>/branches</filename> directory, but
+        you're free to invent any policy you wish.</para>
 
     </sect2>
 
@@ -459,8 +420,8 @@ Changed paths:
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <!-- ================================================================= -->
-  <sect1 id="svn.branchmerge.copychanges">
-    <title>Copying Changes Between Branches</title>
+  <sect1 id="svn.branchmerge.basicmerging">
+    <title>Basic Merging</title>
 
     <para>Now you and Sally are working on parallel branches of the
       project: you're working on a private branch, and Sally is
@@ -489,23 +450,22 @@ Changed paths:
       completely finished with your branch, your entire set of branch
       changes can be copied back into the trunk.</para>
 
+    <para>In the examples that follow, we're assuming that both your
+      Subversion client and server are running Subversion 1.5 (or
+      later).  If either client or server is older than version 1.5,
+      then things are more complicated: the system won't track changes
+      automatically, and you'll have to use <quote>manual</quote>
+      methods to achieve similar results.  (See
+      <xref linkend="svn.branchmerge.advanced"/>.)</para>
 
-    <!-- =============================================================== -->
-    <sect2 id="svn.branchmerge.copychanges.specific">
-      <title>Copying Specific Changes</title>
+  <!-- =============================================================== -->
+    <sect2 id="svn.branchemerge.basicmerging.stayinsync">
+      <title>Staying in Sync</title>
 
-
-      <para>In the previous section, we mentioned that both you and
-        Sally made changes to <filename>integer.c</filename> on
-        different branches.  If you look at Sally's log message for
-        revision 344, you can see that she fixed some spelling errors.
-        No doubt, your copy of the same file still has the same spelling
-        errors.  It's likely that your future changes to this file will
-        be affecting the same areas that have the spelling errors, so
-        you're in for some potential conflicts when you merge your
-        branch someday.  It's better, then, to receive Sally's change
-        now, <emphasis>before</emphasis> you start working too heavily
-        in the same places.</para>
+      <para>###TODO:  show how to keep feature branch in sync with
+      trunk.  This is the first into to 'svn merge', so explain how
+      it creates edits in a working copy that can be either reverted
+      or committed.</para>
 
       <para>It's time to use the <command>svn merge</command> command.
         This command, it turns out, is a very close cousin to the
@@ -515,6 +475,160 @@ Changed paths:
         differences.  For example, you can ask <command>svn
         diff</command> to show you the exact change made by Sally in
         revision 344:</para>
+
+      <sidebar>
+        <title>Why Not Use Patches Instead?</title>
+
+        <para>A question may be on your mind, especially if you're a
+          Unix user: why bother to use <command>svn merge</command> at
+          all?  Why not simply use the operating system's
+          <command>patch</command> command to accomplish the same job?
+          For example:</para>
+
+        <screen>
+$ cd my-calc-branch
+$ svn diff -r 341:HEAD http://svn.example.com/repos/calc/trunk &gt; patchfile
+$ patch -p0  &lt; patchfile
+Patching file integer.c using Plan A...
+Hunk #1 succeeded at 147.
+Hunk #2 succeeded at 164.
+Hunk #3 succeeded at 241.
+Hunk #4 succeeded at 249.
+done
+</screen>
+
+        <para>In this particular case, yes, there really is no
+          difference.  But <command>svn merge</command> has special
+          abilities that surpass the <command>patch</command> program.
+          The file format used by <command>patch</command> is quite
+          limited; it's only able to tweak file contents.  There's no
+          way to represent changes to <emphasis>trees</emphasis>, such
+          as the addition, removal, or renaming of files and
+          directories.  Nor can the <command>patch</command> program
+          notice changes to properties.  If Sally's change had,
+          say, added a new directory, the output of <command>svn
+          diff</command> wouldn't have mentioned it at
+          all.  <command>svn diff</command> only outputs the limited
+          patch-format, so there are some ideas it simply can't
+          express.  The <command>svn merge</command> command, however,
+          can express changes in tree structure and properties by
+          directly applying them to your working copy.</para>
+
+      </sidebar>
+
+      <para>###TODO:  show how to merge back to trunk when done.</para>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.branchemerge.basicmerging.basicmergetracking">
+      <title>Basic Merge Tracking</title>
+
+      <para>###TODO: set expectations on what gets tracked and what
+      doesn't.</para>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.branchmerge.basicmerging.basicmergetracking.mergeinfo">
+        <title>Mergeinfo</title>
+
+        <para>###TODO: explain svn:mergeinfo prop and 'svn mergeinfo'
+          command, so users get a general sense of how the system is
+          tracking changes.</para>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.branchmerge.basicmerging.basicmergetracking.previews">
+        <title>Previewing Merges</title>
+
+        <para>It's a best practice to do your merge into a working
+          copy that has <emphasis>no</emphasis> local edits and has
+          been recently updated.  If your working copy
+          isn't <quote>clean</quote> in these ways, you can run into
+          some headaches.</para>
+
+        <para>Assuming your working copy is tidy, merging isn't a
+          particularly high-risk operation.  If you get the merge
+          wrong the first time, simply <command>svn revert</command>
+          the changes and try again.</para>
+
+        <para>If you've merged into a working copy that already has
+          local modifications, the changes applied by a merge will be
+          mixed with your pre-existing ones, and running
+          <command>svn revert</command> is no longer an option.  The
+          two sets of changes may be impossible to separate.</para>
+
+        <para>In cases like this, people take comfort in being able to
+          predict or examine merges before they happen.  One simple
+          way to do that is to run <command>svn diff</command> with
+          the same arguments you plan to pass to <command>svn
+          merge</command>, as we already showed in our first example
+          of merging.  Another method of previewing is to pass the
+          <option>--dry-run</option> option to the merge
+          command:</para>
+
+        <screen>
+$ svn merge --dry-run http://svn.example.com/repos/calc/trunk
+U  integer.c
+
+$ svn status
+#  nothing printed, working copy is still unchanged.
+</screen>
+
+        <para>The <option>--dry-run</option> option doesn't actually
+          apply any local changes to the working copy.  It only shows
+          status codes that <emphasis>would</emphasis> be printed in a
+          real merge.  It's useful for getting a <quote>high
+          level</quote> preview of the potential merge, for those
+          times when running <command>svn diff</command> gives too
+          much detail.</para>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.branchmerge.basicmerging.basicmergetracking.layered">
+        <title>Multi-Layered Merges</title>
+
+        <para>###TODO: explain how a merge can apply successive
+          patches, and that any intermediate conflicts *must* be
+          resolved (for now, at least.)</para>
+
+      </sect3>
+
+    </sect2>
+
+    </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.branchmerge.advanced">
+    <title>Advanced Merging</title>
+
+    <para>###TODO: Intro: talk about how and why advanced users can
+      pass specific revision numbers to 'svn merge'.</para>
+
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.branchmerge.copychanges.specific">
+      <title>Copying Specific Changes</title>
+
+      <para>Let's go back in time and imagine that you haven't yet
+        merged your private branch back to the trunk. ... ### TODO:
+        explain why we'd want to cherrypick one change, and let's say
+        it's r344:</para>
+
+      <para>Assume you get word that Sally made an interesting change
+        to <filename>integer.c</filename> on the trunk.  ###TODO: blah
+        blah: If you look at Sally's log message for revision 344, you
+        can see that she fixed some spelling errors.  No doubt, your
+        copy of the same file still has the same spelling errors.
+        It's likely that your future changes to this file will be
+        affecting the same areas that have the spelling errors, so
+        you're in for some potential conflicts when you merge your
+        branch someday.  It's better, then, to receive Sally's change
+        now, <emphasis>before</emphasis> you start working too heavily
+        in the same places.</para>
 
       <screen>
 $ svn diff -c 344 http://svn.example.com/repos/calc/trunk
@@ -597,8 +711,8 @@ M  integer.c
         between branches is commonly called
         <firstterm>porting</firstterm> changes.</para>
 
-      <para>When you commit the local modification, make sure your log
-        message mentions that you're porting a specific change from
+      <para>When you commit the local modification, it's a good
+        practice to mention that you're porting a specific change from
         one branch to another.  For example:</para>
 
       <screen>
@@ -607,48 +721,6 @@ Sending        integer.c
 Transmitting file data .
 Committed revision 360.
 </screen>
-
-      <para>As you'll see in the next sections, this is a very
-        important <quote>best practice</quote> to follow.</para>
-
-      <sidebar>
-        <title>Why Not Use Patches Instead?</title>
-
-        <para>A question may be on your mind, especially if you're a
-          Unix user: why bother to use <command>svn merge</command> at
-          all?  Why not simply use the operating system's
-          <command>patch</command> command to accomplish the same job?
-          For example:</para>
-
-        <screen>
-$ svn diff -c 344 http://svn.example.com/repos/calc/trunk &gt; patchfile
-$ patch -p0  &lt; patchfile
-Patching file integer.c using Plan A...
-Hunk #1 succeeded at 147.
-Hunk #2 succeeded at 164.
-Hunk #3 succeeded at 241.
-Hunk #4 succeeded at 249.
-done
-</screen>
-
-        <para>In this particular case, yes, there really is no
-          difference.  But <command>svn merge</command> has special
-          abilities that surpass the <command>patch</command> program.
-          The file format used by <command>patch</command> is quite
-          limited; it's only able to tweak file contents.  There's no
-          way to represent changes to <emphasis>trees</emphasis>, such
-          as the addition, removal, or renaming of files and
-          directories.  Nor can the <command>patch</command> program
-          notice changes to properties.  If Sally's change had,
-          say, added a new directory, the output of <command>svn
-          diff</command> wouldn't have mentioned it at
-          all.  <command>svn diff</command> only outputs the limited
-          patch-format, so there are some ideas it simply can't
-          express.  The <command>svn merge</command> command, however,
-          can express changes in tree structure and properties by
-          directly applying them to your working copy.</para>
-
-      </sidebar>
 
       <para>A word of warning: while <command>svn diff</command> and
         <command>svn merge</command> are very similar in concept, they
@@ -667,7 +739,7 @@ done
         </listitem>
         <listitem>
           <para>You want to merge the changes in a specific file into
-            a file by the same name which exists in your current working 
+            a file by the same name which exists in your current working
             directory.</para>
         </listitem>
       </orderedlist>
@@ -693,10 +765,10 @@ U   my-calc-branch/integer.c
     </sect2>
 
     <!-- =============================================================== -->
-    <sect2 id="svn.branchmerge.copychanges.keyconcept">
-      <title>The Key Concept Behind Merging</title>
+    <sect2 id="svn.branchmerge.advanced.advancedsyntax">
+      <title>Advanced Merge Syntax</title>
 
-      <para>You've now seen an example of the <command>svn
+      <para>You've now seen some examples of the <command>svn
           merge</command> command, and you're about to see several
           more.  If you're feeling confused about exactly how merging
           works, you're not alone.  Many users (especially those new
@@ -717,7 +789,27 @@ U   my-calc-branch/integer.c
         two repository trees are compared, and the differences are
         applied to a working copy.</para>
 
-      <para>The command takes three arguments:</para>
+      <para>If you're using <command>svn merge</command> to do basic
+        copying of changes between branches, it will generally do the
+        right thing automatically.  For example, a command like</para>
+
+      <screen>
+$ svn merge http://svn.example.com/repos/calc/some-branch
+</screen>
+
+      <para>... will attempt to duplicate any changes made
+        on <filename>some-branch</filename> into your current working
+        directory, which is presumably a working copy that shares some
+        historical connection to the branch.  The command is smart
+        enough to only duplicate changes that your working copy
+        doesn't yet have.  If you repeat this command once a week, it
+        will only duplicate the <quote>newest</quote> branch changes
+        that happened since you last merged.</para>
+
+      <para>If you choose to use the <command>svn merge</command>
+        command in all its full glory by giving it specific revision
+        ranges to duplicate, then the command takes three main
+        arguments:</para>
 
       <orderedlist>
 
@@ -767,349 +859,254 @@ $ svn merge -r 100:200 http://svn.example.com/repos/trunk
         how the working-copy argument is optional; if omitted, it
         defaults to the current directory.</para>
 
-
     </sect2>
 
     <!-- =============================================================== -->
-    <sect2 id="svn.branchmerge.copychanges.bestprac">
-      <title>Best Practices for Merging</title>
+    <sect2 id="svn.branchmerge.advanced.undo">
+      <title>Undoing Changes</title>
 
-      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-      <sect3 id="svn.branchmerge.copychanges.bestprac.track">
-        <title>Tracking Merges Manually</title>
+      <para>Another common use for <command>svn merge</command> is to
+        roll back a change that has already been committed.  Suppose
+        you're working away happily on a working copy of
+        <filename>/calc/trunk</filename>, and you discover that the
+        change made way back in revision 303, which changed
+        <filename>integer.c</filename>, is completely wrong.  It never
+        should have been committed.  You can use <command>svn
+        merge</command> to <quote>undo</quote> the change in your
+        working copy, and then commit the local modification to the
+        repository.  All you need to do is to specify a
+        <emphasis>reverse</emphasis> difference.  (You can do this by
+        specifying <option>--revision 303:302</option>, or by an
+        equivalent <option>--change -303</option>.)</para>
 
-        <para>Merging changes sounds simple enough, but in practice it
-          can become a headache.  The problem is that if you
-          repeatedly merge changes from one branch to another, you
-          might accidentally merge the same change
-          <emphasis>twice</emphasis>.  When this happens, sometimes
-          things will work fine.  When patching a file, Subversion
-          typically notices if the file already has the change, and
-          does nothing.  But if the already-existing change has been
-          modified in any way, you'll get a conflict.</para>
 
-        <para>Ideally, your version control system should prevent the
-          double-application of changes to a branch.  It should
-          automatically remember which changes a branch has already
-          received, and be able to list them for you.  It should use
-          this information to help automate merges as much as
-          possible.</para>
-
-        <para>Unfortunately, Subversion is not such a system; it does
-          not yet record any information about merge operations.
-            <footnote><para>However, at the time of writing, this
-             feature is being worked on!</para></footnote>
-          When you commit local modifications, the repository has no
-          idea whether those changes came from running <command>svn
-          merge</command>, or from just hand-editing the files.</para>
-
-        <para>What does this mean to you, the user?  It means that
-          until the day Subversion grows this feature, you'll have to
-          track merge information yourself.  The best place to do this
-          is in the commit log-message.  As demonstrated in prior
-          examples, it's recommended that your log-message mention a
-          specific revision number (or range of revisions) that are
-          being merged into your branch.  Later on, you can
-          run <command>svn log</command> to review which changes your
-          branch already contains.  This will allow you to carefully
-          construct a subsequent <command>svn merge</command> command
-          that won't be redundant with previously ported
-          changes.</para>
-
-        <para>In the next section, we'll show some examples of this
-          technique in action.</para>
-
-      </sect3>
-
-      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-      <sect3 id="svn.branchmerge.copychanges.bestprac.preview">
-        <title>Previewing Merges</title>
-
-        <para>First, always remember to do your merge into a working
-          copy that has <emphasis>no</emphasis> local edits and has
-          been recently updated.  If your working copy
-          isn't <quote>clean</quote> in these ways, you can run into
-          some headaches.</para>
-
-        <para>Assuming your working copy is tidy, merging isn't a
-          particularly high-risk operation.  If you get the merge
-          wrong the first time, simply <command>svn revert</command>
-          the changes and try again.</para>
-
-        <para>If you've merged into a working copy that already has
-          local modifications, the changes applied by a merge will be
-          mixed with your pre-existing ones, and running
-          <command>svn revert</command> is no longer an option.  The
-          two sets of changes may be impossible to separate.</para>
-
-        <para>In cases like this, people take comfort in being able to
-          predict or examine merges before they happen.  One simple
-          way to do that is to run <command>svn diff</command> with
-          the same arguments you plan to pass to <command>svn
-          merge</command>, as we already showed in our first example
-          of merging.  Another method of previewing is to pass the
-          <option>--dry-run</option> option to the merge
-          command:</para>
-
-        <screen>
-$ svn merge --dry-run -c 344 http://svn.example.com/repos/calc/trunk
+      <screen>
+$ svn merge -c -303 http://svn.example.com/repos/calc/trunk
 U  integer.c
 
 $ svn status
-#  nothing printed, working copy is still unchanged.
+M  integer.c
+
+$ svn diff
+&hellip;
+# verify that the change is removed
+&hellip;
+
+$ svn commit -m "Undoing change committed in r303."
+Sending        integer.c
+Transmitting file data .
+Committed revision 350.
 </screen>
 
-        <para>The <option>--dry-run</option> option doesn't actually
-          apply any local changes to the working copy.  It only shows
-          status codes that <emphasis>would</emphasis> be printed in a
-          real merge.  It's useful for getting a <quote>high
-          level</quote> preview of the potential merge, for those
-          times when running <command>svn diff</command> gives too
-          much detail.</para>
+      <para>One way to think about a repository revision is as a
+        specific group of changes (some version control systems call
+        these <firstterm>changesets</firstterm>).  By using the
+        <option>-r</option> option, you can ask <command>svn
+        merge</command> to apply a changeset, or whole range of
+        changesets, to your working copy.  In our case of undoing a
+        change, we're asking <command>svn merge</command> to apply
+        changeset #303 to our working copy
+        <emphasis>backwards</emphasis>.</para>
 
-      </sect3>
+      <sidebar>
+        <title>Subversion and Changesets</title>
 
-      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-      <sect3 id="svn.branchmerge.copychanges.bestprac.merge">
-        <title>Merge Conflicts</title>
+        <para>Everyone seems to have a slightly different definition
+          of <quote>changeset</quote>, or at least a different
+          expectation of what it means for a version control system to
+          have <quote>changeset features</quote>.  For our purpose,
+          let's say that a changeset is just a collection of changes
+          with a unique name.  The changes might include textual edits
+          to file contents, modifications to tree structure, or tweaks
+          to metadata.  In more common speak, a changeset is just a
+          patch with a name you can refer to.</para>
 
-        <para>Just like the <command>svn update</command> command,
-          <command>svn merge</command> applies changes to your working
-          copy.  And therefore it's also capable of creating
-          conflicts.  The conflicts produced by <command>svn
-          merge</command>, however, are sometimes different, and this
-          section explains those differences.</para>
+        <para>In Subversion, a global revision number N names a tree
+          in the repository: it's the way the repository looked after
+          the Nth commit.  It's also the name of an implicit
+          changeset: if you compare tree N with tree N-1, you can
+          derive the exact patch that was committed.  For this reason,
+          it's easy to think of <quote>revision N</quote> as not just
+          a tree, but a changeset as well.  If you use an issue
+          tracker to manage bugs, you can use the revision numbers to
+          refer to particular patches that fix bugs&mdash;for example,
+          <quote>this issue was fixed by revision 9238.</quote>.
+          Somebody can then run <command>svn log -r9238</command> to
+          read about the exact changeset which fixed the bug, and run
+          <command>svn diff -c 9238</command> to see the patch
+          itself.  And Subversion's <literal>merge</literal> command
+          also uses revision numbers.  You can merge specific changesets
+          from one branch to another by naming them in the merge
+          arguments: <command>svn merge -c 9238</command> would
+          merge changeset #9238 into your working copy.</para>
+      </sidebar>
 
-        <para>To begin with, assume that your working copy has no
-          local edits.  When you <command>svn update</command> to a
-          particular revision, the changes sent by the server will
-          always apply <quote>cleanly</quote> to your working copy.
-          The server produces the delta by comparing two trees: a
-          virtual snapshot of your working copy, and the revision tree
-          you're interested in.  Because the left-hand side of the
-          comparison is exactly equal to what you already have, the
-          delta is guaranteed to correctly convert your working copy
-          into the right-hand tree.</para>
+      <para>Keep in mind that rolling back a change like this is just
+        like any other <command>svn merge</command> operation, so you
+        should use <command>svn status</command> and <command>svn
+        diff</command> to confirm that your work is in the state you
+        want it to be in, and then use <command>svn commit</command>
+        to send the final version to the repository.  After
+        committing, this particular changeset is no longer reflected
+        in the <literal>HEAD</literal> revision.</para>
 
-        <para>But <command>svn merge</command> has no such guarantees
-          and can be much more chaotic: the user can ask the server to
-          compare <emphasis>any</emphasis> two trees at all, even ones
-          that are unrelated to the working copy!  This means there's
-          large potential for human error.  Users will sometimes
-          compare the wrong two trees, creating a delta that doesn't
-          apply cleanly.  <command>svn merge</command> will do its
-          best to apply as much of the delta as possible, but some
-          parts may be impossible.  Just as the Unix
-          <command>patch</command> command sometimes complains about
-          <quote>failed hunks</quote>, <command>svn merge</command>
-          will complain about <quote>skipped targets</quote>:</para>
+      <para>Again, you may be thinking: well, that really didn't undo
+        the commit, did it?  The change still exists in revision 303.
+        If somebody checks out a version of the
+        <filename>calc</filename> project between revisions 303 and
+        349, they'll still see the bad change, right?</para>
 
-        <screen>
-$ svn merge -r 1288:1351 http://svn.example.com/repos/branch
-U  foo.c
-U  bar.c
-Skipped missing target: 'baz.c'
-U  glub.c
-C  glorb.h
-
-$
-</screen>
-
-        <para>In the previous example it might be the case that
-          <filename>baz.c</filename> exists in both snapshots of the
-          branch being compared, and the resulting delta wants to
-          change the file's contents, but the file doesn't exist in
-          the working copy.  Whatever the case, the
-          <quote>skipped</quote> message means that the user is most
-          likely comparing the wrong two trees; they're the classic
-          sign of user error.  When this happens, it's easy to
-          recursively revert all the changes created by the merge
-          (<command>svn revert --recursive</command>), delete any
-          unversioned files or directories left behind after the
-          revert, and re-run <command>svn merge</command> with
-          different arguments.</para>
-
-        <para>Also notice that the previous example shows a conflict
-          happening on <filename>glorb.h</filename>.  We already
-          stated that the working copy has no local edits: how can a
-          conflict possibly happen?  Again, because the user can use
-          <command>svn merge</command> to define and apply any old
-          delta to the working copy, that delta may contain textual
-          changes that don't cleanly apply to a working file, even if
-          the file has no local modifications.</para>
-
-        <para>Another small difference between <command>svn
-          update</command> and <command>svn merge</command> are the
-          names of the full-text files created when a conflict
-          happens.  In <xref linkend="svn.tour.cycle.resolve"/>, we saw
-          that an update produces files named
-          <filename>filename.mine</filename>,
-          <filename>filename.rOLDREV</filename>, and
-          <filename>filename.rNEWREV</filename>.  When <command>svn
-          merge</command> produces a conflict, though, it creates
-          three files named <filename>filename.working</filename>,
-          <filename>filename.left</filename>, and
-          <filename>filename.right</filename>.  In this case, the
-          terms <quote>left</quote> and <quote>right</quote> are
-          describing which side of the double-tree comparison the file
-          came from.  In any case, these differing names will help you
-          distinguish between conflicts that happened as a result of an
-          update versus ones that happened as a result of a
-          merge.</para>
-
-      </sect3>
-
-      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-      <sect3 id="svn.branchmerge.copychanges.bestprac.ancestry">
-        <title>Noticing or Ignoring Ancestry</title>
-
-        <para>When conversing with a Subversion developer, you might
-          very likely hear reference to the term
-          <firstterm>ancestry</firstterm>.  This word is used to
-          describe the relationship between two objects in a
-          repository: if they're related to each other, then one
-          object is said to be an ancestor of the other.</para>
-
-        <para>For example, suppose you commit revision 100, which
-          includes a change to a file <filename>foo.c</filename>.
-          Then <filename>foo.c@99</filename> is an
-          <quote>ancestor</quote> of <filename>foo.c@100</filename>.
-          On the other hand, suppose you commit the deletion of
-          <filename>foo.c</filename> in revision 101, and then add a
-          new file by the same name in revision 102.  In this case,
-          <filename>foo.c@99</filename> and
-          <filename>foo.c@102</filename> may appear to be related
-          (they have the same path), but in fact are completely
-          different objects in the repository.  They share no history
-          or <quote>ancestry</quote>.</para>
-
-        <para>The reason for bringing this up is to point out an
-          important difference between <command>svn diff</command> and
-          <command>svn merge</command>.  The former command ignores
-          ancestry, while the latter command is quite sensitive to it.
-          For example, if you asked <command>svn diff</command> to
-          compare revisions 99 and 102 of <filename>foo.c</filename>,
-          you would see line-based diffs; the <literal>diff</literal>
-          command is blindly comparing two paths.  But if you asked
-          <command>svn merge</command> to compare the same two objects,
-          it would notice that they're unrelated and first attempt to
-          delete the old file, then add the new file;  the output would
-          indicate a deletion followed by an add:</para>
-
-        <screen>
-D  foo.c
-A  foo.c
-</screen>
-
-        <para>Most merges involve comparing trees that are ancestrally
-          related to one another, and therefore <command>svn
-          merge</command> defaults to this behavior.  Occasionally,
-          however, you may want the <literal>merge</literal> command
-          to compare two unrelated trees.  For example, you may have
-          imported two source-code trees representing different vendor
-          releases of a software project (see <xref
-          linkend="svn.advanced.vendorbr"/>).  If you asked
-          <command>svn merge</command> to compare the two trees, you'd
-          see the entire first tree being deleted, followed by an add
-          of the entire second tree!  In these situations, you'll want
-          <command>svn merge</command> to do a path-based comparison
-          only, ignoring any relations between files and directories.
-          Add the <option>--ignore-ancestry</option> option to your
-          merge command, and it will behave just like <command>svn
-          diff</command>.  (And conversely, the
-          <option>--notice-ancestry</option> option will cause
-          <command>svn diff</command> to behave like the
-          <literal>merge</literal> command.)</para>
-
-      </sect3>
-
-      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-      <sect3 id="svn.branchmerge.copychanges.bestprac.moves">
-        <title>Merges and Moves</title>
-
-        <para>A common desire is to refactor source code, especially
-          in Java-based software projects.  Files and directories are
-          shuffled around and renamed, often causing great disruption
-          to everyone working on the project.  Sounds like a perfect
-          case to use a branch, doesn't it?  Just create a branch,
-          shuffle things around, then merge the branch back to the
-          trunk, right?</para>
-
-        <para>Alas, this scenario doesn't work so well right now, and
-          is considered one of Subversion's current weak spots.  The
-          problem is that Subversion's <command>update</command>
-          command isn't as robust as it should be, particularly when
-          dealing with copy and move operations.</para>
-
-        <para>When you use <command>svn copy</command> to duplicate a
-          file, the repository remembers where the new file came from,
-          but it fails to transmit that information to the client
-          which is running <command>svn update</command>
-          or <command>svn merge</command>.  Instead of telling the
-          client, <quote>Copy that file you already have to this new
-          location</quote>, it instead sends down an entirely new
-          file.  This can lead to problems, especially because the
-          same thing happens with renamed files.  A lesser-known fact
-          about Subversion is that it lacks <quote>true
-          renames</quote>&mdash;the <command>svn move</command>
-          command is nothing more than an aggregation of <command>svn
-          copy</command> and <command>svn delete</command>.</para>
-
-        <para>For example, suppose that while working on your private
-          branch, you rename <filename>integer.c</filename>
-          to <filename>whole.c</filename>.  Effectively you've created
-          a new file in your branch that is a copy of the original
-          file, and deleted the original file.  Meanwhile, back
-          on <filename>trunk</filename>, Sally has committed some
-          improvements to <filename>integer.c</filename>.  Now you
-          decide to merge your branch to the trunk:</para>
-
-        <screen>
-$ cd calc/trunk
-
-$ svn merge -r 341:405 http://svn.example.com/repos/calc/branches/my-calc-branch
-D   integer.c
-A   whole.c
-</screen>
-
-        <para>This doesn't look so bad at first glance, but it's also
-          probably not what you or Sally expected.  The merge
-          operation has deleted the latest version
-          of <filename>integer.c</filename> file (the one containing
-          Sally's latest changes), and blindly added your
-          new <filename>whole.c</filename> file&mdash;which is a
-          duplicate of the <emphasis>older</emphasis> version
-          of <filename>integer.c</filename>.  The net effect is that
-          merging your <quote>rename</quote> to the branch has removed
-          Sally's recent changes from the latest revision!</para>
-
-        <para>This isn't true data-loss; Sally's changes are still in
-          the repository's history, but it may not be immediately
-          obvious that this has happened.  The moral of this story is
-          that until Subversion improves, be very careful about
-          merging copies and renames from one branch to
-          another.</para>
-
-      </sect3>
+      <para>Yes, that's true.  When we talk about
+        <quote>removing</quote> a change, we're really talking about
+        removing it from <literal>HEAD</literal>.  The original change
+        still exists in the repository's history.  For most
+        situations, this is good enough.  Most people are only
+        interested in tracking the <literal>HEAD</literal> of a
+        project anyway.  There are special cases, however, where you
+        really might want to destroy all evidence of the commit.
+        (Perhaps somebody accidentally committed a confidential
+        document.)  This isn't so easy, it turns out, because
+        Subversion was deliberately designed to never lose
+        information.  Revisions are immutable trees which build upon
+        one another.  Removing a revision from history would cause a
+        domino effect, creating chaos in all subsequent revisions and
+        possibly invalidating all working copies.
+        <footnote>
+          <para>The Subversion project has plans, however, to someday
+            implement a command that would accomplish the task of
+            permanently deleting information.  In the meantime, see
+            <xref linkend="svn.reposadmin.maint.tk.svndumpfilter"/>
+            for a possible workaround.</para>
+        </footnote>
+      </para>
 
     </sect2>
 
+    <!-- =============================================================== -->
+    <sect2 id="svn.branchmerge.advanced.resurrect">
+      <title>Resurrecting Deleted Items</title>
 
-  </sect1>
+      <para>The great thing about version control systems is that
+        information is never lost.  Even when you delete a file or
+        directory, it may be gone from the <literal>HEAD</literal>
+        revision, but the object still exists in earlier revisions.
+        One of the most common questions new users ask is, <quote>How
+        do I get my old file or directory back?</quote>.</para>
 
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <sect1 id="svn.branchmerge.commonuses">
-    <title>Common Use-Cases</title>
+      <para>The first step is to define
+        exactly <emphasis role="bold">which</emphasis> item you're
+        trying to resurrect.  Here's a useful metaphor: you can think
+        of every object in the repository as existing in a sort of
+        two-dimensional coordinate system.  The first coordinate is a
+        particular revision tree, and the second coordinate is a path
+        within that tree.  So every version of your file or directory
+        can be defined by a specific coordinate pair.  (Remember the
+        <quote>peg revision</quote> syntax&mdash;foo.c@224
+        &mdash;mentioned back in
+        <xref linkend="svn.advanced.pegrevs"/>.) </para>
 
-    <para>There are many different uses for branching and <command>svn
-      merge</command>, and this section describes the most common ones
-      you're likely to run into.</para>
+      <para>First, you might need to use <command>svn log</command> to
+        discover the exact coordinate pair you wish to resurrect.  A
+        good strategy is to run <command>svn log
+        --verbose</command> in a directory which used to contain your
+        deleted item.  The <option>--verbose (-v)</option> option shows a
+        list of all changed items in each revision; all you need to do
+        is find the revision in which you deleted the file or
+        directory.  You can do this visually, or by using another tool
+        to examine the log output (via <command>grep</command>, or
+        perhaps via an incremental search in an editor).</para>
+
+      <screen>
+$ cd parent-dir
+$ svn log -v
+&hellip;
+------------------------------------------------------------------------
+r808 | joe | 2003-12-26 14:29:40 -0600 (Fri, 26 Dec 2003) | 3 lines
+Changed paths:
+   D /calc/trunk/real.c
+   M /calc/trunk/integer.c
+
+Added fast fourier transform functions to integer.c.
+Removed real.c because code now in double.c.
+&hellip;
+</screen>
+
+      <para>In the example, we're assuming that you're looking for a
+        deleted file <filename>real.c</filename>.  By looking through
+        the logs of a parent directory, you've spotted that this file
+        was deleted in revision 808.  Therefore, the last version of
+        the file to exist was in the revision right before that.
+        Conclusion: you want to resurrect the path
+        <filename>/calc/trunk/real.c</filename> from revision
+        807.</para>
+
+      <para>That was the hard part&mdash;the research.  Now that you
+        know what you want to restore, you have two different
+        choices.</para>
+
+      <para>One option is to use <command>svn merge</command> to apply
+        revision 808 <quote>in reverse</quote>.  (We've already
+        discussed how to undo changes, see
+        <xref linkend="svn.branchmerge.advanced.undo"/>.)  This
+        would have the effect of re-adding <filename>real.c</filename>
+        as a local modification.  The file would be scheduled for
+        addition, and after a commit, the file would again exist
+        in <literal>HEAD</literal>.</para>
+
+      <para>In this particular example, however, this is probably not
+        the best strategy.  Reverse-applying revision 808 would not
+        only schedule <filename>real.c</filename> for addition, but
+        the log message indicates that it would also undo certain
+        changes to <filename>integer.c</filename>, which you don't
+        want.  Certainly, you could reverse-merge revision 808 and
+        then <command>svn revert</command> the local modifications to
+        <filename>integer.c</filename>, but this technique doesn't
+        scale well.  What if there were 90 files changed in revision
+        808?</para>
+
+      <para>A second, more targeted strategy is not to use
+        <command>svn merge</command> at all, but rather the
+        <command>svn copy</command> command.  Simply copy the exact
+        revision and path <quote>coordinate pair</quote> from the
+        repository to your working copy:</para>
+
+      <screen>
+$ svn copy -r 807 \
+           http://svn.example.com/repos/calc/trunk/real.c ./real.c
+
+$ svn status
+A  +   real.c
+
+$ svn commit -m "Resurrected real.c from revision 807, /calc/trunk/real.c."
+Adding         real.c
+Transmitting file data .
+Committed revision 1390.
+</screen>
+
+      <para>The plus sign in the status output indicates that the item
+        isn't merely scheduled for addition, but scheduled for
+        addition <quote>with history</quote>.  Subversion remembers
+        where it was copied from.  In the future, running <command>svn
+        log</command> on this file will traverse back through the
+        file's resurrection and through all the history it had prior
+        to revision 807.  In other words, this new
+        <filename>real.c</filename> isn't really new; it's a direct
+        descendant of the original, deleted file.</para>
+
+      <para>Although our example shows us resurrecting a file, note
+        that these same techniques work just as well for resurrecting
+        deleted directories.</para>
+
+    </sect2>
 
     <!-- =============================================================== -->
-    <sect2 id="svn.branchmerge.commonuses.wholebr">
-      <title>Merging a Whole Branch to Another</title>
+    <sect2 id="svn.branchmerge.advanced.manual">
+      <title>Manually Merging a Branch</title>
+
+      <para>###TODO: if basic merge tracking isn't available (client
+        or server is older than 1.5), then here is the 'manual' method
+        for keeping a private branch in sync with trunk, and how to
+        merge it back into trunk:</para>
 
       <para>To complete our running example, we'll move forward in
         time.  Suppose several days have passed, and many changes have
@@ -1218,11 +1215,10 @@ Committed revision 406.
         to your original feature or bug fix.  The repository's
         <literal>HEAD</literal> revision is now 480, and you're ready
         to do another merge from your private branch to the trunk.
-        But as discussed in <xref linkend="svn.branchmerge.copychanges.bestprac"/>, you
-        don't want to merge the changes you've already merged before;
-        you only want to merge everything <quote>new</quote> on your
-        branch since the last time you merged.  The trick is to figure
-        out what's new.</para>
+        But don't want to merge the changes you've already merged
+        before; you only want to merge everything <quote>new</quote>
+        on your branch since the last time you merged.  The trick is
+        to figure out what's new.</para>
 
       <para>The first step is to run <command>svn log</command> on the
         trunk, and look for a log message about the last time you
@@ -1274,453 +1270,470 @@ Committed revision 481.
 
     </sect2>
 
-    <!-- =============================================================== -->
-    <sect2 id="svn.branchmerge.commonuses.undo">
-      <title>Undoing Changes</title>
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <sect2 id="svn.branchmerge.advanced.mergeconflicts">
+      <title>Merge Conflicts</title>
 
-      <para>Another common use for <command>svn merge</command> is to
-        roll back a change that has already been committed.  Suppose
-        you're working away happily on a working copy of
-        <filename>/calc/trunk</filename>, and you discover that the
-        change made way back in revision 303, which changed
-        <filename>integer.c</filename>, is completely wrong.  It never
-        should have been committed.  You can use <command>svn
-        merge</command> to <quote>undo</quote> the change in your
-        working copy, and then commit the local modification to the
-        repository.  All you need to do is to specify a
-        <emphasis>reverse</emphasis> difference.  (You can do this by
-        specifying <option>--revision 303:302</option>, or by an
-        equivalent <option>--change -303</option>.)</para>
+      <para>Just like the <command>svn update</command> command,
+        <command>svn merge</command> applies changes to your working
+        copy.  And therefore it's also capable of creating
+        conflicts.  The conflicts produced by <command>svn
+          merge</command>, however, are sometimes different, and this
+        section explains those differences.</para>
 
+      <para>To begin with, assume that your working copy has no
+        local edits.  When you <command>svn update</command> to a
+        particular revision, the changes sent by the server will
+        always apply <quote>cleanly</quote> to your working copy.
+        The server produces the delta by comparing two trees: a
+        virtual snapshot of your working copy, and the revision tree
+        you're interested in.  Because the left-hand side of the
+        comparison is exactly equal to what you already have, the
+        delta is guaranteed to correctly convert your working copy
+        into the right-hand tree.</para>
+
+      <para>But <command>svn merge</command> has no such guarantees
+        and can be much more chaotic: the advanced user can ask the
+        server to compare <emphasis>any</emphasis> two trees at all,
+        even ones that are unrelated to the working copy!  This means
+        there's large potential for human error.  Users will sometimes
+        compare the wrong two trees, creating a delta that doesn't
+        apply cleanly.  <command>svn merge</command> will do its best
+        to apply as much of the delta as possible, but some parts may
+        be impossible.  Just as the Unix
+        <command>patch</command> command sometimes complains about
+        <quote>failed hunks</quote>, <command>svn merge</command>
+        will complain about <quote>skipped targets</quote>:</para>
 
       <screen>
-$ svn merge -c -303 http://svn.example.com/repos/calc/trunk
-U  integer.c
+        $ svn merge -r 1288:1351 http://svn.example.com/repos/branch
+        U  foo.c
+        U  bar.c
+        Skipped missing target: 'baz.c'
+        U  glub.c
+        C  glorb.h
 
-$ svn status
-M  integer.c
+        $
+      </screen>
 
-$ svn diff
-&hellip;
-# verify that the change is removed
-&hellip;
+      <para>In the previous example it might be the case that
+        <filename>baz.c</filename> exists in both snapshots of the
+        branch being compared, and the resulting delta wants to
+        change the file's contents, but the file doesn't exist in
+        the working copy.  Whatever the case, the
+        <quote>skipped</quote> message means that the user is most
+        likely comparing the wrong two trees; they're the classic
+        sign of user error.  When this happens, it's easy to
+        recursively revert all the changes created by the merge
+        (<command>svn revert --recursive</command>), delete any
+        unversioned files or directories left behind after the
+        revert, and re-run <command>svn merge</command> with
+        different arguments.</para>
 
-$ svn commit -m "Undoing change committed in r303."
-Sending        integer.c
-Transmitting file data .
-Committed revision 350.
-</screen>
+      <para>Also notice that the previous example shows a conflict
+        happening on <filename>glorb.h</filename>.  We already
+        stated that the working copy has no local edits: how can a
+        conflict possibly happen?  Again, because the user can use
+        <command>svn merge</command> to define and apply any old
+        delta to the working copy, that delta may contain textual
+        changes that don't cleanly apply to a working file, even if
+        the file has no local modifications.</para>
 
-      <para>One way to think about a repository revision is as a
-        specific group of changes (some version control systems call
-        these <firstterm>changesets</firstterm>).  By using the
-        <option>-r</option> option, you can ask <command>svn
-        merge</command> to apply a changeset, or whole range of
-        changesets, to your working copy.  In our case of undoing a
-        change, we're asking <command>svn merge</command> to apply
-        changeset #303 to our working copy
-        <emphasis>backwards</emphasis>.</para>
-
-      <sidebar>
-        <title>Subversion and Changesets</title>
-
-        <para>Everyone seems to have a slightly different definition
-          of <quote>changeset</quote>, or at least a different
-          expectation of what it means for a version control system to
-          have <quote>changeset features</quote>.  For our purpose,
-          let's say that a changeset is just a collection of changes
-          with a unique name.  The changes might include textual edits
-          to file contents, modifications to tree structure, or tweaks
-          to metadata.  In more common speak, a changeset is just a
-          patch with a name you can refer to.</para>
-
-        <para>In Subversion, a global revision number N names a tree
-          in the repository: it's the way the repository looked after
-          the Nth commit.  It's also the name of an implicit
-          changeset: if you compare tree N with tree N-1, you can
-          derive the exact patch that was committed.  For this reason,
-          it's easy to think of <quote>revision N</quote> as not just
-          a tree, but a changeset as well.  If you use an issue
-          tracker to manage bugs, you can use the revision numbers to
-          refer to particular patches that fix bugs&mdash;for example,
-          <quote>this issue was fixed by revision 9238.</quote>.
-          Somebody can then run <command>svn log -r9238</command> to
-          read about the exact changeset which fixed the bug, and run
-          <command>svn diff -c 9238</command> to see the patch
-          itself.  And Subversion's <literal>merge</literal> command
-          also uses revision numbers.  You can merge specific changesets
-          from one branch to another by naming them in the merge
-          arguments: <command>svn merge -r9237:9238</command> would
-          merge changeset #9238 into your working copy.</para>
-      </sidebar>
-
-      <para>Keep in mind that rolling back a change like this is just
-        like any other <command>svn merge</command> operation, so you
-        should use <command>svn status</command> and <command>svn
-        diff</command> to confirm that your work is in the state you
-        want it to be in, and then use <command>svn commit</command>
-        to send the final version to the repository.  After
-        committing, this particular changeset is no longer reflected
-        in the <literal>HEAD</literal> revision.</para>
-
-      <para>Again, you may be thinking: well, that really didn't undo
-        the commit, did it?  The change still exists in revision 303.
-        If somebody checks out a version of the
-        <filename>calc</filename> project between revisions 303 and
-        349, they'll still see the bad change, right?</para>
-
-      <para>Yes, that's true.  When we talk about
-        <quote>removing</quote> a change, we're really talking about
-        removing it from <literal>HEAD</literal>.  The original change
-        still exists in the repository's history.  For most
-        situations, this is good enough.  Most people are only
-        interested in tracking the <literal>HEAD</literal> of a
-        project anyway.  There are special cases, however, where you
-        really might want to destroy all evidence of the commit.
-        (Perhaps somebody accidentally committed a confidential
-        document.)  This isn't so easy, it turns out, because
-        Subversion was deliberately designed to never lose
-        information.  Revisions are immutable trees which build upon
-        one another.  Removing a revision from history would cause a
-        domino effect, creating chaos in all subsequent revisions and
-        possibly invalidating all working copies.
-        <footnote>
-          <para>The Subversion project has plans, however, to someday
-            implement a command that would accomplish the task of
-            permanently deleting information.  In the meantime, see
-            <xref linkend="svn.reposadmin.maint.tk.svndumpfilter"/>
-            for a possible workaround.</para>
-        </footnote>
-      </para>
+      <para>Another small difference between <command>svn
+          update</command> and <command>svn merge</command> are the
+        names of the full-text files created when a conflict
+        happens.  In <xref linkend="svn.tour.cycle.resolve"/>, we saw
+        that an update produces files named
+        <filename>filename.mine</filename>,
+        <filename>filename.rOLDREV</filename>, and
+        <filename>filename.rNEWREV</filename>.  When <command>svn
+          merge</command> produces a conflict, though, it creates
+        three files named <filename>filename.working</filename>,
+        <filename>filename.left</filename>, and
+        <filename>filename.right</filename>.  In this case, the
+        terms <quote>left</quote> and <quote>right</quote> are
+        describing which side of the double-tree comparison the file
+        came from.  In any case, these differing names will help you
+        distinguish between conflicts that happened as a result of an
+        update versus ones that happened as a result of a
+        merge.</para>
 
     </sect2>
 
-    <!-- =============================================================== -->
-    <sect2 id="svn.branchmerge.commonuses.resurrect">
-      <title>Resurrecting Deleted Items</title>
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <sect2 id="svn.branchmerge.advanced.blockchanges">
+      <title>Blocking Changes</title>
 
-      <para>The great thing about version control systems is that
-        information is never lost.  Even when you delete a file or
-        directory, it may be gone from the <literal>HEAD</literal>
-        revision, but the object still exists in earlier revisions.
-        One of the most common questions new users ask is, <quote>How
-        do I get my old file or directory back?</quote>.</para>
-
-      <para>The first step is to define
-        exactly <emphasis role="bold">which</emphasis> item you're
-        trying to resurrect.  Here's a useful metaphor: you can think
-        of every object in the repository as existing in a sort of
-        two-dimensional coordinate system.  The first coordinate is a
-        particular revision tree, and the second coordinate is a path
-        within that tree.  So every version of your file or directory
-        can be defined by a specific coordinate pair.  (Remember the
-        <quote>peg revision</quote> syntax&mdash;foo.c@224
-        &mdash;mentioned back in
-        <xref linkend="svn.advanced.pegrevs"/>.) </para>
-
-      <para>First, you might need to use <command>svn log</command> to
-        discover the exact coordinate pair you wish to resurrect.  A
-        good strategy is to run <command>svn log
-        --verbose</command> in a directory which used to contain your
-        deleted item.  The <option>--verbose (-v)</option> option shows a
-        list of all changed items in each revision; all you need to do
-        is find the revision in which you deleted the file or
-        directory.  You can do this visually, or by using another tool
-        to examine the log output (via <command>grep</command>, or
-        perhaps via an incremental search in an editor).</para>
-
-      <screen>
-$ cd parent-dir
-$ svn log -v
-&hellip;
-------------------------------------------------------------------------
-r808 | joe | 2003-12-26 14:29:40 -0600 (Fri, 26 Dec 2003) | 3 lines
-Changed paths:
-   D /calc/trunk/real.c
-   M /calc/trunk/integer.c
-
-Added fast fourier transform functions to integer.c.
-Removed real.c because code now in double.c.
-&hellip;
-</screen>
-
-      <para>In the example, we're assuming that you're looking for a
-        deleted file <filename>real.c</filename>.  By looking through
-        the logs of a parent directory, you've spotted that this file
-        was deleted in revision 808.  Therefore, the last version of
-        the file to exist was in the revision right before that.
-        Conclusion: you want to resurrect the path
-        <filename>/calc/trunk/real.c</filename> from revision
-        807.</para>
-
-      <para>That was the hard part&mdash;the research.  Now that you
-        know what you want to restore, you have two different
-        choices.</para>
-
-      <para>One option is to use <command>svn merge</command> to apply
-        revision 808 <quote>in reverse</quote>.  (We've already
-        discussed how to undo changes, see
-        <xref linkend="svn.branchmerge.commonuses.undo"/>.)  This
-        would have the effect of re-adding <filename>real.c</filename>
-        as a local modification.  The file would be scheduled for
-        addition, and after a commit, the file would again exist
-        in <literal>HEAD</literal>.</para>
-
-      <para>In this particular example, however, this is probably not
-        the best strategy.  Reverse-applying revision 808 would not
-        only schedule <filename>real.c</filename> for addition, but
-        the log message indicates that it would also undo certain
-        changes to <filename>integer.c</filename>, which you don't
-        want.  Certainly, you could reverse-merge revision 808 and
-        then <command>svn revert</command> the local modifications to
-        <filename>integer.c</filename>, but this technique doesn't
-        scale well.  What if there were 90 files changed in revision
-        808?</para>
-
-      <para>A second, more targeted strategy is not to use
-        <command>svn merge</command> at all, but rather the
-        <command>svn copy</command> command.  Simply copy the exact
-        revision and path <quote>coordinate pair</quote> from the
-        repository to your working copy:</para>
-
-      <screen>
-$ svn copy -r 807 \
-           http://svn.example.com/repos/calc/trunk/real.c ./real.c
-
-$ svn status
-A  +   real.c
-
-$ svn commit -m "Resurrected real.c from revision 807, /calc/trunk/real.c."
-Adding         real.c
-Transmitting file data .
-Committed revision 1390.
-</screen>
-
-      <para>The plus sign in the status output indicates that the item
-        isn't merely scheduled for addition, but scheduled for
-        addition <quote>with history</quote>.  Subversion remembers
-        where it was copied from.  In the future, running <command>svn
-        log</command> on this file will traverse back through the
-        file's resurrection and through all the history it had prior
-        to revision 807.  In other words, this new
-        <filename>real.c</filename> isn't really new; it's a direct
-        descendant of the original, deleted file.</para>
-
-      <para>Although our example shows us resurrecting a file, note
-        that these same techniques work just as well for resurrecting
-        deleted directories.</para>
+      <para>###TODO:  discuss use of 'svn merge --record-only', give
+      example.  Explain the need to differentiate between 'not merged'
+      and 'don't want to merge'.  Explain that in 1.5, users need to
+      manualy track blocked revisions in a text file or in property.
+      A future version of svn will learn to differentiate between the
+      two concepts.</para>
 
     </sect2>
 
-    <!-- =============================================================== -->
-    <sect2 id="svn.branchmerge.commonuses.patterns">
-      <title>Common Branching Patterns</title>
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <sect2 id="svn.branchmerge.advanced.logblame">
+      <title>Logging and Blaming</title>
 
-      <para>Version control is most often used for software
-        development, so here's a quick peek at two of the most common
-        branching/merging patterns used by teams of programmers.  If
-        you're not using Subversion for software development, feel
-        free to skip this section.  If you're a software developer
-        using version control for the first time, pay close attention,
-        as these patterns are often considered best practices by
-        experienced folk.  These processes aren't specific to
-        Subversion; they're applicable to any version control system.
-        Still, it may help to see them described in Subversion
-        terms.</para>
+      <para>###TODO:  demonstrate 'svn log -g' and 'svn blame -g', and
+        explain why they're useful.</para>
 
-      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-      <sect3 id="svn.branchmerge.commonuses.patterns.release">
-        <title>Release Branches</title>
+    </sect2>
 
-        <para>Most software has a typical lifecycle: code, test,
-          release, repeat.  There are two problems with this process.
-          First, developers need to keep writing new features while
-          quality-assurance teams take time to test supposedly-stable
-          versions of the software.  New work cannot halt while the
-          software is tested.  Second, the team almost always needs to
-          support older, released versions of software; if a bug is
-          discovered in the latest code, it most likely exists in
-          released versions as well, and customers will want to get
-          that bugfix without having to wait for a major new
-          release.</para>
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <sect2 id="svn.branchmerge.advanced.ancestry">
+      <title>Noticing or Ignoring Ancestry</title>
 
-        <para>Here's where version control can help.  The typical
-          procedure looks like this:</para>
+      <para>When conversing with a Subversion developer, you might
+        very likely hear reference to the term
+        <firstterm>ancestry</firstterm>.  This word is used to
+        describe the relationship between two objects in a
+        repository: if they're related to each other, then one
+        object is said to be an ancestor of the other.</para>
+
+      <para>For example, suppose you commit revision 100, which
+        includes a change to a file <filename>foo.c</filename>.
+        Then <filename>foo.c@99</filename> is an
+        <quote>ancestor</quote> of <filename>foo.c@100</filename>.
+        On the other hand, suppose you commit the deletion of
+        <filename>foo.c</filename> in revision 101, and then add a
+        new file by the same name in revision 102.  In this case,
+        <filename>foo.c@99</filename> and
+        <filename>foo.c@102</filename> may appear to be related
+        (they have the same path), but in fact are completely
+        different objects in the repository.  They share no history
+        or <quote>ancestry</quote>.</para>
+
+      <para>The reason for bringing this up is to point out an
+        important difference between <command>svn diff</command> and
+        <command>svn merge</command>.  The former command ignores
+        ancestry, while the latter command is quite sensitive to it.
+        For example, if you asked <command>svn diff</command> to
+        compare revisions 99 and 102 of <filename>foo.c</filename>,
+        you would see line-based diffs; the <literal>diff</literal>
+        command is blindly comparing two paths.  But if you asked
+        <command>svn merge</command> to compare the same two objects,
+        it would notice that they're unrelated and first attempt to
+        delete the old file, then add the new file;  the output would
+        indicate a deletion followed by an add:</para>
+
+      <screen>
+        D  foo.c
+        A  foo.c
+      </screen>
+
+      <para>Most merges involve comparing trees that are ancestrally
+        related to one another, and therefore <command>svn
+          merge</command> defaults to this behavior.  Occasionally,
+        however, you may want the <literal>merge</literal> command
+        to compare two unrelated trees.  For example, you may have
+        imported two source-code trees representing different vendor
+        releases of a software project (see <xref
+                                               linkend="svn.advanced.vendorbr"/>).  If you asked
+        <command>svn merge</command> to compare the two trees, you'd
+        see the entire first tree being deleted, followed by an add
+        of the entire second tree!  In these situations, you'll want
+        <command>svn merge</command> to do a path-based comparison
+        only, ignoring any relations between files and directories.
+        Add the <option>--ignore-ancestry</option> option to your
+        merge command, and it will behave just like <command>svn
+          diff</command>.  (And conversely, the
+        <option>--notice-ancestry</option> option will cause
+        <command>svn diff</command> to behave like the
+        <literal>merge</literal> command.)</para>
+
+    </sect2>
+
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <sect2 id="svn.branchmerge.advanced.moves">
+      <title>Merges and Moves</title>
+
+      <para>A common desire is to refactor source code, especially
+        in Java-based software projects.  Files and directories are
+        shuffled around and renamed, often causing great disruption
+        to everyone working on the project.  Sounds like a perfect
+        case to use a branch, doesn't it?  Just create a branch,
+        shuffle things around, then merge the branch back to the
+        trunk, right?</para>
+
+      <para>Alas, this scenario doesn't work so well right now, and
+        is considered one of Subversion's current weak spots.  The
+        problem is that Subversion's <command>update</command>
+        command isn't as robust as it should be, particularly when
+        dealing with copy and move operations.</para>
+
+      <para>When you use <command>svn copy</command> to duplicate a
+        file, the repository remembers where the new file came from,
+        but it fails to transmit that information to the client
+        which is running <command>svn update</command>
+        or <command>svn merge</command>.  Instead of telling the
+        client, <quote>Copy that file you already have to this new
+          location</quote>, it instead sends down an entirely new
+        file.  This can lead to problems, especially because the
+        same thing happens with renamed files.  A lesser-known fact
+        about Subversion is that it lacks <quote>true
+          renames</quote>&mdash;the <command>svn move</command>
+        command is nothing more than an aggregation of <command>svn
+          copy</command> and <command>svn delete</command>.</para>
+
+      <para>For example, suppose that while working on your private
+        branch, you rename <filename>integer.c</filename>
+        to <filename>whole.c</filename>.  Effectively you've created
+        a new file in your branch that is a copy of the original
+        file, and deleted the original file.  Meanwhile, back
+        on <filename>trunk</filename>, Sally has committed some
+        improvements to <filename>integer.c</filename>.  Now you
+        decide to merge your branch to the trunk:</para>
+
+      <screen>
+        $ cd calc/trunk
+
+        $ svn merge -r 341:405 http://svn.example.com/repos/calc/branches/my-calc-branch
+        D   integer.c
+        A   whole.c
+      </screen>
+
+      <para>This doesn't look so bad at first glance, but it's also
+        probably not what you or Sally expected.  The merge
+        operation has deleted the latest version
+        of <filename>integer.c</filename> file (the one containing
+        Sally's latest changes), and blindly added your
+        new <filename>whole.c</filename> file&mdash;which is a
+        duplicate of the <emphasis>older</emphasis> version
+        of <filename>integer.c</filename>.  The net effect is that
+        merging your <quote>rename</quote> to the branch has removed
+        Sally's recent changes from the latest revision!</para>
+
+      <para>This isn't true data-loss; Sally's changes are still in
+        the repository's history, but it may not be immediately
+        obvious that this has happened.  The moral of this story is
+        that until Subversion improves, be very careful about
+        merging copies and renames from one branch to
+        another.</para>
+
+    </sect2>
+
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <sect2 id="svn.branchmerge.advanced.pre1.5clients">
+      <title>Blocking Pre-1.5 Clients</title>
+
+      <para>###TODO:  Why you might want to do this.  (How did we
+        decide to do this??)</para>
+
+    </sect2>
+
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.branchmerge.commonpatterns">
+    <title>Common Branching Patterns</title>
+
+    <para>There are many different uses for branching and <command>svn
+        merge</command>, and this section describes the most common ones
+      you're likely to run into.</para>
+
+    <para>Version control is most often used for software
+      development, so here's a quick peek at two of the most common
+      branching/merging patterns used by teams of programmers.  If
+      you're not using Subversion for software development, feel
+      free to skip this section.  If you're a software developer
+      using version control for the first time, pay close attention,
+      as these patterns are often considered best practices by
+      experienced folk.  These processes aren't specific to
+      Subversion; they're applicable to any version control system.
+      Still, it may help to see them described in Subversion
+      terms.</para>
+
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <sect2 id="svn.branchmerge.commonpatterns.release">
+      <title>Release Branches</title>
+
+      <para>Most software has a typical lifecycle: code, test,
+        release, repeat.  There are two problems with this process.
+        First, developers need to keep writing new features while
+        quality-assurance teams take time to test supposedly-stable
+        versions of the software.  New work cannot halt while the
+        software is tested.  Second, the team almost always needs to
+        support older, released versions of software; if a bug is
+        discovered in the latest code, it most likely exists in
+        released versions as well, and customers will want to get
+        that bugfix without having to wait for a major new
+        release.</para>
+
+      <para>Here's where version control can help.  The typical
+        procedure looks like this:</para>
 
       <itemizedlist>
 
         <listitem>
           <para><emphasis>Developers commit all new work to the
-                trunk.</emphasis>
+              trunk.</emphasis>
 
-              Day-to-day changes are committed to
-              <filename>/trunk</filename>: new features, bugfixes, and
-              so on.</para>
+            Day-to-day changes are committed to
+            <filename>/trunk</filename>: new features, bugfixes, and
+            so on.</para>
         </listitem>
 
         <listitem>
           <para><emphasis>The trunk is copied to a
-                <quote>release</quote> branch.</emphasis>
+              <quote>release</quote> branch.</emphasis>
 
-              When the team thinks the software is ready for release
-              (say, a 1.0 release), then <filename>/trunk</filename>
-              might be copied to
-              <filename>/branches/1.0</filename>.</para>
+            When the team thinks the software is ready for release
+            (say, a 1.0 release), then <filename>/trunk</filename>
+            might be copied to
+            <filename>/branches/1.0</filename>.</para>
         </listitem>
 
         <listitem>
           <para><emphasis>Teams continue to work in parallel.</emphasis>
 
-              One team begins rigorous testing of the release branch,
-              while another team continues new work (say, for version
-              2.0) on <filename>/trunk</filename>.  If bugs are
-              discovered in either location, fixes are ported back and
-              forth as necessary.  At some point, however, even that
-              process stops.  The branch is <quote>frozen</quote> for
-              final testing right before a release.</para>
+            One team begins rigorous testing of the release branch,
+            while another team continues new work (say, for version
+            2.0) on <filename>/trunk</filename>.  If bugs are
+            discovered in either location, fixes are ported back and
+            forth as necessary.  At some point, however, even that
+            process stops.  The branch is <quote>frozen</quote> for
+            final testing right before a release.</para>
         </listitem>
 
         <listitem>
           <para><emphasis>The branch is tagged and released.</emphasis>
 
-              When testing is complete,
-              <filename>/branches/1.0</filename> is copied to
-              <filename>/tags/1.0.0</filename> as a reference
-              snapshot.  The tag is packaged and released to
-              customers.</para>
+            When testing is complete,
+            <filename>/branches/1.0</filename> is copied to
+            <filename>/tags/1.0.0</filename> as a reference
+            snapshot.  The tag is packaged and released to
+            customers.</para>
         </listitem>
 
         <listitem>
           <para><emphasis>The branch is maintained over time.</emphasis>
 
-              While work continues on <filename>/trunk</filename> for
-              version 2.0, bugfixes continue to be ported from
-              <filename>/trunk</filename> to
-              <filename>/branches/1.0</filename>.  When enough
-              bugfixes have accumulated, management may decide to do a
-              1.0.1 release: <filename>/branches/1.0</filename> is
-              copied to <filename>/tags/1.0.1</filename>, and the tag
-              is packaged and released.</para>
+            While work continues on <filename>/trunk</filename> for
+            version 2.0, bugfixes continue to be ported from
+            <filename>/trunk</filename> to
+            <filename>/branches/1.0</filename>.  When enough
+            bugfixes have accumulated, management may decide to do a
+            1.0.1 release: <filename>/branches/1.0</filename> is
+            copied to <filename>/tags/1.0.1</filename>, and the tag
+            is packaged and released.</para>
         </listitem>
 
-        </itemizedlist>
+      </itemizedlist>
 
-        <para>This entire process repeats as the software matures:
-          when the 2.0 work is complete, a new 2.0 release branch is
-          created, tested, tagged, and eventually released.  After
-          some years, the repository ends up with a number of release
-          branches in <quote>maintenance</quote> mode, and a number
-          of tags representing final shipped versions.</para>
+      <para>This entire process repeats as the software matures:
+        when the 2.0 work is complete, a new 2.0 release branch is
+        created, tested, tagged, and eventually released.  After
+        some years, the repository ends up with a number of release
+        branches in <quote>maintenance</quote> mode, and a number
+        of tags representing final shipped versions.</para>
 
-      </sect3>
+    </sect2>
 
-      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-      <sect3 id="svn.branchmerge.commonuses.patterns.feature">
-        <title>Feature Branches</title>
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <sect2 id="svn.branchmerge.commonpatterns.feature">
+      <title>Feature Branches</title>
 
-        <para>A <firstterm>feature branch</firstterm> is the sort of
-          branch that's been the dominant example in this chapter, the
-          one you've been working on while Sally continues to work on
-          <filename>/trunk</filename>.  It's a temporary branch
-          created to work on a complex change without interfering with
-          the stability of <filename>/trunk</filename>.  Unlike
-          release branches (which may need to be supported forever),
-          feature branches are born, used for a while, merged back to
-          the trunk, then ultimately deleted.  They have a finite span
-          of usefulness.</para>
+      <para>A <firstterm>feature branch</firstterm> is the sort of
+        branch that's been the dominant example in this chapter, the
+        one you've been working on while Sally continues to work on
+        <filename>/trunk</filename>.  It's a temporary branch
+        created to work on a complex change without interfering with
+        the stability of <filename>/trunk</filename>.  Unlike
+        release branches (which may need to be supported forever),
+        feature branches are born, used for a while, merged back to
+        the trunk, then ultimately deleted.  They have a finite span
+        of usefulness.</para>
 
-        <para>Again, project policies vary widely concerning exactly
-          when it's appropriate to create a feature branch.  Some
-          projects never use feature branches at all: commits to
-          <filename>/trunk</filename> are a free-for-all.  The
-          advantage to this system is that it's simple&mdash;nobody
-          needs to learn about branching or merging.  The disadvantage
-          is that the trunk code is often unstable or unusable.  Other
-          projects use branches to an extreme: no change is
-          <emphasis>ever</emphasis> committed to the trunk directly.
-          Even the most trivial changes are created on a short-lived
-          branch, carefully reviewed and merged to the trunk.  Then
-          the branch is deleted.  This system guarantees an
-          exceptionally stable and usable trunk at all times, but at
-          the cost of tremendous process overhead.</para>
+      <para>Again, project policies vary widely concerning exactly
+        when it's appropriate to create a feature branch.  Some
+        projects never use feature branches at all: commits to
+        <filename>/trunk</filename> are a free-for-all.  The
+        advantage to this system is that it's simple&mdash;nobody
+        needs to learn about branching or merging.  The disadvantage
+        is that the trunk code is often unstable or unusable.  Other
+        projects use branches to an extreme: no change is
+        <emphasis>ever</emphasis> committed to the trunk directly.
+        Even the most trivial changes are created on a short-lived
+        branch, carefully reviewed and merged to the trunk.  Then
+        the branch is deleted.  This system guarantees an
+        exceptionally stable and usable trunk at all times, but at
+        the cost of tremendous process overhead.</para>
 
-        <para>Most projects take a middle-of-the-road approach.  They
-          commonly insist that <filename>/trunk</filename> compile and
-          pass regression tests at all times.  A feature branch is
-          only required when a change requires a large number of
-          destabilizing commits.  A good rule of thumb is to ask this
-          question: if the developer worked for days in isolation and
-          then committed the large change all at once (so that
-          <filename>/trunk</filename> were never destabilized), would
-          it be too large a change to review?  If the answer to that
-          question is <quote>yes</quote>, then the change should be
-          developed on a feature branch.  As the developer commits
-          incremental changes to the branch, they can be easily
-          reviewed by peers.</para>
+      <para>Most projects take a middle-of-the-road approach.  They
+        commonly insist that <filename>/trunk</filename> compile and
+        pass regression tests at all times.  A feature branch is
+        only required when a change requires a large number of
+        destabilizing commits.  A good rule of thumb is to ask this
+        question: if the developer worked for days in isolation and
+        then committed the large change all at once (so that
+        <filename>/trunk</filename> were never destabilized), would it
+        be too large a change to review?  If the answer to that
+        question is <quote>yes</quote>, then the change should be
+        developed on a feature branch.  As the developer commits
+        incremental changes to the branch, they can be easily reviewed
+        by peers.</para>
 
-        <para>Finally, there's the issue of how to best keep a feature
-          branch in <quote>sync</quote> with the trunk as work
-          progresses.  As we mentioned earlier, there's a great risk
-          to working on a branch for weeks or months; trunk changes
-          may continue to pour in, to the point where the two lines of
-          development differ so greatly that it may become a nightmare
-          trying to merge the branch back to the trunk.</para>
+      <para>Finally, there's the issue of how to best keep a feature
+        branch in <quote>sync</quote> with the trunk as work
+        progresses.  As we mentioned earlier, there's a great risk to
+        working on a branch for weeks or months; trunk changes may
+        continue to pour in, to the point where the two lines of
+        development differ so greatly that it may become a nightmare
+        trying to merge the branch back to the trunk.</para>
 
-        <para>This situation is best avoided by regularly merging
-          trunk changes to the branch.  Make up a policy: once a week,
-          merge the last week's worth of trunk changes to the branch.
-          Take care when doing this; the merging needs to be
-          hand-tracked to avoid the problem of repeated merges (as
-          described in
-          <xref
-          linkend="svn.branchmerge.copychanges.bestprac.track"/>).
-          You'll need to write careful log messages detailing exactly
-          which revision ranges have been merged already (as
-          demonstrated in
-          <xref linkend="svn.branchmerge.commonuses.wholebr"/>).  It
-          may sound intimidating, but it's actually pretty easy to
-          do.</para>
+      <para>This situation is best avoided by regularly merging trunk
+        changes to the branch.  Make up a policy: once a week, merge
+        the last week's worth of trunk changes to the branch.  Take
+        care when doing this; the merging needs to be hand-tracked to
+        avoid the problem of repeated merges.  You'll need to write
+        careful log messages detailing exactly which revision ranges
+        have been merged already.  It may sound intimidating, but it's
+        actually pretty easy to do.</para>
 
-        <para>At some point, you'll be ready to merge the
-          <quote>synchronized</quote> feature branch back to the
-          trunk.  To do this, begin by doing a final merge of the
-          latest trunk changes to the branch.  When that's done, the
-          latest versions of branch and trunk will be absolutely
-          identical except for your branch changes.  So in this
-          special case, you would merge by comparing the branch with
-          the trunk:</para>
+      <para>At some point, you'll be ready to merge the
+        <quote>synchronized</quote> feature branch back to the trunk.
+        To do this, begin by doing a final merge of the latest trunk
+        changes to the branch.  When that's done, the latest versions
+        of branch and trunk will be absolutely identical except for
+        your branch changes.  So in this special case, you would merge
+        by comparing the branch with the trunk:</para>
 
-        <screen>
-$ cd trunk-working-copy
+      <para>###TODO:  SIMPLIFY THIS EXAMPLE TO SHOW MERGE-TRACKING</para>
 
-$ svn update
-At revision 1910.
+      <screen>
+        $ cd trunk-working-copy
 
-$ svn merge http://svn.example.com/repos/calc/trunk@1910 \
-            http://svn.example.com/repos/calc/branches/mybranch@1910
-U  real.c
-U  integer.c
-A  newdirectory
-A  newdirectory/newfile
-&hellip;
-</screen>
+        $ svn update
+        At revision 1910.
 
-        <para>By comparing the <literal>HEAD</literal> revision of the
-          trunk with the <literal>HEAD</literal> revision of the
-          branch, you're defining a delta that describes only the
-          changes you made to the branch; both lines of development
-          already have all of the trunk changes.</para>
+        $ svn merge http://svn.example.com/repos/calc/trunk@1910 \
+        http://svn.example.com/repos/calc/branches/mybranch@1910
+        U  real.c
+        U  integer.c
+        A  newdirectory
+        A  newdirectory/newfile
+        &hellip;
+      </screen>
 
-        <para>Another way of thinking about this pattern is that your
-          weekly sync of trunk to branch is analogous to running
-          <command>svn update</command> in a working copy, while the
-          final merge step is analogous to running <command>svn
+      <para>By comparing the <literal>HEAD</literal> revision of the
+        trunk with the <literal>HEAD</literal> revision of the
+        branch, you're defining a delta that describes only the
+        changes you made to the branch; both lines of development
+        already have all of the trunk changes.</para>
+
+      <para>Another way of thinking about this pattern is that your
+        weekly sync of trunk to branch is analogous to running
+        <command>svn update</command> in a working copy, while the
+        final merge step is analogous to running <command>svn
           commit</command> from a working copy.  After all, what else
-          <emphasis>is</emphasis> a working copy but a very shallow
-          private branch?  It's a branch that's only capable of
-          storing one change at a time.</para>
-
-      </sect3>
+        <emphasis>is</emphasis> a working copy but a very shallow
+        private branch?  It's a branch that's only capable of
+        storing one change at a time.</para>
 
     </sect2>
 
