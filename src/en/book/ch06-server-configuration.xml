@@ -485,20 +485,21 @@ $               # svnserve is now running, listening on port 3690
           <option>--listen-host=</option> options to customize the
           exact port and hostname to <quote>bind</quote> to.</para>
 
-      <para>Once we successfully start <command>svnserve</command> as above,
-        it makes every repository on your system available to the
-        network.  A client needs to specify an
+      <para>Once we successfully start <command>svnserve</command> as
+        above, it makes every repository on your system available to
+        the network.  A client needs to specify an
         <emphasis>absolute</emphasis> path in the repository URL.  For
         example, if a repository is located at
-        <filename>/usr/local/repositories/project1</filename>, then a
-        client would reach it via
-        <uri>svn://host.example.com/usr/local/repositories/project1</uri>.
-        To increase security, you can pass the <option>-r</option>
-        option to <command>svnserve</command>, which restricts it to
-        exporting only repositories below that path.  For example:</para>
+        <filename>/var/svn/project1</filename>, then a client would
+        reach it via
+        <uri>svn://host.example.com/var/svn/project1</uri>.  To
+        increase security, you can pass the <option>-r</option> option
+        to <command>svnserve</command>, which restricts it to
+        exporting only repositories below that path.  For
+        example:</para>
       
       <screen>
-$ svnserve -d -r /usr/local/repositories
+$ svnserve -d -r /var/svn
 &hellip;
 </screen>
 
@@ -1521,13 +1522,13 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
         name and the optional port number) begin with
         <filename>/repos/</filename> to a DAV provider whose
         repository is located at
-        <filename>/absolute/path/to/repository</filename> using the
+        <filename>/var/svn/repository</filename> using the
         following <filename>httpd.conf</filename> syntax:</para>
 
         <screen>
 &lt;Location /repos&gt;
   DAV svn
-  SVNPath /absolute/path/to/repository
+  SVNPath /var/svn/repository
 &lt;/Location&gt;
 </screen>
 
@@ -1537,7 +1538,7 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
         <literal>SVNParentPath</literal> directive, to indicate that
         common parent directory.  For example, if you know you will be
         creating multiple Subversion repositories in a directory
-        <filename>/usr/local/svn</filename> that would be accessed via
+        <filename>/var/svn</filename> that would be accessed via
         URLs like <uri>http://my.server.com/svn/repos1</uri>,
         <uri>http://my.server.com/svn/repos2</uri>, and
         so on, you could use the <filename>httpd.conf</filename>
@@ -1547,8 +1548,8 @@ LoadModule dav_svn_module     modules/mod_dav_svn.so
 &lt;Location /svn&gt;
   DAV svn
 
-  # any "/svn/foo" URL will map to a repository /usr/local/svn/foo
-  SVNParentPath /usr/local/svn
+  # any "/svn/foo" URL will map to a repository /var/svn/foo
+  SVNParentPath /var/svn
 &lt;/Location&gt;
 </screen>
 
@@ -1642,7 +1643,7 @@ ServerName svn.example.com
       <screen>
 &lt;Location /svn&gt;
   DAV svn
-  SVNParentPath /usr/local/svn
+  SVNParentPath /var/svn
 &lt;/Location&gt;
 </screen>
 
@@ -1725,7 +1726,7 @@ $
         <screen>
 &lt;Location /svn&gt;
   DAV svn
-  SVNParentPath /usr/local/svn
+  SVNParentPath /var/svn
   AuthType Basic
   AuthName "Subversion repository"
   AuthUserFile /etc/svn-auth-file
@@ -1748,7 +1749,7 @@ $
         <screen>
 &lt;Location /svn&gt;
   DAV svn
-  SVNParentPath /usr/local/svn
+  SVNParentPath /var/svn
   AuthType Basic
   AuthName "Subversion repository"
   AuthUserFile /etc/svn-auth-file
@@ -1964,7 +1965,7 @@ ssl-client-cert-password = somepassword
         <screen>
 &lt;Location /svn&gt;
   DAV svn
-  SVNParentPath /usr/local/svn
+  SVNParentPath /var/svn
 
   # how to authenticate a user
   AuthType Basic
@@ -2007,7 +2008,7 @@ ssl-client-cert-password = somepassword
         <screen>
 &lt;Location /svn&gt;
   DAV svn
-  SVNParentPath /usr/local/svn
+  SVNParentPath /var/svn
 
   # how to authenticate a user
   AuthType Basic
@@ -2082,7 +2083,7 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           <programlisting>
 &lt;Location /repos&gt;
   DAV svn
-  SVNParentPath /usr/local/svn
+  SVNParentPath /var/svn
 
   # our access control policy
   AuthzSVNAccessFile /path/to/access/file
@@ -2102,7 +2103,7 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           <programlisting>
 &lt;Location /repos&gt;
   DAV svn
-  SVNParentPath /usr/local/svn
+  SVNParentPath /var/svn
 
   # our access control policy
   AuthzSVNAccessFile /path/to/access/file
@@ -2136,7 +2137,7 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           <programlisting>
 &lt;Location /repos&gt;
   DAV svn
-  SVNParentPath /usr/local/svn
+  SVNParentPath /var/svn
 
   # our access control policy
   AuthzSVNAccessFile /path/to/access/file
@@ -2214,7 +2215,7 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           <programlisting>
 &lt;Location /repos&gt;
   DAV svn
-  SVNParentPath /usr/local/svn
+  SVNParentPath /var/svn
 
   SVNPathAuthz off
 &lt;/Location&gt;
@@ -2365,7 +2366,7 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
         <screen>
 &lt;Location /svn&gt;
   DAV svn
-  SVNParentPath /usr/local/svn
+  SVNParentPath /var/svn
   SVNIndexXSLT "/svnindex.xsl"
   &hellip;
 &lt;/Location&gt;
@@ -2397,7 +2398,7 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           <screen>
 &lt;Location /svn&gt;
   DAV svn
-  SVNParentPath /usr/local/svn
+  SVNParentPath /var/svn
   SVNListParentPath on
   &hellip;
 &lt;/Location&gt;
@@ -2406,7 +2407,7 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           <para>If a user now points her web browser to the
           URL <literal>http://host.example.com/svn/</literal>, she'll
           see list of all Subversion repositories sitting
-          in <filename>/usr/local/svn</filename>.  Obviously, this can
+          in <filename>/var/svn</filename>.  Obviously, this can
           be a security problem, so this feature is turned off by
           default.</para>
 
