@@ -105,14 +105,14 @@
       place.</para>
 
     <para>Let's say that you've been given the task of implementing a
-      radical new project feature.  It will take a long time to write,
-      and will affect all the files in the project.  The problem here
+      large software feature.  It will take a long time to write, and
+      will affect all the files in the project.  The immediate problem
       is that you don't want to interfere with Sally, who is in the
       process of fixing small bugs here and there.  She's depending on
       the fact that the latest version of the project (in
       <filename>/calc/trunk</filename>) is always usable.  If you
       start committing your changes bit-by-bit, you'll surely break
-      things for Sally.</para>
+      things for Sally (and other team members as well.)</para>
 
     <para>One strategy is to crawl into a hole: you and Sally can stop
       sharing information for a week or two.  That is, start gutting
@@ -128,15 +128,17 @@
       forth, or just do all the work on a single computer.  By that
       same token, it's difficult to share your changes-in-progress
       with anyone else.  A common software development <quote>best
-      practice</quote> is to allow your peers to review your work as you
-      go.  If nobody sees your intermediate commits, you lose
-      potential feedback.  Finally, when you're finished with all your
-      changes, you might find it very difficult to re-merge your final
-      work with the rest of the company's main body of code.  Sally
-      (or others) may have made many other changes in the repository
-      that are difficult to incorporate into your working
-      copy&mdash;especially if you run <command>svn update</command>
-      after weeks of isolation.</para>
+      practice</quote> is to allow your peers to review your work as
+      you go.  If nobody sees your intermediate commits, you lose
+      potential feedback, and may end up going down the wrong path for
+      weeks before another person on your team notices.  Finally, when
+      you're finished with all your changes, you might find it very
+      difficult to re-merge your final work with the rest of the
+      company's main body of code.  Sally (or others) may have made
+      many other changes in the repository that are difficult to
+      incorporate into your working copy&mdash;especially if you
+      run <command>svn update</command> after weeks of
+      isolation.</para>
 
     <para>The better solution is to create your own branch, or line of
       development, in the repository.  This allows you to save your
@@ -165,7 +167,7 @@
         begins its life as a copy of
         <filename>/calc/trunk</filename>.</para>
 
-      <para>At this point, you've probably seen <command>svn
+      <para>At this point, you might have seen <command>svn
         copy</command> used to copy one file to another within a
         working copy.  But it can also be used to do
         a <quote>remote</quote> copy entirely within the repository.
@@ -214,7 +216,7 @@ Committed revision 341.
           repository growing huge&mdash;Subversion doesn't actually
           duplicate any data.  Instead, it creates a new directory
           entry that points to an <emphasis>existing</emphasis> tree.
-          If you're an experience Unix user, you'll recognize this as
+          If you're an experienced Unix user, you'll recognize this as
           the same concept behind a hard-link.  As further changes are
           made to files and directories beneath the copied directory,
           Subversion continues to employ this hard-link concept where
@@ -224,9 +226,9 @@ Committed revision 341.
         <para>This is why you'll often hear Subversion users talk
           about <quote>cheap copies</quote>.  It doesn't matter how
           large the directory is&mdash;it takes a very tiny, constant
-          amount of time to make a copy of it.  In fact, this feature
-          is the basis of how commits work in Subversion: each
-          revision is a <quote>cheap copy</quote> of the previous
+          amount of time and space to make a copy of it.  In fact,
+          this feature is the basis of how commits work in Subversion:
+          each revision is a <quote>cheap copy</quote> of the previous
           revision, with a few items lazily changed within.  (To read
           more about this, visit Subversion's website and read about
           the <quote>bubble up</quote> method in Subversion's design
@@ -448,7 +450,11 @@ Changed paths:
       sharing; Subversion gives you the ability to selectively
       <quote>copy</quote> changes between branches.  And when you're
       completely finished with your branch, your entire set of branch
-      changes can be copied back into the trunk.</para>
+      changes can be copied back into the trunk.  In Subversion
+      terminology, the general act of replicating changes from one
+      branch to another is called <firstterm>merging</firstterm>, and
+      is performed using various invocations of the <command>svn
+      merge</command> command.</para>
 
     <para>In the examples that follow, we're assuming that both your
       Subversion client and server are running Subversion 1.5 (or
@@ -460,21 +466,73 @@ Changed paths:
 
   <!-- =============================================================== -->
     <sect2 id="svn.branchemerge.basicmerging.stayinsync">
-      <title>Staying in Sync</title>
+      <title>Keeping a Branch in Sync</title>
 
-      <para>###TODO:  show how to keep feature branch in sync with
-      trunk.  This is the first into to 'svn merge', so explain how
-      it creates edits in a working copy that can be either reverted
-      or committed.</para>
+      <para>Continuing with our running example, let's suppose that a
+        week has passed since you started working on your private
+        branch.  Your new feature isn't finished yet, but at the same
+        time you know that other people on your team have continued to
+        make important changes in the
+        project's <filename>/trunk</filename>.  It's in your best
+        interest to replicate those changes to your own branch, just
+        to make sure they mesh well with your changes.  In fact, this
+        is a best practice: by frequently keeping your branch in sync
+        with the main development line, it helps
+        prevent <quote>surprise</quote> conflicts when it comes time
+        for you to fold your changes back into the trunk.</para>
 
-      <para>It's time to use the <command>svn merge</command> command.
-        This command, it turns out, is a very close cousin to the
-        <command>svn diff</command> command (which you read about in
-        <xref linkend="svn.tour"/>).  Both commands are able to
-        compare any two objects in the repository and describe the
-        differences.  For example, you can ask <command>svn
-        diff</command> to show you the exact change made by Sally in
-        revision 344:</para>
+      <para>Subversion is aware of the history of your branch, and
+        knows when it divided away from the trunk.  To replicate the
+        latest, greatest trunk changes to your branch, simply
+        run:</para>
+
+      <screen>
+$ pwd
+/home/user/my-calc-branch
+
+$ svn merge http://svn.example.com/repos/calc/trunk
+U  button.c
+U  integer.c
+</screen>
+
+      <para>Your branch working copy now contains new local
+        modifications, and these edits are duplications of all of the
+        changes that have happened on the trunk since you first
+        created your branch:</para>
+
+      <screen>
+$ svn status
+M  button.c
+M  integer.c
+</screen>
+
+      <para>At this point, the wise thing to do is look at the changes
+        carefully with <command>svn diff</command>, then build and
+        test your branch.  You might need to resolve some conflicts
+        (just as you do with <command>svn update</command>), or
+        possibly make some small edits to get things working properly.
+        (Remember, just because there are
+        no <emphasis>syntactic</emphasis> conflicts doesn't mean there
+        aren't any <emphasis>semantic</emphasis> conflicts!)  If you
+        encounter serious problems, you can always abort the local
+        changes by running <command>svn revert</command> and start a
+        long <quote>what's going on?</quote> discussion with your
+        collaborators.  If things look good, however, then you can
+        submit your changes into the repository:</para>
+
+      <screen>
+$ svn commit -m "Merged /trunk to /my-calc-branch."
+Sending        button.c
+Sending        integer.c
+Transmitting file data ..
+Committed revision 357.
+</screen>
+
+      <para>At this point, your private branch is now <quote>in
+          sync</quote> with the trunk, so you can rest easier knowing
+          that as you continue to work in isolation, you're not
+          drifting <emphasis>too</emphasis> far away from what
+          everyone else is doing.</para>
 
       <sidebar>
         <title>Why Not Use Patches Instead?</title>
@@ -510,13 +568,113 @@ done
           diff</command> wouldn't have mentioned it at
           all.  <command>svn diff</command> only outputs the limited
           patch-format, so there are some ideas it simply can't
-          express.  The <command>svn merge</command> command, however,
-          can express changes in tree structure and properties by
-          directly applying them to your working copy.</para>
+          express.</para>
+
+        <para>The <command>svn merge</command> command, however, can
+          express changes in tree structure and properties by directly
+          applying them to your working copy.  Even more important,
+          this command records the changes that have been duplicated
+          to your branch, so that Subversion is aware of exactly which
+          changes exist in each location (see
+          <xref linkend="svn.branchmerge.basicmerging.basicmergetracking.mergeinfo"/>.)
+          This is a critical feature that makes branch management
+          usable; without it, users would have to manually keep notes
+          on which sets of changes have or haven't been merged
+          yet.</para>
 
       </sidebar>
 
-      <para>###TODO:  show how to merge back to trunk when done.</para>
+      <para>Suppose, now, that another week has passed.  You've
+        committed more changes to your branch, and your comrades have
+        continued to improve the trunk as well.  Once again, you'd
+        like to replicate the latest trunk changes to your branch and
+        bring yourself in sync.  Just run the same merge command
+        again!</para>
+
+      <screen>
+$ svn merge http://svn.example.com/repos/calc/trunk
+U  integer.c
+U  Makefile
+A  README
+</screen>
+
+      <para>Subversion knows which trunk changes you've already
+        replicated to your branch, so it carefully only replicates
+        those changes you don't yet have.  Once again, you'll have to
+        build, test, and <command>svn commit</command> the local
+        modifications to your branch.</para>
+
+      <para>What happens when you finally finish your work, though?
+        Your new feature is finished, and you're ready to merge your
+        branch changes back to the trunk (so your team can enjoy the
+        bounty of your labor.)  The process is simple.  First, bring
+        your branch in sync with trunk again, just as you've been
+        doing all along:</para>
+
+      <screen>
+$ svn merge http://svn.example.com/repos/calc/trunk
+U  button.c
+U  README
+
+$ # build, test, ...
+
+$ svn commit -m "Final merge of trunk changes to my-calc-branch."
+Sending        button.c
+Sending        README
+Transmitting file data ..
+Committed revision 390.
+</screen>
+
+      <para>Now, you use <command>svn merge</command> to replicate
+        your branch changes back into the trunk.  To do this, you'll
+        need a working copy of <filename>/trunk</filename>.  You can
+        do this by either doing an <command>svn checkout</command>,
+        dredging up an old trunk working copy from somewhere on your
+        disk, or by using <command>svn switch</command> (see
+        <xref linkend="svn.branchmerge.switchwc"/>.)  Then
+        invoke <command>svn merge</command> within your trunk working
+        copy:</para>
+
+      <screen>
+$ pwd
+/home/user/calc-trunk
+
+$ svn merge http://svn.example.com/repos/calc/branches/my-calc-branch
+U  button.c
+U  integer.c
+U  Makefile
+
+$ # build, test, verify, ...
+
+$ svn commit -m "Merge my-calc-branch back into trunk!"
+Sending        button.c
+Sending        integer.c
+Sending        Makefile
+Transmitting file data ..
+Committed revision 391.
+</screen>
+
+      <para>Congratulations, your branch has now been re-merged back
+        into the main line of development.  You'll no longer need your
+        branch at this point anymore, so you can do some basic
+        housecleaning in the repository:</para>
+
+      <screen>
+$ svn delete http://svn.example.com/repos/calc/branches/my-calc-branch
+Committed revision 392.
+</screen>
+
+      <para>But wait!  Isn't the history of that branch valuable?
+        What if somebody wants to audit the evolution of your feature
+        someday, and look at all your commits?  No need to worry.
+        Remember that even though your branch is no longer visible in
+        the <filename>/branches</filename> directory, its existence is
+        still an immutable part of the repository's history.  A
+        simple <command>svn log</command> command on
+        the <filename>/branches</filename> URL will show the entire
+        history of your branch.  Your branch can even be resurrected
+        at some point, should you desire.  (See
+        <xref linkend="svn.branchmerge.advanced.resurrect"/>.)</para>
 
     </sect2>
 
