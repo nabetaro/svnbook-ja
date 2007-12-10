@@ -419,6 +419,7 @@ Changed paths:
 
   </sect1>
 
+
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <!-- ================================================================= -->
@@ -463,6 +464,50 @@ Changed paths:
       automatically, and you'll have to use <quote>manual</quote>
       methods to achieve similar results.  (See
       <xref linkend="svn.branchmerge.advanced"/>.)</para>
+
+  <!-- =============================================================== -->
+    <sect2 id="svn.branchmerge.changesets">
+      <title>Changesets</title>
+
+      <para>Before we get too far in, we should warn you that there's
+        going to be a lot of discussion of <quote>changes</quote> in
+        the pages ahead.  A lot of people experienced with version
+        control systems use the terms <quote>change</quote>
+        and <quote>changeset</quote> interchangeably, and we should
+        clarify what Subversion understands as
+        a <firstterm>changeset</firstterm>.</para>
+
+      <para>Everyone seems to have a slightly different definition
+        of <quote>changeset</quote>, or at least a different
+        expectation of what it means for a version control system to
+        have them.  For our purpose, let's say that a changeset is
+        just a collection of changes with a unique name.  The changes
+        might include textual edits to file contents, modifications to
+        tree structure, or tweaks to metadata.  In more common speak,
+        a changeset is just a patch with a name you can refer
+        to.</para>
+
+      <para>In Subversion, a global revision number N names a tree in
+        the repository: it's the way the repository looked after the
+        Nth commit.  It's also the name of an implicit changeset: if
+        you compare tree N with tree N-1, you can derive the exact
+        patch that was committed.  For this reason, it's easy to think
+        of revision N as not just a tree, but a changeset as well.  If
+        you use an issue tracker to manage bugs, you can use the
+        revision numbers to refer to particular patches that fix
+        bugs&mdash;for example,
+        <quote>this issue was fixed by revision 9238.</quote>.
+        Somebody can then run <command>svn log -r9238</command> to
+        read about the exact changeset which fixed the bug, and run
+        <command>svn diff -c 9238</command> to see the patch itself.
+        And (as you'll see shortly)
+        Subversion's <command>merge</command> command is able to use
+        revision numbers.  You can merge specific changesets from one
+        branch to another by naming them in the merge
+        arguments: <command>svn merge -c 9238</command> would merge
+        changeset #9238 into your working copy.</para>
+
+      </sect2>
 
   <!-- =============================================================== -->
     <sect2 id="svn.branchemerge.basicmerging.stayinsync">
@@ -585,11 +630,11 @@ done
 
       </sidebar>
 
-      <para>Suppose, now, that another week has passed.  You've
-        committed more changes to your branch, and your comrades have
-        continued to improve the trunk as well.  Once again, you'd
-        like to replicate the latest trunk changes to your branch and
-        bring yourself in sync.  Just run the same merge command
+      <para>Suppose that another week has passed.  You've committed
+        more changes to your branch, and your comrades have continued
+        to improve the trunk as well.  Once again, you'd like to
+        replicate the latest trunk changes to your branch and bring
+        yourself in sync.  Just run the same merge command
         again!</para>
 
       <screen>
@@ -634,15 +679,21 @@ Committed revision 390.
         do this by either doing an <command>svn checkout</command>,
         dredging up an old trunk working copy from somewhere on your
         disk, or by using <command>svn switch</command> (see
-        <xref linkend="svn.branchmerge.switchwc"/>.)  Then
-        invoke <command>svn merge</command> within your trunk working
-        copy:</para>
+        <xref linkend="svn.branchmerge.switchwc"/>.) However you get a
+        trunk working copy, remember that it's a best practice to do
+        your merge into a working copy that
+        has <emphasis>no</emphasis> local edits and has been recently
+        updated.  If your working copy isn't <quote>clean</quote> in
+        these ways, you can run into some headaches.</para>
+
+      <para>Once you have a clean working copy of trunk,
+        you're ready merge your branch back into it:</para>
 
       <screen>
 $ pwd
 /home/user/calc-trunk
 
-$ svn merge http://svn.example.com/repos/calc/branches/my-calc-branch
+$ svn merge --reintegrate http://svn.example.com/repos/calc/branches/my-calc-branch
 --- Merging r341 through r390 into '.':
 U  button.c
 U  integer.c
@@ -659,9 +710,35 @@ Committed revision 391.
 </screen>
 
       <para>Congratulations, your branch has now been re-merged back
-        into the main line of development.  You'll no longer need your
-        branch at this point anymore, so you can do some basic
-        housecleaning in the repository:</para>
+        into the main line of development.  Notice our use of
+        the <option>--reintegrate</option> option this time around.
+        The option is needed because this sort of <quote>merge
+        back</quote> is a different sort of work than what you've been
+        doing up until now.  Previously, we had been
+        asking <command>svn merge</command> to grab the <quote>next
+        set</quote> of changes one branch and duplicate them to
+        another branch.  This is fairly straightforward, and each time
+        Subversion knows how to pick up where it left off.  In our
+        prior examples, you can see that first it merges the ranges
+        345:356 from trunk to branch; later on, it continues by
+        merging the next contiguously available range, 357:380.  When
+        doing the final sync, it merges the range 381:385>.</para>
+
+      <para>When merging your branch back to the trunk, however, the
+        underlying mathematics is quite different.  Your feature
+        branch is now a mish-mosh of both duplicated trunk changes and
+        private branch changes, so there's no simple contiguous range
+        of revisions to copy over.  By specifying
+        the <option>--integrate</option> option, you're asking
+        Subversion to carefully replicate <emphasis>only</emphasis>
+        those changes unique to your branch.  (And in fact it does
+        this by comparing the latest trunk tree with the latest branch
+        tree:  the resulting difference is exactly your branch
+        changes!)</para>
+
+      <para>Now that your branch is merged to trunk, you'll no longer
+        need your branch.  You can do some basic housecleaning in the
+        repository:</para>
 
       <screen>
 $ svn delete http://svn.example.com/repos/calc/branches/my-calc-branch
@@ -686,51 +763,88 @@ Committed revision 392.
     <sect2 id="svn.branchemerge.basicmerging.basicmergetracking">
       <title>Basic Merge Tracking</title>
 
-      <para>###TODO: set expectations on what gets tracked and what
-      doesn't.</para>
+      <para>Of course, there's a lot more detail to the story of
+        merging changes.  Subversion does its best to note where
+        changes have happened and where they've been duplicated, but
+        it's far from perfect.  In this section, we'll show you how
+        some of the magic works.</para>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.branchmerge.basicmerging.basicmergetracking.mergeinfo">
-        <title>Mergeinfo</title>
+        <title>Mergeinfo and Previews</title>
 
-        <para>###TODO: explain svn:mergeinfo prop and 'svn mergeinfo'
-          command, so users get a general sense of how the system is
-          tracking changes.</para>
+        <para>The basic mechanism Subversion uses to track
+          changesets&mdash;that is, which changes have been merged to
+          which branches&mdash;is by recording data in properties.
+          Specifically, merge data is tracked in
+          the <literal>svn:mergeinfo</literal> property attached to
+          files and directories.  (If you're not familiar with
+          Subversion properties, now is the time to go skim over
+          <xref linkend="svn.advanced.props"/>.)</para>
 
-      </sect3>
-
-      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-      <sect3 id="svn.branchmerge.basicmerging.basicmergetracking.previews">
-        <title>Previewing Merges</title>
-
-        <para>It's a best practice to do your merge into a working
-          copy that has <emphasis>no</emphasis> local edits and has
-          been recently updated.  If your working copy
-          isn't <quote>clean</quote> in these ways, you can run into
-          some headaches.</para>
-
-        <para>Assuming your working copy is tidy, merging isn't a
-          particularly high-risk operation.  If you get the merge
-          wrong the first time, simply <command>svn revert</command>
-          the changes and try again.</para>
-
-        <para>If you've merged into a working copy that already has
-          local modifications, the changes applied by a merge will be
-          mixed with your pre-existing ones, and running
-          <command>svn revert</command> is no longer an option.  The
-          two sets of changes may be impossible to separate.</para>
-
-        <para>In cases like this, people take comfort in being able to
-          predict or examine merges before they happen.  One simple
-          way to do that is to run <command>svn diff</command> with
-          the same arguments you plan to pass to <command>svn
-          merge</command>, as we already showed in our first example
-          of merging.  Another method of previewing is to pass the
-          <option>--dry-run</option> option to the merge
-          command:</para>
+        <para>You can examine the property, just like any
+          other:</para>
 
         <screen>
-$ svn merge --dry-run http://svn.example.com/repos/calc/trunk
+$ cd my-calc-branch
+
+$ svn propget svn:mergeinfo .
+/trunk:341-390
+</screen>
+
+        <para>...but it is <emphasis>not</emphasis> recommended that
+          you change the value of this property yourself, unless you
+          really know what you're doing.  (An example of this comes up
+          in <xref linkend="svn.branchmerge.advanced.blockchanges"/>.)
+          In general, this property is automatically maintained by
+          Subversion whenever you run <command>svn merge</command>,
+          and its value indicates which changes have already been
+          replicated into a particular directory.</para>
+
+        <para>As we saw earlier, there's also a
+          subcommand <command>svn mergeinfo</command>, which can be
+          helpful in seeing not only which changesets a directory has
+          absorbed, but also which changesets it's still eligible to
+          receive.  This gives a sort of preview of the next set of
+          changes that <command>svn merge</command> will replicate to
+          your branch.</para>
+
+        <screen>
+$ svn mergeinfo .
+Path: .
+  Source path: /trunk
+    Merged ranges: r341:390
+    Eligible ranges: r391:395
+</screen>
+
+        <para>The <command>svn mergeinfo</command> command, by
+          default, looks back at the history of the thing you're
+          querying and tries to make a sane guess about
+          the <quote>source</quote> you want to be copying changes
+          from.  In our prior example, because we're querying our
+          branch working copy, the command assumes we're interested in
+          receiving changes from <filename>/trunk</filename> (since
+          that's where our branch was originally copied from.)
+          However, if another coworker had a different branch going on
+          that we wanted to merge changes from, we could have this
+          command tell us about eligible changesets from that source
+          too:</para>
+
+        <screen>
+$ svn mergeinfo --from-source \
+                http://svn.example.com/repos/calc/branches/other-branch  .
+Path: .
+  Source path: /branches/other-branch
+    Merged ranges:
+    Eligible ranges: r360:364
+</screen>
+
+        <para>Another way to get a more precise preview of a merge
+          operation is to use
+          the <option>--dry-run</option> option.</para>
+
+        <screen>
+$ svn merge http://svn.example.com/repos/calc/trunk --dry-run
 U  integer.c
 
 $ svn status
@@ -744,6 +858,32 @@ $ svn status
           level</quote> preview of the potential merge, for those
           times when running <command>svn diff</command> gives too
           much detail.</para>
+
+        <para>Of course, the best way to preview a merge operation is
+          to just do it!  Remember, running <command>svn
+          merge</command> isn't an inherently risky thing; if you
+          don't like the results, simply <command>svn revert -R</command>
+          the changes from your working copy and retry the command
+          with different options.  The merge isn't final until you
+          actually <command>svn commit</command> the results.</para>
+
+        <tip>
+          <para>While it's perfectly fine to experiment with merges by
+            running <command>svn merge</command> and <command>svn
+            revert</command> over and over, you may run into some
+            annoying (but easily bypassed) roadblocks.  For example,
+            if the merge operation adds a new file (i.e. schedules it
+            for addition), then <command>svn revert</command> won't
+            actually remove the file;  it simply unschedules the
+            addition.  You're left with an unversioned file.  If you
+            then attempt to run the merge again, you may get conflicts
+            due to the unversioned file <quote>being in the
+            way</quote>.  Solution?  After performing a revert, be
+            sure to clean up the working copy and remove unversioned
+            files and directories.  The output of <command>svn
+            status</command> should be as clean (read:  empty) as
+            possible!</para>
+        </tip>
 
       </sect3>
 
@@ -1060,48 +1200,14 @@ Transmitting file data .
 Committed revision 350.
 </screen>
 
-      <para>One way to think about a repository revision is as a
-        specific group of changes (some version control systems call
-        these <firstterm>changesets</firstterm>).  By using the
+      <para>As we mentioned earlier, one way to think about a
+        repository revision is as a specific changeset.  By using the
         <option>-r</option> option, you can ask <command>svn
         merge</command> to apply a changeset, or whole range of
         changesets, to your working copy.  In our case of undoing a
         change, we're asking <command>svn merge</command> to apply
         changeset #303 to our working copy
         <emphasis>backwards</emphasis>.</para>
-
-      <sidebar>
-        <title>Subversion and Changesets</title>
-
-        <para>Everyone seems to have a slightly different definition
-          of <quote>changeset</quote>, or at least a different
-          expectation of what it means for a version control system to
-          have <quote>changeset features</quote>.  For our purpose,
-          let's say that a changeset is just a collection of changes
-          with a unique name.  The changes might include textual edits
-          to file contents, modifications to tree structure, or tweaks
-          to metadata.  In more common speak, a changeset is just a
-          patch with a name you can refer to.</para>
-
-        <para>In Subversion, a global revision number N names a tree
-          in the repository: it's the way the repository looked after
-          the Nth commit.  It's also the name of an implicit
-          changeset: if you compare tree N with tree N-1, you can
-          derive the exact patch that was committed.  For this reason,
-          it's easy to think of <quote>revision N</quote> as not just
-          a tree, but a changeset as well.  If you use an issue
-          tracker to manage bugs, you can use the revision numbers to
-          refer to particular patches that fix bugs&mdash;for example,
-          <quote>this issue was fixed by revision 9238.</quote>.
-          Somebody can then run <command>svn log -r9238</command> to
-          read about the exact changeset which fixed the bug, and run
-          <command>svn diff -c 9238</command> to see the patch
-          itself.  And Subversion's <literal>merge</literal> command
-          also uses revision numbers.  You can merge specific changesets
-          from one branch to another by naming them in the merge
-          arguments: <command>svn merge -c 9238</command> would
-          merge changeset #9238 into your working copy.</para>
-      </sidebar>
 
       <para>Keep in mind that rolling back a change like this is just
         like any other <command>svn merge</command> operation, so you
