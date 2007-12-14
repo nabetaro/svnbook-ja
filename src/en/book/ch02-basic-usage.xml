@@ -761,12 +761,15 @@ M       bar.c               # the content in bar.c has local modifications
           <varlistentry>
             <term><computeroutput>C      item</computeroutput></term>
             <listitem>
+
               <para>The file <filename>item</filename> is in a state
                 of conflict.  That is, changes received from the
                 server during an update overlap with local changes
-                that you have in your working copy.  You must resolve
-                this conflict before committing your changes to the
+                that you have in your working copy (and weren't
+                resolved during the update).  You must resolve this
+                conflict before committing your changes to the
                 repository.</para>
+
             </listitem>
           </varlistentry>
 
@@ -1034,8 +1037,8 @@ $ svn status README
 $ svn update
 U  INSTALL
 G  README
-C  bar.c
-Updated to revision 46.
+Conflict discovered in 'bar.c.
+Select: (p)ostpone, (d)iff, (e)dit, (h)elp for more options :
 </screen>
 
       <para>The <computeroutput>U</computeroutput> and
@@ -1050,93 +1053,320 @@ Updated to revision 46.
         changes coming from the repository didn't overlap with the local
         changes.</para>
 
-      <para>But the <computeroutput>C</computeroutput> stands for
-        <computeroutput>c</computeroutput>onflict.  This means that the
-        changes from the server overlapped with your own, and now you
-        have to manually choose between them.</para>
-
-      <para>Whenever a conflict occurs, three things typically occur
-        to assist you in noticing and resolving that conflict:</para>
-
-      <itemizedlist>
-
-        <listitem>
-          <para>Subversion prints a <computeroutput>C</computeroutput>
-            during the update, and remembers that the file is in a
-            state of conflict.</para>
-        </listitem>
-
-        <listitem>
-          <para>If Subversion considers the file to be mergeable,
-            it places <firstterm>conflict
-            markers</firstterm>&mdash;special strings of text which
-            delimit the <quote>sides</quote> of the
-            conflict&mdash;into the file to visibly demonstrate the
-            overlapping areas.  (Subversion uses the
-            <literal>svn:mime-type</literal> property to decide if a
-            file is capable of contextual, line-based merging.  See
-            <xref linkend="svn.advanced.props.special.mime-type"/> to learn more.)</para>
-        </listitem>
-
-        <listitem>
-          <para>For every conflicted file, Subversion places three
-            extra unversioned files in your working copy:</para>
-
-          <variablelist>
-
-            <varlistentry>
-              <term><filename>filename.mine</filename></term>
-              <listitem>
-                <para>This is your file as it existed in your working
-                  copy before you updated your working copy&mdash;that
-                  is, without conflict markers.  This file has only
-                  your latest changes in it.  (If Subversion considers
-                  the file to be unmergeable, then the
-                  <filename>.mine</filename> file isn't created, since
-                  it would be identical to the working file.)</para>
-              </listitem>
-            </varlistentry>
-
-            <varlistentry>
-              <term><filename>filename.rOLDREV</filename></term>
-              <listitem>
-                <para>This is the file that was the
-                  <literal>BASE</literal> revision before you updated
-                  your working copy.  That is, the file that you
-                  checked out before you made your latest
-                  edits.</para>
-              </listitem>
-            </varlistentry>
-
-            <varlistentry>
-              <term><filename>filename.rNEWREV</filename></term>
-              <listitem>
-                <para>This is the file that your Subversion client
-                  just received from the server when you updated your
-                  working copy.  This file corresponds to the
-                  <literal>HEAD</literal> revision of the
-                  repository.</para>
-              </listitem>
-            </varlistentry>
-
-          </variablelist>
-
-          <para>Here <literal>OLDREV</literal> is the revision number
-            of the file in your <filename>.svn</filename> directory
-            and <literal>NEWREV</literal> is the revision number of
-            the repository <literal>HEAD</literal>.</para>
-        </listitem>
-
-      </itemizedlist>
-
-      <para>For example, Sally makes changes to the file
-        <filename>sandwich.txt</filename> in the repository.  Harry has
-        just changed the file in his working copy and checked it in.
-        Sally updates her working copy before checking in and she gets
-        a conflict:</para>
+      <para>But the next line is part of a feature new in Subversion
+        1.5 called interactive conflict resolution.  This means that
+        the changes from the server overlapped with your own, and you
+        have the opportunity to resolve this conflict.  The most
+        commonly used options are displayed, but you can see all of
+        the options by typing <replaceable>h</replaceable>: </para>
 
       <screen>
+...
+  (p)ostpone - mark the conflict to be resolved later
+  (d)iff     - show all changes made to merged file
+  (e)dit     - change merged file in an editor
+  (r)esolved - accept merged version of file
+  (m)ine     - accept my version of file
+  (t)heirs   - accept their version of file
+  (l)aunch   - use third-party tool to resolve conflict
+  (h)elp     - show this list
+</screen>
+
+      <para>Let's briefly review each of these options before we go
+        into detail on what each option means.</para>
+
+      <variablelist>
+        <varlistentry>
+          <term><computeroutput>(p)ostpone</computeroutput></term>
+          <listitem>
+
+            <para>Leaves the file in a conflicted state for you to
+            resolve after your update is complete.</para>
+
+          </listitem>
+        </varlistentry>
+
+
+
+        <varlistentry>
+          <term><computeroutput>(d)iff</computeroutput></term>
+          <listitem>
+
+            <para>Display the differences between the base revision
+            and the conflicted file itself in unified diff format.</para>
+
+          </listitem>
+        </varlistentry>
+
+
+        <varlistentry>
+          <term><computeroutput>(e)dit</computeroutput></term>
+          <listitem>
+
+            <para>Open the file in conflict with your favorite editor,
+              as set in the environment variable
+              <literal>EDITOR</literal>.</para>
+
+          </listitem>
+        </varlistentry>
+
+
+        <varlistentry>
+          <term><computeroutput>(r)esolved</computeroutput></term>
+          <listitem>
+
+            <para>After editing a file, choosing this command tells
+              <command>svn</command> that you've resolved the
+              conflicts in the file and that it should accept the
+              current contents&mdash;basically that you've
+              <quote>resolved</quote> the conflict.</para>
+
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><computeroutput>(m)ine</computeroutput></term>
+          <listitem>
+
+            <para>Discard the newly received changes from the server
+              and use only your local changes for the file under review.</para>
+
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><computeroutput>(t)heirs</computeroutput></term>
+          <listitem>
+
+            <para>Discard your local changes to the file under review
+              and use only the newly received changes from the
+              server.</para>
+
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><computeroutput>(l)aunch</computeroutput></term>
+          <listitem>
+
+            <para>Launch an external program to perform the conflict
+            resolution.  This requires a bit of preparation
+            beforehand.</para>
+
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><computeroutput>(h)elp</computeroutput></term>
+          <listitem>
+
+            <para>Shows the list of all possible commands you can use
+            in interactive conflict resolution.</para>
+
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+      <para>We'll cover these commands in more detail now, grouping
+        them together by related functionality.</para>
+
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.cycle.resolve.diff">
+
+        <title>Viewing Conflict Differences Interactively</title>
+
+        <para>Before deciding how to attack a conflict interactively,
+          odds are that you'd like to see what exactly is in conflict,
+          and the diff command (<command>d</command>) is what you'll
+          use for this:</para>
+
+        <screen>
+...
+Select: (p)ostpone, (d)iff, (e)dit, (h)elp for more options : d
+--- .svn/text-base/sandwich.txt.svn-base      Tue Dec 11 21:33:57 2007
++++ .svn/tmp/tempfile.32.tmp     Tue Dec 11 21:34:33 2007
+@@ -1 +1,5 @@
+-Just buy a sandwich.
++&lt;&lt;&lt;&lt;&lt;&lt;&lt; .mine
++Go pickup a cheesesteak.
++=======
++Bring me a taco!
++&gt;&gt;&gt;&gt;&gt;&gt;&gt; .r32
+...
+</screen>
+
+        <para>The first line of the diff content shows the previous
+          contents of the working copy (the <literal>BASE</literal>
+          revision), the next content line is your change, and the
+          last content line is the change that was just received from
+          the server (<emphasis>usually</emphasis> the
+          <literal>HEAD</literal> revision).  With this information in
+          hand, you're ready to move on to the next action.</para>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.cycle.resolve.resolve">
+
+        <title>Resolving Conflict Differences Interactively</title>
+
+        <para>There are four different ways to resolve conflicts
+          interactively&mdash;two of which allow you to selectively
+          merge and edit changes, and two of which allow you to simply
+          pick a version of the file and move along.</para>
+
+        <para>If you wish to choose some combination of your local
+          changes, you can use the <quote>edit</quote> command
+          (<command>e</command>) to manually edit the file with
+          conflict markers in a text editor (determined by the
+          <literal>EDITOR</literal> environment variable).  Editing
+          the file by hand in your favorite text editor is a somewhat
+          low-tech way of remedying conflicts (see <xref
+          linkend="svn.tour.cycle.resolve.byhand"/> for a
+          walkthrough), so some people like to use fancy graphical
+          merge tools instead.</para>
+
+        <para>In order to use a merge tool, you need to either set the
+          <literal>SVN_MERGE</literal> environment variable, or define
+          the <literal>merge-tool-cmd</literal> option in your
+          Subversion configuration file (see <xref
+          linkend="svn.advanced.confarea.opts"/> for more details).
+          Subversion will pass four arguments to the merge tool: The
+          <literal>BASE</literal> revision of the file, the revision
+          of the file received from the server as part of the update,
+          the copy of the file containing your local edits, and
+          lastly, the merged copy of the file (which contains conflict
+          markers).  If your merge tool is expecting arguments in a
+          different order or format, you'll need to write a wrapper
+          script for Subversion to invoke.  After you've edited the
+          file, if you're satisfied with the changes you've made, you
+          can tell Subversion that the edited file is no longer in
+          conflict by using the <quote>resolved</quote> command
+          (<literal>r</literal>).</para>
+
+          <!-- TODO(fitz): I think the above detail on the merge tool -->
+          <!-- should probably be in ch07 -->
+
+        <para>If you decide that you don't need to merge any changes,
+          but just want to accept one version of the file or the
+          other, you can either choose your changes (aka
+          <quote>mine</quote>) by using the <quote>mine</quote>
+          command (<command>m</command>) or choose theirs by using the
+          <quote>theirs</quote> command (<command>t</command>).</para>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.cycle.resolve.pending">
+
+        <title>Postponing Conflict Resolution</title>
+
+        <para>This may sound like an appropriate section for avoiding
+          marital disagreements, but it's actually still about
+          Subversion, so read on.  If you're doing an update and
+          encounter a conflict that you're not prepared to review or
+          resolve, you can type <command>p</command> to postpone
+          resolving a conflict on a file-by-file basis when you run
+          <command>svn update</command>.  If you're running an update
+          and don't want to resolve any conflicts, you can pass the
+          <option>--non-interactive</option> option to <command>svn
+          update</command> and any file in conflict will be marked
+          with a <computeroutput>C</computeroutput>
+          automatically.</para>
+
+        <para>The <computeroutput>C</computeroutput> stands for
+          <computeroutput>c</computeroutput>onflict.  This means that
+          the changes from the server overlapped with your own, and
+          now you have to manually choose between them after the
+          update has completed.  When you postpone a conflict
+          resolution, <command>svn</command> typically does three
+          things to assist you in noticing and resolving that
+          conflict:</para>
+
+        <itemizedlist>
+
+          <listitem>
+            <para>Subversion prints a <computeroutput>C</computeroutput>
+              during the update, and remembers that the file is in a
+              state of conflict.</para>
+          </listitem>
+
+          <listitem>
+            <para>If Subversion considers the file to be mergeable, it
+              places <firstterm>conflict
+              markers</firstterm>&mdash;special strings of text which
+              delimit the <quote>sides</quote> of the
+              conflict&mdash;into the file to visibly demonstrate the
+              overlapping areas.  (Subversion uses the
+              <literal>svn:mime-type</literal> property to decide if a
+              file is capable of contextual, line-based merging.  See
+              <xref linkend="svn.advanced.props.special.mime-type"/>
+              to learn more.)</para>
+          </listitem>
+
+          <listitem>
+            <para>For every conflicted file, Subversion places three
+              extra unversioned files in your working copy:</para>
+
+            <variablelist>
+
+              <varlistentry>
+                <term><filename>filename.mine</filename></term>
+                <listitem>
+                  <para>This is your file as it existed in your working
+                    copy before you updated your working copy&mdash;that
+                    is, without conflict markers.  This file has only
+                    your latest changes in it.  (If Subversion considers
+                    the file to be unmergeable, then the
+                    <filename>.mine</filename> file isn't created, since
+                    it would be identical to the working file.)</para>
+                </listitem>
+              </varlistentry>
+
+              <varlistentry>
+                <term><filename>filename.rOLDREV</filename></term>
+                <listitem>
+                  <para>This is the file that was the
+                    <literal>BASE</literal> revision before you updated
+                    your working copy.  That is, the file that you
+                    checked out before you made your latest
+                    edits.</para>
+                </listitem>
+              </varlistentry>
+
+              <varlistentry>
+                <term><filename>filename.rNEWREV</filename></term>
+                <listitem>
+                  <para>This is the file that your Subversion client
+                    just received from the server when you updated your
+                    working copy.  This file corresponds to the
+                    <literal>HEAD</literal> revision of the
+                    repository.</para>
+                </listitem>
+              </varlistentry>
+
+            </variablelist>
+
+            <para>Here <literal>OLDREV</literal> is the revision number
+              of the file in your <filename>.svn</filename> directory
+              and <literal>NEWREV</literal> is the revision number of
+              the repository <literal>HEAD</literal>.</para>
+          </listitem>
+
+        </itemizedlist>
+
+        <para>For example, Sally makes changes to the file
+          <filename>sandwich.txt</filename> in the repository.  Harry has
+          just changed the file in his working copy and checked it in.
+          Sally updates her working copy before checking in and she gets
+          a conflict, which she postpones:</para>
+
+        <screen>
 $ svn update
+Conflict discovered in 'sandwich.txt'.
+Select: (p)ostpone, (d)iff, (e)dit, (h)elp for more options : p
 C  sandwich.txt
 Updated to revision 2.
 $ ls -1
@@ -1146,52 +1376,55 @@ sandwich.txt.r1
 sandwich.txt.r2
 </screen>
 
-      <para>At this point, Subversion will <emphasis>not</emphasis>
-        allow you to commit the file <filename>sandwich.txt</filename>
-        until the three temporary files are removed.</para>
+        <para>At this point, Subversion will <emphasis>not</emphasis>
+          allow Sally to commit the file
+          <filename>sandwich.txt</filename> until the three temporary
+          files are removed.</para>
 
-      <screen>
+        <screen>
 $ svn commit -m "Add a few more things"
 svn: Commit failed (details follow):
 svn: Aborting commit: '/home/sally/svn-work/sandwich.txt' remains in conflict
 </screen>
 
-      <para>If you get a conflict, you need to do one of three
-        things:</para>
+        <para>If you've postponed a conflict, you need to do one of three
+          things:</para>
 
-        <itemizedlist>
+          <itemizedlist>
 
-          <listitem>
-            <para>Merge the conflicted text <quote>by hand</quote> (by
-              examining and editing the conflict markers within the
-              file).</para>
-          </listitem>
+            <listitem>
+              <para>Merge the conflicted text <quote>by hand</quote> (by
+                examining and editing the conflict markers within the
+                file).</para>
+            </listitem>
 
-          <listitem>
-            <para>Copy one of the temporary files on top of your
-              working file.</para>
-          </listitem>
+            <listitem>
+              <para>Copy one of the temporary files on top of your
+                working file.</para>
+            </listitem>
 
-          <listitem>
-            <para>Run <command>svn revert &lt;filename&gt;</command>
-              to throw away all of your local changes.</para>
-          </listitem>
+            <listitem>
+              <para>Run <command>svn revert &lt;filename&gt;</command>
+                to throw away all of your local changes.</para>
+            </listitem>
 
-        </itemizedlist>
+          </itemizedlist>
 
-      <para>Once you've resolved the conflict, you need to let
-        Subversion know by running <command>svn resolved</command>.
-        This removes the three temporary files and Subversion no
-        longer considers the file to be in a state of
-        conflict.<footnote><para>You can always remove the temporary
-        files yourself, but would you really want to do that when
-        Subversion can do it for you?  We didn't think so.</para>
-        </footnote></para>
+        <para>Once you've resolved the conflict, you need to let
+          Subversion know by running <command>svn resolved</command>.
+          This removes the three temporary files and Subversion no
+          longer considers the file to be in a state of
+          conflict.<footnote><para>You can always remove the temporary
+          files yourself, but would you really want to do that when
+          Subversion can do it for you?  We didn't think so.</para>
+          </footnote></para>
 
-      <screen>
+        <screen>
 $ svn resolved sandwich.txt
 Resolved conflicted state of 'sandwich.txt'
 </screen>
+
+      </sect3>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.tour.cycle.resolve.byhand">
