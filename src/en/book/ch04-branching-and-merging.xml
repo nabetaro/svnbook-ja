@@ -497,7 +497,7 @@ Changed paths:
         revision numbers to refer to particular patches that fix
         bugs&mdash;for example,
         <quote>this issue was fixed by revision 9238.</quote>.
-        Somebody can then run <command>svn log -r9238</command> to
+        Somebody can then run <command>svn log -r 9238</command> to
         read about the exact changeset which fixed the bug, and run
         <command>svn diff -c 9238</command> to see the patch itself.
         And (as you'll see shortly)
@@ -528,8 +528,10 @@ Changed paths:
 
       <para>Subversion is aware of the history of your branch, and
         knows when it divided away from the trunk.  To replicate the
-        latest, greatest trunk changes to your branch, simply
-        run:</para>
+        latest, greatest trunk changes to your branch, first make sure
+        your working copy of the branch
+        is <quote>clean</quote>&mdash;that it has no local
+        modifications.  Then simply run:</para>
 
       <screen>
 $ pwd
@@ -577,8 +579,8 @@ Committed revision 357.
       <para>At this point, your private branch is now <quote>in
           sync</quote> with the trunk, so you can rest easier knowing
           that as you continue to work in isolation, you're not
-          drifting <emphasis>too</emphasis> far away from what
-          everyone else is doing.</para>
+          drifting too far away from what everyone else is
+          doing.</para>
 
       <sidebar>
         <title>Why Not Use Patches Instead?</title>
@@ -601,7 +603,7 @@ Hunk #4 succeeded at 249.
 done
 </screen>
 
-        <para>In this particular case, yes, there really is no
+        <para>In this particular example, there really isn't much
           difference.  But <command>svn merge</command> has special
           abilities that surpass the <command>patch</command> program.
           The file format used by <command>patch</command> is quite
@@ -652,7 +654,7 @@ A  README
         modifications to your branch.</para>
 
       <para>What happens when you finally finish your work, though?
-        Your new feature is finished, and you're ready to merge your
+        Your new feature is done, and you're ready to merge your
         branch changes back to the trunk (so your team can enjoy the
         bounty of your labor.)  The process is simple.  First, bring
         your branch in sync with trunk again, just as you've been
@@ -675,16 +677,18 @@ Committed revision 390.
 
       <para>Now, you use <command>svn merge</command> to replicate
         your branch changes back into the trunk.  To do this, you'll
-        need a working copy of <filename>/trunk</filename>.  You can
-        do this by either doing an <command>svn checkout</command>,
-        dredging up an old trunk working copy from somewhere on your
-        disk, or by using <command>svn switch</command> (see
+        need an up-to-date working copy
+        of <filename>/trunk</filename>.  You can do this by either
+        doing an <command>svn checkout</command>, dredging up an old
+        trunk working copy from somewhere on your disk, or by
+        using <command>svn switch</command> (see
         <xref linkend="svn.branchmerge.switchwc"/>.) However you get a
         trunk working copy, remember that it's a best practice to do
         your merge into a working copy that
         has <emphasis>no</emphasis> local edits and has been recently
         updated.  If your working copy isn't <quote>clean</quote> in
-        these ways, you can run into some headaches.</para>
+        these ways, you can run into some conflict-related
+        headaches.</para>
 
       <para>Once you have a clean working copy of trunk,
         you're ready merge your branch back into it:</para>
@@ -722,7 +726,7 @@ Committed revision 391.
         prior examples, you can see that first it merges the ranges
         345:356 from trunk to branch; later on, it continues by
         merging the next contiguously available range, 357:380.  When
-        doing the final sync, it merges the range 381:385>.</para>
+        doing the final sync, it merges the range 381:385.</para>
 
       <para>When merging your branch back to the trunk, however, the
         underlying mathematics is quite different.  Your feature
@@ -787,13 +791,12 @@ Committed revision 392.
 
         <screen>
 $ cd my-calc-branch
-
 $ svn propget svn:mergeinfo .
 /trunk:341-390
 </screen>
 
-        <para>...but it is <emphasis>not</emphasis> recommended that
-          you change the value of this property yourself, unless you
+        <para>It is <emphasis>not</emphasis> recommended that you
+          change the value of this property yourself, unless you
           really know what you're doing.  (An example of this comes up
           in <xref linkend="svn.branchmerge.advanced.blockchanges"/>.)
           In general, this property is automatically maintained by
@@ -887,16 +890,6 @@ $ svn status
 
       </sect3>
 
-      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-      <sect3 id="svn.branchmerge.basicmerging.basicmergetracking.layered">
-        <title>Multi-Layered Merges</title>
-
-        <para>###TODO: explain how a merge can apply successive
-          patches, and that any intermediate conflicts *must* be
-          resolved (for now, at least.)</para>
-
-      </sect3>
-
     </sect2>
 
     </sect1>
@@ -907,122 +900,130 @@ $ svn status
   <sect1 id="svn.branchmerge.advanced">
     <title>Advanced Merging</title>
 
-    <para>###TODO: Intro: talk about how and why advanced users can
-      pass specific revision numbers to 'svn merge'.</para>
+    <para>Here ends the automated magic.  Sooner or later, once you
+      get the hang of branching and merging, you're going to have to
+      ask Subversion to merge <emphasis>specific</emphasis> changes
+      from one place to another.  And in order to do this, you're
+      going to have to start passing more complicated arguments
+      to <command>svn merge</command>.  This next section describes
+      the fully-expanded syntax of the merge command, and discusses a
+      number of common scenarios that require it.</para>
 
 
     <!-- =============================================================== -->
-    <sect2 id="svn.branchmerge.copychanges.specific">
-      <title>Copying Specific Changes</title>
+    <sect2 id="svn.branchmerge.cherrypicking">
+      <title>Cherrypicking</title>
 
-      <para>Let's go back in time and imagine that you haven't yet
-        merged your private branch back to the trunk. ... ### TODO:
-        explain why we'd want to cherrypick one change, and let's say
-        it's r344:</para>
+      <para>Just as the term <quote>changeset</quote> is often used in
+        version control systems, so is the term
+        of <firstterm>cherrypicking</firstterm>.  This word refers to
+        the act of choosing <emphasis>one</emphasis> specific
+        changeset from a branch and replicating it to another.
+        Cherrypicking may also refer to the act of duplicating a
+        particular set of (not necessarily contiguous!) changesets
+        from one branch to another.  This is in contrast to more
+        typical merging scenarios, where the <quote>next</quote>
+        contiguous range of revisions is duplicated
+        automatically.</para>
 
-      <para>Assume you get word that Sally made an interesting change
-        to <filename>integer.c</filename> on the trunk.  ###TODO: blah
-        blah: If you look at Sally's log message for revision 344, you
-        can see that she fixed some spelling errors.  No doubt, your
-        copy of the same file still has the same spelling errors.
-        It's likely that your future changes to this file will be
-        affecting the same areas that have the spelling errors, so
-        you're in for some potential conflicts when you merge your
-        branch someday.  It's better, then, to receive Sally's change
-        now, <emphasis>before</emphasis> you start working too heavily
-        in the same places.</para>
+      <para>Why would people want to replicate just a single change?
+        It comes up more often than you'd think.  For example, let's
+        go back in time and imagine that you haven't yet merged your
+        private feature-branch back to the trunk.  At the
+        water-cooler, you get word that Sally made an interesting
+        change to <filename>integer.c</filename> on the trunk.
+        Looking over the history of commits to the trunk, you see that
+        in revision 355 she fixed a critical bug that directly
+        impacts the feature you're working on.  You might not be ready
+        to merge all the trunk changes to your branch just yet, but
+        you certainly need that particular bugfix in order to continue
+        your work.</para>
 
       <screen>
-$ svn diff -c 344 http://svn.example.com/repos/calc/trunk
+$ svn diff -c 355 http://svn.example.com/repos/calc/trunk
 
 Index: integer.c
 ===================================================================
---- integer.c	(revision 343)
-+++ integer.c	(revision 344)
+--- integer.c	(revision 354)
++++ integer.c	(revision 355)
 @@ -147,7 +147,7 @@
      case 6:  sprintf(info-&gt;operating_system, "HPFS (OS/2 or NT)"); break;
      case 7:  sprintf(info-&gt;operating_system, "Macintosh"); break;
      case 8:  sprintf(info-&gt;operating_system, "Z-System"); break;
--    case 9:  sprintf(info-&gt;operating_system, "CPM"); break;
+-    case 9:  sprintf(info-&gt;operating_system, "CP/MM");
 +    case 9:  sprintf(info-&gt;operating_system, "CP/M"); break;
      case 10:  sprintf(info-&gt;operating_system, "TOPS-20"); break;
      case 11:  sprintf(info-&gt;operating_system, "NTFS (Windows NT)"); break;
      case 12:  sprintf(info-&gt;operating_system, "QDOS"); break;
-@@ -164,7 +164,7 @@
-     low = (unsigned short) read_byte(gzfile);  /* read LSB */
-     high = (unsigned short) read_byte(gzfile); /* read MSB */
-     high = high &lt;&lt; 8;  /* interpret MSB correctly */
--    total = low + high; /* add them togethe for correct total */
-+    total = low + high; /* add them together for correct total */
-
-     info-&gt;extra_header = (unsigned char *) my_malloc(total);
-     fread(info-&gt;extra_header, total, 1, gzfile);
-@@ -241,7 +241,7 @@
-      Store the offset with ftell() ! */
-
-   if ((info-&gt;data_offset = ftell(gzfile))== -1) {
--    printf("error: ftell() retturned -1.\n");
-+    printf("error: ftell() returned -1.\n");
-     exit(1);
-   }
-
-@@ -249,7 +249,7 @@
-   printf("I believe start of compressed data is %u\n", info-&gt;data_offset);
-   #endif
-
--  /* Set postion eight bytes from the end of the file. */
-+  /* Set position eight bytes from the end of the file. */
-
-   if (fseek(gzfile, -8, SEEK_END)) {
-     printf("error: fseek() returned non-zero\n");
 </screen>
 
-      <para>The <command>svn merge</command> command is almost exactly
-        the same.  Instead of printing the differences to your
-        terminal, however, it applies them directly to your working
-        copy as <emphasis>local modifications</emphasis>:</para>
+      <para>Just as you used <command>svn diff</command> in the prior
+        example to examine revision 355, you can pass the same option
+        to <command>svn merge</command>:</para>
 
       <screen>
-$ svn merge -c 344 http://svn.example.com/repos/calc/trunk
+$ svn merge -c 355 http://svn.example.com/repos/calc/trunk
 U  integer.c
 
 $ svn status
 M  integer.c
 </screen>
 
-      <para>The output of <command>svn merge</command> shows that your
-        copy of <filename>integer.c</filename> was patched.  It now
-        contains Sally's change&mdash;the change has been
-        <quote>copied</quote> from the trunk to your working copy of
-        your private branch, and now exists as a local modification.
-        At this point, it's up to you to review the local modification
-        and make sure it works correctly.</para>
-
-      <para>In another scenario, it's possible that things may not have
-        gone so well, and that <filename>integer.c</filename> may have
-        entered a conflicted state.  You might need to resolve the
-        conflict using standard procedures (see <xref
-        linkend="svn.tour"/>), or if you decide that the merge was a
-        bad idea altogether, simply give up and <command>svn
-        revert</command> the local change.</para>
-
-      <para>But assuming that you've reviewed the merged change, you can
-        <command>svn commit</command> the change as usual.  At that
-        point, the change has been merged into your repository branch.
-        In version control terminology, this act of copying changes
-        between branches is commonly called
-        <firstterm>porting</firstterm> changes.</para>
-
-      <para>When you commit the local modification, it's a good
-        practice to mention that you're porting a specific change from
-        one branch to another.  For example:</para>
+      <para>You can now go through the usual testing procedures before
+        committing this change to your branch.  After the commit,
+        Subversion marks r355 as having been merged to the branch, so
+        that future <quote>magic</quote> merges that synchronize your
+        branch with the trunk know to skip over r355.  (Merging the
+        same change to the same branch almost always results in a
+        conflict!)</para>
 
       <screen>
-$ svn commit -m "integer.c: ported r344 (spelling fixes) from trunk."
-Sending        integer.c
-Transmitting file data .
-Committed revision 360.
+$ cd my-calc-branch
+
+$ svn propget svn:mergeinfo .
+/trunk:341-349,355
+
+$ svn mergeinfo .
+Path: .
+  Source path: /trunk
+    Merged ranges: r341:349,r355
+    Eligible ranges: r350:354,r356:360
+
+$ svn merge http://svn.example.com/repos/calc/trunk
+--- Merging r350 through r354 into '.':
+U  integer.c
+U  Makefile
+--- Merging r356 through r360 into '.':
+U  integer.c
+U  button.c
 </screen>
+
+      <para>This use-case of replicating
+        (or <firstterm>backporting</firstterm>) bugfixes from one
+        branch to another is perhaps the most popular reason for
+        cherrypicking changes; it comes up all the time, for example,
+        when a team is maintaining a <quote>release branch</quote> of
+        software.  (We discuss this pattern in
+        <xref linkend="svn.branchmerge.commonpatterns.release"/>.)</para>
+
+      <warning>
+        <para>Did you notice how, in the last example, the merge
+        invocation caused two distinct ranges of merges to be applied?
+        The <command>svn merge</command> command applied two
+        independent patches to your working copy in order to skip over
+        changeset 355, which your branch already contained.  There's
+        nothing inherently wrong with this, except that it has the
+        potential to make conflict-resolution more tricky.  If the
+        first range of changes creates conflicts,
+        you <emphasis>must</emphasis> resolve them interactively in
+        order for the merge process to continue and apply the second
+        range of changes.  If you postpone a conflict from the first
+        wave of changes, the whole merge command will bail out with an
+        error message.<footnote><para>At least, this is true in
+        Subversion 1.5 at the time of writing.  This behavior may
+        improve in future versions of
+        Subversion.</para></footnote></para>
+      </warning>
 
       <para>A word of warning: while <command>svn diff</command> and
         <command>svn merge</command> are very similar in concept, they
@@ -1030,9 +1031,9 @@ Committed revision 360.
         them in <xref linkend="svn.ref"/> for details, or ask
         <command>svn help</command>.  For example, <command>svn
         merge</command> requires a working-copy path as a target, i.e.
-        a place where it should apply the tree-changes.  If the target
-        isn't specified, it assumes you are trying to perform one of
-        the following common operations:</para>
+        a place where it should apply the generated patch.  If the
+        target isn't specified, it assumes you are trying to perform
+        one of the following common operations:</para>
 
       <orderedlist>
         <listitem>
@@ -1054,32 +1055,22 @@ Committed revision 360.
         <command>svn merge</command> assumes the second case and tries
         to apply the changes to a local file with the same name.</para>
 
-      <para>If you want changes applied somewhere else, you'll
-        need to say so.  For example, if you're sitting in the parent
-        directory of your working copy, you'll have to specify the
-        target directory to receive the changes:</para>
-
-      <screen>
-$ svn merge -c 344 http://svn.example.com/repos/calc/trunk my-calc-branch
-U   my-calc-branch/integer.c
-</screen>
-
     </sect2>
 
     <!-- =============================================================== -->
     <sect2 id="svn.branchmerge.advanced.advancedsyntax">
-      <title>Advanced Merge Syntax</title>
+      <title>Merge Syntax:  Full Disclosure</title>
 
       <para>You've now seen some examples of the <command>svn
-          merge</command> command, and you're about to see several
-          more.  If you're feeling confused about exactly how merging
-          works, you're not alone.  Many users (especially those new
-          to version control) are initially perplexed about the proper
-          syntax of the command, and about how and when the feature
-          should be used.  But fear not, this command is actually much
-          simpler than you think!  There's a very easy technique for
-          understanding exactly how <command>svn merge</command>
-          behaves.</para>
+        merge</command> command, and you're about to see several more.
+        If you're feeling confused about exactly how merging works,
+        you're not alone.  Many users (especially those new to version
+        control) are initially perplexed about the proper syntax of
+        the command, and about how and when the feature should be
+        used.  But fear not, this command is actually much simpler
+        than you think!  There's a very easy technique for
+        understanding exactly how <command>svn merge</command>
+        behaves.</para>
 
       <para>The main source of confusion is the
         <emphasis>name</emphasis> of the command.  The term
@@ -1226,9 +1217,9 @@ Committed revision 350.
 
       <para>Yes, that's true.  When we talk about
         <quote>removing</quote> a change, we're really talking about
-        removing it from <literal>HEAD</literal>.  The original change
-        still exists in the repository's history.  For most
-        situations, this is good enough.  Most people are only
+        removing it from the <literal>HEAD</literal> revision.  The
+        original change still exists in the repository's history.  For
+        most situations, this is good enough.  Most people are only
         interested in tracking the <literal>HEAD</literal> of a
         project anyway.  There are special cases, however, where you
         really might want to destroy all evidence of the commit.
@@ -1339,8 +1330,7 @@ Removed real.c because code now in double.c.
         repository to your working copy:</para>
 
       <screen>
-$ svn copy -r 807 \
-           http://svn.example.com/repos/calc/trunk/real.c ./real.c
+$ svn copy http://svn.example.com/repos/calc/trunk/real.c@807 ./real.c
 
 $ svn status
 A  +   real.c
@@ -1359,7 +1349,23 @@ Committed revision 1390.
         file's resurrection and through all the history it had prior
         to revision 807.  In other words, this new
         <filename>real.c</filename> isn't really new; it's a direct
-        descendant of the original, deleted file.</para>
+        descendant of the original, deleted file.  This is usually
+        considered a good and useful thing.  If, however, you wanted
+        to resurrect the file <emphasis>without</emphasis>
+        maintaining a historical link to the old file, this technique
+        works just as well:</para>
+
+      <screen>
+$ svn cat http://svn.example.com/repos/calc/trunk/real.c@807 > ./real.c
+
+$ svn add real.c
+A  real.c
+
+$ svn commit -m "Recreated real.c from revision 807."
+Adding         real.c
+Transmitting file data .
+Committed revision 1390.
+</screen>
 
       <para>Although our example shows us resurrecting a file, note
         that these same techniques work just as well for resurrecting
