@@ -1373,180 +1373,9 @@ Committed revision 1390.
 
     </sect2>
 
-    <!-- =============================================================== -->
-    <sect2 id="svn.branchmerge.advanced.manual">
-      <title>Manually Merging a Branch</title>
-
-      <para>###TODO: if basic merge tracking isn't available (client
-        or server is older than 1.5), then here is the 'manual' method
-        for keeping a private branch in sync with trunk, and how to
-        merge it back into trunk:</para>
-
-      <para>To complete our running example, we'll move forward in
-        time.  Suppose several days have passed, and many changes have
-        happened on both the trunk and your private branch.  Suppose
-        that you've finished working on your private branch; the
-        feature or bug fix is finally complete, and now you want to
-        merge all of your branch changes back into the trunk for
-        others to enjoy.</para>
-
-      <para>So how do we use <command>svn merge</command> in this
-        scenario?  Remember that this command compares two trees, and
-        applies the differences to a working copy.  So to receive the
-        changes, you need to have a working copy of the trunk.  We'll
-        assume that either you still have your original one lying
-        around (fully updated), or that you recently checked out a
-        fresh working copy of <filename>/calc/trunk</filename>.</para>
-
-      <para>But which two trees should be compared?  At first glance,
-        the answer may seem obvious: just compare the latest trunk
-        tree with your latest branch tree.  But beware&mdash;this
-        assumption is <emphasis>wrong</emphasis>, and has burned many
-        a new user!  Since <command>svn merge</command> operates like
-        <command>svn diff</command>, comparing the latest trunk and 
-        branch trees will <emphasis>not</emphasis> merely describe
-        the set of changes you made to your branch.  Such a comparison
-        shows too many changes: it would not only show the addition of
-        your branch changes, but also the <emphasis>removal</emphasis>
-        of trunk changes that never happened on your branch.</para>
-
-      <para>To express only the changes that happened on your branch,
-        you need to compare the initial state of your branch to its
-        final state.  Using <command>svn log</command> on your branch,
-        you can see that your branch was created in revision 341.  And
-        the final state of your branch is simply a matter of using the
-        <literal>HEAD</literal> revision.  That means you want to
-        compare revisions 341 and <literal>HEAD</literal> of your
-        branch directory, and apply those differences to a working
-        copy of the trunk.</para>
-
-      <tip>
-        <para>A nice way of finding the revision in which a branch was
-          created (the <quote>base</quote> of the branch) is to use the
-          <option>--stop-on-copy</option> option to <command>svn
-          log</command>.  The log subcommand will normally show every
-          change ever made to the branch, including tracing back
-          through the copy which created the branch.  So normally,
-          you'll see history from the trunk as well.  The
-          <option>--stop-on-copy</option> will halt log output as soon
-          as <command>svn log</command> detects that its target was
-          copied or renamed.</para>
-
-        <para>So in our continuing example,</para>
-
-        <screen>
-$ svn log -v --stop-on-copy \
-          http://svn.example.com/repos/calc/branches/my-calc-branch
-&hellip;
-------------------------------------------------------------------------
-r341 | user | 2002-11-03 15:27:56 -0600 (Thu, 07 Nov 2002) | 2 lines
-Changed paths:
-   A /calc/branches/my-calc-branch (from /calc/trunk:340)
-
-$
-</screen>
-
-        <para>As expected, the final revision printed by this command
-          is the revision in which <filename>my-calc-branch</filename>
-          was created by copying.</para>
-      </tip>
-
-
-      <para>Here's the final merging procedure, then:</para>
-
-      <screen>
-$ cd calc/trunk
-$ svn update
-At revision 405.
-
-$ svn merge -r 341:405 http://svn.example.com/repos/calc/branches/my-calc-branch
-U   integer.c
-U   button.c
-U   Makefile
-
-$ svn status
-M   integer.c
-M   button.c
-M   Makefile
-
-# ...examine the diffs, compile, test, etc...
-
-$ svn commit -m "Merged my-calc-branch changes r341:405 into the trunk."
-Sending        integer.c
-Sending        button.c
-Sending        Makefile
-Transmitting file data ...
-Committed revision 406.
-</screen>
-
-      <para>Again, notice that the commit log message very
-        specifically mentions the range of changes that was merged
-        into the trunk.  Always remember to do this, because it's
-        critical information you'll need later on.</para>
-
-      <para>For example, suppose you decide to keep working on your
-        branch for another week, in order to complete an enhancement
-        to your original feature or bug fix.  The repository's
-        <literal>HEAD</literal> revision is now 480, and you're ready
-        to do another merge from your private branch to the trunk.
-        But don't want to merge the changes you've already merged
-        before; you only want to merge everything <quote>new</quote>
-        on your branch since the last time you merged.  The trick is
-        to figure out what's new.</para>
-
-      <para>The first step is to run <command>svn log</command> on the
-        trunk, and look for a log message about the last time you
-        merged from the branch:</para>
-
-      <screen>
-$ cd calc/trunk
-$ svn log
-&hellip;
-------------------------------------------------------------------------
-r406 | user | 2004-02-08 11:17:26 -0600 (Sun, 08 Feb 2004) | 1 line
-
-Merged my-calc-branch changes r341:405 into the trunk.
-------------------------------------------------------------------------
-&hellip;
-</screen>
-
-      <para>Aha!  Since all branch-changes that happened between
-        revisions 341 and 405 were previously merged to the trunk as
-        revision 406, you now know that you want to merge only the
-        branch changes after that&mdash;by comparing revisions 406 and
-        <literal>HEAD</literal>.</para>
-
-      <screen>
-$ cd calc/trunk
-$ svn update
-At revision 480.
-
-# We notice that HEAD is currently 480, so we use it to do the merge:
-
-$ svn merge -r 406:480 http://svn.example.com/repos/calc/branches/my-calc-branch
-U   integer.c
-U   button.c
-U   Makefile
-
-$ svn commit -m "Merged my-calc-branch changes r406:480 into the trunk."
-Sending        integer.c
-Sending        button.c
-Sending        Makefile
-Transmitting file data ...
-Committed revision 481.
-</screen>
-
-      <para>Now the trunk contains the complete second wave of changes
-        made to the branch.  At this point, you can either delete your
-        branch (we'll discuss this later on), or continue working on
-        your branch and repeat this procedure for subsequent
-        merges.</para>
-
-    </sect2>
-
     <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
     <sect2 id="svn.branchmerge.advanced.mergeconflicts">
-      <title>Merge Conflicts</title>
+      <title>More on Merge Conflicts</title>
 
       <para>Just like the <command>svn update</command> command,
         <command>svn merge</command> applies changes to your working
@@ -1580,15 +1409,15 @@ Committed revision 481.
         will complain about <quote>skipped targets</quote>:</para>
 
       <screen>
-        $ svn merge -r 1288:1351 http://svn.example.com/repos/branch
-        U  foo.c
-        U  bar.c
-        Skipped missing target: 'baz.c'
-        U  glub.c
-        C  glorb.h
-
-        $
-      </screen>
+$ svn merge -r 1288:1351 http://svn.example.com/repos/branch
+U  foo.c
+U  bar.c
+Skipped missing target: 'baz.c'
+U  glub.c
+U  sputter.h
+Conflict discovered in 'glorb.h'.
+Select: (p)ostpone, (d)iff, (e)dit, (h)elp for more options : 
+</screen>
 
       <para>In the previous example it might be the case that
         <filename>baz.c</filename> exists in both snapshots of the
@@ -1649,10 +1478,133 @@ Committed revision 481.
 
     <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
     <sect2 id="svn.branchmerge.advanced.logblame">
-      <title>Logging and Blaming</title>
+      <title>Merge-Sensitive Logs and Annotations</title>
 
-      <para>###TODO:  demonstrate 'svn log -g' and 'svn blame -g', and
-        explain why they're useful.</para>
+      <para>One of the main features of any version control system is
+        to keep track of who changed what, and when they did it.
+        The <command>svn log</command> and <command>svn
+        blame</command> commands are just the tools for this: when
+        invoked on individual files, they show not only the history of
+        changesets that affected the file, but exactly which user
+        wrote which line of code, and when they did it.</para>
+
+      <para>When changes start getting replicated between branches,
+        however, things start to get complicated.  For example, if you
+        were to ask <command>svn log</command> about the history of
+        your feature branch, it shows exactly every revision that ever
+        affected the branch:</para>
+
+      <screen>
+$ cd my-calc-branch
+$ svn log -q
+------------------------------------------------------------------------
+r390 | user | 2002-11-22 11:01:57 -0600 (Fri, 22 Nov 2002) | 1 line
+------------------------------------------------------------------------
+r388 | user | 2002-11-21 05:20:00 -0600 (Thu, 21 Nov 2002) | 2 lines
+------------------------------------------------------------------------
+r381 | user | 2002-11-20 15:07:06 -0600 (Wed, 20 Nov 2002) | 2 lines
+------------------------------------------------------------------------
+r359 | user | 2002-11-19 19:19:20 -0600 (Tue, 19 Nov 2002) | 2 lines
+------------------------------------------------------------------------
+r357 | user | 2002-11-15 14:29:52 -0600 (Fri, 15 Nov 2002) | 2 lines
+------------------------------------------------------------------------
+r343 | user | 2002-11-07 13:50:10 -0600 (Thu, 07 Nov 2002) | 2 lines
+------------------------------------------------------------------------
+r341 | user | 2002-11-03 07:17:16 -0600 (Sun, 03 Nov 2002) | 2 lines
+------------------------------------------------------------------------
+r303 | sally | 2002-10-29 21:14:35 -0600 (Tue, 29 Oct 2002) | 2 lines
+------------------------------------------------------------------------
+r98 | sally | 2002-02-22 15:35:29 -0600 (Fri, 22 Feb 2002) | 2 lines
+------------------------------------------------------------------------
+</screen>
+
+      <para>But is this really an accurate picture of all the changes
+        that happened on the branch?  What's being left out here is
+        the fact that revisions 390, 381, and 357 were actually the
+        results of merging changes from trunk.  If you look at a one
+        of these logs in detail, the multiple trunk changesets that
+        comprised the branch change are nowhere to be seen.</para>
+
+      <screen>
+$ svn log -v -r 390
+------------------------------------------------------------------------
+r390 | user | 2002-11-22 11:01:57 -0600 (Fri, 22 Nov 2002) | 1 line
+Changed paths:
+   M /branches/my-calc-branch/button.c
+   M /branches/my-calc-branch/README
+
+Final merge of trunk changes to my-calc-branch.
+</screen>
+
+      <para>We happen to know that this merge to the branch was
+        nothing but a merge of trunk changes.  How can we see those
+        trunk changes as well?  The answer is to use
+        the <option>--use-merge-history (-g)</option> option.  This
+        option expands those <quote>child</quote> changes that were
+        part of the merge.</para>
+
+      <screen>
+$ svn log -v -r 390 -g
+------------------------------------------------------------------------
+r390 | user | 2002-11-22 11:01:57 -0600 (Fri, 22 Nov 2002) | 1 line
+Changed paths:
+   M /branches/my-calc-branch/button.c
+   M /branches/my-calc-branch/README
+
+Final merge of trunk changes to my-calc-branch.
+------------------------------------------------------------------------
+r383 | sally | 2002-11-21 03:19:00 -0600 (Thu, 21 Nov 2002) | 2 lines
+Changed paths:
+   M /branches/my-calc-branch/button.c
+Result of a merge from: r390
+
+Fix inverse graphic error on button.
+------------------------------------------------------------------------
+r382 | sally | 2002-11-20 16:57:06 -0600 (Wed, 20 Nov 2002) | 2 lines
+Changed paths:
+   M /branches/my-calc-branch/README
+Result of a merge from: r390
+
+Document my last fix in README.
+</screen>
+
+      <para>By making the log operation use merge history, we see not
+        just the revision we queried (r390), but the two revisions
+        that came along on the ride with it&mdash;a couple of changes
+        made by Sally to the trunk.  This is a much more complete
+        picture of history!</para>
+
+      <para>The <command>svn blame</command> command also takes
+        the <option>--use-merge-history (-g)</option> option.  If this
+        option is neglected, then somebody looking at a line-by-line
+        annotation of <filename>button.c</filename> may get the
+        mistaken impression that you were responsible for the lines
+        that fixed a certain error:</para>
+
+      <screen>
+$ svn blame button.c
+...
+   390    user    retval = inverse_func(button, path);
+   390    user    return retval;
+   390    user    }
+...
+</screen>
+
+      <para>And while it's true that you did actually commit those
+        three lines in revision 390, two of them were actually writen
+        by Sally back in revision 383:</para>
+
+      <screen>
+$ svn blame button.c -g
+...
+G    383    sally   retval = inverse_func(button, path);
+G    383    sally   return retval;
+     390    user    }
+...
+</screen>
+
+      <para>Now we know who to <emphasis>really</emphasis> blame for
+        those two lines of code!</para>
 
     </sect2>
 
