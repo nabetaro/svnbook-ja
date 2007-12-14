@@ -461,9 +461,15 @@ Changed paths:
       Subversion client and server are running Subversion 1.5 (or
       later).  If either client or server is older than version 1.5,
       then things are more complicated: the system won't track changes
-      automatically, and you'll have to use <quote>manual</quote>
-      methods to achieve similar results.  (See
-      <xref linkend="svn.branchmerge.advanced"/>.)</para>
+      automatically, and you'll have to use painful manual methods to
+      achieve similar results.  That is, you'll always need to use the
+      detailed merge syntax to specify specific ranges of revisions to
+      replicate (See <xref
+      linkend="svn.branchmerge.advanced.advancedsyntax"/>), and take
+      special care to keep track of what's already been merged and
+      what hasn't.  For this reason, we <emphasis>strongly</emphasis>
+      recommend making sure that your client and server are at least
+      version 1.5 or later.</para>
 
   <!-- =============================================================== -->
     <sect2 id="svn.branchmerge.changesets">
@@ -918,7 +924,7 @@ $ svn status
         version control systems, so is the term
         of <firstterm>cherrypicking</firstterm>.  This word refers to
         the act of choosing <emphasis>one</emphasis> specific
-        changeset from a branch and replicating it to another.
+p        changeset from a branch and replicating it to another.
         Cherrypicking may also refer to the act of duplicating a
         particular set of (not necessarily contiguous!) changesets
         from one branch to another.  This is in contrast to more
@@ -1467,12 +1473,53 @@ Select: (p)ostpone, (d)iff, (e)dit, (h)elp for more options :
     <sect2 id="svn.branchmerge.advanced.blockchanges">
       <title>Blocking Changes</title>
 
-      <para>###TODO:  discuss use of 'svn merge --record-only', give
-      example.  Explain the need to differentiate between 'not merged'
-      and 'don't want to merge'.  Explain that in 1.5, users need to
-      manualy track blocked revisions in a text file or in property.
-      A future version of svn will learn to differentiate between the
-      two concepts.</para>
+      <para>Sometimes there's a particular changeset which you don't
+        want to be automatically merged.  For example, perhaps your
+        team's policy is to do new development work on
+        <filename>/trunk</filename>, but to be more conservative about
+        backporting changes to a <quote>stable</quote> branch you use
+        for releasing to the public.  On one extreme, you can manually
+        cherrypick single changesets from trunk to the
+        branch&mdash;only the changes that are stable enough to pass
+        muster.  Maybe things aren't quite that strict, though;
+        perhaps most of the time you'd like to just let <command>svn
+        merge</command> automatically merge most changes from trunk to
+        branch.  In this case, you'd like a way to mask a few specific
+        changes out, i.e. prevent them from ever being automatically
+        merged.</para>
+
+      <para>In Subversion 1.5, the only way to block a changeset is to
+        make the system believe that the change has
+        <emphasis>already</emphasis> been merged.  You'll need to
+        manually edit the <literal>svn:mergeinfo</literal> property on
+        the branch, and add the blocked revision(s) to the
+        list:</para>
+
+      <screen>
+$ cd my-calc-branch
+
+$ svn propget svn:mergeinfo .
+/trunk:1680-3305
+
+$ svn propset svn:mergeinfo "/trunk:1680-3305,3328" .
+property 'svn:mergeinfo' set on '.'
+</screen>
+
+      <para>This technique works, but it's also a little bit
+        dangerous.  The main problem is that we're not differentiating
+        between the ideas of <quote>I don't want this change</quote>
+        and <quote>I don't have this change</quote>.  We're
+        effectively lying to the system, making it think that the
+        change was previously merged.  This puts the responsibility on
+        you&mdash;the user&mdash;to remember that the change wasn't
+        actually merged, it just wasn't wanted.  There's no way to ask
+        Subversion for a list of <quote>blocked changelists</quote>.
+        If you want to track them (so that you can unblock them
+        someday) you'll need to record it in a text file somewhere, or
+        perhaps in an invented property.  In Subversion 1.5,
+        unfortunately, this is the only way to manage blocked
+        revisions; the plans are to make a better interface for this
+        in future versions.</para>
 
     </sect2>
 
