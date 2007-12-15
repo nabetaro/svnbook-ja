@@ -1679,7 +1679,7 @@ ServerName svn.example.com
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.serverconfig.httpd.authn.basic">
-        <title>Basic HTTP Authentication</title>
+        <title>Setting Up HTTP Authentication</title>
 
         <para>The easiest way to authenticate a client is via the
           HTTP Basic authentication mechanism, which simply uses a
@@ -1764,12 +1764,43 @@ $
 
         <para>One word of warning: HTTP Basic Auth passwords pass in
           very nearly plain-text over the network, and thus are
-          extremely insecure.  If you're worried about password
-          snooping, it may be best to use some sort of SSL encryption,
-          so that clients authenticate via <literal>https://</literal>
-          instead of <literal>http://</literal>; at a bare minimum,
-          you can configure Apache to use a self-signed server
-          certificate.
+          extremely insecure.</para>
+
+        <para>Another option is to not use Basic authentication
+          but <quote>Digest</quote> authentication instead.  Digest
+          authentication allows the server to verify the client's
+          identity <emphasis>without</emphasis> passing the plaintext
+          password over the network.  Assuming that the client and
+          server both know the user's password, they can verify that
+          the password is the same by using it to apply a hashing
+          function to a one-time bit of information.  The server sends
+          a small random-ish string to the client; the client uses the
+          user's password to hash the string; the server then looks to
+          see if the hashed value is what it expected.</para>
+
+        <para>Configuring Apache for Digest authentication is also
+          fairly easy, and only a small variation on our prior
+          example.  Be sure to consult Apache's documentation for full
+          details.</para>
+
+        <screen>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNParentPath /var/svn
+  AuthType Digest
+  AuthName "Subversion repository"
+  AuthDigestDomain /svn/
+  AuthUserFile /etc/svn-auth-file
+  Require valid-user
+&lt;/Location&gt;
+</screen>
+
+        <para>If you're looking for maximum security, then public-key
+          cryptography is the best solution.  It may be best to use
+          some sort of SSL encryption, so that clients authenticate
+          via <literal>https://</literal> instead
+          of <literal>http://</literal>; at a bare minimum, you can
+          configure Apache to use a self-signed server certificate.
           <footnote>
             <para>While self-signed server certificates are still
               vulnerable to a <quote>man in the middle</quote> attack,
