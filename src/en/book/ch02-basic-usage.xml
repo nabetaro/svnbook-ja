@@ -2157,31 +2157,62 @@ $ svn export http://svn.example.com/svn/repos1 -r 1729
   <sect1 id="svn.tour.cleanup">
     <title>Sometimes You Just Need to Clean Up</title>
 
-    <para>When Subversion modifies your working copy (or any
-      information within <filename>.svn</filename>), it tries to do
-      so as safely as possible.  Before changing the working copy,
-      Subversion writes its intentions to a log file.  Next it
-      executes the commands in the log file to apply the requested
-      change, holding a lock on the relevant part of the working
-      copy while it works&mdash;to prevent other Subversion clients
-      from accessing the working copy in mid-change.  Finally,
-      Subversion removes the log file.  Architecturally, this is
-      similar to a journaled filesystem.  If a Subversion operation
-      is interrupted (if the process is killed, or if the machine
-      crashes, for example), the log files remain on disk.  By
-      re-executing the log files, Subversion can complete the
-      previously started operation, and your working copy can get
-      itself back into a consistent state.</para>
+    <sect2 id="svn.tour.cleanup.disposal">
 
-    <para>And this is exactly what <command>svn cleanup</command>
-      does: it searches your working copy and runs any leftover
-      logs, removing working copy locks in the process.
-      If Subversion ever tells you that some part of your working copy
-      is <quote>locked</quote>, then this is the command that you
-      should run.  Also, <command>svn status</command> will display
-      an <literal>L</literal> next to locked items:</para>
+      <title>Disposing of a Working Copy</title>
 
-    <screen>
+      <para>Subversion doesn't track either the state or existence of
+        working copies on the server, so there's no server overhead to
+        keeping working copies around.  Likewise, there's no need to
+        let the server know that you're going to delete a working
+        copy.</para>
+
+      <para>If you're likely to use a working copy again, there's
+        nothing wrong with just leaving it on disk until you're ready
+        to use it again, at which point all it takes is an
+        <command>svn update</command> to bring it up to date and ready
+        for use.</para>
+
+      <para>However, if you're definitely not going to use a working
+        copy again, you can safely delete the entire thing, but you'd
+        be well served to take a look through the working copy for
+        unversioned files.  To find these files, run <command>svn
+        status</command> and review any files that are prefixed by a
+        <literal>?</literal> to make certain that they're not of
+        importance.  After you're done reviewing, you can safely
+        delete your working copy.</para>
+
+    </sect2>
+
+    <sect2 id="svn.tour.cleanup.interruption">
+
+      <title>Recovering From an Interruption</title>
+
+      <para>When Subversion modifies your working copy (or any
+        information within <filename>.svn</filename>), it tries to do
+        so as safely as possible.  Before changing the working copy,
+        Subversion writes its intentions to a log file.  Next it
+        executes the commands in the log file to apply the requested
+        change, holding a lock on the relevant part of the working
+        copy while it works&mdash;to prevent other Subversion clients
+        from accessing the working copy in mid-change.  Finally,
+        Subversion removes the log file.  Architecturally, this is
+        similar to a journaled filesystem.  If a Subversion operation
+        is interrupted (if the process is killed, or if the machine
+        crashes, for example), the log files remain on disk.  By
+        re-executing the log files, Subversion can complete the
+        previously started operation, and your working copy can get
+        itself back into a consistent state.</para>
+
+      <para>And this is exactly what <command>svn cleanup</command>
+        does: it searches your working copy and runs any leftover
+        logs, removing working copy locks in the process.
+        If Subversion ever tells you that some part of your working copy
+        is <quote>locked</quote>, then this is the command that you
+        should run.  Also, <command>svn status</command> will display
+        an <literal>L</literal> next to locked items:</para>
+
+      <screen>
 $ svn status
   L    somedir
 M      somedir/foo.c
@@ -2191,12 +2222,14 @@ $ svn status
 M      somedir/foo.c
 </screen>
 
-    <para>Don't confuse these working copy locks with the ordinary
-      locks that Subversion users create when using
-      the <quote>lock-modify-unlock</quote> model of concurrent
-      version control; see
-      <xref linkend="svn.advanced.locking.meanings"/> for
-      clarification.</para>
+      <para>Don't confuse these working copy locks with the ordinary
+        locks that Subversion users create when using
+        the <quote>lock-modify-unlock</quote> model of concurrent
+        version control; see
+        <xref linkend="svn.advanced.locking.meanings"/> for
+        clarification.</para>
+
+    </sect2>
 
   </sect1>
 
