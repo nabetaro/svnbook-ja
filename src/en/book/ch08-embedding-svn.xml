@@ -1001,7 +1001,8 @@ make_new_directory(const char *repos_path,
    * always try to make our changes against a copy of the latest snapshot
    * of the filesystem tree. 
    */
-  INT_ERR(svn_fs_begin_txn(&amp;txn, fs, youngest_rev, pool));
+  INT_ERR(svn_repos_fs_begin_txn_for_commit2(&amp;txn, repos, youngest_rev,
+                                             apr_hash_make(pool), pool));
 
   /* Now that we have started a new Subversion transaction, get a root
    * object that represents that transaction. 
@@ -1213,11 +1214,14 @@ def do_status(wc_path, verbose):
         # the status crawl
         text_status = generate_status_code(status.text_status)
         prop_status = generate_status_code(status.prop_status)
-        print '%s%s  %s' % (text_status, prop_status, path[wc_path_len + 1:])
+        print '%s%s  %s' % (text_status, prop_status, path)
         
     # Do the status crawl, using _status_callback() as our callback function.
-    svn.client.svn_client_status(wc_path, None, _status_callback,
-                                 1, verbose, 0, 0, ctx)
+    revision = svn.core.svn_opt_revision_t()
+    revision.type = svn.core.svn_opt_revision_head
+    svn.client.svn_client_status2(wc_path, revision, _status_callback,
+                                  svn.core.svn_depth_infinity, verbose,
+                                  0, 0, 1, ctx)
 
 def usage_and_exit(errorcode):
     """Print usage message, and exit with ERRORCODE."""
@@ -1251,7 +1255,7 @@ if __name__ == '__main__':
     try:
         do_status(wc_path, verbose)
     except svn.core.SubversionException, e:
-        sys.stderr.write("Error (%d): %s\n" % (e[1], e[0]))
+        sys.stderr.write("Error (%d): %s\n" % (e.apr_err, e.message))
         sys.exit(1)
 </programlisting>
       </example>
