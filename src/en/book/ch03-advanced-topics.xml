@@ -2912,8 +2912,348 @@ Index: frabnaggilywort/IDEA
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <!-- ================================================================= -->
-  <sect1 id="svn.serverconfig.netmodel">
+  <sect1 id="svn.advanced.changelists">
+    <title>Changelists</title>
 
+    <para>It is commonplace for a developer to find himself working at
+      any given time on multiple different, distinct changes to a
+      particular bit of source code.  This isn't necessarily due to
+      poor planning or some form of digital masochism.  A software
+      engineer often spots bugs in his peripheral vision while working
+      on some nearby chunk of source code.  Or perhaps he's halfway
+      through some large change when he realizes the solution he's
+      working on is best committed as several smaller logical units.
+      Often, these logical units aren't nicely contained in some
+      module, safely separated from other changes.  The units might
+      overlap, modifying different files in the same module, or even
+      modifying different lines in the same file.</para>
+
+    <para>There are various work methodologies that developers can
+      employ to keep these logical changes organized.  Some use
+      separate working copies of the same repository to hold each
+      individual change-in-progress.  Others might choose to create
+      short-lived feature branches in the repository, and use a single
+      working copy that is constantly switched to point to one such
+      branch or another.  Still others use <command>diff</command> and
+      <command>patch</command> tools to backup and restore uncommitted
+      changes to and from patchfiles associated with each change.
+      Each of these methods has its pros and cons, and to a large
+      degree, the details of the changes being made heavily influence
+      the methodology used to distinguish them.</para>
+
+    <para>Subversion 1.5 brings a new
+      <firstterm>changelists</firstterm> feature which adds yet
+      another method to the mix.  Changelists are basically arbitrary
+      labels applied to working copy files for the express purpose of
+      associating multiple files together.  Users of many of Google's
+      software offerings are familiar with this concept already.  For
+      example, Gmail doesn't provide the traditional folders-based
+      email organization mechanism.  In <ulink
+      url="http://mail.google.com/">Gmail</ulink>, you apply arbitrary
+      labels to emails, and multiple emails can be said to be part of
+      the same group if they happen to share a particular label.
+      Viewing only a group of similarly labeled emails then becomes a
+      simple user interface trick.  Many other Web 2.0 sites have
+      similar mechanisms&mdash;consider the <quote>tags</quote> used
+      by sites like <ulink
+      url="http://www.youtube.com/">YouTube</ulink> and <ulink
+      url="http://www.flickr.com/">Flickr</ulink>,
+      <quote>categories</quote> applied to blog posts, and so on.
+      Folks understand today that organization of data is critical,
+      but that how that data is organized needs to be a flexible
+      concept.  The old files-and-folders paradigm is too rigid for
+      some applications.</para>
+
+    <para>Subversion's changelist support allows you to create
+      changelists by applying labels to files you want to be
+      associated with that changelist, remove those labels, and limit
+      the scope of the files on which its subcommands operate to only
+      those bearing a particular label.  In this section, we'll look
+      in detail at how to do these things.</para>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.changelists.creating">
+      <title>Creating and Modifying Changelists</title>
+
+      <para>You can create, modify, and delete changelists using the
+        <command>svn changelist</command> command.  More accurately,
+        you use this command to set or unset the changelist
+        association of a particular working copy file.  A changelist
+        is effectively created the first time you label a file with
+        that changelist; it is deleted when you remove that label from
+        the last file which had it.  Let's examine a usage scenario
+        which demonstrates these concepts.</para>
+
+      <para>Harry is fixing some bugs in the calculator application's
+        mathematics logic.  His work leads him to change a couple of
+        files.</para>
+
+      <screen>
+$ svn status
+M      integer.c
+M      mathops.c
+$
+</screen>
+
+      <para>While testing his bug fix, Harry notices that his changes
+        bring to light a tangentially related bug in the user
+        interface logic found in <filename>button.c</filename>.  Harry
+        decides that he'll go ahead and fix that bug, too, as a
+        separate commit from his math fixes.  Now, in a small working
+        copy with only a handful of files and few logical changes,
+        Harry can probably keep his two logical change groupings
+        mentally organized without any problem.  But today he's going
+        to use Subversion's changelists feature as a special favor to
+        the authors of this book.</para>
+
+      <para>Harry first creates a changelist and associates with it
+        the two files he's already changed.  He does this by using the
+        <command>svn changelist</command> command to assign the same
+        arbitrary changelist name to those files.</para>
+
+      <screen>
+$ svn changelist math-fixes integer.c mathops.c
+Path 'integer.c' is now a member of changelist 'math-fixes'.
+Path 'mathops.c' is now a member of changelist 'math-fixes'.
+$ svn status
+
+--- Changelist 'math-fixes':
+M      integer.c
+M      mathops.c
+$
+</screen>
+
+      <para>As you can see, the output of <command>svn
+        status</command> reflects this new grouping.</para>
+
+      <para>Harry now sets off to fix the secondary UI problem.  Since
+        he knows which file he'll be changing, he assigns that path to
+        a changelist, too.  Unfortunately, Harry careless assigns this
+        third file to the same changelist as the previous two files.</para>
+
+      <screen>
+$ svn changelist math-fix button.c
+Path 'button.c' is now a member of changelist 'math-fixes'.
+$ svn status
+
+--- Changelist 'math-fixes':
+       button.c
+M      integer.c
+M      mathops.c
+$
+</screen>
+
+      <para>Fortunately, Harry catches his mistake.  At this point,
+        he has two options.  He can remove the changelist association
+        from button.c, and then assign a different changelist
+        name:</para>
+
+      <screen>
+$ svn changelist --remove button.c
+Path 'button.c' is no longer a member of a changelist.
+$ svn changelist ui-fix button.c
+Path 'button.c' is now a member of changelist 'ui-fix'.
+$
+</screen>
+
+      <para>Or, he can skip the removal and just assign a new
+        changelist name.  In this case, Subversion will first warn
+        Harry that <filename>button.c</filename> is being removed from
+        the first changelist:</para>
+
+      <screen>
+$ svn changelist ui-fix button.c
+svn: warning: Removing 'button.c' from changelist 'math-fixes'.
+Path 'button.c' is now a member of changelist 'ui-fix'.
+$ svn status
+
+--- Changelist 'ui-fix':
+       button.c
+
+--- Changelist 'math-fixes':
+M      integer.c
+M      mathops.c
+$
+</screen>
+
+      <para>Harry now has two distinct changelists present in his
+        working copy, and <command>svn status</command> will group its
+        output according to these changelist determinations.  Notice
+        that even though Harry hasn't yet modified
+        <filename>button.c</filename>, it still shows up in the output
+        of <command>svn status</command> as interesting because it has
+        a changelist assignment.  Changelists can be added to and
+        removed from files at any time, regardless of whether or not
+        they contain local modifications.</para>
+
+      <para>Harry now fixes the user interface problem in
+        <filename>button.c</filename>.</para>
+
+      <screen>
+$ svn status
+
+--- Changelist 'ui-fix':
+M      button.c
+
+--- Changelist 'math-fixes':
+M      integer.c
+M      mathops.c
+$
+</screen>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.changelists.asfilters">
+      <title>Changelists as Operation Filters</title>
+
+      <para>The visual grouping that Harry sees in the output of
+        <command>svn status</command> as shown in our previous section
+        is nice, but not entirely useful.  The
+        <command>status</command> command is but one of many
+        operations that he might wish to perform on his working copy.
+        Fortunately, many of Subversion's other operations understand
+        how to operate on changelists via the use of the
+        <option>--changelist</option> option.</para>
+
+      <para>When provided with a <option>--changelist</option> option,
+        Subversion commands will limit the scope of their operation to
+        only those files to which a particular changelist name is
+        assigned.  If Harry now wants to see the actual changes he's
+        made to the files in his <literal>math-fixes</literal>
+        changelist, he <emphasis>could</emphasis> explicitly list only
+        the files that make up that changelist on the <command>svn
+        diff</command> command line.</para>
+
+      <screen>
+$ svn diff integer.c mathops.c
+Index: integer.c
+===================================================================
+--- integer.c	(revision 1157)
++++ integer.c	(working copy)
+&hellip;
+Index: mathops.c
+===================================================================
+--- mathops.c	(revision 1157)
++++ mathops.c	(working copy)
+&hellip;
+$
+</screen>
+
+      <para>That works okay for a few files, but what if Harry's
+        change touched twenty or thirty files?  That would be an
+        annoyingly long list of explicitly named files.  Now that he's
+        using changelists, though, Harry can avoid explicitly listing
+        the set of files in his changelist from now on, and provide
+        instead just the changelist name.</para>
+
+      <screen>
+$ svn diff --changelist math-fixes
+Index: integer.c
+===================================================================
+--- integer.c	(revision 1157)
++++ integer.c	(working copy)
+&hellip;
+Index: mathops.c
+===================================================================
+--- mathops.c	(revision 1157)
++++ mathops.c	(working copy)
+&hellip;
+$
+</screen>
+
+      <para>And when it's time to commit, Harry can again use the
+        <option>--changelist</option> option to limit the scope of the
+        commit to files in a certain changelist.  He might commit his
+        user interface fix by doing the following:</para>
+
+      <screen>
+$ svn ci -m "Fix a user interface bug found while working on math logic." \
+      --changelist ui-fix
+Sending        button.c
+Transmitting file data .
+Committed revision 1158.
+$
+</screen>
+
+      <para>In fact, the <command>svn commit</command> command
+        provides a second changelists-related option:
+        <option>--keep-changelist</option>.  Normally, changelist
+        assignments are removed from files after they are committed.
+        But if <option>--keep-changelist</option> is provided,
+        Subversion will leave the changelist assignment on the
+        committed (and now unmodified) files.  In any case, committing
+        files assigned to one changelist leaves other changelists
+        undisturbed.</para>
+
+      <screen>
+$ svn status
+
+--- Changelist 'math-fixes':
+M      integer.c
+M      mathops.c
+$
+</screen>
+
+      <note>
+        <para>The <option>--changelist</option> option acts only as a
+          filter for Subversion command targets, and will not add
+          targets to an operation.  For example, on a commit operation
+          specified as <command>svn commit /path/to/dir</command>, the
+          target is the directory <filename>/path/to/dir</filename>
+          and its children (to infinite depth).  If you then add a
+          changelist specifier to that command, only those files in
+          and under <filename>/path/to/dir</filename> which are
+          assigned that changelist name will be considered as targets
+          of the commit&mdash;the commit will not include files
+          located elsewhere (such is in
+          <filename>/path/to/another-dir</filename>, regardless of
+          their changelist assignment, even if they are part of the
+          same working copy as the operation's target(s).</para>
+      </note>
+
+      <para>Even the <command>svn changelist</command> command accepts
+        the <option>--changelist</option> option.  This allows you to
+        quickly and easily rename or remove a changelist.</para>
+
+      <screen>
+$ svn changelist math-bugs --changelist math-fixes
+svn: warning: Removing 'integer.c' from changelist 'math-fixes'.
+Path 'integer.c' is now a member of changelist 'math-bugs'.
+svn: warning: Removing 'mathops.c' from changelist 'math-fixes'.
+Path 'mathops.c' is now a member of changelist 'math-bugs'.
+$ svn changelist --remove --changelist math-bugs
+Path 'integer.c' is no longer a member of a changelist.
+Path 'mathops.c' is no longer a member of a changelist.
+$
+</screen>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.changelists.limitations">
+      <title>Changelist Limitations</title>
+
+      <para>Subversion's changelist feature is a handy tool for
+        grouping working copy files, but does have a few limitations.
+        Changelist are artifacts of a particular working copy, which
+        means that changelist assignments cannot be propogated to the
+        repository or otherwise shared with other users.  Changelists
+        can only be assigned to files&mdash;Subversion doesn't
+        currently support the use of changelists with directories.
+        Finally, you can have at most one changelist assignment on a
+        given working copy file.  Here is where the blog post category
+        and photo service tag analogies break down&mdash;if you find
+        yourself needing to assign a file to multiple changelists,
+        you're out of luck.</para>
+
+    </sect2>
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.serverconfig.netmodel">
     <title>Network Model</title>
 
     <para>At some point, you're going to need to understand how your
