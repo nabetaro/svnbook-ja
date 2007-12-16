@@ -1680,6 +1680,164 @@ $Date:: 2006-03-15 0#$:  Date of last commit
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <!-- ================================================================= -->
+  <sect1 id="svn.advanced.sparsedirs">
+    <title>Sparse Directories</title>
+
+    <para>By default, Subversion commands on directories act in a
+      recursive manner.  For example, <command>svn checkout</command>
+      creates a working copy with every file and directory in the
+      specified area of the repository, descending recursively through
+      the repository tree until the entire structure is copied to your
+      local disk.  Subversion 1.5 introduces the
+      <option>--depth</option> option which allows you to easily
+      checkout all or part working copy with the freedom to bring in
+      previously ignored files subdirectories at anytime.  For
+      example, say we have a repository with the following
+      structure:</para>
+
+    <screen>
+$ svn co file:///var/svn/repos mom
+A    mom/son
+A    mom/son/grandson
+A    mom/daughter
+A    mom/daughter/granddaughter1
+A    mom/daughter/granddaughter2
+A    mom/daughter/fishie.txt
+A    mom/kitty1.txt
+A    mom/doggie1.txt
+Checked out revision 1.
+</screen>
+
+    <para>Now, let's checkout the same tree with, but with no children
+      at all:</para>
+
+    <screen>
+$ svn co file:///var/svn/repos mom --depth=empty
+Checked out revision 1
+</screen>
+
+    <para>Now let's dig a little deeper and checkout the tree with
+      only the files in the top-level directory:</para>
+
+    <screen>
+svn co file:///var/svn/repos mom --depth=files
+A    mom/kitty1.txt
+A    mom/doggie1.txt
+Checked out revision 1.
+</screen>
+
+    <para>As you can see, we got only the files in the top-level
+      directory, and not the directories.  If we want the files and
+      directories in the top-level directory, but not the children in
+      those directories, we can use the immediates argument:</para>
+
+    <screen>
+svn co file:///var/svn/repos mom --depth=immediates
+A    mom/son
+A    mom/daughter
+A    mom/kitty1.txt
+A    mom/doggie1.txt
+Checked out revision 1.
+</screen>
+
+    <para>This retrieves the subdirectories in the top-level, but sets
+      the depth of each of these subdirectories to empty.</para>
+
+    <para>While we've used svn checkout as an example here, you can
+      use the <option>--depth</option> option with many other
+      Subversion commands.  Here's a brief overview of what each depth
+      argument does (See <xref linkend="svn.ref"/> for details on
+      which commands use the <option>--depth</option> option).</para>
+
+    <variablelist>
+
+      <varlistentry>
+        <term><literal>--depth=empty</literal></term>
+        <listitem>
+          <para>Include only files or subdirectories that are already
+            in your working copy (which means none if you're doing a
+            fresh checkout).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><literal>--depth=files</literal></term>
+        <listitem>
+          <para>Increase the depth of the current directory to include
+            files, but not subdirectores</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><literal>--depth=immediates</literal></term>
+        <listitem>
+          <para>Increase the depth of the current directory to include
+            both subdirectories with <option>--depth=empty</option>
+            and files.</para>
+        </listitem>
+      </varlistentry>
+      
+      <varlistentry>
+        <term><literal>--depth=infinity</literal></term>
+        <listitem>
+          <para>The default behavior.  Increases the depth of the
+            current directory to, well, infinity (what indeed did you
+            expect?)</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>To illustrate how you might use sparse directorise, let's
+      say that you have a repository with 37 top-level
+      projects:</para>
+
+    <screen>
+trunk/project1
+trunk/project2
+trunk/project3
+...
+trunk/project36
+trunk/project37
+</screen>
+
+    <para>If you're working on <literal>project23</literal> and it has
+      dependencies on <literal>project14</literal> and
+      <literal>project29</literal>, it would be convenient to checkout
+      those three projects as part of a cohesive working copy without
+      sucking down the other 34 projects.  To do this, you could
+      perform the following series of actions:</para>
+
+    <screen>
+$ svn checkout file:///var/svn/repos/trunk uberproject --depth=empty
+...
+$ cd uberproject
+$ svn update project14
+...
+$ svn update project23
+...
+$ svn update project29
+...
+</screen>
+
+    <para>Now you have a minimally-sized working copy that will allow
+      you to commit changes to all three of these projects at
+      once.</para>
+
+    <para>Another time where sparse directories are useful is when
+      you've just done a merge into your working copy and you'd like
+      to see the property modifications that will be recorded as part
+      of the merge, running svn diff on your directory will pull down
+      all the changes in your working copy recursively, however, if
+      you use <option>--depth=empty</option>, it will only show the
+      property modifications (i.e. only the changed mergeinfo) on the
+      root directory of your working copy.</para>
+
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
   <sect1 id="svn.advanced.locking">
     <title>Locking</title>
 
