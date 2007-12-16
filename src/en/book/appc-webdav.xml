@@ -501,57 +501,52 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
           <literal>HOST\username</literal>.  These interoperability
           problems are severe and documented in numerous places around
           the web, to the frustration of many users.  Even Greg Stein,
-          the original author of Apache's WebDAV module, recommends
-          against trying to use XP Web Folders against an Apache
+          the original author of Apache's WebDAV module, bluntly
+          states XP Web Folders simply can't operate against an Apache
           server.</para>
 
-        <para>It turns out that the original
-          <quote>Explorer-only</quote> Web Folders implementation isn't
-          dead in XP, it's just buried.  It's still possible to find it
-          by using this technique:</para>
+        <para>Windows Vista's implementation of Web Folders seems to
+          be almost the same as XP's, and so it has the same sort of
+          problems (at the time of writing).</para>
 
-        <orderedlist>
+        <para>However, there seem to be workarounds for both XP and
+          Vista that allow Web Folders to work against Apache.  Users
+          have mostly reported success with these techniques, so we'll
+          relay them here.</para>
 
-          <listitem>
-            <para>Go to 'Network Places'.</para>
-          </listitem>
+        <para>On Windows XP, you have two options.  First, search
+          Microsoft's website for patch KB90730, <quote>Software
+          Update for Web Folders</quote>.  This may fix all your
+          problems.  If it doesn't, it seems that the original pre-XP
+          Web Folders implementation is still buried within the
+          system.  You can unearth it by going to <quote>Network
+          Places</quote> and add a new network place.  When prompted,
+          enter the URL of the repository, but <emphasis>include a
+          port number</emphasis> in the URL.  For
+          example, <literal>http://host/repos</literal> would be
+          entered as <literal>http://host:80/repos</literal> instead.
+          Respond to any authentication prompts with your Subversion
+          credentials.</para>
 
-          <listitem>
-            <para>Add a new network place.</para>
-          </listitem>
+        <para>On Windows Vista, the same patch KB90730 may clear
+          everything up.  But there may still be other issue.  Some
+          users have reported that Vista considers
+          all <literal>http:</literal> connections insecure, and thus
+          will always fail any authentication challenges from Apache
+          unless the connection happens
+          over <literal>https:</literal>.  If you're unable to connect
+          to the Subversion repository via SSL, you can tweak the
+          system registry to turn off this behavior.  Just set the
+          key <literal>HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WebClient\Parameters\BasicAuthLevel</literal>
+          from 1 to 2.  A final warning: be sure to set up the Web
+          Folder to point to the repository's root directory
+          (<filename>/</filename>), rather than some subdirectory
+          like <filename>/trunk</filename>.  Vista Web Folders only
+          seems to work against repository roots.</para>
 
-          <listitem>
-            <para>When prompted, enter the URL of the repository, but
-              <emphasis>include a port number</emphasis> in the URL.
-              For example, <literal>http://host/repos</literal> would be
-              entered as <literal>http://host:80/repos</literal> instead.
-            </para>
-          </listitem>
-
-          <listitem>
-            <para>Respond to any authentication prompts.</para>
-          </listitem>
-
-        </orderedlist>
-
-        <para>There are a number of other rumored workarounds to the
-          problems, but none of them seem to work on all versions and
-          patchlevels of Windows XP.  In our tests, only the previous
-          algorithm seems to work consistently on every system.  The
-          general consensus of the WebDAV community is that you should
-          avoid the new Web Folders implementation and use the old one
-          instead, and that if you need a real filesystem-level
-          client for Windows XP, then use a third-party program like
-          WebDrive or NetDrive.</para>
-
-        <para>A final tip: if you're attempting to use XP Web Folders,
-          make sure you have the absolute latest version from
-          Microsoft.  For example, Microsoft released a bug-fixed
-          version in January 2005, available at
-          <ulink url="http://support.microsoft.com/?kbid=892211"/>.
-          In particular, this release is known to fix a bug whereby
-          browsing a DAV share shows an unexpected infinite
-          recursion.</para>
+        <para>In general, while these workarounds may function for
+          you, you might get a better overall experience using a
+          third-party WebDAV client like WebDrive or NetDrive.</para>
 
       </sect3>
 
