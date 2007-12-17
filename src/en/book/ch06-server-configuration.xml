@@ -144,6 +144,14 @@
           </row>
 
           <row>
+            <entry>Master-slave server replication</entry>
+            <entry>Transparent write-proxying available from slave to master</entry>
+            <entry>Can only create read-only slave servers</entry>
+            <entry>Can only create read-only slave servers</entry>
+          </row>
+
+
+          <row>
             <entry>Speed</entry>
             <entry>somewhat slower</entry>
             <entry>somewhat faster</entry>
@@ -2551,59 +2559,251 @@ CustomLog logs/svn_logfile "%t %u %{SVN-ACTION}e" env=SVN-ACTION
       <sect3 id="svn.serverconfig.httpd.extra.writethruproxy">
         <title>Write-Through Proxying</title>
 
-        <para>intro paragraph -- present the problem of a massively
-          distributed team.  80% of all traffic is read-traffic.  itch
-          is how to speed up remote offices.  solution: write-through
-          proxying makes that 80% traffic into zippy local
-          accesses.  Explain how single-master replication works from
-          10,000 feet:  define master and slave terminology.</para>
+        <para>One of the nice advantages of using Apache as a
+          Subversion server is that it can be set up for simple
+          replication.  For example, suppose that your team is
+          distributed across four offices around the globe.  The
+          Subversion repository can only exist in one of those
+          offices, and that means the other three offices will not
+          enjoy accessing it&mdash;they're likely to experience
+          significantly slower traffic and response times when
+          updating and committing code.  A powerful solution is to set
+          up a system consisting of one <firstterm>master</firstterm>
+          Apache server and several <firstterm>slave</firstterm>
+          Apache servers.  If you place a slave server in each office,
+          then users can check out a working copy from whichever slave
+          is closest to them.  All read requests go to their local
+          slave.  Write requests get automatically routed to the
+          single master server.  When the commit completes, the master
+          then automatically <quote>pushes</quote> the new revision to
+          each slave server using the <command>svnsync</command>
+          replication tool.</para>
 
-        <para>requirements:  at least svn 1.5 and apache 2.2.0.
-          mod_proxy must be enabled.  Here the walkthrough</para>
+        <para>This configuration creates a huge perceptual speed
+          increase for your users, because Subversion client traffic
+          is typically 80-90% read requests.  And if those requests
+          are coming from a <emphasis>local</emphasis> server, it's a
+          huge win.</para>
+
+        <para>In this section, we'll walk you through a standard setup
+          of this single-master/multiple slave system.  However, keep
+          in mind that your servers must be running at least Apache
+          2.2.0 (with <command>mod_proxy</command> loaded) and
+          Subversion (<command>mod_dav_svn</command>) 1.5.</para>
 
         <sect4 id="svn.serverconfig.httpd.extra.writethruproxy.configure">
           <title>Configure the Servers</title>
 
-          <para>Show Location block for master, *two* location blocks
-            for slave.  Explain why we need the second location
-            block.  Explain the need to keep authn and authz
-            consistent across all servers.</para>
+          <para>First, configure your master server's
+            <filename>httpd.conf</filename> file in the usual way.
+            Make the repository available at a certain URI location,
+            and configure authentication and authorization however
+            you'd like.  After that's done, configure each of your
+            <quote>slave</quote> servers in the exact same way, but
+            add the special <literal>SVNMasterURI</literal> directive
+            to the block:</para>
+
+          <screen>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNPath /var/svn/repos
+  SVNMasterURI http://master.example.com/svn
+  &hellip;
+&lt;/Location&gt;
+</screen>
+
+          <para>This new directive tells a slave server to redirect
+            all write requests to the master.  (This is done
+            automatically via Apache's <command>mod_proxy</command>
+            module.)  Ordinary read requests, however, are still
+            serviced by the slaves.  Be sure that your master and
+            slave servers all have matching authentication and
+            authorization configurations;  if they fall out of sync,
+            it can lead to big headaches.</para>
+
+          <para>Next, we need to deal with the problem of infinite
+            recursion.  With the current configuration, imagine what
+            will happen when a Subversion client performs a commit to
+            the master server.  After the commit completes, the server
+            uses <command>svnsync</command> to replicate the new
+            revision to each slave.  But because
+            <command>svnsync</command> appears to be just another
+            Subversion client performing a commit, the slave will
+            immediately attempt to proxy the incoming write request
+            back to the master!  Hilarity ensues.</para>
+
+          <para>The solution to this problem is to have the master
+            push revisions to a different
+            <literal>&lt;Location&gt;</literal> on the slaves.  This
+            location is configured to <emphasis>not</emphasis> proxy
+            write requests at all, but accept normal commits from (and
+            only from) the master's IP address:</para>
+
+          <screen>
+&lt;Location /svn-proxy-sync&gt;
+  DAV svn
+  SVNPath /var/svn/repos
+  Order deny,allow
+  Deny from all
+  # Only let the server's IP address access this Location:
+  Allow from 10.20.30.40
+  &hellip;
+&lt;/Location&gt;
+</screen>
 
         </sect4>
 
         <sect4 id="svn.serverconfig.httpd.extra.writethruproxy.replicate">
           <title>Set up Replication</title>
 
-          <para>Assumption: one master server, N slave servers.</para>
+          <para>Now that you've configured your Location blocks on
+            master and slaves, you need to configure the master to
+            replicate to the slaves.  This is done the usual way,
+            using <command>svnsync</command>.  If you're not familiar
+            with this tool, see <xref
+            linkend="svn.reposadmin.maint.replication"/> for
+            details.</para>
 
-          <para>Do initial svnsync from master (file:///) to each
-            slave (http://).  Show how.</para>
+          <para>First, make sure that each slave repository has a
+            <filename>pre-revprop-change</filename> hook script which
+            allows remote revision property changes.  (This is
+            standard procedure for being on the receiving end of
+            <command>svnsync</command>) Then log into the master
+            server and configure each of the slave repository URIs to
+            receive data from the master repository on local
+            disk:</para>
 
-          <para>Establish post-commit and post-revprop change hook
-            script to replicate each newly committed revision to each
-            slave.  Show scripts.  Show how to background the sync
-            ops, so clients aren't stuck waiting for commits to
-            finish. (Also, make sure slaves are configured to accept
-            propchanges.)</para>
+          <screen>
+$ svnsync init http://slave1.example.com/svn-proxy-sync file://var/svn/repos
+Copied properties for revision 0.
+$ svnsync init http://slave2.example.com/svn-proxy-sync file://var/svn/repos
+Copied properties for revision 0.
+$ svnsync init http://slave3.example.com/svn-proxy-sync file://var/svn/repos
+Copied properties for revision 0.
 
-          <para>Mention locks.  If nothing is done, locking will work,
-            but users won't be able to 'query' locks from the local
-            slave servers.  If you want locks to replicate to slaves,
-            then the post-commit script will need to be expanded to do
-            some fancy remote ssh-commands that call 'svn (un)lock' on
-            slaves.  Show example from jerenkrantz.</para>
+# Perform the initial replication
+
+$ svnsync sync http://slave1.example.com/svn-proxy-sync
+Transmitting file data ....
+Committed revision 1.
+Copied properties for revision 1.
+Transmitting file data .......
+Committed revision 2.
+Copied properties for revision 2.
+&hellip;
+
+$ svnsync sync http://slave2.example.com/svn-proxy-sync
+Transmitting file data ....
+Committed revision 1.
+Copied properties for revision 1.
+Transmitting file data .......
+Committed revision 2.
+Copied properties for revision 2.
+&hellip;
+
+$ svnsync sync http://slave3.example.com/svn-proxy-sync
+Transmitting file data ....
+Committed revision 1.
+Copied properties for revision 1.
+Transmitting file data .......
+Committed revision 2.
+Copied properties for revision 2.
+&hellip;
+</screen>
+
+          <para>After this is done, we configure the master server's
+            <filename>post-commit</filename> hook script to invoke
+            <command>svnsync</command> on each slave server:</para>
+
+          <programlisting>
+#!/bin/sh
+# Post-commit script to replicate newly-committed revision to slaves
+
+svnsync sync http://slave1.example.com/svn-proxy-sync &gt; /dev/null 2&gt;&amp;1
+svnsync sync http://slave2.example.com/svn-proxy-sync &gt; /dev/null 2&gt;&amp;1
+svnsync sync http://slave3.example.com/svn-proxy-sync &gt; /dev/null 2&gt;&amp;1
+</programlisting>
+
+          <para>The extra bits on the end of each line aren't
+            necessary, but they're a sneaky way to allow the sync
+            commands to run in the background, so that the Subversion
+            client isn't left waiting forever for the commit to
+            finish.  In addition to this
+            <filename>post-commit</filename> hook, you'll need a
+            <filename>post-revprop-change</filename> hook as well, so
+            that when a user, say, modifies a log message, the slave
+            servers get that change as well:</para>
+
+          <programlisting>
+#!/bin/sh
+# Post-revprop-change script to replicate revprop-changes to slaves
+
+REV=${2}
+svnsync copy-revprops http://slave1.example.com/svn-proxy-sync ${REV} &gt; /dev/null 2&gt;&amp;1
+svnsync copy-revprops http://slave2.example.com/svn-proxy-sync ${REV} &gt; /dev/null 2&gt;&amp;1
+svnsync copy-revprops http://slave3.example.com/svn-proxy-sync ${REV} &gt; /dev/null 2&gt;&amp;1
+</programlisting>
+
+          <para>The only thing we've left out here is what to do about
+            locks.  Because locks are strictly enforced my the master
+            server (the only place where commits happen), we don't
+            technically need to do anything.  Many teams don't use
+            Subversion's locking features at all, so it may be a
+            non-issue for you.  However, if lock changes aren't
+            replicated from master to slaves, it means that clients
+            won't be able to query the status of locks
+            (e.g. <command>svn status -u</command> will show no
+            information about repository locks.)  If this bothers you,
+            you can write <filename>post-lock</filename> and
+            <filename>post-unlock</filename> hook scripts which run
+            <command>svn lock</command> and <command>svn
+            unlock</command> on each slave machine, presumably through
+            a remote shell method such as SSH.  That's left as an
+            exercise for the reader!</para>
 
         </sect4>
 
         <sect4 id="svn.serverconfig.httpd.extra.writethruproxy.caveats">
           <title>Caveats</title>
 
-          <para>Replication isn't entirely robust in the case of
-            network or server crashes.  If svnsync fails to happen
-            after a commit, who will realize this?  To make it
-            bulletproof, one needs more out-of-band monitoring that
-            can force an svnsync to happen... left as exercise to the
-            reader.</para>
+          <para>Your master/slave replication system should now be
+            ready to use.  A couple words of warning are in order,
+            however.  Remember that this replication isn't entirely
+            robust in the face of computer or network crashes.  For
+            example, if one of the automated
+            <command>svnsync</command> commands fails to complete for
+            some reason, the slaves will begin to fall behind.  For
+            example, your remote users will see that they've committed
+            revision 100, but then when they run <command>svn
+            update</command>, their local server will tell them than
+            revision 100 doesn't yet exist!  Of course, the problem
+            will be automatically fixed the next time another commit
+            happens and the subsequent <command>svnsync</command> is
+            successful&mdash;the sync will replicate all waiting
+            revisions.  But still, you may want to set up some sort of
+            out-of-band monitoring to notice synchronization failures
+            and force <command>svnsync</command> to run when things go
+            wrong.</para>
+
+          <sidebar>
+            <title>Can we set up replication with
+            <command>svnserve</command>?</title>
+
+            <para>If you're using <command>svnserve</command> instead
+              of Apache as your server, you can certainly configure
+              your repository's hook scripts to invoke
+              <command>svnsync</command> as we've shown here, thereby
+              causing automatic replication from master to slaves.
+              Unfortunately, at the time of writing there is no way to
+              make slave <command>svnserve</command> servers
+              automatically proxy write requests back to the master
+              server.  This means your users would only be able to
+              check out read-only working copies from the slave
+              servers.  You'd have to configure your slave servers to
+              disallow write access completely.  This might be useful
+              for creating read-only <quote>mirrors</quote> of popular
+              open-source projects, but it's not a transparent
+              proxying system.</para> </sidebar>
 
         </sect4>
 
@@ -2611,7 +2811,7 @@ CustomLog logs/svn_logfile "%t %u %{SVN-ACTION}e" env=SVN-ACTION
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.serverconfig.httpd.extra.other">
-        <title>Other Features</title>
+        <title>Other Apache Features</title>
 
         <para>Several of the features already provided by Apache in
           its role as a robust Web server can be leveraged for
