@@ -451,8 +451,9 @@ $ svn commit -m "They don't make Sunday."
         <varlistentry>
           <term><option>--recursive</option> (<option>-R</option>)</term>
           <listitem>
-            <para>Makes a subcommand recurse into subdirectories.
-              Most subcommands recurse by default.</para>
+            <para><emphasis>Deprecated</emphasis>.  Makes a subcommand
+              recurse into subdirectories.  Most subcommands recurse
+              by default.</para>
           </listitem>
         </varlistentry>
         
@@ -3911,7 +3912,8 @@ property 'owner-pic' set on 'moo.c'
 
           <screen>
 --targets FILENAME
---recursive (-R)
+--depth ARG
+--accept ARG
 --quiet (-q)
 --config-dir DIR
 </screen>
@@ -4000,9 +4002,10 @@ foo.c.r31
 
           <screen>
 --targets FILENAME
---recursive (-R)
+--depth ARG
 --quiet (-q)
 --config-dir DIR
+--changelist ARG
 </screen>
         </refsect1>
 
@@ -4017,10 +4020,10 @@ Reverted foo.c
 </screen>
 
           <para>If you want to revert a whole directory of files,
-            use the <option>--recursive</option> flag:</para>
+            use the <option>--depth=infinity</option> option:</para>
 
           <screen>
-$ svn revert --recursive .
+$ svn revert --depth=infinity .
 Reverted newdir/afile
 Reverted foo.c
 Reverted bar.txt
@@ -4087,7 +4090,9 @@ $ svn status
             <option>--show-updates</option>, it adds working revision
             and server out-of-date information.  With
             <option>--verbose</option>, it prints full revision
-            information on every item.</para>
+            information on every item.  With <option>--quiet</option>,
+            it prints only summary information about locally modified
+            items.</para>
 
           <para>The first six columns in the output are each one
             character wide, and each column gives you information
@@ -4399,7 +4404,7 @@ $ svn status
           <screen>
 --show-updates (-u)
 --verbose (-v)
---non-recursive (-N)
+--depth ARG
 --quiet (-q)
 --no-ignore
 --username USER
@@ -4408,6 +4413,7 @@ $ svn status
 --non-interactive
 --config-dir DIR
 --ignore-externals
+--changelist ARG
 </screen>
         </refsect1>
 
@@ -4484,7 +4490,7 @@ Head revision:   981
         </refnamediv>
         <refsect1>
           <title>Synopsis</title>
-          <programlisting>svn switch URL [PATH]</programlisting>
+          <programlisting>svn switch URL[@PEGREV] [PATH]</programlisting>
 
           <programlisting>switch --relocate FROM TO [PATH...]</programlisting>
 
@@ -4498,7 +4504,9 @@ Head revision:   981
             copy to point to a new URL&mdash;usually a URL which
             shares a common ancestor with your working copy, although
             not necessarily.  This is the Subversion way to move a
-            working copy to a new branch.  See <xref
+            working copy to a new branch.  If specified,
+            <replaceable>PEGREV</replaceable> determines in which
+            revision the target is first looked up.  See <xref
             linkend="svn.branchmerge.switchwc"/> for an in-depth look
             at switching.</para>
 
@@ -4510,6 +4518,20 @@ Head revision:   981
             URL (typically because an administrator has moved the
             repository to another server, or to another URL on the
             same server).</para>
+
+          <para>If <option>--force</option> is used, unversioned
+            obstructing paths in the working copy do not automatically
+            cause a failure if the switch attempts to add the same
+            path.  If the obstructing path is the same type (file or
+            directory) as the corresponding path in the repository it
+            becomes versioned but its contents are left untouched in
+            the working copy.  This means that an obstructing
+            directory's unversioned children may also obstruct and
+            become versioned.  For files, any content differences
+            between the obstruction and the repository are treated
+            like a local modification to the working copy.  All
+            properties from the repository are applied to the
+            obstructing path.</para>
 
         </refsect1>
 
@@ -4533,7 +4555,10 @@ Head revision:   981
 
           <screen>
 --revision (-r) REV
---non-recursive (-N)
+--depth ARG
+--ignore-externals
+--force
+--accept ARG
 --quiet (-q)
 --diff3-cmd CMD
 --relocate FROM TO
@@ -4697,6 +4722,7 @@ At revision 3.
 --non-interactive
 --config-dir DIR
 --force
+--changelist ARG
 </screen>
         </refsect1>
 
@@ -4807,6 +4833,13 @@ $ svn unlock http://svn.red-bean.com/repos/test/tree.jpg
               </listitem>
             </varlistentry>
 
+            <varlistentry>
+              <term>E</term>
+              <listitem>
+                <para>Existed</para>
+              </listitem>
+            </varlistentry>
+
           </variablelist>
 
           <para>A character in the first column signifies an update
@@ -4834,17 +4867,21 @@ $ svn unlock http://svn.red-bean.com/repos/test/tree.jpg
 
           <screen>
 --revision (-r) REV
---non-recursive (-N)
+--depth ARG
+--force
 --quiet (-q)
 --no-ignore
 --incremental
 --diff3-cmd CMD
+--editor-cmd ARG
+--accept ARG
 --username USER
 --password PASS
 --no-auth-cache
 --non-interactive
 --config-dir DIR
 --ignore-externals
+--changelist
 </screen>
         </refsect1>
 
