@@ -661,7 +661,7 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           or <command>svnserve</command> (see <xref
           linkend="svn.serverconfig"/>)&mdash;rather than accessing it
           as many different users via <literal>file://</literal> or
-          <literal>svn+ssh://</literal> URLs.  If using a Berkeley DB
+          <literal>svn+ssh://</literal> URLs.  If accessing a Berkeley DB
           repository directly as multiple users, be sure to read <xref
           linkend="svn.serverconfig.multimethod"/>.</para>
 
@@ -1217,29 +1217,11 @@ Available subcommands:
    help (?, h)
 </screen>
 
-        <para>There are only two interesting subcommands.  They allow
-          you to make the choice between explicit or implicit
-          inclusion of paths in the stream:</para>
-
-        <variablelist>
-          <varlistentry>
-            <term><literal>exclude</literal></term>
-            <listitem>
-              <para>Filter out a set of paths from the dump data
-                stream.</para>
-            </listitem>
-          </varlistentry>
-
-          <varlistentry>
-            <term><literal>include</literal></term>
-            <listitem>
-              <para>Allow only the requested set of paths to pass
-                through the dump data stream.</para>
-            </listitem>
-          </varlistentry>
-        </variablelist>
-
-        <para>You can learn more about these subcommands and
+        <para>There are only two interesting subcommands:
+          <literal>exclude</literal> and <literal>include</literal>.
+          They allow you to make the choice between implicit or
+          explicit inclusion of paths in the stream.  You can learn
+          more about these subcommands and
           <command>svndumpfilter</command>'s unique purpose in <xref
           linkend="svn.reposadmin.maint.filtering" />.</para>
 
@@ -2571,14 +2553,7 @@ exit 1
         <command>svnsync</command> is to register in our target
         repository the fact that it will be a mirror of the source
         repository.  We do this using the <command>svnsync
-        initialize</command> subcommand.  Note that the various
-        <command>svnsync</command> subcommands provide several of the
-        same authentication-related options that
-        <command>svn</command> does:  <option>--username</option>,
-        <option>--password</option>,
-        <option>--non-interactive</option>,
-        <option>--config-dir</option>, and
-        <option>--no-auth-cache</option>.</para>
+        initialize</command> subcommand.</para>
 
       <screen>
 $ svnsync help init
@@ -2586,26 +2561,10 @@ initialize (init): usage: svnsync initialize DEST_URL SOURCE_URL
 
 Initialize a destination repository for synchronization from
 another repository.
-
-The destination URL must point to the root of a repository with
-no committed revisions.  The destination repository must allow
-revision property changes.
-
-You should not commit to, or make revision property changes in,
-the destination repository by any method other than 'svnsync'.
-In other words, the destination repository should be a read-only
-mirror of the source repository.
-
-Valid options:
-  --non-interactive        : do no interactive prompting
-  --no-auth-cache          : do not cache authentication tokens
-  --username arg           : specify a username ARG
-  --password arg           : specify a password ARG
-  --config-dir arg         : read user configuration files from directory ARG
-
+&hellip;
 $ svnsync initialize http://svn.example.com/svn-mirror \
                      http://svn.collab.net/repos/svn \
-                     --username syncuser --password syncpass
+                     --sync-username syncuser --sync-password syncpass
 Copied properties for revision 0.
 $
 </screen>
@@ -2624,17 +2583,28 @@ $
       </note>
 
       <note>
-        <para>The initial release of <command>svnsync</command> (in
-          Subversion 1.4) has a small shortcoming&mdash;the values
-          given to the <option>--username</option> and
-          <option>--password</option> command-line options get used
+        <para>In Subversion 1.4, the values
+          given to <command>svnsync</command>'s <option>--username</option> and
+          <option>--password</option> command-line options were used
           for authentication against both the source and destination
-          repositories.  Obviously, there's no guarantee that the
-          synchronizing user's credentials are the same in both
-          places.  In the event that they are not the same, users
-          trying to run <command>svnsync</command> in non-interactive
+          repositories.  This caused problems when a user's
+          credentials weren't exactly the same for both repositories,
+          especially when running in non-interactive
           mode (with the <option>--non-interactive</option> option)
           might experience problems.</para>
+
+        <para>This has been fixed in Subversion 1.5 with the
+          introduction of two new pairs of options.  Use the
+          <option>--source-username</option> and
+          <option>--source-password</option> options to provide
+          authentication credentials for the source repository; use
+          <option>--sync-username</option> and
+          <option>--sync-password</option> to provide credentials for
+          the destination repository.  (The old
+          <command>--username</command> and
+          <command>--password</command> options still exist for
+          compatibility, but we advise against using them.)</para>
+
       </note>
 
       <para>And now comes the fun part.  With a single subcommand, we
@@ -2665,29 +2635,30 @@ $
 $ svnsync help synchronize
 synchronize (sync): usage: svnsync synchronize DEST_URL
 
-Transfer all pending revisions from source to destination.
+Transfer all pending revisions to the destination from the source
+with which it was initialized.
 &hellip;
-$ svnsync synchronize http://svn.example.com/svn-mirror \
-                      --username syncuser --password syncpass
-Transmitting file data ....
+$ svnsync synchronize http://svn.example.com/svn-mirror
+Transmitting file data ........................................
 Committed revision 1.
 Copied properties for revision 1.
 Transmitting file data ..
 Committed revision 2.
 Copied properties for revision 2.
-Transmitting file data ..........
+Transmitting file data .....
 Committed revision 3.
 Copied properties for revision 3.
 &hellip;
-Transmitting file data .....
+Transmitting file data ..
 Committed revision 23406.
 Copied properties for revision 23406.
-Transmitting file data ...
+Transmitting file data .
 Committed revision 23407.
 Copied properties for revision 23407.
-Transmitting file data ........
+Transmitting file data ....
 Committed revision 23408.
 Copied properties for revision 23408.
+$
 </screen>
 
       <para>Of particular interest here is that for each mirrored
@@ -2727,17 +2698,16 @@ Copied properties for revision 23408.
         to do so manually by using (or with some additionally tooling
         around) the <command>svnsync copy-revprops</command>
         subcommand, which simply re-replicates all the revision
-        properties for a particular revision.</para>
+        properties for a particular revision or range thereof.</para>
 
       <screen>
 $ svnsync help copy-revprops
-copy-revprops: usage: svnsync copy-revprops DEST_URL REV
+copy-revprops: usage: svnsync copy-revprops DEST_URL [REV[:REV2]]
 
-Copy all revision properties for revision REV from source to
-destination.
+Copy the revision properties in a given range of revisions to the
+destination from the source with which it was initialized.
 &hellip;
-$ svnsync copy-revprops http://svn.example.com/svn-mirror 12 \
-                        --username syncuser --password syncpass
+$ svnsync copy-revprops http://svn.example.com/svn-mirror 12
 Copied properties for revision 12.
 $
 </screen>
