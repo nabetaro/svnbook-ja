@@ -2757,21 +2757,11 @@ $
         working copy that interacts with both, but you'll have to jump
         through some hoops to make it happen.  First, you need to
         ensure that both the primary and mirror repositories have the
-        same repository UUID (which is not the case by default).  You
-        can set the mirror repository's UUID by loading a dump file
-        stub into it which contains the UUID of the primary
-        repository, like so:</para>
-
-      <screen>
-$ cat - &lt;&lt;EOF | svnadmin load --force-uuid dest
-SVN-fs-dump-format-version: 2
-
-UUID: 65390229-12b7-0310-b90b-f21a5aa7ec8e
-EOF
-$
-</screen>
+        same repository UUID (which is not the case by default).  See
+        <xref linkend="svn.reposadmin.maint.uuids" /> for more about
+        managing repository UUIDs.</para>
         
-      <para>Now that the two repositories have the same UUID, you can
+      <para>Once the two repositories have the same UUID, you can
         use <command>svn switch --relocate</command> to point your
         working copy to whichever of the repositories you wish to
         operate against, a process which is described in <xref
@@ -2977,6 +2967,125 @@ $ svnadmin hotcopy --clean-logs /var/svn/bdb-repos /var/svn/bdb-repos-backup
         times.</para>
 
     </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.reposadmin.maint.uuids">
+      <title>Managing Repository UUIDs</title>
+
+      <para>Subversion repositories have a universally unique
+        identifier (UUID) associated with them.  This is used by
+        Subversion clients to verify the identity of a repository when
+        other forms of verification aren't good enough (such as
+        checking the repository URL, which can change over time).
+        Most Subversion repository administrators rarely, if ever,
+        need to think about repository UUIDs as anything more than a
+        trivial implementation detail of Subversion.  Sometimes,
+        however, there is cause for attention to this detail.</para>
+
+      <para>As a general rule, you want the UUIDs of your live
+        repositories to be unique.  That is, after all, the point of
+        having UUIDs.  But there are times when you want the
+        repository UUIDs of two repositories to be exactly the same.
+        For example, if you make a copy of a repository for backup
+        purposes, you want the backup to be a perfect replica of the
+        original so that, in the event that you have to restore that
+        backup and replace the live repository, users don't suddenly
+        see what looks like a different repository.  When dumping and
+        loading repository history (as described in <xref
+        linkend="svn.reposadmin.maint.migrate" />), you get to decide
+        whether or not to apply the UUID encapsulated in the data dump
+        stream to the repository you are loading the data into.  The
+        particular circumstance will dictate the correct
+        behavior.</para>
+
+      <para>There are a couple of ways to set (or reset) a
+        repository's UUID, should you need to.  As of Subversion 1.5,
+        this is as simple as using the <command>svnadmin
+        setuuid</command> command.  If you provide this subcommand
+        with an explicit UUID, it will validate that the UUID is
+        well-formed and then set the repository UUID to that value.
+        If you omit the UUID, a brand new UUID will be generated for
+        your repository.</para>
+
+      <screen>
+$ svnlook uuid /var/svn/repos
+cf2b9d22-acb5-11dc-bc8c-05e83ce5dbec
+$ svnadmin setuuid /var/svn/repos   # generate a new UUID
+$ svnlook uuid /var/svn/repos
+3c3c38fe-acc0-11dc-acbc-1b37ff1c8e7c
+$ svnadmin setuuid /var/svn/repos \
+           cf2b9d22-acb5-11dc-bc8c-05e83ce5dbec  # restore the old UUID
+$ svnlook uuid /var/svn/repos
+cf2b9d22-acb5-11dc-bc8c-05e83ce5dbec
+$
+</screen>
+
+      <para>For folks using versions of Subversion earlier than 1.5,
+        these tasks are a little more complicated.  You can set an
+        explicit UUID on a repository by creating a stub repository
+        dump file that carries that UUID specification, and then
+        loading that into your repository with the
+        <option>--force-uuid</option> option to <command>svnadmin
+        load</command>.</para>
+
+      <screen>
+$ cat - &lt;&lt;EOF | svnadmin load --force-uuid /var/snv/repos
+SVN-fs-dump-format-version: 2
+
+UUID: cf2b9d22-acb5-11dc-bc8c-05e83ce5dbec
+EOF
+$
+</screen>
+
+      <para>Having older versions of Subversion generate a brand new
+        UUID is not quite as simple to do, though.  Your best bet here
+        is to find some other way to generate a UUID, and then
+        explicitly set the repository's UUID to that value.</para>
+
+    </sect2>
+
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.reposadmin.maint.moving-and-removing">
+    <title>Moving and Removing Repositories</title>
+
+    <para>Subversion repository data is wholly contained within the
+      repository directory.  As such, you can move a Subversion
+      repository to some other location on disk, rename a repository,
+      copy a repository, or delete a repository altogether using the
+      tools provided by your operating system for manipulating
+      directories&mdash;<command>mv</command>, <command>cp
+      -a</command>, and <command>rm -r</command> on Unix platforms;
+      <command>copy</command>, <command>move</command> and
+      <command>rmdir /s /q</command> on Windows; vast numbers of mouse
+      and menu gyrations in various graphical file explorer
+      applications, and so on.</para>
+
+    <para>Of course, there's often still more to be done when trying
+      to cleanly affect changes like this.  For example, you might
+      need to update your Subversion server configuration to point to
+      the new location of a relocated repository, or to remove
+      configuration bits for a now-deleted repository.  If you have
+      automated processes that publish information from or about your
+      repositories, they may need to be updated.  Hook scripts might
+      need to be reconfigured.  Users need to be notified.  The list
+      can go on indefinitely, or at least to the extent that you've
+      built processes and procedures around your Subversion
+      repository.</para>
+
+    <para>In the case of a copied repository, you should also consider
+      the fact that Subversion uses repository UUIDs to distinguish
+      repositories.  If you copy a Subversion repository using a
+      typical shell recursive copy command, you'll wind up with two
+      repositories identical in every way&mdash;including their UUIDs.
+      In some circumstances, this might be desirable.  But in the
+      instances where it is not, you'll need to generate a new UUID
+      for one of these identical repositories.  See <xref
+      linkend="svn.reposadmin.maint.uuids" /> for more about managing
+      repository UUIDs.</para>
 
   </sect1>
 
