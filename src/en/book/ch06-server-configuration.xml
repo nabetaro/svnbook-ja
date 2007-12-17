@@ -2548,6 +2548,68 @@ CustomLog logs/svn_logfile "%t %u %{SVN-ACTION}e" env=SVN-ACTION
       </sect3>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.serverconfig.httpd.extra.writethruproxy">
+        <title>Write-Through Proxying</title>
+
+        <para>intro paragraph -- present the problem of a massively
+          distributed team.  80% of all traffic is read-traffic.  itch
+          is how to speed up remote offices.  solution: write-through
+          proxying makes that 80% traffic into zippy local
+          accesses.  Explain how single-master replication works from
+          10,000 feet:  define master and slave terminology.</para>
+
+        <para>requirements:  at least svn 1.5 and apache 2.2.0.
+          mod_proxy must be enabled.  Here the walkthrough</para>
+
+        <sect4 id="svn.serverconfig.httpd.extra.writethruproxy.configure">
+          <title>Configure the Servers</title>
+
+          <para>Show Location block for master, *two* location blocks
+            for slave.  Explain why we need the second location
+            block.  Explain the need to keep authn and authz
+            consistent across all servers.</para>
+
+        </sect4>
+
+        <sect4 id="svn.serverconfig.httpd.extra.writethruproxy.replicate">
+          <title>Set up Replication</title>
+
+          <para>Assumption: one master server, N slave servers.</para>
+
+          <para>Do initial svnsync from master (file:///) to each
+            slave (http://).  Show how.</para>
+
+          <para>Establish post-commit and post-revprop change hook
+            script to replicate each newly committed revision to each
+            slave.  Show scripts.  Show how to background the sync
+            ops, so clients aren't stuck waiting for commits to
+            finish. (Also, make sure slaves are configured to accept
+            propchanges.)</para>
+
+          <para>Mention locks.  If nothing is done, locking will work,
+            but users won't be able to 'query' locks from the local
+            slave servers.  If you want locks to replicate to slaves,
+            then the post-commit script will need to be expanded to do
+            some fancy remote ssh-commands that call 'svn (un)lock' on
+            slaves.  Show example from jerenkrantz.</para>
+
+        </sect4>
+
+        <sect4 id="svn.serverconfig.httpd.extra.writethruproxy.caveats">
+          <title>Caveats</title>
+
+          <para>Replication isn't entirely robust in the case of
+            network or server crashes.  If svnsync fails to happen
+            after a commit, who will realize this?  To make it
+            bulletproof, one needs more out-of-band monitoring that
+            can force an svnsync to happen... left as exercise to the
+            reader.</para>
+
+        </sect4>
+
+        </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.serverconfig.httpd.extra.other">
         <title>Other Features</title>
 
