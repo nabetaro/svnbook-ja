@@ -385,11 +385,11 @@ $ svn commit -m "They don't make Sunday."
         <varlistentry>
           <term><option>--non-recursive</option> (<option>-N</option>)</term>
           <listitem>
-            <para>Stops a subcommand from recursing into
-              subdirectories.  Most subcommands recurse by default,
-              but some subcommands&mdash;usually those that have the
-              potential to remove or undo your local
-              modifications&mdash;do not.</para>
+            <para><emphasis>Deprecated</emphasis>.  Stops a subcommand
+              from recursing into subdirectories.  Most subcommands
+              recurse by default, but some subcommands&mdash;usually
+              those that have the potential to remove or undo your
+              local modifications&mdash;do not.</para>
           </listitem>
         </varlistentry>
 
@@ -710,13 +710,14 @@ $ svn log -r 1729:{2002-02-17}
 
           <screen>
 --targets FILENAME
---non-recursive (-N)
 --quiet (-q)
 --config-dir DIR
 --no-ignore
 --auto-props
 --no-auto-props
 --force
+--depth ARG
+--parents
 </screen>
         </refsect1>
         
@@ -746,7 +747,7 @@ A         testdir/d
             contents:</para>
           
           <screen>
-$ svn add --non-recursive otherdir
+$ svn add --depth=empty otherdir
 A         otherdir
 </screen>
 
@@ -821,6 +822,7 @@ A         otherdir/docs/baz.doc
 --xml
 --extensions (-x) ARG
 --force
+--use-merge-history(-g)
 --username ARG
 --password ARG
 --no-auth-cache
@@ -963,6 +965,99 @@ Latest revision fresh from the repository!
         </refsect1>
       </refentry>
 
+      <refentry id="svn.ref.svn.c.changelist">
+
+        <indexterm>
+          <primary>svn</primary>
+          <secondary>subcommands</secondary>
+          <tertiary>changelist</tertiary>
+        </indexterm>
+
+        <refnamediv>
+          <refname>svn changelist</refname>
+          <refpurpose>Associate (or deassociate) local paths with a
+            changelist.</refpurpose>
+        </refnamediv>
+        <refsect1>
+          <title>Synopsis</title>
+          <programlisting>changelist CLNAME TARGET...</programlisting>
+          <programlisting>changelist --remove TARGET...</programlisting>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+          
+          <para>Used for dividing files in a working copy into
+            changelist (logical named groupings) to allow users to
+            easily work on multiple file collections within a single
+            working copy.</para>
+
+        </refsect1>
+
+        <refsect1>
+          <title>Alternate Names</title>
+          <para>cl</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Changes</title>
+          <para>Working copy</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Accesses Repository</title>
+          <para>No</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Options</title>
+
+          <screen>
+--remove
+--targets ARG
+--changelist ARG
+--config-dir ARG
+</screen>
+        </refsect1>
+
+        <refsect1>
+          <title>Examples</title>
+
+          <para>Edit three files, add them to a changelist, then
+            commit only files in that changelist:</para> <screen>
+
+$ svn cl issue1729 foo.c bar.c baz.c
+Path 'foo.c' is now a member of changelist 'issue1729'.
+Path 'bar.c' is now a member of changelist 'issue1729'.
+Path 'baz.c' is now a member of changelist 'issue1729'.
+
+$ svn status
+A      someotherfile.c
+A      test/sometest.c
+
+--- Changelist 'issue1729':
+A      foo.c
+A      bar.c
+A      baz.c
+
+$ svn commit --changelist issue1729 -m "Fixing Issue 1729."
+Adding         bar.c
+Adding         baz.c
+Adding         foo.c
+Transmitting file data ...
+Committed revision 2.
+
+$ svn status
+A      someotherfile.c
+A      test/sometest.c
+</screen>
+
+          <para>Note that only the files in changelist
+            <replaceable>issue1729</replaceable> were
+            committed.</para>
+          
+        </refsect1>
+      </refentry>
+
       <refentry id="svn.ref.svn.c.checkout">
 
         <indexterm>
@@ -1013,7 +1108,9 @@ Latest revision fresh from the repository!
           <screen>
 --revision (-r) REV
 --quiet (-q)
---non-recursive (-N)
+--depth ARG
+--force
+--accept ARG
 --username USER
 --password PASS
 --no-auth-cache
@@ -1250,15 +1347,18 @@ $ svn cleanup /var/svn/working-copy
 --file (-F) FILE
 --quiet (-q)
 --no-unlock
---non-recursive (-N)
 --targets FILENAME
 --force-log
+--depth ARG
+--with-revprop ARG
 --username USER
 --password PASS
 --no-auth-cache
 --non-interactive
 --encoding ENC
 --config-dir DIR
+--changelist ARG
+--keep-changelist
 </screen>
         </refsect1>
 
@@ -1339,7 +1439,9 @@ Committed revision 7.
         <refsect1>
           <title>Description</title>
           
-          <para>Copy one or more files in a working copy or in the repository.
+          <para>Copy one or more files in a working copy or in the
+            repository.  When copying multiple sources, they will be
+            added as children of DST, which must be a directory.
             <replaceable>SRC</replaceable> and
             <replaceable>DST</replaceable> can each be either a
             working copy (WC) path or URL:</para>
@@ -1422,6 +1524,8 @@ Committed revision 7.
 --file (-F) FILE
 --revision (-r) REV
 --quiet (-q)
+--parents
+--with-revprop ARG
 --username USER
 --password PASS
 --no-auth-cache
@@ -1542,12 +1646,13 @@ Committed revision 13.
         <refsect1>
           <title>Description</title>
 
-          <para>Items specified by <replaceable>PATH</replaceable> are scheduled
-            for deletion upon the next commit.  Files (and
-            directories that have not been committed) are
-            immediately removed from the working copy.  The command
-            will not remove any unversioned or modified items; use
-            the <option>--force</option> option to override this
+          <para>Items specified by <replaceable>PATH</replaceable> are
+            scheduled for deletion upon the next commit.  Files (and
+            directories that have not been committed) are immediately
+            removed from the working copy unless the
+            <option>--keep-local</option> option is given.  The
+            command will not remove any unversioned or modified items;
+            use the <option>--force</option> option to override this
             behavior.</para>
 
           <para>Items specified by URL are deleted from
@@ -1581,6 +1686,8 @@ Committed revision 13.
 --file (-F) FILE
 --quiet (-q)
 --targets FILENAME
+--with-revprop ARG
+--keep-local
 --username USER
 --password PASS
 --no-auth-cache
@@ -1796,7 +1903,7 @@ D         over-there
 --change (-c) ARG
 --old ARG
 --new ARG
---non-recursive (-N)
+--depth ARG
 --diff-cmd CMD
 --extensions (-x) "ARGS"
 --no-diff-deleted
@@ -1808,7 +1915,8 @@ D         over-there
 --no-auth-cache
 --non-interactive
 --config-dir DIR
-
+--changelist ARG
+--xml
 </screen>
         </refsect1>
 
@@ -1982,7 +2090,7 @@ Index: COMMITTERS
 --password PASS
 --no-auth-cache
 --non-interactive
---non-recursive (-N)
+--depth ARG
 --config-dir DIR
 --native-eol EOL
 --ignore-externals
@@ -2113,8 +2221,10 @@ Exported revision 15.
             <replaceable>URL</replaceable>.  If
             <replaceable>PATH</replaceable> is omitted
             <quote><filename>.</filename></quote> is assumed.  Parent
-            directories are created in the repository as
-            necessary.</para>
+            directories are created in the repository as necessary.
+            Unversionable items such as device files and pipes are
+            ignored even if <option>--force</option> is
+            specified.</para>
         </refsect1>
 
         <refsect1>
@@ -2139,7 +2249,9 @@ Exported revision 15.
 --message (-m) TEXT
 --file (-F) FILE
 --quiet (-q)
---non-recursive (-N)
+--depth ARG
+--force
+--with-revprop ARG
 --username USER
 --password PASS
 --no-auth-cache
@@ -2272,7 +2384,7 @@ Committed revision 16.
 
           <screen>
 --revision (-r) REV
---recursive (-R)
+--depth ARG
 --targets FILENAME
 --incremental
 --xml
@@ -2281,6 +2393,7 @@ Committed revision 16.
 --no-auth-cache
 --non-interactive
 --config-dir DIR
+--changelist ARG
 </screen>
         </refsect1>
 
@@ -2432,7 +2545,7 @@ My test lock comment
           <screen>
 --revision (-r) REV
 --verbose (-v)
---recursive (-R)
+--depth ARG
 --incremental
 --xml
 --username USER
@@ -2535,7 +2648,7 @@ $ svn list --verbose file:///var/svn/repos
 --no-auth-cache
 --non-interactive
 --config-dir DIR
---force
+--changelist ARG
 </screen>
         </refsect1>
 
@@ -2650,15 +2763,20 @@ $ svn lock http://svn.red-bean.com/repos/test/tree.jpg
 --quiet (-q)
 --verbose (-v)
 --targets FILENAME
+--user-merge-history (-g)
+--change (-c)
 --stop-on-copy
 --incremental
---limit NUM
+--limit (-l) NUM
+--with-all-revprops
+--with-revprop ARG
 --xml
 --username USER
 --password PASS
 --no-auth-cache
 --non-interactive
 --config-dir DIR
+--changelist ARG
 </screen>
         </refsect1>
 
@@ -2837,32 +2955,44 @@ Made a change.
         </refnamediv>
         <refsect1>
           <title>Synopsis</title>
-          <programlisting>svn merge [-c M | -r N:M] SOURCE[@REV] [WCPATH]</programlisting>
           <programlisting>svn merge sourceURL1[@N] sourceURL2[@M] [WCPATH]</programlisting>
           <programlisting>svn merge sourceWCPATH1@N sourceWCPATH2@M [WCPATH]</programlisting>
+          <programlisting>svn merge [[-c M]... | [-r N:M]...] [SOURCE[@REV] [WCPATH]]</programlisting>
         </refsect1>
         <refsect1>
           <title>Description</title>
 
-          <para>In the first and second forms, the source paths (URLs
-            in the first form, working copy paths in the second) are
-            specified at revisions <replaceable>N</replaceable> and
-            <replaceable>M</replaceable>.  These are the two sources
-            to be compared.  The revisions default to
-            <literal>HEAD</literal> if omitted.</para>
+          <para>In the first form, the source URLs are specified at
+            revisions <literal>N</literal> and <literal>M</literal>.
+            These are the two sources to be compared.  The revisions
+            default to <literal>HEAD</literal> if omitted.</para>
 
-          <para>The <literal>-c M</literal> option is equivalent to
-            <literal>-r N:M</literal> where <replaceable>N =
-            M-1</replaceable>.  Using <literal>-c -M</literal> does
-            the reverse: <literal>-r M:N</literal> where
-            <replaceable>N = M-1</replaceable>.</para>
+          <para>In the second form, the URLs corresponding to the
+            source working copy paths define the sources to be
+            compared.  The revisions must be specified.</para>
 
           <para>In the third form, <replaceable>SOURCE</replaceable>
-            can be a URL or working copy item, in which case the
-            corresponding URL is used.  This URL, at revisions
-            <replaceable>N</replaceable> and
-            <replaceable>M</replaceable>, defines the two sources to
-            be compared.</para>
+            can be either a URL or a working copy path (in which case
+            its corresponding URL is used).  If not specified,
+            <replaceable>SOURCE</replaceable> will be the same as
+            <replaceable>WCPATH</replaceable>.
+            <replaceable>SOURCE</replaceable> in revision
+            <replaceable>REV</replaceable> is compared as it existed
+            between revisions <replaceable>N</replaceable> and
+            <replaceable>M</replaceable> for each revision range
+            provided.  If <replaceable>REV</replaceable> is not
+            specified, <literal>HEAD</literal> is assumed.</para>
+
+          <para><literal>-c M</literal> is equivalent to <literal>-r
+            &lt;M-1&gt;:M</literal>, and <literal>-c -M</literal> does
+            the reverse: <literal>-r M:&lt;M-1&gt;</literal>.  If no
+            revision ranges are specified, the default range of
+            <literal>1:HEAD</literal> is used.  Multiple
+            <literal>-c</literal> and/or <literal>-r</literal>
+            instances may be specified, and mixing of forward and
+            reverse ranges is allowed&mdash;the ranges are internally
+            compacted to their minimum representation before merging
+            begins (which may result in no-op).</para>
 
           <para><replaceable>WCPATH</replaceable> is the working copy
             path that will receive the changes.  If
@@ -2872,11 +3002,16 @@ Made a change.
             file within <quote><filename>.</filename></quote>: in which
             case, the differences will be applied to that file.</para>
 
-          <para>Unlike <command>svn diff</command>, the merge command
-            takes the ancestry of a file into consideration when
-            performing a merge operation.  This is very important when
-            you're merging changes from one branch into another and
-            you've renamed a file on one branch but not the other.</para>
+          <para>Subversion will only internally track metadata about
+            the merge operation if the two sources are ancestrally
+            related&mdash;if the first source is an ancestor of the
+            second, or vice-versa.  This is guaranteed to be the case
+            when using the third form.  Unlike <command>svn
+            diff</command>, the merge command takes the ancestry of a
+            file into consideration when performing a merge operation.
+            This is very important when you're merging changes from
+            one branch into another and you've renamed a file on one
+            branch but not the other.</para>
 
         </refsect1>
         <refsect1>
@@ -2900,7 +3035,9 @@ Made a change.
           <screen>
 --revision (-r) REV
 --change (-c) REV
---non-recursive (-N)
+--depth ARG
+--record-only
+--accept ARG
 --quiet (-q)
 --force
 --dry-run
