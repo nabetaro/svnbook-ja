@@ -2525,7 +2525,7 @@ Committed revision 377.
       working copy directory (see <xref linkend="svn.advanced.externals" />).</para>
 
     <para>But sometimes you want to maintain custom modifications to
-      third-party data in your own version control system.  Returning
+      third-party code in your own version control system.  Returning
       to the software development example, programmers might need to
       make modifications to that third-party library for their own
       purposes.  These modifications might include new functionality
@@ -2540,9 +2540,9 @@ Committed revision 377.
       disjointed fashion, such as using patch files or full-fledged
       alternate versions of files and directories.  But these quickly
       become maintenance headaches, requiring some mechanism by which
-      to apply your custom changes to the third-party data, and
+      to apply your custom changes to the third-party code, and
       necessitating regeneration of those changes with each successive
-      version of the third-party data that you track.</para>
+      version of the third-party code that you track.</para>
 
     <para>The solution to this problem is to use <firstterm>vendor
       branches</firstterm>.  A vendor branch is a directory tree in
@@ -2565,8 +2565,8 @@ Committed revision 377.
     <sect2 id="svn.advanced.vendorbr.general">
       <title>General Vendor Branch Management Procedure</title>
 
-      <para>Managing vendor branches generally works like this.  You
-        create a top-level directory (such as
+      <para>Managing vendor branches generally works like this: first,
+        you create a top-level directory (such as
         <filename>/vendor</filename>) to hold the vendor branches.
         Then you import the third party code into a subdirectory of
         that top-level directory.  You then copy that subdirectory
@@ -2579,8 +2579,8 @@ Committed revision 377.
         occur between your local changes and the upstream
         changes.</para>
 
-      <para>Perhaps an example will help to clarify this algorithm.
-        We'll use a scenario where your development team is creating a
+      <para>An example will help to clarify this algorithm.  We'll use
+        a scenario where your development team is creating a
         calculator program that links against a third-party complex
         number arithmetic library, libcomplex.  We'll begin with the
         initial creation of the vendor branch, and the import of the
@@ -2657,22 +2657,25 @@ $ svn copy http://svn.example.com/repos/vendor/libcomplex/1.0  \
 
       <para>After replacing the 1.0 code with 1.1 code, <command>svn
         status</command> will show files with local modifications as
-        well as, perhaps, some unversioned or missing files.  If we
-        did what we were supposed to do, the unversioned files are
-        only those new files introduced in the 1.1 release of
-        libcomplex&mdash;we run <command>svn add</command> on those to
-        get them under version control.  The missing files are files
-        that were in 1.0 but not in 1.1, and on those paths we run
-        <command>svn delete</command>.  Finally, once our
-        <filename>current</filename> working copy contains only the
-        libcomplex 1.1 code, we commit the changes we made to get it
-        looking that way.</para>
+        well as, perhaps, some unversioned files.  If we did what we
+        were supposed to do, the unversioned files are only those new
+        files introduced in the 1.1 release of libcomplex&mdash;we
+        run <command>svn add</command> on those to get them under
+        version control.  If the 1.1 code no longer has certain files
+        that were in the 1.0 tree, it may be hard to notice them;
+        you'd have to compare the two trees with some external tool
+        and then <command>svn delete</command> any files present in
+        1.0 but not in 1.1.  (Although it might also be just fine to
+        let these same files live on in unused obscurity!)  Finally,
+        once our <filename>current</filename> working copy contains
+        only the libcomplex 1.1 code, we commit the changes we made to
+        get it looking that way.</para>
 
       <para>Our <filename>current</filename> branch now contains the
-        new vendor drop.  We tag the new version (in the same way we
-        previously tagged the version 1.0 vendor drop), and then merge
-        the differences between the tag of the previous version and
-        the new current version into our main development
+        new vendor drop.  We tag the new version as 1.1 (in the same
+        way we previously tagged the version 1.0 vendor drop), and
+        then merge the differences between the tag of the previous
+        version and the new current version into our main development
         branch.</para>
 
       <screen>
