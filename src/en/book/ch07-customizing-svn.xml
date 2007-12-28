@@ -361,15 +361,38 @@ collabnet = svn.collab.net
             </listitem>
           </varlistentry>
           <varlistentry>
-            <term><literal>http-auth-types</literal></term>
+            <term><literal>http-library</literal></term>
             <listitem>
-              <para>### TODO ###</para>
+              <para>Subversion provides a pair of repository access
+                modules which understand its WebDAV network protocol.
+                The original one which shipped with Subversion 1.0 is
+                <literal>libsvn_ra_neon</literal> (though back then it
+                was called <literal>libsvn_ra_dav</literal>).  Newer
+                Subversion versions also provide
+                <literal>libsvn_ra_serf</literal>, which uses a
+                different underlying implementation and aims to
+                support some of the newer HTTP concepts.</para>
+
+              <para>At this point, <literal>libsvn_ra_serf</literal>
+                is still considered experimental, though it appears to
+                work in the common cases quite well.  To encourage
+                experimentation, Subversion provides the
+                <literal>http-library</literal> runtime configuration
+                option to allow users to specify (generally, or in a
+                per-server-group fashion) which WebDAV access module
+                they'd prefer to use&mdash;<literal>neon</literal> or
+                <literal>serf</literal>.</para>
             </listitem>
           </varlistentry>
           <varlistentry>
-            <term><literal>http-library</literal></term>
+            <term><literal>http-auth-types</literal></term>
             <listitem>
-              <para>### TODO ###</para>
+              <para>This option is a semicolon-delimited list of
+                authentication types supported by the Neon-based
+                WebDAV repository access modules.  Valid members of
+                this list are <literal>basic</literal>,
+                <literal>digest</literal>, and
+                <literal>negotiate</literal>.</para>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -483,52 +506,11 @@ collabnet = svn.collab.net
             <term><literal>editor-cmd</literal></term>
             <listitem>
               <para>This specifies the program Subversion will use to
-                query the user for a log message during a commit
-                operation, such as when using <command>svn
-                commit</command> without either the
-                <option>--message</option> (<option>-m</option>) or
-                <option>--file</option> (<option>-F</option>) options.
-                This program is also used with the <command>svn
-                propedit</command> command&mdash;a temporary file is
-                populated with the current value of the property the
-                user wishes to edit, and the edits take place right
-                in the editor program (see <xref
-                linkend="svn.advanced.props" />).  This option's default
-                value is empty.  The order of priority for determining the
-                editor command (where lower-numbered locations take 
-                precedence over higher-numbered locations) is:</para>
-              <orderedlist>
-                <listitem>
-                  <para>Command-line option 
-                    <literal>--editor-cmd</literal></para>
-                </listitem>
-                <listitem>
-                  <para>Environment variable 
-                    <literal>SVN_EDITOR</literal></para>
-                </listitem>
-                <listitem>
-                  <para>Configuration option 
-                    <literal>editor-cmd</literal></para>
-                </listitem>
-                <listitem>
-                  <para>Environment variable
-                    <literal>VISUAL</literal></para>
-                </listitem>
-                <listitem>
-                  <para>Environment variable
-                    <literal>EDITOR</literal></para>
-                </listitem>
-                <listitem>
-                  <para>Possibly, a default value built in to Subversion
-                    (not present in the official builds)</para>
-                </listitem>
-              </orderedlist>
-              <para>The value of any of these options or variables is
-                (unlike <literal>diff-cmd</literal>) the beginning of a
-                command line to be executed by the shell.  Subversion
-                appends a space and the pathname of the temporary file to be
-                edited.  The editor should modify the temporary file and
-                return a zero exit code to indicate success.</para>
+                query the user for certain types of textual metadata
+                or when interactively resolving conflicts.  See
+                <xref linkend="svn.advanced.externaleditors"/> for
+                more details on using external text editors with
+                Subversion.</para>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -683,28 +665,98 @@ collabnet = svn.collab.net
           <varlistentry>
             <term><literal>mime-types-file</literal></term>
             <listitem>
-              <para>### TODO ###</para>
+              <para>This option, new to Subversion 1.5, specifies the
+                path of a MIME types mapping file, such as the
+                <filename>mime.types</filename> file provided by the
+                Apache HTTP Server.  Subversion uses this file to
+                assign MIME types to newly added or imported files.
+                See <xref linkend="svn.advanced.props.auto" /> and
+                <xref linkend="svn.advanced.props.special.mime-type"
+                /> for more about Subversion's detection and use of
+                file content types.</para>
             </listitem>         
           </varlistentry>
                
           <varlistentry>
             <term><literal>preserved-conflict-file-exts</literal></term>
             <listitem>
-              <para>### TODO ###</para>
+              <para>The value of this option is a space-delimited list
+                of file extensions which Subversion should preserve
+                when generating conflict file names.  By default, the
+                list is empty.  This option is new to Subversion
+                1.5.</para>
+
+              <para>When Subversion detects conflicting file content
+                changes, it defers resolution of that conflict to the
+                user.  To assist in the resolution, Subversion keeps
+                pristine copies of the various competing versions of
+                the file in the working copy.  By default, those
+                conflict files have names constructed by appending to
+                the original file name a custom extension such as
+                <literal>.mine</literal> or
+                <literal>.<replaceable>REV</replaceable></literal>
+                (where <replaceable>REV</replaceable> is a revision
+                number).  A mild annoyance with this naming scheme is
+                that on operating systems where a file's extension
+                determines the default application used to open and
+                edit that file, appending a custom extension prevents
+                the file from being easily opened by its native
+                application.  For example, if the file
+                <filename>ReleaseNotes.pdf</filename> was conflicted,
+                the conflict files might be named
+                <filename>ReleaseNotes.pdf.mine</filename> or
+                <filename>ReleaseNotes.pdf.r4231</filename>.  While
+                your system might be configured to use Adobe's Acrobat
+                Reader to open files whose extensions are
+                <literal>.pdf</literal>, there probably isn't an
+                application configured on your system to open all
+                files whose extensions are
+                <literal>.r4321</literal>.</para>
+
+              <para>You can fix this annoyance by using this
+                configuration option, though.  For files with one of
+                the specified extensions, Subversion will append to
+                the conflict file names the custom extension just as
+                before, but then also re-append the file's original
+                extension.  Using the previous example, and assuming
+                that <literal>pdf</literal> is one of the extensions
+                configured in this list thereof, the conflict files
+                generated for <filename>ReleaseNotes.pdf</filename>
+                would instead be named
+                <filename>ReleaseNotes.pdf.mine.pdf</filename> and
+                <filename>ReleaseNotes.pdf.r4231.pdf</filename>.
+                Because each of these files end in
+                <literal>.pdf</literal>, the correct default
+                application will be used to view them.</para>
             </listitem>         
           </varlistentry>
 
           <varlistentry>
             <term><literal>interactive-conflicts</literal></term>
             <listitem>
-              <para>### TODO ###</para>
+              <para>This is a boolean option which specifies whether
+                or not Subversion should try to resolve conflicts
+                interactively.  If its value is <literal>yes</literal>
+                (which is the default value), Subversion will prompt
+                the user for how to handle conflicts in the manner
+                demonstrated in <xref linkend="svn.tour.cycle.resolve"
+                />.  Otherwise, it will simply flag the conflict and
+                continue its operation, postponing resolution to a later
+                time.</para>
             </listitem>         
           </varlistentry>
 
           <varlistentry>
             <term><literal>no-unlock</literal></term>
             <listitem>
-              <para>### TODO ###</para>
+              <para>This boolean option corresponds to the
+                <option>--no-unlock</option> option to <command>svn
+                commit</command>, which tells Subversion not to release
+                locks on files you've just committed.  If this runtime
+                option is set to <literal>yes</literal>, Subversion will
+                never release locks automatically, leaving you to run
+                <command>svn unlock</command> explicitly.  It defaults to
+                <literal>no</literal>.</para>
             </listitem>         
           </varlistentry>
 
@@ -905,6 +957,90 @@ svn: Can't convert string from 'UTF-8' to native encoding:
       </sidebar>
 
     </sect2>
+
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.advanced.externaleditors">
+    <title>Using External Editors</title>
+
+    <para>The most obvious way to get data into Subversion is through
+      the addition of files to version control, committing changes to
+      those files, and so on.  But there are other pieces of
+      information besides merely versioned file data that live in your
+      Subversion repository.  Some of these bits of
+      information&mdash;commit log messages, lock comments, and some
+      property values&mdash;tend to be textual in nature and are
+      provided explicitly by users.  Most of this information can be
+      provided to the Subversion command-line client using the
+      <option>--message (-m)</option> and <option>--file (-F)</option>
+      options with the appropriate subcommands.</para>
+
+    <para>Each of these options has its pros and cons.  For example,
+      when performing a commit, <option>--file (-F)</option> works
+      well if you've already prepared a text file that holds your
+      commit log message.  If you didn't, though, you can use
+      <option>--message (-m)</option> to provide a log message on the
+      command line.  Unfortunately, it can be tricky to compose
+      anything more than a simple one-line message on the command line.
+      Users want more flexibility&mdash;multi-line, free-form log
+      message editing on demand.</para>
+      
+    <para>Subversion supports this by allowing you to specify an
+      external text editor which it will launch as necessary in order
+      to give you a more powerful input mechanism for this textual
+      metadata.  There are several ways to tell Subversion which
+      editor you'd like use.  Subversion checks the following things,
+      in the order specified, when it wants to launch such an
+      editor:</para>
+
+    <orderedlist>
+      <listitem>
+        <para><literal>--editor-cmd</literal> command-line option</para>
+      </listitem>
+      <listitem>
+        <para><literal>SVN_EDITOR</literal> environment variable</para>
+      </listitem>
+      <listitem>
+        <para><literal>editor-cmd</literal> runtime configuration option</para>
+      </listitem>
+      <listitem>
+        <para><literal>VISUAL</literal> environment variable</para>
+      </listitem>
+      <listitem>
+        <para><literal>EDITOR</literal> environment variable</para>
+      </listitem>
+      <listitem>
+        <para>Possibly, a fallback value built into the Subversion
+          libraries (not present in the official builds)</para>
+      </listitem>
+    </orderedlist>
+
+    <para>The value of any of these options or variables is the
+      beginning of a command line to be executed by the shell.
+      Subversion appends to that command line a space and the pathname
+      of a temporary file to be edited.  So, in order to be used with
+      Subversion, the configured or specified editor needs to support
+      an invocation in which its last command-line parameter is a file
+      to be edited, and it should be able to save the file in place
+      and return a zero exit code to indicate success.</para>
+
+    <para>As noted, external editors can be used to provide commit log
+      messages to any of the committing subcommands (such as
+      <command>svn commit</command> or <command>import</command>,
+      <command>svn mkdir</command> or <command>delete</command> when
+      provided a URL target, and so on), and Subversion will try to
+      launch the editor automatically if you don't specify either of
+      the <option>--message (-m)</option> or <option>--file
+      (-F)</option> options.  The <command>svn propedit</command>
+      command is built almost entirely around the use of an external
+      editor.  And beginning in version 1.5, Subversion will also use
+      the configured external text editor when the user asks it to
+      launch an editor during interactive conflict resolution.  Oddly,
+      there doesn't appear to be a way to use external editors to
+      interactively provide lock comments.</para>
 
   </sect1>
 
