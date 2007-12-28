@@ -1050,23 +1050,10 @@ svn: Can't convert string from 'UTF-8' to native encoding:
   <sect1 id="svn.advanced.externaldifftools">
     <title>Using External Differencing and Merge Tools</title>
 
-    <para>### TODO: what's the difference between diff3-cmd and
-              merge-tool-cmd? ###</para>
-
-    <para>The presence of <option>--diff-cmd</option> and
-      <option>--diff3-cmd</option> options, and similarly named
-      runtime configuration parameters (see <xref
-      linkend="svn.advanced.confarea.opts.config"/>), can lead to a
-      false notion of how easy it is to use external differencing (or
-      <quote>diff</quote>) and merge tools with Subversion.  While
-      Subversion can use most of popular such tools available, the
-      effort invested in setting this up often turns out to be
-      non-trivial.</para>
-
-    <para>The interface between Subversion and external diff and merge
-      tools harkens back to a time when Subversion's only contextual
-      differencing capabilities were built around invocations of the
-      GNU diffutils toolchain, specifically the
+    <para>The interface between Subversion and external 2- and 3-way
+      differencing tools harkens back to a time when Subversion's only
+      contextual differencing capabilities were built around
+      invocations of the GNU diffutils toolchain, specifically the
       <command>diff</command> and <command>diff3</command> utilities.
       To get the kind of behavior Subversion needed, it called these
       utilities with more than a handful of options and parameters,
@@ -1086,9 +1073,9 @@ svn: Can't convert string from 'UTF-8' to native encoding:
       easy configuration mechanisms for specifying that Subversion
       should use the external GNU diff and diff3 utilities located at
       a particular place on the system could be applied toward the use
-      of other diff and merge tools, too.  After all, Subversion
-      didn't actually verify that the things it was being told to run
-      were members of the GNU diffutils toolchain.  But the only
+      of other differencing tools, too.  After all, Subversion didn't
+      actually verify that the things it was being told to run were
+      members of the GNU diffutils toolchain.  But the only
       configurable aspect of using those external tools is their
       location on the system&mdash;not the option set, parameter
       order, etc.  Subversion continues throwing all those GNU utility
@@ -1096,31 +1083,49 @@ svn: Can't convert string from 'UTF-8' to native encoding:
       that program can understand those options.  And that's where
       things get unintuitive for most users.</para>
 
-    <para>The key to using external diff and merge tools (other than
-      GNU diff and diff3, of course) with Subversion is to use wrapper
-      scripts which convert the input from Subversion into something
-      that your differencing tool can understand, and then to convert
-      the output of your tool back into a format which Subversion
-      expects&mdash;the format that the GNU tools would have used.
-      The following sections cover the specifics of those
+    <para>The key to using external 2- and 3-way differencing tools
+      (other than GNU diff and diff3, of course) with Subversion is to
+      use wrapper scripts which convert the input from Subversion into
+      something that your differencing tool can understand, and then
+      to convert the output of your tool back into a format which
+      Subversion expects&mdash;the format that the GNU tools would
+      have used.  The following sections cover the specifics of those
       expectations.</para>
 
     <note>
-      <para>The decision on when to fire off a contextual diff or
-        merge as part of a larger Subversion operation is made
-        entirely by Subversion, and is affected by, among other
-        things, whether or not the files being operated on are
-        human-readable as determined by their
-        <literal>svn:mime-type</literal> property.  This means, for
-        example, that even if you had the niftiest Microsoft
-        Word-aware differencing or merging tool in the Universe, it
-        would never be invoked by Subversion so long as your versioned
-        Word documents had a configured MIME type that denoted that
-        they were not human-readable (such as
+      <para>The decision on when to fire off a contextual 2- or 3-way
+        diff as part of a larger Subversion operation is made entirely
+        by Subversion, and is affected by, among other things, whether
+        or not the files being operated on are human-readable as
+        determined by their <literal>svn:mime-type</literal> property.
+        This means, for example, that even if you had the niftiest
+        Microsoft Word-aware differencing or merging tool in the
+        Universe, it would never be invoked by Subversion so long as
+        your versioned Word documents had a configured MIME type that
+        denoted that they were not human-readable (such as
         <literal>application/msword</literal>).  For more about MIME
         type settings, see <xref
         linkend="svn.advanced.props.special.mime-type"/></para>
     </note>
+
+    <para>Subversion 1.5 introduces interactive resolution of
+      conflicts (described in <xref linkend="svn.tour.cycle.resolve"
+      />), and one of the options provided to users is the ability
+      launch a third-party merge tool.  If this action is taken,
+      Subversion will consult the <literal>merge-tool-cmd</literal>
+      runtime configuration option to find the name of an external
+      merge tool and, upon finding one, launch that tool with the
+      appropriate input files.  This differs from the configurable
+      3-way differencing tool in a couple of ways.  First, the
+      differencing tool is always used to handle 3-way differences,
+      whereas the merge tool is only employed when 3-way difference
+      application has detected a conflict.  Secondly, the interface is
+      much cleaner&mdash;your configured merge tool need only accept
+      on its command line four path specifications: the base file, the
+      <quote>theirs</quote> file (which contains upstream changes),
+      the <quote>mine</quote> file (which contains local
+      modifications), and the path of the file where the final
+      resolved contents should be stored.</para>
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.externaldifftools.diff">
