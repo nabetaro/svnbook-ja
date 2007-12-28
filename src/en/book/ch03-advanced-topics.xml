@@ -1170,31 +1170,114 @@ $
       directories&mdash;its output can get quite noisy where many of
       these things exist.</para>
 
-    <para>So Subversion provides two ways for telling it which
-      files you would prefer that it simply disregard.  One of the
-      ways involves the use of Subversion's runtime configuration
-      system (see <xref linkend="svn.advanced.confarea" />), and
-      therefore applies to all the Subversion operations which make
-      use of that runtime configuration, generally those performed on
-      a particular computer, or by a particular user of a computer.
-      The other way makes use of Subversion's directory property
-      support, is more tightly bound to the versioned tree itself, and
-      therefore affects everyone who has a working copy of that tree.
-      Both of the mechanisms use file patterns.</para>
+    <para>So Subversion provides two ways for telling it which files
+      you would prefer that it simply disregard.  One of the ways
+      involves the use of Subversion's runtime configuration system
+      (see <xref linkend="svn.advanced.confarea" />), and therefore
+      applies to all the Subversion operations which make use of that
+      runtime configuration, generally those performed on a particular
+      computer, or by a particular user of a computer.  The other way
+      makes use of Subversion's directory property support, is more
+      tightly bound to the versioned tree itself, and therefore
+      affects everyone who has a working copy of that tree.  Both of
+      the mechanisms use <firstterm>file patterns</firstterm> (strings
+      of literal and special wildcard characters used to match against
+      file names) to decide which files to ignore.</para>
 
     <para>The Subversion runtime configuration system provides an
       option, <literal>global-ignores</literal>, whose value is a
-      whitespace-delimited collection of file patterns (also known as
-      <firstterm>globs</firstterm>).  The Subversion client checks
-      these patterns against the names of the files which are
-      candidates for addition to version control, as well as to
-      unversioned files which the <command>svn status</command>
-      command notices.  If any file's name matches one of the
-      patterns, Subversion will basically act as if the file didn't
-      exist at all.  This is really useful for the kinds of files that
-      you almost never want to version, such as editor backup files
-      like Emacs' <literal>*~</literal> and <literal>.*~</literal>
-      files.</para>
+      whitespace-delimited collection of file patterns.  The
+      Subversion client checks these patterns against the names of the
+      files which are candidates for addition to version control, as
+      well as to unversioned files which the <command>svn
+      status</command> command notices.  If any file's name matches
+      one of the patterns, Subversion will basically act as if the
+      file didn't exist at all.  This is really useful for the kinds
+      of files that you almost never want to version, such as editor
+      backup files like Emacs' <literal>*~</literal> and
+      <literal>.*~</literal> files.</para>
+
+    <sidebar>
+      <title>File Patterns in Subversion</title>
+
+      <para>File patterns (also called <firstterm>globs</firstterm> or
+        <firstterm>shell wildcard patterns</firstterm>) are strings of
+        characters that are intended to be matched against file names,
+        typically for the purpose of quickly selecting some subset of
+        similar files from a larger grouping without having to
+        explicitly name each file.  The patterns contain two types of
+        characters:  regular characters which are compared explicitly
+        against potential matches, and special wildcard characters
+        which are interpreted differently for matching
+        purposes.</para>
+
+      <para>There are different types of file pattern syntaxes, but
+        Subversion uses the one most commonly found in Unix systems
+        implemented as the <function>fnmatch</function> system
+        function.  It supports the following wildcards, described here
+        simply for your convenience:</para>
+
+      <variablelist>
+        <varlistentry>
+          <term><literal>?</literal></term>
+          <listitem>
+            <para>matches any single character</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>*</literal></term>
+          <listitem>
+            <para>matches any string of characters, including the
+              empty string</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>[</literal></term>
+          <listitem>
+            <para>begins a character class definition terminated by
+              <literal>]</literal>, used for matching a subset of
+              characters</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <para>You can see this same pattern matching behavior at a Unix
+        shell prompt.  The following are some examples of patterns
+        being used for various things.</para>
+
+      <screen>
+$ ls   ### the book sources
+appa-quickstart.xml		ch06-server-configuration.xml
+appb-svn-for-cvs-users.xml	ch07-customizing-svn.xml
+appc-webdav.xml			ch08-embedding-svn.xml
+appd-third-party-tools.xml	ch09-reference.xml
+book.xml			ch10-world-peace-thru-svn.xml
+ch00-preface.xml		copyright.xml
+ch01-fundamental-concepts.xml	foreword.xml
+ch02-basic-usage.xml		images/
+ch03-advanced-topics.xml	index.xml
+ch04-branching-and-merging.xml	styles.css
+ch05-repository-admin.xml
+$ ls ch*   ### the book chapters
+ch00-preface.xml		ch06-server-configuration.xml
+ch01-fundamental-concepts.xml	ch07-customizing-svn.xml
+ch02-basic-usage.xml		ch08-embedding-svn.xml
+ch03-advanced-topics.xml	ch09-reference.xml
+ch04-branching-and-merging.xml	ch10-world-peace-thru-svn.xml
+ch05-repository-admin.xml
+$ ls ch?0-*   ### the book chapters whose numbers end in zero
+ch00-preface.xml  ch10-world-peace-thru-svn.xml
+$ ls ch0[3578]-*   ### the book chapters that Mike is responsible for
+ch03-advanced-topics.xml   ch07-customizing-svn.xml
+ch05-repository-admin.xml  ch08-embedding-svn.xml
+$
+</screen>
+
+      <para>File pattern matching is a bit more complex than what
+        we've described here, but this basic usage level tends to suit
+        the majority of Subversion users.</para>
+
+    </sidebar>
 
     <para>When found on a versioned directory, the
       <literal>svn:ignore</literal> property is expected to contain a
