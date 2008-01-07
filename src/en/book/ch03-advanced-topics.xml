@@ -1799,155 +1799,279 @@ $Date:: 2006-03-15 0#$:  Date of last commit
   <sect1 id="svn.advanced.sparsedirs">
     <title>Sparse Directories</title>
 
-    <para>By default, Subversion commands on directories act in a
-      recursive manner.  For example, <command>svn checkout</command>
-      creates a working copy with every file and directory in the
-      specified area of the repository, descending recursively through
-      the repository tree until the entire structure is copied to your
-      local disk.  Subversion 1.5 introduces the
-      <option>--depth</option> option which allows you to easily
-      checkout all or part working copy with the freedom to bring in
-      previously ignored files subdirectories at anytime.  For
-      example, say we have a repository with the following
-      structure:</para>
+    <para>By default, most Subversion operations on directories act in
+      a recursive manner.  For example, <command>svn
+      checkout</command> creates a working copy with every file and
+      directory in the specified area of the repository, descending
+      recursively through the repository tree until the entire
+      structure is copied to your local disk.  Subversion 1.5
+      introduces a feature called <firstterm>sparse
+      directories</firstterm> (or <firstterm>shallow
+      checkouts</firstterm>) which allows you to easily checkout a
+      working copy&mdash;or a portion of a working copy&mdash;more
+      shallowly than full recursion, with the freedom to bring in
+      previously ignored files and subdirectories at a later
+      time.</para>
+
+    <para>For example, say we have a repository with a tree of files
+      and directories named like the members of a human family with
+      pets.  (It's an odd example, to be sure, but bear with us.)  A
+      regular <command>svn checkout</command> operation will give us a
+      working copy of the whole tree:</para>
 
     <screen>
-$ svn co file:///var/svn/repos mom
+$ svn checkout file:///var/svn/repos mom
 A    mom/son
 A    mom/son/grandson
 A    mom/daughter
 A    mom/daughter/granddaughter1
+A    mom/daughter/granddaughter1/bunny1.txt
+A    mom/daughter/granddaughter1/bunny2.txt
 A    mom/daughter/granddaughter2
 A    mom/daughter/fishie.txt
 A    mom/kitty1.txt
 A    mom/doggie1.txt
 Checked out revision 1.
+$
 </screen>
 
-    <para>Now, let's checkout the same tree with, but with no children
-      at all:</para>
+    <para>Now, let's checkout the same tree again, but this time,
+      we'll ask Subversion to give us only the topmost direcectory
+      with none of its children at all.</para>
 
     <screen>
-$ svn co file:///var/svn/repos mom --depth=empty
+$ svn checkout file:///var/svn/repos mom-empty --depth=empty
 Checked out revision 1
+$
 </screen>
-
-    <para>Now let's dig a little deeper and checkout the tree with
-      only the files in the top-level directory:</para>
-
-    <screen>
-svn co file:///var/svn/repos mom --depth=files
-A    mom/kitty1.txt
-A    mom/doggie1.txt
-Checked out revision 1.
-</screen>
-
-    <para>As you can see, we got only the files in the top-level
-      directory, and not the directories.  If we want the files and
-      directories in the top-level directory, but not the children in
-      those directories, we can use the immediates argument:</para>
-
-    <screen>
-svn co file:///var/svn/repos mom --depth=immediates
-A    mom/son
-A    mom/daughter
-A    mom/kitty1.txt
-A    mom/doggie1.txt
-Checked out revision 1.
-</screen>
-
-    <para>This retrieves the subdirectories in the top-level, but sets
-      the depth of each of these subdirectories to empty.</para>
-
-    <para>While we've used svn checkout as an example here, you can
-      use the <option>--depth</option> option with many other
-      Subversion commands.  Here's a brief overview of what each depth
-      argument does (See <xref linkend="svn.ref"/> for details on
-      which commands use the <option>--depth</option> option).</para>
+ 
+    <para>Notice that we added to our original <command>svn
+      checkout</command> command line a new <option>--depth</option>
+      option.  This option is present on many of Subversion's
+      subcommands, and is similar to the <option>--non-recursive
+      (-N)</option> and <option>--recursive (-R)</option> options.  In
+      fact, it combines, improves upon, supercedes, and ultimately
+      obsoletes these two older options.  For starters, it expands the
+      supported degrees of depth specification available to users,
+      adding some previously unsupported (or inconsistently supported)
+      depths.  Here are the depth values that you can request for a
+      given Subversion operation:</para>
 
     <variablelist>
 
       <varlistentry>
         <term><literal>--depth=empty</literal></term>
         <listitem>
-          <para>Include only files or subdirectories that are already
-            in your working copy (which means none if you're doing a
-            fresh checkout).</para>
+          <para>Include only the immediate target of the operation,
+            not any of its file or directory children.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>--depth=files</literal></term>
         <listitem>
-          <para>Increase the depth of the current directory to include
-            files, but not subdirectores</para>
+          <para>Include the immediate target of the operation and any
+            of its immediate file chidren.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
         <term><literal>--depth=immediates</literal></term>
         <listitem>
-          <para>Increase the depth of the current directory to include
-            both subdirectories with <option>--depth=empty</option>
-            and files.</para>
+          <para>Include the immediate target of the operation and any
+            of its immediate file or directory chidren.  The directory
+            children will themselves be empty.</para>
         </listitem>
       </varlistentry>
       
       <varlistentry>
         <term><literal>--depth=infinity</literal></term>
         <listitem>
-          <para>The default behavior.  Increases the depth of the
-            current directory to, well, infinity (what indeed did you
-            expect?)</para>
+          <para>Include the immediate target, its file and directory
+            children, its children's children, and so on to full
+            recursion.</para>
         </listitem>
       </varlistentry>
 
     </variablelist>
 
-    <para>To illustrate how you might use sparse directorise, let's
-      say that you have a repository with 37 top-level
-      projects:</para>
+    <para>Of course, merely combining two existing options into one
+      hardly constitutes a new feature worthy of a whole section in
+      our book.  Fortunately, there is more to this story.  This idea
+      of depth extends not just to the operations you perform with
+      your Subversion client, but also as a description of a working
+      copy citizen's <firstterm>ambient depth</firstterm>&mdash;the
+      depth persistently recorded by the working copy for that item.
+      Its key strength is this very persistence, the fact that it is
+      <quote>sticky</quote>.  The working copy remembers the depth
+      you've selected for each item in it until you later change that
+      depth selection, and by default, Subversion commands operate on
+      the working copy citizens present, regardless of their selected
+      depth settings.</para>
+
+    <tip>
+      <para>You can check the recorded ambient depth of a working copy
+        using the <command>svn info</command> command.  If the ambient
+        depth is anything other than infinite recursion, <command>svn
+        info</command> will display a line describing that depth
+        value:</para>
+
+      <screen>$ svn info mom-immediates | grep '^Depth:'
+Depth: immediates
+$
+</screen>
+    </tip>
+
+    <para>Our previous examples demonstrated checkouts of infinite
+      depth (the default for <command>svn checkout</command>) and
+      empty depth.  Let's look now at examples of the other depth
+      values:</para>
 
     <screen>
-trunk/project1
-trunk/project2
-trunk/project3
-...
-trunk/project36
-trunk/project37
+$ svn checkout file:///var/svn/repos mom-files --depth=files
+A    mom-files/kitty1.txt
+A    mom-files/doggie1.txt
+Checked out revision 1.
+$ svn checkout file:///var/svn/repos mom-immediates --depth=immediates
+A    mom-immediates/son
+A    mom-immediates/daughter
+A    mom-immediates/kitty1.txt
+A    mom-immediates/doggie1.txt
+Checked out revision 1.
+$
 </screen>
 
-    <para>If you're working on <literal>project23</literal> and it has
-      dependencies on <literal>project14</literal> and
-      <literal>project29</literal>, it would be convenient to checkout
-      those three projects as part of a cohesive working copy without
-      sucking down the other 34 projects.  To do this, you could
-      perform the following series of actions:</para>
+    <para>As described, each of these depths is something more than
+      only-the-target, but something less than full recursion.</para>
+
+    <para>We've used <command>svn checkout</command> as an example
+      here, but you'll find the <option>--depth</option> option
+      present on many other Subversion commands, too.  In those other
+      commands, depth specification is a way to limit the scope of an
+      operation to some depth, much like the way the older
+      <option>--non-recursive (-N)</option> and <option>--recursive
+      (-R)</option> options behave.  This means that when operating on
+      a working copy of some depth, and requesting an operation of a
+      shallower depth, the operation is limited to that shallower
+      depth.  In fact, we can make an even more general statement:
+      given a working copy of any arbitrary&mdash;even
+      mixed&mdash;ambient depth, and a Subversion command with some
+      requested operational depth, the command will maintain the
+      ambient depth of the working copy members while still limiting
+      the scope of the operation to the requested (or default)
+      operational depth.</para>
+
+    <!-- NOTE:  We may change this next part before 1.5 ships, to push
+         instead for an explicit -new-depth option to 'svn update' -->
+
+    <para>There is one key exception to this generality, found in the
+      <command>svn update</command> command.  <command>svn
+      update</command> interprets <option>--depth</option> as a new
+      sticky ambient depth value for its targets.  This is the
+      mechanism you use to make a shallow working copy citizen deeper.
+      Watch what happens as we take our empty-depth checkout and
+      gradually telescope it deeper using <command>svn update
+      --depth</command>:</para>
 
     <screen>
-$ svn checkout file:///var/svn/repos/trunk uberproject --depth=empty
-...
-$ cd uberproject
-$ svn update project14
-...
-$ svn update project23
-...
-$ svn update project29
-...
+$ svn update --depth=files mom-empty
+A    mom-empty/kittie1.txt
+A    mom-empty/doggie1.txt
+Updated to revision 1.
+$ svn update --depth=immediates mom-empty
+A    mom-empty/son
+A    mom-empty/daughter
+Updated to revision 1.
+$ svn update --depth=infinity mom-empty
+A    mom-empty/son/grandson
+A    mom-empty/daughter/granddaughter1
+A    mom-empty/daughter/granddaughter1/bunny1.txt
+A    mom-empty/daughter/granddaughter1/bunny2.txt
+A    mom-empty/daughter/granddaughter2
+A    mom-empty/daughter/fishie1.txt
+Updated to revision 1.
+$
 </screen>
 
-    <para>Now you have a minimally-sized working copy that will allow
-      you to commit changes to all three of these projects at
-      once.</para>
+    <para>As we gradually increased our depth selection, the
+      repository gave us more pieces of our tree.</para>
 
-    <para>Another time where sparse directories are useful is when
-      you've just done a merge into your working copy and you'd like
-      to see the property modifications that will be recorded as part
-      of the merge, running svn diff on your directory will pull down
-      all the changes in your working copy recursively, however, if
-      you use <option>--depth=empty</option>, it will only show the
-      property modifications (i.e. only the changed mergeinfo) on the
-      root directory of your working copy.</para>
+    <para>In our example, we operated only on the root of our working
+      copy, changing its ambient depth value.  But we can
+      independently change the ambient depth value of
+      <emphasis>any</emphasis> subdirectory inside the working copy,
+      too.  Careful use of this ability allows us to flesh out only
+      certain portions of the working copy tree, leaving other
+      portions absent altogether (hence the <quote>sparse</quote> bit
+      of the feature's name).  Here's an example of how we might build
+      out a portion of one branch of our family's tree, enable full
+      recursion on another branch, and still other pieces pruned
+      (absent from disk).</para>
+
+    <screen>
+$ rm -rf mom-empty
+$ svn checkout file://`pwd`/repos/mom mom-empty --depth=empty
+Checked out revision 1.
+$ svn update --depth=empty mom-empty/son
+A    mom-empty/son
+Updated to revision 1.
+$ svn update --depth=empty mom-empty/daughter
+A    mom-empty/daughter
+Updated to revision 1.
+$ svn update --depth=infinity mom-empty/daughter/granddaughter1
+A    mom-empty/daughter/granddaughter1
+A    mom-empty/daughter/granddaughter1/bunny1.txt
+A    mom-empty/daughter/granddaughter1/bunny2.txt
+Updated to revision 1.
+$
+</screen>
+
+    <para>Fortunately, having a complex collection of ambient depths
+      in a single working copy doesn't complicate the way you interact
+      with that working copy.  You can still make, revert, display and
+      commit local modifications in your working copy without
+      providing any new options (including <option>--depth</option>)
+      to the relevant subcommands.  Even <command>svn update</command>
+      works as it does elsewhere when no specific depth is
+      provided&mdash;it updates the working copy targets that are
+      present while honoring their sticky depths.</para>
+
+    <para>You might at this point be wondering, <quote>So what?  When
+      would I use this?</quote>.  One scenario where this feature
+      finds utility is tied to a particular repository layout,
+      specifically where you have many related or co-dependent
+      projects or software modules living as siblings in a single
+      repository location (<filename>trunk/project1</filename>,
+      <filename>trunk/project2</filename>,
+      <filename>trunk/project3</filename>, and so on).  In such
+      scenarios, it might be the case that you personally only care
+      about a handful of those projects&mdash;maybe some primary
+      project and a few other modules on which it depends.  You can
+      checkout individual working copies of all of these things, but
+      those working copies are disjoint and, as a result, it can be
+      cumbersome to perform operations across several or all of them
+      at the same time.  The alternative is to use the sparse
+      directories feature, building out a single working copy that
+      contains only the modules you care about.  You'd start with an
+      empty-depth checkout of the common parent directory of the
+      projects, and then update with infinite depth only the items you
+      wish to have, like we demonstrated in the previous example.
+      Think of it like an opt-in system for working copy
+      citizens.</para>
+
+    <para>Subversion 1.5's implementation of shallow checkouts is
+      good, but does not support a couple of interesting behaviors.
+      First, you cannot de-telescope a working copy item.  Running
+      <command>svn update --depth=empty</command> on an infinite-depth
+      working copy will not have the effect of discarding everything
+      but the top-most directory.  In this case (where the operational
+      depth is more shallow than the ambient depth), <command>svn
+      update</command>'s interpretation of <option>--depth</option>
+      degrades to match the way other subcommands use it&mdash;as a
+      limitation on the scope of the operation.  Secondly, there is no
+      depth value to indicate that you wish an item to be explicitly
+      excluded.  You have to do implicit exclusion of an item by
+      including everything else.</para>
 
   </sect1>
 
@@ -2741,7 +2865,8 @@ Fetching external item into calc/third-party/skins
 
     <para>The <command>svn status</command> command also recognizes
       externals definitions, displaying a status code of
-      <literal>X</literal> for the disjoint subdirectories into which
+      <literal>X</literal> for the <firstterm>disjoint</firstterm> (or
+      disconnected) subdirectories into which
       externals are checked out, and then recursing into those
       subdirectories to display the status of the external items
       themselves.</para>
