@@ -104,10 +104,11 @@ $ svn status -v myfile
           <term><option>--depth</option>
             <replaceable>ARG</replaceable></term>
           <listitem>
-            <para>Set the depth on a directory in a working copy to
-              one of <literal>empty</literal>,
-              <literal>files</literal>, <literal>immediates</literal>,
-              or <literal>infinity</literal>.</para>
+            <para>Limit the scope of an operation to a particular tree
+              depth.  <replaceable>ARG</replaceable> is one of
+              <literal>empty</literal>, <literal>files</literal>,
+              <literal>immediates</literal>, or
+              <literal>infinity</literal>.</para>
           </listitem>
         </varlistentry>
 
@@ -517,6 +518,17 @@ $ svn log -r 1729:{2002-02-17}
           </listitem>
         </varlistentry>
         
+        <varlistentry>
+          <term><option>--set-depth</option>
+            <replaceable>ARG</replaceable></term>
+          <listitem>
+            <para>Set the sticky depth on a directory in a working
+              copy to one of <literal>empty</literal>,
+              <literal>files</literal>, <literal>immediates</literal>,
+              or <literal>infinity</literal>.</para>
+          </listitem>
+        </varlistentry>
+
         <varlistentry>
           <term><option>--show-updates</option> (<option>-u</option>)</term>
           <listitem>
@@ -4510,15 +4522,6 @@ Head revision:   981
             linkend="svn.branchmerge.switchwc"/> for an in-depth look
             at switching.</para>
 
-          <para>
-            The <option>--relocate</option> option causes <command>svn
-            switch</command> to do something different: it updates
-            your working copy to point to <emphasis>the
-            same</emphasis> repository directory, only at a different
-            URL (typically because an administrator has moved the
-            repository to another server, or to another URL on the
-            same server).</para>
-
           <para>If <option>--force</option> is used, unversioned
             obstructing paths in the working copy do not automatically
             cause a failure if the switch attempts to add the same
@@ -4532,6 +4535,23 @@ Head revision:   981
             like a local modification to the working copy.  All
             properties from the repository are applied to the
             obstructing path.</para>
+
+          <para>As with most subcommands, you can limit the scope of
+            the switch operation to a particular tree depth using the
+            <option>--depth</option> option.  Alternatively, you can
+            use the --set-depth option to set a new
+            <quote>sticky</quote> working copy depth on the switch
+            target.  Currently, the depth of a working copy directory
+            can only be increased (telescoped more deeply); you cannot
+            make a directory more shallow.</para>
+
+          <para>The <option>--relocate</option> option causes
+            <command>svn switch</command> to do something different:
+            it updates your working copy to point to <emphasis>the
+            same</emphasis> repository directory, only at a different
+            URL (typically because an administrator has moved the
+            repository to another server, or to another URL on the
+            same server).</para>
 
         </refsect1>
 
@@ -4556,6 +4576,7 @@ Head revision:   981
           <screen>
 --revision (-r) REV
 --depth ARG
+--set-depth ARG
 --ignore-externals
 --force
 --accept ARG
@@ -4611,16 +4632,17 @@ Updated to revision 31.
             other words, the contents of the repository doesn't
             change, but the main URL used to reach the root of the
             repository does.  For example, the hostname may change,
-            the URL scheme may change, or any part of the URL which leads to the
-            repository itself may change.  Rather than check out a new working
-            copy, you can have the <command>svn switch</command>
-            command <quote>rewrite</quote> the beginnings of all the
-            URLs in your working copy.  Use the
-            <option>--relocate</option> option to do the substitution.
-            No file contents are changed, nor is the repository
-            contacted.  It's similar to running a Perl script over
-            your working copy <filename>.svn/</filename> directories
-            which runs <command>s/OldRoot/NewRoot/</command>.</para>
+            the URL scheme may change, or any part of the URL which
+            leads to the repository itself may change.  Rather than
+            check out a new working copy, you can have the
+            <command>svn switch</command> command
+            <quote>rewrite</quote> the beginnings of all the URLs in
+            your working copy.  Use the <option>--relocate</option>
+            option to do the substitution.  No file contents are
+            changed, nor is the repository contacted.  It's similar to
+            running a Perl script over your working copy
+            <filename>.svn/</filename> directories which runs
+            <command>s/OldRoot/NewRoot/</command>.</para>
 
           <screen>
 $ svn checkout file:///var/svn/repos test
@@ -4845,6 +4867,15 @@ $ svn unlock http://svn.red-bean.com/repos/test/tree.jpg
           <para>A character in the first column signifies an update
             to the actual file, while updates to the file's
             properties are shown in the second column.</para>
+
+          <para>As with most subcommands, you can limit the scope of
+            the update operation to a particular tree depth using the
+            <option>--depth</option> option.  Alternatively, you can
+            use the --set-depth option to set a new
+            <quote>sticky</quote> working copy depth on the update
+            target.  Currently, the depth of a working copy directory
+            can only be increased (telescoped more deeply); you cannot
+            make a directory more shallow.</para>
         </refsect1>
 
         <refsect1>
@@ -4868,6 +4899,7 @@ $ svn unlock http://svn.red-bean.com/repos/test/tree.jpg
           <screen>
 --revision (-r) REV
 --depth ARG
+--set-depth ARG
 --force
 --quiet (-q)
 --no-ignore
@@ -4900,9 +4932,9 @@ D  newdir/README
 Updated to revision 32.
 </screen>
 
-          <para>You can also <quote>update</quote> your working copy to an older
-            revision (Subversion doesn't have the concept of
-            <quote>sticky</quote> files like CVS does; see <xref
+          <para>You can also <quote>update</quote> your working copy
+            to an older revision (Subversion doesn't have the concept
+            of <quote>sticky</quote> files like CVS does; see <xref
             linkend="svn.forcvs"/>):</para>
 
           <screen>
@@ -4918,7 +4950,8 @@ Updated to revision 30.
           <tip>
             <para>If you want to examine an older revision of a
               single file, you may want to use <command>svn
-              cat</command> instead&mdash;it won't change your working copy.</para>
+              cat</command> instead&mdash;it won't change your working
+              copy.</para>
           </tip>
           
         </refsect1>
