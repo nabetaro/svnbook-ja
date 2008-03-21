@@ -1,0 +1,2267 @@
+<chapter id="svn.tour">
+  <title>Basic Usage</title>
+
+  <para>Now we will go into the details of using Subversion.  By the
+    time you reach the end of this chapter, you will be able to
+    perform all the tasks you need to use Subversion in a normal day's
+    work.  You'll start with getting your files into Subversion,
+    followed by an initial checkout of your code.  We'll then walk you
+    through making changes and examining those changes.  You'll also
+    see how to bring changes made by others into your working copy,
+    examine them, and work through any conflicts that might
+    arise.</para>
+
+  <para>Note that this chapter is not meant to be an exhaustive list
+    of all Subversion's commands&mdash;rather, it's a conversational
+    introduction to the most common Subversion tasks you'll
+    encounter.  This chapter assumes that you've read and understood
+    <xref linkend="svn.basic"/> and are familiar with the general
+    model of Subversion.  For a complete reference of all commands,
+    see <xref linkend="svn.ref"/>.</para>
+
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.tour.help">
+    <title>Help!</title>
+
+    <para>Before reading on, here is the most important command you'll
+      ever need when using Subversion: <command>svn help</command>.
+      The Subversion command-line client is self-documenting&mdash;at
+      any time, a quick <command>svn help
+      <replaceable>SUBCOMMAND</replaceable></command> will describe
+      the syntax, options, and behavior of the subcommand.</para>
+
+    <screen>
+$ svn help import
+import: Commit an unversioned file or tree into the repository.
+usage: import [PATH] URL
+
+  Recursively commit a copy of PATH to URL.
+  If PATH is omitted '.' is assumed.
+  Parent directories are created as necessary in the repository.
+  If PATH is a directory, the contents of the directory are added
+  directly under URL.
+  Unversionable items such as device files and pipes are ignored
+  if --force is specified.
+
+Valid options:
+  -q [--quiet]             : print nothing, or only summary information
+  -N [--non-recursive]     : obsolete; try --depth=files or --depth=immediates
+  --depth ARG              : pass depth ('empty', 'files', 'immediates', or
+                            'infinity') as ARG
+&hellip;
+</screen>
+
+      <sidebar>
+        <title>Options and Switches and Flags, Oh My!</title>
+        
+        <para>The Subversion command line client has numerous command
+          modifiers (which we call options), but there are two
+          distinct kinds of options&mdash;<quote>short options</quote>
+          that are a single hyphen followed by a single letter, and
+          <quote>long options</quote> that consist of two hyphens
+          followed by a number of letters (eg <literal>-s</literal>
+          and <literal>--this-is-a-long-option</literal>
+          respectively).  Every option has a long format, but only
+          certain options have an additional short format (these are
+          typically options that are frequently used).  In order to
+          maintain clarity, we <emphasis>usually</emphasis> use the
+          long form in code examples, but when describing options, if
+          there's a short form, we'll provide the long form (to
+          improve clarity), and the short form (to make it easier to
+          remember).  You should use whichever one you're more
+          comfortable with, but don't try to use both.</para>
+        
+      </sidebar>
+
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.tour.importing">
+    <title>Getting Data into your Repository</title>
+
+    <para>There are two ways to get new files into your Subversion
+      repository: <command>svn import</command> and <command>svn
+      add</command>.  We'll discuss <command>svn import</command> here
+      and <command>svn add</command> later in this chapter when we
+      review a typical day with Subversion.</para>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.tour.importing.import">
+      <title>svn import</title>
+
+      <para>The <command>svn import</command> command is a quick way to
+        copy an unversioned tree of files into a repository, creating
+        intermediate directories as necessary.  <command>svn
+        import</command> doesn't require a working copy, and your files
+        are immediately committed to the repository.  This is typically
+        used when you have an existing tree of files that you want to
+        begin tracking in your Subversion repository.  For example:</para>
+
+      <screen>
+$ svnadmin create /var/svn/newrepos
+$ svn import mytree file:///var/svn/newrepos/some/project \
+             -m "Initial import"
+Adding         mytree/foo.c
+Adding         mytree/bar.c
+Adding         mytree/subdir
+Adding         mytree/subdir/quux.h
+
+Committed revision 1.
+</screen>
+
+      <para>The previous example copied the contents of directory
+        <filename>mytree</filename> under the directory
+        <filename>some/project</filename> in the repository:</para>
+
+      <screen>
+$ svn list file:///var/svn/newrepos/some/project
+bar.c
+foo.c
+subdir/
+</screen>
+
+      <para>Note that after the import is finished, the original tree
+        is <emphasis>not</emphasis> converted into a working copy.  To
+        start working, you still need to <command>svn
+        checkout</command> a fresh working copy of the tree.</para>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.tour.importing.layout">
+      <title>Recommended repository layout</title>
+
+      <para>While Subversion's flexibility allows you to layout your
+      repository in any way that you choose, we recommend that you
+      create a <filename>trunk</filename> directory to hold the
+      <quote>main line</quote> of development, a
+      <filename>branches</filename> directory to contain branch
+      copies, and a <filename>tags</filename> directory to contain tag
+      copies, for example:</para>
+
+      <screen>
+$ svn list file:///var/svn/repos
+/trunk
+/branches
+/tags
+</screen>
+
+      <para>You'll learn more about tags and branches in <xref
+      linkend="svn.branchmerge"/>.  For details and how to set up
+      multiple projects, see <xref
+      linkend="svn.branchmerge.maint.layout"/> and <xref
+      linkend="svn.reposadmin.projects.chooselayout"/> to read more
+      about <quote>project roots</quote>.</para>
+
+    </sect2>
+
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.tour.initial">
+    <title>Initial Checkout</title>
+
+    <para>Most of the time, you will start using a Subversion
+      repository by doing a <firstterm>checkout</firstterm> of your
+      project.  Checking out a repository creates a <quote>working
+      copy</quote> of it on your local machine.  This copy contains
+      the <literal>HEAD</literal> (latest revision) of the Subversion
+      repository that you specify on the command line:</para>
+
+
+    <screen>
+$ svn checkout http://svn.collab.net/repos/svn/trunk
+A    trunk/Makefile.in
+A    trunk/ac-helpers
+A    trunk/ac-helpers/install.sh
+A    trunk/ac-helpers/install-sh
+A    trunk/build.conf
+&hellip;
+Checked out revision 8810.
+</screen>
+
+    <sidebar>
+      <title>What's in a Name?</title>
+
+      <para>Subversion tries hard not to limit the type of data you
+        can place under version control.  The contents of files and
+        property values are stored and transmitted as binary data, and
+        <xref linkend="svn.advanced.props.special.mime-type"/>
+        tells you how to give Subversion a hint that
+        <quote>textual</quote> operations don't make sense for a
+        particular file.  There are a few places, however, where
+        Subversion places restrictions on information it
+        stores.</para>
+
+      <para>Subversion internally handles certain bits of
+        data&mdash;for example, property names, path names, and log
+        messages&mdash;as UTF-8 encoded Unicode.  This is not to say
+        that all your interactions with Subversion must involve UTF-8,
+        though.  As a general rule, Subversion clients will gracefully
+        and transparently handle conversions between UTF-8 and the
+        encoding system in use on your computer, if such a conversion
+        can meaningfully be done (which is the case for most common
+        encodings in use today).</para>
+
+      <para>In addition, path names are used as XML attribute values
+        in WebDAV exchanges, as well in as some of Subversion's
+        housekeeping files.  This means that path names can only
+        contain legal XML (1.0) characters.  Subversion also prohibits
+        TAB, CR, and LF characters in path names to prevent paths from
+        being broken up in diffs, or in the output of commands like
+        <xref linkend="svn.ref.svn.c.log"/> or <xref
+        linkend="svn.ref.svn.c.status"/>.</para>
+
+      <para>While it may seem like a lot to remember, in practice
+        these limitations are rarely a problem.  As long as your
+        locale settings are compatible with UTF-8, and you don't use
+        control characters in path names, you should have no trouble
+        communicating with Subversion.  The command-line client adds
+        an extra bit of help&mdash;it will automatically escape illegal
+        path characters as needed in URLs you type to create
+        <quote>legally correct</quote> versions for internal
+        use.</para>
+
+    </sidebar>
+
+    <para>Although the above example checks out the trunk directory,
+      you can just as easily check out any deep subdirectory of a
+      repository by specifying the subdirectory in the checkout
+      URL:</para>
+
+    <screen>
+$ svn checkout \
+      http://svn.collab.net/repos/svn/trunk/subversion/tests/cmdline/
+A    cmdline/revert_tests.py
+A    cmdline/diff_tests.py
+A    cmdline/autoprop_tests.py
+A    cmdline/xmltests
+A    cmdline/xmltests/svn-test.sh
+&hellip;
+Checked out revision 8810.
+</screen>
+
+    <para>Since Subversion uses a <quote>copy-modify-merge</quote>
+      model instead of <quote>lock-modify-unlock</quote> (see <xref
+      linkend="svn.basic.vsn-models"/>), you can start right in 
+      making changes to the files and directories in your working
+      copy.  Your working copy is just like any other collection of
+      files and directories on your system.  You can edit and change
+      them, move them around, you can even delete the entire working
+      copy and forget about it.</para>
+
+      <warning>
+        <para>While your working copy is <quote>just like any other
+          collection of files and directories on your system</quote>,
+          you can edit files at will, but you must tell Subversion
+          about <emphasis>everything else</emphasis> that you do.  For
+          example, if you want to copy or move an item in a working
+          copy, you should use <command>svn copy</command> or
+          <command>svn move</command> instead of the copy and move
+          commands provided by your operating system.  We'll talk more
+          about them later in this chapter.</para>
+      </warning>
+
+    <para>Unless you're ready to commit the addition of a new file or
+      directory, or changes to existing ones, there's no need to
+      further notify the Subversion server that you've done
+      anything.</para>
+
+    <sidebar>
+      <title>What's with the <filename>.svn</filename> directory?</title>
+
+      <para>Every directory in a working copy contains an
+        administrative area, a subdirectory named
+        <filename>.svn</filename>.  Usually, directory listing
+        commands won't show this subdirectory, but it is nevertheless
+        an important directory.  Whatever you do, don't delete or
+        change anything in the administrative area!  Subversion
+        depends on it to manage your working copy.</para>
+
+      <para>If you accidentally remove the <filename>.svn</filename>
+        subdirectory, the easiest way to fix the problem is to remove
+        the entire containing directory (a normal system deletion,
+        not <command>svn delete</command>), then run <command>svn
+        update</command> from a parent directory.  The Subversion
+        client will re-download the directory you've deleted, with a
+        new <filename>.svn</filename> area as well.</para>
+    </sidebar>
+
+    <para>While you can certainly check out a working copy with the
+      URL of the repository as the only argument, you can also specify
+      a directory after your repository URL.  This places your working
+      copy in the new directory that you name.  For example:</para>
+
+    <screen>
+$  svn checkout http://svn.collab.net/repos/svn/trunk subv
+A    subv/Makefile.in
+A    subv/ac-helpers
+A    subv/ac-helpers/install.sh
+A    subv/ac-helpers/install-sh
+A    subv/build.conf
+&hellip;
+Checked out revision 8810.
+</screen>
+
+    <para>That will place your working copy in a directory named
+      <literal>subv</literal> instead of a directory named
+      <literal>trunk</literal> as we did previously.  The directory
+      <literal>subv</literal> will be created if it doesn't already
+      exist.</para>
+
+
+    <sect2 id="svn.tour.initial.disabling-password-caching">
+      <title>Disabling Password Caching</title>
+
+      <para>When you perform a Subversion operation that requires you
+        to authenticate, by default Subversion caches your
+        authentication credentials on disk.  This is done for
+        convenience, so that you don't have to continually re-enter
+        your password for future operations.  If you're concerned
+        about caching your Subversion passwords,<footnote><para>Of
+        course, you're not terribly worried&mdash;first because you
+        know that you can't <emphasis>really</emphasis> delete
+        anything from Subversion and, secondly, because your
+        Subversion password isn't the same as any of the other three
+        million passwords you have, right?  Right?</para></footnote>
+        you can disable caching either permanently or on a
+        case-by-case basis.</para>
+
+      <para>To disable password caching for a particular one-time
+        command, pass the <option >--no-auth-cache</option > option on
+        the commandline.  To permanently disable caching, you can add
+        the line <literal>store-passwords = no</literal> to your local
+        machine's Subversion configuration file.  See <xref
+        linkend="svn.serverconfig.netmodel.credcache"/> for
+        details.</para>
+
+    </sect2>
+
+    <sect2 id="svn.tour.initial.different-user">
+      <title>Authenticating as a Different User</title>
+
+      <para>Since Subversion caches auth credentials by default (both
+        username and password), it conveniently remembers who you were
+        acting as the last time you modified you working copy.  But
+        sometimes that's not helpful&mdash;particularly if you're
+        working in a shared working copy, like a system configuration
+        directory or a webserver document root.  In this case, just
+        pass the <option>--username</option> option on the
+        commandline and Subversion will attempt to authenticate as
+        that user, prompting you for a password if necessary.</para>
+
+    </sect2>
+
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.tour.cycle">
+    <title>Basic Work Cycle</title>
+
+    <para>Subversion has numerous features, options, bells and
+      whistles, but on a day-to-day basis, odds are that you will only
+      use a few of them.  In this section we'll run through the most
+      common things that you might find yourself doing with Subversion
+      in the course of a day's work.</para>
+
+    <para>The typical work cycle looks like this:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Update your working copy</para>
+        <itemizedlist>
+          <listitem>
+            <para><command>svn update</command></para>
+          </listitem>
+        </itemizedlist>
+
+      </listitem>
+
+      <listitem>
+        <para>Make changes</para>
+        <itemizedlist>
+          <listitem>
+            <para><command>svn add</command></para>
+          </listitem>
+          <listitem>
+            <para><command>svn delete</command></para>
+          </listitem>
+          <listitem>
+            <para><command>svn copy</command></para>
+          </listitem>
+          <listitem>
+            <para><command>svn move</command></para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para>Examine your changes</para>
+        <itemizedlist>
+          <listitem>
+            <para><command>svn status</command></para>
+          </listitem>
+          <listitem>
+            <para><command>svn diff</command></para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para>Possibly undo some changes</para>
+        <itemizedlist>
+          <listitem>
+            <para><command>svn revert</command></para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+
+      <listitem>
+        <para>Resolve Conflicts (Merge Others' Changes)</para>
+        <itemizedlist>
+          <listitem>
+            <para><command>svn update</command></para>
+          </listitem>
+          <listitem>
+            <para><command>svn resolved</command></para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para>Commit your changes</para>
+        <itemizedlist>
+          <listitem>
+            <para><command>svn commit</command></para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+    </itemizedlist>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.tour.cycle.update">
+      <title>Update Your Working Copy</title>
+
+      <para>When working on a project with a team, you'll want to
+        update your working copy to receive any changes made since
+        your last update by other developers on the project.  Use
+        <command>svn update</command> to bring your working copy into
+        sync with the latest revision in the repository.</para>
+
+      <screen>
+$ svn update
+U  foo.c
+U  bar.c
+Updated to revision 2.
+</screen>
+
+      <para>In this case, someone else checked in modifications to
+        both <filename>foo.c</filename> and <filename>bar.c</filename>
+        since the last time you updated, and Subversion has updated
+        your working copy to include those changes.</para>
+
+      <para>When the server sends changes to your working copy via
+        <command>svn update</command>, a letter code is displayed next
+        to each item to let you know what actions Subversion performed
+        to bring your working copy up-to-date.  To find out what these
+        letters mean, see <xref linkend
+        ="svn.ref.svn.c.update"/>.</para>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.tour.cycle.edit">
+      <title>Make Changes to Your Working Copy</title>
+
+      <para>Now you can get to work and make changes in your working
+        copy.  It's usually most convenient to decide on a discrete
+        change (or set of changes) to make, such as writing a new
+        feature, fixing a bug, etc.  The Subversion commands that you
+        will use here are <command>svn add</command>, <command>svn
+        delete</command>, <command>svn copy</command>, <command>svn
+        move</command>, and <command>svn mkdir</command>.  However, if
+        you are merely editing files that are already in Subversion,
+        you may not need to use any of these commands until you
+        commit.</para>
+
+      <para>There are two kinds of changes you can make to your
+        working copy: file changes and tree changes.  You don't need
+        to tell Subversion that you intend to change a file; just make
+        your changes using your text editor, word processor, graphics
+        program, or whatever tool you would normally use.  Subversion
+        automatically detects which files have been changed, and in
+        addition handles binary files just as easily as it handles
+        text files&mdash;and just as efficiently too.  For tree
+        changes, you can ask Subversion to <quote>mark</quote> files
+        and directories for scheduled removal, addition, copying, or
+        moving.  These changes may take place immediately in your
+        working copy, but no additions or removals will happen in the
+        repository until you commit them.</para>
+
+      <para>Here is an overview of the five Subversion subcommands
+        that you'll use most often to make tree changes.</para>
+
+      <sidebar>
+        <title>Versioning symbolic links</title>
+
+        <para>On non-Windows platforms, Subversion is able to version
+          files of the special type <firstterm>symbolic
+          link</firstterm> (or, <quote>symlink</quote>).  A symlink is
+          a file which acts as a sort of transparent reference to some
+          other object in the filesystem, allowing programs to read
+          and write to those objects indirectly by way of performing
+          operations on the symlink itself.</para>
+
+        <para>When a symlink is committed into a Subversion
+          repository, Subversion remembers that the file was in fact a
+          symlink, as well as the object to which the symlink
+          <quote>points</quote>.  When that symlink is checked out to
+          another working copy on a non-Windows system, Subversion
+          reconstructs a real filesystem-level symbolic link from the
+          versioned symlink.  But that doesn't in any way limit the
+          usability of working copies on systems such as Windows which
+          do not support symlinks.  On such systems, Subversion simply
+          creates a regular text file whose contents are the path to
+          which to the original symlink pointed.  While that file
+          can't be used as a symlink on a Windows system, it also
+          won't prevent Windows users from performing their other
+          Subversion-related activities.</para> </sidebar>
+
+      <variablelist>
+
+        <varlistentry>
+          <term><command>svn add foo</command></term>
+          <listitem>
+            <para>Schedule file, directory, or symbolic link
+              <filename>foo</filename> to be added to the repository.
+              When you next commit, <filename>foo</filename> will
+              become a child of its parent directory.  Note that if
+              <filename>foo</filename> is a directory, everything
+              underneath <filename>foo</filename> will be scheduled
+              for addition.  If you only want to add
+              <filename>foo</filename> itself, pass the
+              <option>--non-recursive</option> (<option>-N</option>)
+              option.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><command>svn delete foo</command></term>
+          <listitem>
+            <para>Schedule file, directory, or symbolic link
+              <filename>foo</filename> to be deleted from the
+              repository.  If <filename>foo</filename> is a file or
+              link, it is immediately deleted from your working copy.
+              If <filename>foo</filename> is a directory, it is not
+              deleted, but Subversion schedules it for deletion.  When
+              you commit your changes, <filename>foo</filename> will
+              be entirely removed from your working copy and the
+              repository.
+              <footnote><para>Of course, nothing is ever totally
+              deleted from the repository&mdash;just from the
+              <literal>HEAD</literal> of the repository.  You can get
+              back anything you delete by checking out (or updating
+              your working copy to) a revision earlier than the one in
+              which you deleted it. Also see
+              <xref linkend="svn.branchmerge.advanced.resurrect"/>.
+            </para></footnote></para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><command>svn copy foo bar</command></term>
+          <listitem>
+            <para>Create a new item <filename>bar</filename> as a
+              duplicate of <filename>foo</filename> and automatically
+              schedule <filename>bar</filename> for addition.  When
+              <filename>bar</filename> is added to the repository on
+              the next commit, its copy history is recorded (as having
+              originally come from <filename>foo</filename>).
+              <command>svn copy</command> does not create intermediate
+              directories unless you pass the
+              <option>--parents</option>.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><command>svn move foo bar</command></term>
+          <listitem>
+            <para>This command is exactly the same as running
+              <command>svn copy foo bar; svn delete foo</command>.
+              That is, <filename>bar</filename> is scheduled for
+              addition as a copy of <filename>foo</filename>, and
+              <filename>foo</filename> is scheduled for removal.
+              <command>svn move</command> does not create intermediate
+              directories unless you pass the
+              <option>--parents</option>.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><command>svn mkdir blort</command></term>
+          <listitem>
+            <para>This command is exactly the same as running
+              <command>mkdir blort; svn add blort</command>.  That is,
+              a new directory named <filename>blort</filename> is
+              created and scheduled for addition.</para>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+      <sidebar>
+        <title>Changing the Repository Without a Working Copy</title>
+
+        <para>There <emphasis>are</emphasis> some use cases that
+          immediately commit tree changes to the repository.  This
+          only happens when a subcommand is operating directly on a
+          URL, rather than on a working-copy path.  In particular,
+          specific uses of <command>svn mkdir</command>, <command>svn
+          copy</command>, <command>svn move</command>, and
+          <command>svn delete</command> can work with URLs (And don't
+          forget that <command>svn import</command> always makes
+          changes to a URL).</para>
+
+        <para>URL operations behave in this manner because commands
+          that operate on a working copy can use the working copy as a
+          sort of <quote>staging area</quote> to set up your changes
+          before committing them to the repository.  Commands that
+          operate on URLs don't have this luxury, so when you operate
+          directly on a URL, any of the above actions represent an
+          immediate commit.</para>
+
+      </sidebar>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.tour.cycle.examine">
+      <title>Examine Your Changes</title>
+
+      <para>Once you've finished making changes, you need to commit
+        them to the repository, but before you do so, it's usually a
+        good idea to take a look at exactly what you've changed.  By
+        examining your changes before you commit, you can make a more
+        accurate log message.  You may also discover that you've
+        inadvertently changed a file, and this gives you a chance to
+        revert those changes before committing.  Additionally, this is
+        a good opportunity to review and scrutinize changes before
+        publishing them.  You can see an overview of the changes
+        you've made by using <command>svn status</command>, and dig
+        into the details of those changes by using <command>svn
+        diff</command>.</para>
+
+      <sidebar>
+        <title>Look Ma! No Network!</title>
+
+        <para>The commands <command>svn status</command>,
+          <command>svn diff</command>, and <command>svn
+          revert</command> can be used without any network access even
+          if your repository <emphasis>is</emphasis> across the
+          network.  This makes it easy to manage your
+          changes-in-progress when you are somewhere without a network
+          connection, such as travelling on an airplane, riding a
+          commuter train or hacking on the beach.<footnote><para>And
+          also that you don't have a WAN card.  Thought you got us,
+          huh?</para></footnote></para>
+
+        <para>Subversion does this by keeping private caches of
+          pristine versions of each versioned file inside of the
+          <filename>.svn</filename> administrative areas.  This allows
+          Subversion to report&mdash;and revert&mdash;local
+          modifications to those files <emphasis>without network
+          access</emphasis>.  This cache (called the
+          <quote>text-base</quote>) also allows Subversion to send the
+          user's local modifications during a commit to the server as
+          a compressed <firstterm>delta</firstterm> (or
+          <quote>difference</quote>) against the pristine version.
+          Having this cache is a tremendous benefit&mdash;even if you
+          have a fast net connection, it's much faster to send only a
+          file's changes rather than the whole file to the
+          server.</para>
+
+      </sidebar>
+
+      <para>Subversion has been optimized to help you with this task,
+        and is able to do many things without communicating with the
+        repository.  In particular, your working copy contains a
+        hidden cached <quote>pristine</quote> copy of each version
+        controlled file within the <filename>.svn</filename> area.
+        Because of this, Subversion can quickly show you how your
+        working files have changed, or even allow you to undo your
+        changes without contacting the repository.</para>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.cycle.examine.status">
+        <title>See an overview of your changes</title>
+
+        <para>To get an overview of your changes, you'll use the
+          <command>svn status</command> command.  You'll probably use
+          <command>svn status</command> more than any other Subversion
+          command.</para>
+
+        <sidebar>
+          <title>CVS Users: Hold That Update!</title>
+
+          <para>You're probably used to using <command>cvs
+            update</command> to see what changes you've made to your
+            working copy.  <command>svn status</command> will give you
+            all the information you need regarding what has changed in
+            your working copy&mdash;without accessing the repository
+            or potentially incorporating new changes published by
+            other users.</para>
+
+          <para>In Subversion, <command>update</command> does just
+            that&mdash;it updates your working copy with any changes
+            committed to the repository since the last time you've
+            updated your working copy.  You may have to break the
+            habit of using the <command>update</command> command to
+            see what local modifications you've made.</para>
+
+        </sidebar>
+
+        <para>If you run <command>svn status</command> at the top of
+          your working copy with no arguments, it will detect all file
+          and tree changes you've made.  Below are a few examples of
+          the most common status codes that <command>svn
+          status</command> can return.  (Note that the text following
+          <literal>#</literal> is not
+          actually printed by <command>svn status</command>.)</para>
+
+        <screen>
+A       stuff/loot/bloo.h   # file is scheduled for addition
+C       stuff/loot/lump.c   # file has textual conflicts from an update
+D       stuff/fish.c        # file is scheduled for deletion
+M       bar.c               # the content in bar.c has local modifications
+</screen>
+
+        <para>In this output format <command>svn status</command>
+          prints six columns of characters, followed by several
+          whitespace characters, followed by a file or directory name.
+          The first column tells the status of a file or directory
+          and/or its contents.  The codes we listed are:</para>
+
+        <variablelist>
+
+          <varlistentry>
+            <term><computeroutput>A      item</computeroutput></term>
+            <listitem>
+              <para>The file, directory, or symbolic link
+                <filename>item</filename> has been scheduled for
+                addition into the repository.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><computeroutput>C      item</computeroutput></term>
+            <listitem>
+
+              <para>The file <filename>item</filename> is in a state
+                of conflict.  That is, changes received from the
+                server during an update overlap with local changes
+                that you have in your working copy (and weren't
+                resolved during the update).  You must resolve this
+                conflict before committing your changes to the
+                repository.</para>
+
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><computeroutput>D      item</computeroutput></term>
+            <listitem>
+              <para>The file, directory, or symbolic link
+                <filename>item</filename> has been scheduled for
+                deletion from the repository.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><computeroutput>M      item</computeroutput></term>
+            <listitem>
+              <para>The contents of the file <filename>item</filename>
+                have been modified.</para>
+            </listitem>
+          </varlistentry>
+
+        </variablelist>
+
+        <para>If you pass a specific path to <command>svn
+          status</command>, you get information about that item
+          alone:</para>
+
+        <screen>
+$ svn status stuff/fish.c
+D      stuff/fish.c
+</screen>
+
+        <para><command>svn status</command> also has a
+          <option>--verbose</option> (<option>-v</option>) option,
+          which will show you the status of <emphasis>every</emphasis>
+          item in your working copy, even if it has not been
+          changed:</para>
+
+        <screen>
+$ svn status -v
+M               44        23    sally     README
+                44        30    sally     INSTALL
+M               44        20    harry     bar.c
+                44        18    ira       stuff
+                44        35    harry     stuff/trout.c
+D               44        19    ira       stuff/fish.c
+                44        21    sally     stuff/things
+A                0         ?     ?        stuff/things/bloo.h
+                44        36    harry     stuff/things/gloo.c
+</screen>
+
+        <para>This is the <quote>long form</quote> output of
+          <command>svn status</command>.  The letters in the first
+          column mean the same as before, but the second column shows
+          the working-revision of the item.  The third and fourth
+          columns show the revision in which the item last changed,
+          and who changed it.</para>
+
+        <para>None of the prior invocations to <command>svn
+          status</command> contact the repository&mdash;instead, they
+          compare the metadata in the <filename>.svn</filename>
+          directory with the working copy.  Finally, there is the
+          <option>--show-updates</option> (<option>-u</option>)
+          option, which contacts the repository and adds information
+          about things that are out-of-date:</para>
+
+        <screen>
+$ svn status -u -v
+M      *        44        23    sally     README
+M               44        20    harry     bar.c
+       *        44        35    harry     stuff/trout.c
+D               44        19    ira       stuff/fish.c
+A                0         ?     ?        stuff/things/bloo.h
+Status against revision:   46
+</screen>
+
+        <para>Notice the two asterisks: if you were to run
+          <command>svn update</command> at this point, you would
+          receive changes to <filename>README</filename>
+          and <filename>trout.c</filename>.  This tells you some very
+          useful information&mdash;you'll need to update and get the
+          server changes on <filename>README</filename> before you
+          commit, or the repository will reject your commit for being
+          out-of-date.  (More on this subject later.)</para>
+
+          <para><command>svn status</command> can display much more
+            information about the files and directories in your
+            working copy than we've shown here&mdash;for an exhaustive
+            description of svn status and its output, see <xref
+            linkend="svn.ref.svn.c.status"/>.</para>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.cycle.examine.diff">
+        <title>Examine the details of your local modifications</title>
+
+        <para>Another way to examine your changes is with the
+          <command>svn diff</command> command.  You can find out
+          <emphasis>exactly</emphasis> how you've modified things by
+          running <command>svn diff</command> with no arguments, which
+          prints out file changes in <firstterm>unified diff
+          format</firstterm>:</para>
+
+        <screen>
+$ svn diff
+Index: bar.c
+===================================================================
+--- bar.c	(revision 3)
++++ bar.c	(working copy)
+@@ -1,7 +1,12 @@
++#include &lt;sys/types.h&gt;
++#include &lt;sys/stat.h&gt;
++#include &lt;unistd.h&gt;
++
++#include &lt;stdio.h&gt;
+
+ int main(void) {
+-  printf("Sixty-four slices of American Cheese...\n");
++  printf("Sixty-five slices of American Cheese...\n");
+ return 0;
+ }
+
+Index: README
+===================================================================
+--- README	(revision 3)
++++ README	(working copy)
+@@ -193,3 +193,4 @@
++Note to self:  pick up laundry.
+
+Index: stuff/fish.c
+===================================================================
+--- stuff/fish.c	(revision 1)
++++ stuff/fish.c	(working copy)
+-Welcome to the file known as 'fish'.
+-Information on fish will be here soon.
+
+Index: stuff/things/bloo.h
+===================================================================
+--- stuff/things/bloo.h	(revision 8)
++++ stuff/things/bloo.h	(working copy)
++Here is a new file to describe
++things about bloo.
+</screen>
+
+        <para>The <command>svn diff</command> command produces this
+          output by comparing your working files against the cached
+          <quote>pristine</quote> copies within the
+          <filename>.svn</filename> area.  Files scheduled for
+          addition are displayed as all added-text, and files
+          scheduled for deletion are displayed as all deleted
+          text.</para>
+
+        <para>Output is displayed in unified diff format.  That is,
+          removed lines are prefaced with <literal>-</literal> and
+          added lines are prefaced with
+          <literal>+</literal>.  <command>svn diff</command> also
+          prints filename and offset information useful to the
+          <command>patch</command> program, so you can generate
+          <quote>patches</quote> by redirecting the diff output to a
+          file:</para>
+
+        <screen>
+$ svn diff &gt; patchfile
+</screen>
+
+        <para>You could, for example, email the patch file to another
+          developer for review or testing prior to commit.</para>
+
+        <para>Subversion uses its internal diff engine, which produces
+          unified diff format, by default.  If you want diff output in
+          a different format, specify an external diff program using
+          <option>--diff-cmd</option> and pass any flags you'd like to
+          it using the <option>--extensions</option>
+          (<option>-x</option>) option.  For example, to see local
+          differences in file <filename>foo.c</filename> in context
+          output format while ignoring case differences, you might run
+          <command>svn diff --diff-cmd /usr/bin/diff --extensions '-i'
+          foo.c</command>.</para>
+
+      </sect3>
+
+    </sect2>
+
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.tour.cycle.revert">
+      <title>Undoing Working Changes</title>
+
+
+      <para>Suppose while viewing the output of <command>svn
+        diff</command> you determine that all the changes you made to
+        a particular file are mistakes.  Maybe you shouldn't have
+        changed the file at all, or perhaps it would be easier to make
+        different changes starting from scratch.</para>
+ 
+      <para>This is a perfect opportunity to use <command>svn
+        revert</command>:</para>
+
+      <screen>
+$ svn revert README
+Reverted 'README'
+</screen>
+
+      <para>Subversion reverts the file to its pre-modified state by
+        overwriting it with the cached <quote>pristine</quote> copy
+        from the <filename>.svn</filename> area.  But also note that
+        <command>svn revert</command> can undo
+        <emphasis>any</emphasis> scheduled operations&mdash;for
+        example, you might decide that you don't want to add a new
+        file after all:</para>
+
+      <screen>
+$ svn status foo
+?      foo
+
+$ svn add foo
+A         foo
+
+$ svn revert foo
+Reverted 'foo'
+
+$ svn status foo
+?      foo
+</screen>
+
+      <note>
+        <para><command>svn revert</command>
+          <replaceable>ITEM</replaceable> has exactly the same
+          effect as deleting <replaceable>ITEM</replaceable> from
+          your working copy and then running <command>svn update -r
+          BASE</command> <replaceable>ITEM</replaceable>.  However,
+          if you're reverting a file, <command>svn revert</command>
+          has one very noticeable difference&mdash;it doesn't have
+          to communicate with the repository to restore your
+          file.</para>
+      </note>
+
+      <para>Or perhaps you mistakenly removed a file from version
+        control:</para>
+
+      <screen>
+$ svn status README
+       README
+
+$ svn delete README
+D         README
+
+$ svn revert README
+Reverted 'README'
+
+$ svn status README
+       README
+</screen>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.tour.cycle.resolve">
+      <title>Resolve Conflicts (Merging Others' Changes)</title>
+
+      <para>We've already seen how <command>svn status -u</command>
+        can predict conflicts.  Suppose you run <command>svn
+        update</command> and some interesting things occur:</para>
+
+      <screen>
+$ svn update
+U  INSTALL
+G  README
+Conflict discovered in 'bar.c.
+Select: (p)ostpone, (d)iff, (e)dit, (h)elp for more options :
+</screen>
+
+      <para>The <computeroutput>U</computeroutput> and
+        <computeroutput>G</computeroutput> codes are no cause for
+        concern; those files cleanly absorbed changes from the
+        repository.  The files marked with
+        <computeroutput>U</computeroutput> contained no local changes
+        but were <computeroutput>U</computeroutput>pdated with changes
+        from the repository.  The <computeroutput>G</computeroutput>
+        stands for mer<computeroutput>G</computeroutput>ed, which
+        means that the file had local changes to begin with, but the
+        changes coming from the repository didn't overlap with the local
+        changes.</para>
+
+      <para>But the next line is part of a feature new in Subversion
+        1.5 called interactive conflict resolution.  This means that
+        the changes from the server overlapped with your own, and you
+        have the opportunity to resolve this conflict.  The most
+        commonly used options are displayed, but you can see all of
+        the options by typing <replaceable>h</replaceable>: </para>
+
+      <screen>
+...
+  (p)ostpone - mark the conflict to be resolved later
+  (d)iff     - show all changes made to merged file
+  (e)dit     - change merged file in an editor
+  (r)esolved - accept merged version of file
+  (m)ine     - accept my version of file
+  (t)heirs   - accept their version of file
+  (l)aunch   - use third-party tool to resolve conflict
+  (h)elp     - show this list
+</screen>
+
+      <para>Let's briefly review each of these options before we go
+        into detail on what each option means.</para>
+
+      <variablelist>
+        <varlistentry>
+          <term><computeroutput>(p)ostpone</computeroutput></term>
+          <listitem>
+
+            <para>Leaves the file in a conflicted state for you to
+            resolve after your update is complete.</para>
+
+          </listitem>
+        </varlistentry>
+
+
+
+        <varlistentry>
+          <term><computeroutput>(d)iff</computeroutput></term>
+          <listitem>
+
+            <para>Display the differences between the base revision
+            and the conflicted file itself in unified diff format.</para>
+
+          </listitem>
+        </varlistentry>
+
+
+        <varlistentry>
+          <term><computeroutput>(e)dit</computeroutput></term>
+          <listitem>
+
+            <para>Open the file in conflict with your favorite editor,
+              as set in the environment variable
+              <literal>EDITOR</literal>.</para>
+
+          </listitem>
+        </varlistentry>
+
+
+        <varlistentry>
+          <term><computeroutput>(r)esolved</computeroutput></term>
+          <listitem>
+
+            <para>After editing a file, choosing this command tells
+              <command>svn</command> that you've resolved the
+              conflicts in the file and that it should accept the
+              current contents&mdash;basically that you've
+              <quote>resolved</quote> the conflict.</para>
+
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><computeroutput>(m)ine</computeroutput></term>
+          <listitem>
+
+            <para>Discard the newly received changes from the server
+              and use only your local changes for the file under review.</para>
+
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><computeroutput>(t)heirs</computeroutput></term>
+          <listitem>
+
+            <para>Discard your local changes to the file under review
+              and use only the newly received changes from the
+              server.</para>
+
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><computeroutput>(l)aunch</computeroutput></term>
+          <listitem>
+
+            <para>Launch an external program to perform the conflict
+            resolution.  This requires a bit of preparation
+            beforehand.</para>
+
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><computeroutput>(h)elp</computeroutput></term>
+          <listitem>
+
+            <para>Shows the list of all possible commands you can use
+            in interactive conflict resolution.</para>
+
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+      <para>We'll cover these commands in more detail now, grouping
+        them together by related functionality.</para>
+
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.cycle.resolve.diff">
+
+        <title>Viewing Conflict Differences Interactively</title>
+
+        <para>Before deciding how to attack a conflict interactively,
+          odds are that you'd like to see what exactly is in conflict,
+          and the diff command (<command>d</command>) is what you'll
+          use for this:</para>
+
+        <screen>
+...
+Select: (p)ostpone, (d)iff, (e)dit, (h)elp for more options : d
+--- .svn/text-base/sandwich.txt.svn-base      Tue Dec 11 21:33:57 2007
++++ .svn/tmp/tempfile.32.tmp     Tue Dec 11 21:34:33 2007
+@@ -1 +1,5 @@
+-Just buy a sandwich.
++&lt;&lt;&lt;&lt;&lt;&lt;&lt; .mine
++Go pickup a cheesesteak.
++=======
++Bring me a taco!
++&gt;&gt;&gt;&gt;&gt;&gt;&gt; .r32
+...
+</screen>
+
+        <para>The first line of the diff content shows the previous
+          contents of the working copy (the <literal>BASE</literal>
+          revision), the next content line is your change, and the
+          last content line is the change that was just received from
+          the server (<emphasis>usually</emphasis> the
+          <literal>HEAD</literal> revision).  With this information in
+          hand, you're ready to move on to the next action.</para>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.cycle.resolve.resolve">
+
+        <title>Resolving Conflict Differences Interactively</title>
+
+        <para>There are four different ways to resolve conflicts
+          interactively&mdash;two of which allow you to selectively
+          merge and edit changes, and two of which allow you to simply
+          pick a version of the file and move along.</para>
+
+        <para>If you wish to choose some combination of your local
+          changes, you can use the <quote>edit</quote> command
+          (<command>e</command>) to manually edit the file with
+          conflict markers in a text editor (determined by the
+          <literal>EDITOR</literal> environment variable).  Editing
+          the file by hand in your favorite text editor is a somewhat
+          low-tech way of remedying conflicts (see <xref
+          linkend="svn.tour.cycle.resolve.byhand"/> for a
+          walkthrough), so some people like to use fancy graphical
+          merge tools instead.</para>
+
+        <para>In order to use a merge tool, you need to either set the
+          <literal>SVN_MERGE</literal> environment variable, or define
+          the <literal>merge-tool-cmd</literal> option in your
+          Subversion configuration file (see <xref
+          linkend="svn.advanced.confarea.opts"/> for more details).
+          Subversion will pass four arguments to the merge tool: The
+          <literal>BASE</literal> revision of the file, the revision
+          of the file received from the server as part of the update,
+          the copy of the file containing your local edits, and
+          lastly, the merged copy of the file (which contains conflict
+          markers).  If your merge tool is expecting arguments in a
+          different order or format, you'll need to write a wrapper
+          script for Subversion to invoke.  After you've edited the
+          file, if you're satisfied with the changes you've made, you
+          can tell Subversion that the edited file is no longer in
+          conflict by using the <quote>resolved</quote> command
+          (<literal>r</literal>).</para>
+
+          <!-- TODO(fitz): I think the above detail on the merge tool -->
+          <!-- should probably be in ch07 -->
+
+        <para>If you decide that you don't need to merge any changes,
+          but just want to accept one version of the file or the
+          other, you can either choose your changes (aka
+          <quote>mine</quote>) by using the <quote>mine</quote>
+          command (<command>m</command>) or choose theirs by using the
+          <quote>theirs</quote> command (<command>t</command>).</para>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.cycle.resolve.pending">
+
+        <title>Postponing Conflict Resolution</title>
+
+        <para>This may sound like an appropriate section for avoiding
+          marital disagreements, but it's actually still about
+          Subversion, so read on.  If you're doing an update and
+          encounter a conflict that you're not prepared to review or
+          resolve, you can type <command>p</command> to postpone
+          resolving a conflict on a file-by-file basis when you run
+          <command>svn update</command>.  If you're running an update
+          and don't want to resolve any conflicts, you can pass the
+          <option>--non-interactive</option> option to <command>svn
+          update</command> and any file in conflict will be marked
+          with a <computeroutput>C</computeroutput>
+          automatically.</para>
+
+        <para>The <computeroutput>C</computeroutput> stands for
+          <computeroutput>c</computeroutput>onflict.  This means that
+          the changes from the server overlapped with your own, and
+          now you have to manually choose between them after the
+          update has completed.  When you postpone a conflict
+          resolution, <command>svn</command> typically does three
+          things to assist you in noticing and resolving that
+          conflict:</para>
+
+        <itemizedlist>
+
+          <listitem>
+            <para>Subversion prints a <computeroutput>C</computeroutput>
+              during the update, and remembers that the file is in a
+              state of conflict.</para>
+          </listitem>
+
+          <listitem>
+            <para>If Subversion considers the file to be mergeable, it
+              places <firstterm>conflict
+              markers</firstterm>&mdash;special strings of text which
+              delimit the <quote>sides</quote> of the
+              conflict&mdash;into the file to visibly demonstrate the
+              overlapping areas.  (Subversion uses the
+              <literal>svn:mime-type</literal> property to decide if a
+              file is capable of contextual, line-based merging.  See
+              <xref linkend="svn.advanced.props.special.mime-type"/>
+              to learn more.)</para>
+          </listitem>
+
+          <listitem>
+            <para>For every conflicted file, Subversion places three
+              extra unversioned files in your working copy:</para>
+
+            <variablelist>
+
+              <varlistentry>
+                <term><filename>filename.mine</filename></term>
+                <listitem>
+                  <para>This is your file as it existed in your working
+                    copy before you updated your working copy&mdash;that
+                    is, without conflict markers.  This file has only
+                    your latest changes in it.  (If Subversion considers
+                    the file to be unmergeable, then the
+                    <filename>.mine</filename> file isn't created, since
+                    it would be identical to the working file.)</para>
+                </listitem>
+              </varlistentry>
+
+              <varlistentry>
+                <term><filename>filename.rOLDREV</filename></term>
+                <listitem>
+                  <para>This is the file that was the
+                    <literal>BASE</literal> revision before you updated
+                    your working copy.  That is, the file that you
+                    checked out before you made your latest
+                    edits.</para>
+                </listitem>
+              </varlistentry>
+
+              <varlistentry>
+                <term><filename>filename.rNEWREV</filename></term>
+                <listitem>
+                  <para>This is the file that your Subversion client
+                    just received from the server when you updated your
+                    working copy.  This file corresponds to the
+                    <literal>HEAD</literal> revision of the
+                    repository.</para>
+                </listitem>
+              </varlistentry>
+
+            </variablelist>
+
+            <para>Here <literal>OLDREV</literal> is the revision number
+              of the file in your <filename>.svn</filename> directory
+              and <literal>NEWREV</literal> is the revision number of
+              the repository <literal>HEAD</literal>.</para>
+          </listitem>
+
+        </itemizedlist>
+
+        <para>For example, Sally makes changes to the file
+          <filename>sandwich.txt</filename> in the repository.  Harry has
+          just changed the file in his working copy and checked it in.
+          Sally updates her working copy before checking in and she gets
+          a conflict, which she postpones:</para>
+
+        <screen>
+$ svn update
+Conflict discovered in 'sandwich.txt'.
+Select: (p)ostpone, (d)iff, (e)dit, (h)elp for more options : p
+C  sandwich.txt
+Updated to revision 2.
+$ ls -1
+sandwich.txt
+sandwich.txt.mine
+sandwich.txt.r1
+sandwich.txt.r2
+</screen>
+
+        <para>At this point, Subversion will <emphasis>not</emphasis>
+          allow Sally to commit the file
+          <filename>sandwich.txt</filename> until the three temporary
+          files are removed.</para>
+
+        <screen>
+$ svn commit -m "Add a few more things"
+svn: Commit failed (details follow):
+svn: Aborting commit: '/home/sally/svn-work/sandwich.txt' remains in conflict
+</screen>
+
+        <para>If you've postponed a conflict, you need to do one of three
+          things:</para>
+
+          <itemizedlist>
+
+            <listitem>
+              <para>Merge the conflicted text <quote>by hand</quote> (by
+                examining and editing the conflict markers within the
+                file).</para>
+            </listitem>
+
+            <listitem>
+              <para>Copy one of the temporary files on top of your
+                working file.</para>
+            </listitem>
+
+            <listitem>
+              <para>Run <command>svn revert &lt;filename&gt;</command>
+                to throw away all of your local changes.</para>
+            </listitem>
+
+          </itemizedlist>
+
+        <para>Once you've resolved the conflict, you need to let
+          Subversion know by running <command>svn resolved</command>.
+          This removes the three temporary files and Subversion no
+          longer considers the file to be in a state of
+          conflict.<footnote><para>You can always remove the temporary
+          files yourself, but would you really want to do that when
+          Subversion can do it for you?  We didn't think so.</para>
+          </footnote></para>
+
+        <screen>
+$ svn resolved sandwich.txt
+Resolved conflicted state of 'sandwich.txt'
+</screen>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.cycle.resolve.byhand">
+        <title>Merging Conflicts by Hand</title>
+
+        <para>Merging conflicts by hand can be quite intimidating the
+          first time you attempt it, but with a little practice, it
+          can become as easy as falling off a bike.</para>
+
+        <para>Here's an example.  Due to a miscommunication, you and
+          Sally, your collaborator, both edit the file
+          <filename>sandwich.txt</filename> at the same time.  Sally
+          commits her changes, and when you go to update your working
+          copy, you get a conflict and you're going to have to edit
+          <filename>sandwich.txt</filename> to resolve the conflicts.
+          First, let's take a look at the file:</para>
+
+        <screen>
+$ cat sandwich.txt
+Top piece of bread
+Mayonnaise
+Lettuce
+Tomato
+Provolone
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; .mine
+Salami
+Mortadella
+Prosciutto
+=======
+Sauerkraut
+Grilled Chicken
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; .r2
+Creole Mustard
+Bottom piece of bread
+</screen>
+
+        <para>The strings of less-than signs, equal signs, and
+          greater-than signs are conflict markers, and are not part of
+          the actual data in conflict.  You generally want to ensure
+          that those are removed from the file before your next
+          commit.  The text between the first two sets of markers is
+          composed of the changes you made in the conflicting
+          area:</para>
+
+        <screen>
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; .mine
+Salami
+Mortadella
+Prosciutto
+=======
+</screen>
+
+        <para>The text between the second and third sets of conflict
+          markers is the text from Sally's commit:</para>
+
+        <screen>
+=======
+Sauerkraut
+Grilled Chicken
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; .r2
+</screen>
+
+        <para>Usually you won't want to just delete the conflict
+          markers and Sally's changes&mdash;she's going to be awfully
+          surprised when the sandwich arrives and it's not what she
+          wanted.  So this is where you pick up the phone or walk
+          across the office and explain to Sally that you can't get
+          sauerkraut from an Italian deli.<footnote><para>And if you
+          ask them for it, they may very well ride you out of town on
+          a rail.</para></footnote> Once you've agreed on the changes
+          you will check in, edit your file and remove the conflict
+          markers.</para>
+
+        <screen>
+Top piece of bread
+Mayonnaise
+Lettuce
+Tomato
+Provolone
+Salami
+Mortadella
+Prosciutto
+Creole Mustard
+Bottom piece of bread
+</screen>
+
+        <para>Now run <command>svn resolved</command>, and you're
+          ready to commit your changes:</para>
+
+        <screen>
+$ svn resolved sandwich.txt
+$ svn commit -m "Go ahead and use my sandwich, discarding Sally's edits."
+</screen>
+
+        <para>Note that <command>svn resolved</command>, unlike most
+          of the other commands we deal with in this chapter, requires
+          an argument.  In any case, you want to be careful and only
+          run <command>svn resolved</command> when you're certain that
+          you've fixed the conflict in your file&mdash;once the
+          temporary files are removed, Subversion will let you commit
+          the file even if it still contains conflict markers.</para>
+
+        <para>If you ever get confused while editing the conflicted
+          file, you can always consult the three files that Subversion
+          creates for you in your working copy&mdash;including your
+          file as it was before you updated.  You can even use a
+          third-party interactive merging tool to examine those three
+          files.</para>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.cycle.resolve.copyover">
+        <title>Copying a File Onto Your Working File</title>
+
+        <para>If you get a conflict and decide that you want to throw
+          out your changes, you can merely copy one of the temporary
+          files created by Subversion over the file in your working
+          copy:</para>
+
+        <screen>
+$ svn update
+C  sandwich.txt
+Updated to revision 2.
+$ ls sandwich.*
+sandwich.txt  sandwich.txt.mine  sandwich.txt.r2  sandwich.txt.r1
+$ cp sandwich.txt.r2 sandwich.txt
+$ svn resolved sandwich.txt
+</screen>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.cycle.resolve.revert">
+        <title>Punting: Using <command>svn revert</command></title>
+
+        <para>If you get a conflict, and upon examination decide that
+          you want to throw out your changes and start your edits
+          again, just revert your changes:</para>
+
+        <screen>
+$ svn revert sandwich.txt
+Reverted 'sandwich.txt'
+$ ls sandwich.*
+sandwich.txt
+</screen>
+
+        <para>Note that when you revert a conflicted file, you don't
+          have to run <command>svn resolved</command>.</para>
+
+      </sect3>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.tour.cycle.commit">
+      <title>Commit Your Changes</title>
+
+      <para>Finally!  Your edits are finished, you've merged all
+        changes from the server, and you're ready to commit your
+        changes to the repository.</para>
+
+      <para>The <command>svn commit</command> command sends all of
+        your changes to the repository.  When you commit a change, you
+        need to supply a <firstterm>log message</firstterm>,
+        describing your change.  Your log message will be attached to
+        the new revision you create.  If your log message is brief,
+        you may wish to supply it on the command line using the
+        <option>--message</option> (or <option>-m</option>)
+        option:</para>
+
+      <screen>
+$ svn commit -m "Corrected number of cheese slices."
+Sending        sandwich.txt
+Transmitting file data .
+Committed revision 3.
+</screen>
+
+      <para>However, if you've been composing your log message as you
+        work, you may want to tell Subversion to get the message from
+        a file by passing the filename with the
+        <option>--file</option> (<option>-F</option>) option:</para>
+
+      <screen>
+$ svn commit -F logmsg
+Sending        sandwich.txt
+Transmitting file data .
+Committed revision 4.
+</screen>
+
+      <para>If you fail to specify either the
+        <option>--message</option> or <option>--file</option> option,
+        then Subversion will automatically launch your favorite editor
+        (see the <literal>editor-cmd</literal> section in
+        <xref linkend="svn.advanced.confarea.opts.config"/>) for composing a log
+        message.</para>
+
+
+      <tip>
+        <para>If you're in your editor writing a commit message and
+          decide that you want to cancel your commit, you can just
+          quit your editor without saving changes.  If you've already
+          saved your commit message, simply delete the text, save
+          again, then abort.</para>
+
+        <screen>
+$ svn commit
+Waiting for Emacs...Done
+
+Log message unchanged or not specified
+a)bort, c)ontinue, e)dit
+a
+$
+</screen>
+      </tip>
+
+      <para>The repository doesn't know or care if your changes make
+        any sense as a whole; it only checks to make sure that nobody
+        else has changed any of the same files that you did when you
+        weren't looking.  If somebody <emphasis>has</emphasis> done
+        that, the entire commit will fail with a message informing you
+        that one or more of your files is out-of-date:</para>
+
+      <screen>
+$ svn commit -m "Add another rule"
+Sending        rules.txt
+svn: Commit failed (details follow):
+svn: Your file or directory 'sandwich.txt' is probably out-of-date
+&hellip;
+</screen>
+
+      <para>(The exact wording of this error message depends on the
+        network protocol and server you're using, but the idea is the
+        same in all cases.)</para>
+
+      <para>At this point, you need to run <command>svn
+        update</command>, deal with any merges or conflicts that
+        result, and attempt your commit again.</para>
+
+      <para>That covers the basic work cycle for using Subversion.
+        There are many other features in Subversion that you can use
+        to manage your repository and working copy, but most of your
+        day-to-day use of Subversion will involve only the commands
+        that we've discussed so far in this chapter.  We will,
+        however, cover a few more commands that you'll use fairly
+        often.</para>
+
+    </sect2>
+
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.tour.history">
+    <title>Examining History</title>
+
+    <para>Your Subversion repository is like a time machine.  It keeps
+      a record of every change ever committed, and allows you to
+      explore this history by examining previous versions of files and
+      directories as well as the metadata that accompanies them.  With
+      a single Subversion command, you can check out the repository
+      (or restore an existing working copy) exactly as it was at any
+      date or revision number in the past.  However, sometimes you
+      just want to <emphasis>peer into</emphasis> the past instead of
+      <emphasis>going into</emphasis> the past.</para>
+
+    <para>There are several commands that can provide you with
+      historical data from the repository:</para>
+
+      <variablelist>
+
+        <varlistentry>
+          <term><command>svn log</command></term>
+          <listitem>
+            <para>Shows you broad information: log messages with date
+              and author information attached to revisions, and which
+              paths changed in each revision.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><command>svn diff</command></term>
+          <listitem>
+            <para>Shows line-level details of a particular change.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><command>svn cat</command></term>
+          <listitem>
+            <para>Retrieves a file as it existed in a particular
+              revision number and display it on your screen.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><command>svn list</command></term>
+          <listitem>
+            <para>Displays the files in a directory for any given
+              revision.</para>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.tour.history.log">
+      <title>Generating a list of historical changes</title>
+
+      <para>To find information about the history of a file or
+        directory, use the <command>svn log</command>
+        command. <command>svn log</command> will provide you with a
+        record of who made changes to a file or directory, at what
+        revision it changed, the time and date of that revision, and,
+        if it was provided, the log message that accompanied the
+        commit.</para>
+
+      <screen>
+$ svn log
+------------------------------------------------------------------------
+r3 | sally | Mon, 15 Jul 2002 18:03:46 -0500 | 1 line
+
+Added include lines and corrected # of cheese slices.
+------------------------------------------------------------------------
+r2 | harry | Mon, 15 Jul 2002 17:47:57 -0500 | 1 line
+
+Added main() methods.
+------------------------------------------------------------------------
+r1 | sally | Mon, 15 Jul 2002 17:40:08 -0500 | 1 line
+
+Initial import
+------------------------------------------------------------------------
+</screen>
+
+      <para>Note that the log messages are printed in
+        <emphasis>reverse chronological order</emphasis> by default.
+        If you wish to see a different range of revisions in a
+        particular order, or just a single revision, pass the
+        <option>--revision</option> (<option>-r</option>)
+        option:</para>
+
+      <screen>
+$ svn log -r 5:19    # shows logs 5 through 19 in chronological order
+
+$ svn log -r 19:5    # shows logs 5 through 19 in reverse order
+
+$ svn log -r 8       # shows log for revision 8
+</screen>
+
+      <para>You can also examine the log history of a single file or
+        directory.  For example:</para>
+
+      <screen>
+$ svn log foo.c
+&hellip;
+$ svn log http://foo.com/svn/trunk/code/foo.c
+&hellip;
+</screen>
+
+      <para>These will display log messages <emphasis>only</emphasis>
+        for those revisions in which the working file (or URL)
+        changed.</para>
+
+      <sidebar>
+
+        <title>Why Does <command>svn log</command> Not Show Me What I
+          Just Committed?</title>
+
+        <para>If you make a commit and immediately type <command>svn
+          log</command> with no arguments, you may notice that your
+          most recent commit doesn't show up in the list of log
+          messages.  This is due to a combination of the behavior of
+          <command>svn commit</command> and the default behavior of
+          <command>svn log</command>.  First, when you commit changes
+          to the repository, <command>svn</command> only bumps the
+          revision of files (and directories) that it commits, so
+          usually the parent directory remains at the older revision
+          (See <xref
+          linkend="svn.basic.in-action.mixedrevs.update-commit"/> for
+          why).  <command>svn log</command> then defaults to fetching
+          the history of the directory at its current revision, and
+          thus you don't see the newly-committed changes.  The
+          solution here is to either update your working copy or
+          explicitly provide a revision number to <command>svn
+          log</command> by using the <option>--revision</option>
+          (<option>-r</option>) option.</para>
+
+      </sidebar>
+
+      <para>If you want even more information about a file or
+        directory, <command>svn log</command> also takes a
+        <option>--verbose</option> (<option>-v</option>) option.
+        Because Subversion allows you to move and copy files and
+        directories, it is important to be able to track path changes
+        in the filesystem, so in verbose mode, <command>svn
+        log</command> will include a list of changed paths in a
+        revision in its output:</para>
+
+      <screen>
+$ svn log -r 8 -v
+------------------------------------------------------------------------
+r8 | sally | 2002-07-14 08:15:29 -0500 | 1 line
+Changed paths:
+M /trunk/code/foo.c
+M /trunk/code/bar.h
+A /trunk/code/doc/README
+
+Frozzled the sub-space winch.
+
+------------------------------------------------------------------------
+</screen>
+
+      <para>
+        <command>svn log</command> also takes a <option>--quiet</option>
+        (<option>-q</option>) option, which suppresses the body of the
+        log message.  When combined with <option>--verbose</option>, it
+        gives just the names of the changed files.</para>
+
+      <sidebar>
+        <title>Why Does <command>svn log</command> Give Me an Empty
+          Response?</title>
+
+        <para>After working with Subversion for a bit, most users will
+          come across something like this:</para>
+
+        <screen>
+$ svn log -r 2
+------------------------------------------------------------------------
+$
+</screen>
+
+        <para>At first glance, this seems like an error.  But recall
+          that while revisions are repository-wide, <command>svn
+          log</command> operates on a path in the repository.  If you
+          supply no path, Subversion uses the current working
+          directory as the default target.  As a result, if you're
+          operating in a subdirectory of your working copy and attempt
+          to see the log of a revision in which neither that directory
+          nor any of its children was changed, Subversion will show you
+          an empty log.  If you want to see what changed in that
+          revision, try pointing <command>svn log</command> directly at
+          the top-most URL of your repository, as in <command>svn log -r 2
+          http://svn.collab.net/repos/svn</command>.</para>
+
+      </sidebar>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.tour.history.diff">
+      <title>Examining the details of historical changes</title>
+
+      <para>We've already seen <command>svn diff</command>
+        before&mdash;it displays file differences in unified diff
+        format; it was used to show the local modifications made to
+        our working copy before committing to the repository.</para>
+
+      <para>In fact, it turns out that there are
+        <emphasis>three</emphasis> distinct uses of <command>svn
+        diff</command>:</para>
+
+      <itemizedlist>
+
+        <listitem>
+          <para>Examining local changes</para>
+        </listitem>
+
+        <listitem>
+          <para>Comparing your working copy to the repository</para>
+        </listitem>
+
+        <listitem>
+          <para>Comparing repository to repository</para>
+        </listitem>
+
+      </itemizedlist>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.history.diff.local">
+        <title>Examining Local Changes</title>
+
+        <para>As we've seen, invoking <command>svn diff</command> with
+          no options will compare your working files to the cached
+          <quote>pristine</quote> copies in
+          the <filename>.svn</filename> area:</para>
+
+        <screen>
+$ svn diff
+Index: rules.txt
+===================================================================
+--- rules.txt	(revision 3)
++++ rules.txt	(working copy)
+@@ -1,4 +1,5 @@
+ Be kind to others
+ Freedom = Responsibility
+ Everything in moderation
+-Chew with your mouth open
++Chew with your mouth closed
++Listen when others are speaking
+$
+</screen>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.history.diff.wcrepos">
+        <title>Comparing Working Copy to Repository</title>
+
+        <para>If a single <option>--revision</option>
+          (<option>-r</option>) number is passed, then your
+          working copy is compared to the specified revision in the
+          repository.</para>
+
+        <screen>
+$ svn diff -r 3 rules.txt
+Index: rules.txt
+===================================================================
+--- rules.txt	(revision 3)
++++ rules.txt	(working copy)
+@@ -1,4 +1,5 @@
+ Be kind to others
+ Freedom = Responsibility
+ Everything in moderation
+-Chew with your mouth open
++Chew with your mouth closed
++Listen when others are speaking
+$
+</screen>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.history.diff.reposrepos">
+        <title>Comparing Repository to Repository</title>
+
+        <para>If two revision numbers, separated by a colon, are
+          passed via <option>--revision</option>
+          (<option>-r</option>), then the two revisions are directly
+          compared.</para>
+
+        <screen>
+$ svn diff -r 2:3 rules.txt
+Index: rules.txt
+===================================================================
+--- rules.txt	(revision 2)
++++ rules.txt	(revision 3)
+@@ -1,4 +1,4 @@
+ Be kind to others
+-Freedom = Chocolate Ice Cream
++Freedom = Responsibility
+ Everything in moderation
+ Chew with your mouth open
+$
+</screen>
+
+        <para>A more convenient way of comparing a revision to the
+          previous revision is to use the <option>--change</option>
+          (<option>-c</option>) option:</para>
+
+        <screen>
+$ svn diff -c 3 rules.txt
+Index: rules.txt
+===================================================================
+--- rules.txt	(revision 2)
++++ rules.txt	(revision 3)
+@@ -1,4 +1,4 @@
+ Be kind to others
+-Freedom = Chocolate Ice Cream
++Freedom = Responsibility
+ Everything in moderation
+ Chew with your mouth open
+$
+</screen>
+
+        <para>Lastly, you can compare repository revisions even when
+          you don't have a working copy on your local machine, just by
+          including the appropriate URL on the command line:</para>
+
+        <screen>
+$ svn diff -c 5 http://svn.example.com/repos/example/trunk/text/rules.txt
+&hellip;
+$
+</screen>
+
+      </sect3>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.tour.history.browsing">
+      <title>Browsing the repository</title>
+
+      <para>Using <command>svn cat</command> and <command>svn
+        list</command>, you can view various revisions of files and
+        directories without changing the working revision of your
+        working copy.  In fact, you don't even need a working copy to
+        use either one.</para>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.history.browsing.cat">
+         <title><command>svn cat</command></title>
+
+
+        <para>If you want to examine an earlier version of a file and
+          not necessarily the differences between two files, you can use
+          <command>svn cat</command>:</para>
+
+        <screen>
+$ svn cat -r 2 rules.txt
+Be kind to others
+Freedom = Chocolate Ice Cream
+Everything in moderation
+Chew with your mouth open
+$
+</screen>
+
+        <para>You can also redirect the output directly into a
+          file:</para>
+
+        <screen>
+$ svn cat -r 2 rules.txt &gt; rules.txt.v2
+$
+</screen>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.history.browsing.list">
+        <title><command>svn list</command></title>
+
+        <para>The <command>svn list</command> command shows you what
+          files are in a repository directory without actually
+          downloading the files to your local machine:</para>
+
+        <screen>
+$ svn list http://svn.collab.net/repos/svn
+README
+branches/
+clients/
+tags/
+trunk/
+</screen>
+
+        <para>If you want a more detailed listing, pass the
+          <option>--verbose</option> (<option>-v</option>) flag to get
+          output like this:</para>
+
+        <screen>
+$ svn list -v http://svn.collab.net/repos/svn
+  20620 harry            1084 Jul 13  2006 README
+  23339 harry                 Feb 04 01:40 branches/
+  21282 sally                 Aug 27 09:41 developer-resources/
+  23198 harry                 Jan 23 17:17 tags/
+  23351 sally                 Feb 05 13:26 trunk/
+</screen>
+
+        <para>The columns tell you the revision at which the file or
+          directory was last modified, the user who modified it, the size
+          if it is a file, the date it was last modified, and the item's
+          name.</para>
+
+        <warning>
+          <para>The <command>svn list</command> with no arguments
+          defaults to the <emphasis>repository URL</emphasis> of the
+          current working directory, <emphasis>not</emphasis> the
+          local working copy directory.  After all, if you wanted a
+          listing of your local directory, you could use just plain
+          <command>ls</command> (or any reasonable non-Unixy
+          equivalent).</para>
+        </warning>
+
+      </sect3>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.tour.history.snapshots">
+      <title>Fetching older repository snapshots</title>
+
+      <para>In addition to all of the above commands, you can use
+        <command>svn update</command> and <command>svn
+        checkout</command> with the <option>--revision</option> option
+        to take an entire working copy <quote>back in time</quote>
+        <footnote><para>See?  We told you that Subversion was a time
+        machine.</para></footnote>:</para>
+
+      <screen>
+$ svn checkout -r 1729 # Checks out a new working copy at r1729
+&hellip;
+$ svn update -r 1729 # Updates an existing working copy to r1729
+&hellip;
+</screen>
+
+      <tip>
+        <para>Many Subversion newcomers attempt to use the above
+          <command>svn update</command> example to <quote>undo</quote>
+          committed changes, but this won't work as you can't commit
+          changes that you obtain from backdating a working copy if
+          the changed files have newer revisions.  See <xref
+          linkend="svn.branchmerge.advanced.resurrect"/> for a
+          description of how to <quote>undo</quote> a commit.</para>
+      </tip>
+
+      <para>Lastly, if you're building a release and wish to bundle up
+        your files from Subversion but don't want those
+        pesky <filename>.svn</filename> directories in the way, then
+        you can use <command>svn export</command> to create a local
+        copy of all or part of your repository
+        sans <filename>.svn</filename> directories.  As
+        with <command>svn update</command> and
+        <command>svn checkout</command>, you can also pass the
+        <option>--revision</option> option to <command>svn
+        export</command>:</para>
+
+      <screen>
+$ svn export http://svn.example.com/svn/repos1 # Exports latest revision
+&hellip;
+$ svn export http://svn.example.com/svn/repos1 -r 1729
+# Exports revision r1729
+&hellip;
+</screen>
+
+    </sect2>
+
+  </sect1>
+
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.tour.cleanup">
+    <title>Sometimes You Just Need to Clean Up</title>
+
+    <sect2 id="svn.tour.cleanup.disposal">
+
+      <title>Disposing of a Working Copy</title>
+
+      <para>Subversion doesn't track either the state or existence of
+        working copies on the server, so there's no server overhead to
+        keeping working copies around.  Likewise, there's no need to
+        let the server know that you're going to delete a working
+        copy.</para>
+
+      <para>If you're likely to use a working copy again, there's
+        nothing wrong with just leaving it on disk until you're ready
+        to use it again, at which point all it takes is an
+        <command>svn update</command> to bring it up to date and ready
+        for use.</para>
+
+      <para>However, if you're definitely not going to use a working
+        copy again, you can safely delete the entire thing, but you'd
+        be well served to take a look through the working copy for
+        unversioned files.  To find these files, run <command>svn
+        status</command> and review any files that are prefixed by a
+        <literal>?</literal> to make certain that they're not of
+        importance.  After you're done reviewing, you can safely
+        delete your working copy.</para>
+
+    </sect2>
+
+    <sect2 id="svn.tour.cleanup.interruption">
+
+      <title>Recovering From an Interruption</title>
+
+      <para>When Subversion modifies your working copy (or any
+        information within <filename>.svn</filename>), it tries to do
+        so as safely as possible.  Before changing the working copy,
+        Subversion writes its intentions to a log file.  Next it
+        executes the commands in the log file to apply the requested
+        change, holding a lock on the relevant part of the working
+        copy while it works&mdash;to prevent other Subversion clients
+        from accessing the working copy in mid-change.  Finally,
+        Subversion removes the log file.  Architecturally, this is
+        similar to a journaled filesystem.  If a Subversion operation
+        is interrupted (if the process is killed, or if the machine
+        crashes, for example), the log files remain on disk.  By
+        re-executing the log files, Subversion can complete the
+        previously started operation, and your working copy can get
+        itself back into a consistent state.</para>
+
+      <para>And this is exactly what <command>svn cleanup</command>
+        does: it searches your working copy and runs any leftover
+        logs, removing working copy locks in the process.
+        If Subversion ever tells you that some part of your working copy
+        is <quote>locked</quote>, then this is the command that you
+        should run.  Also, <command>svn status</command> will display
+        an <literal>L</literal> next to locked items:</para>
+
+      <screen>
+$ svn status
+  L    somedir
+M      somedir/foo.c
+
+$ svn cleanup
+$ svn status
+M      somedir/foo.c
+</screen>
+
+      <para>Don't confuse these working copy locks with the ordinary
+        locks that Subversion users create when using
+        the <quote>lock-modify-unlock</quote> model of concurrent
+        version control; see
+        <xref linkend="svn.advanced.locking.meanings"/> for
+        clarification.</para>
+
+    </sect2>
+
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.tour.summary">
+    <title>Summary</title>
+
+      <para>Now we've covered most of the Subversion client commands.
+        Notable exceptions are those dealing with branching and
+        merging (see <xref linkend="svn.branchmerge"/>) and properties (see
+        <xref linkend="svn.advanced.props"/>).  However, you may want to
+        take a moment to skim through <xref linkend="svn.ref"/> to
+        get an idea of all the many different commands that Subversion
+        has&mdash;and how you can use them to make your work
+        easier.</para>
+
+  </sect1>
+
+</chapter>
+
+<!--
+local variables:
+sgml-parent-document: ("book.xml" "chapter")
+end:
+-->
