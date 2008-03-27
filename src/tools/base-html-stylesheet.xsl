@@ -23,4 +23,13 @@
     </xsl:call-template>
   </xsl:template>
 
+  <xsl:template name="user.footer.navigation">
+    <hr/>
+    <div id="svn-footer">
+    <p>You are reading <em>Version Control with Subversion</em>, by Ben Collins-Sussman, Brian W. Fitpatrick, and C. Michael Pilato.<br/>
+       This work is licensed under the <a href="http://creativecommons.org/licenses/by/2.0/">Creative Commons Attribution License</a>.<br/>
+       To submit comments, corrections, or other contributions to the text, please visit <a href="http://www.svnbook.com/">http://www.svnbook.com/</a>.</p>
+    </div>
+  </xsl:template>
+
 </xsl:stylesheet>
