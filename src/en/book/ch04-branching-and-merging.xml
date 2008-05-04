@@ -555,16 +555,27 @@ U    integer.c
 
       <screen>
 $ svn status
+M      .
 M      button.c
 M      integer.c
 </screen>
 
       <para>At this point, the wise thing to do is look at the changes
         carefully with <command>svn diff</command>, and then build and
-        test your branch.  You might need to resolve some conflicts
-        (just as you do with <command>svn update</command>) or
-        possibly make some small edits to get things working properly.
-        (Remember, just because there are
+        test your branch.  Notice that the current working directory
+        (<quote><filename>.</filename></quote>) has also been
+        modified; the <command>svn diff</command> will show that
+        its <literal>svn:mergeinfo</literal> property has been either
+        created or modified.  This is important merge-related metadata
+        that you should <emphasis>not</emphasis> touch, since it will
+        be needed by future <command>svn merge</command> commands.
+        (We'll learn more about this metadata later in the
+        chapter.)</para>
+
+      <para>After performing the merge, you might also need to resolve
+        some conflicts (just as you do with <command>svn
+        update</command>) or possibly make some small edits to get
+        things working properly.  (Remember, just because there are
         no <emphasis>syntactic</emphasis> conflicts doesn't mean there
         aren't any <emphasis>semantic</emphasis> conflicts!)  If you
         encounter serious problems, you can always abort the local
@@ -575,6 +586,7 @@ M      integer.c
 
       <screen>
 $ svn commit -m "Merged latest trunk changes to my-calc-branch."
+Sending        .
 Sending        button.c
 Sending        integer.c
 Transmitting file data ..
@@ -674,6 +686,7 @@ U    README
 $ # build, test, ...
 
 $ svn commit -m "Final merge of trunk changes to my-calc-branch."
+Sending        .
 Sending        button.c
 Sending        README
 Transmitting file data ..
@@ -706,14 +719,16 @@ $ svn update  # (just to make sure the working copy is at latest everywhere)
 At revision 390.
 
 $ svn merge --reintegrate http://svn.example.com/repos/calc/branches/my-calc-branch
---- Merging r341 through r390 into '.':
+--- Merging differences between repository URLs into '.':
 U    button.c
 U    integer.c
 U    Makefile
+ U   .
 
 $ # build, test, verify, ...
 
 $ svn commit -m "Merge my-calc-branch back into trunk!"
+Sending        .
 Sending        button.c
 Sending        integer.c
 Sending        Makefile
@@ -724,18 +739,20 @@ Committed revision 391.
       <para>Congratulations, your branch has now been re-merged back
         into the main line of development.  Notice our use of
         the <option>--reintegrate</option> option this time around.
-        The option is needed because this sort of <quote>merge
+        The option is critical for reintegrating changes from a branch
+        back into its original line of development&mdash;don't forget
+        it!  It's needed because this sort of <quote>merge
         back</quote> is a different sort of work than what you've been
         doing up until now.  Previously, we had been
         asking <command>svn merge</command> to grab the <quote>next
         set</quote> of changes from one line of development (the
         trunk) and duplicate them to another (your branch).  This is
-        fairly straightforward, and each time
-        Subversion knows how to pick up where it left off.  In our
-        prior examples, you can see that first it merges the ranges
-        345:356 from trunk to branch; later on, it continues by
-        merging the next contiguously available range, 356:380.  When
-        doing the final sync, it merges the range 380:385.</para>
+        fairly straightforward, and each time Subversion knows how to
+        pick up where it left off.  In our prior examples, you can see
+        that first it merges the ranges 345:356 from trunk to branch;
+        later on, it continues by merging the next contiguously
+        available range, 356:380.  When doing the final sync, it
+        merges the range 380:385.</para>
 
       <para>When merging your branch back to the trunk, however, the
         underlying mathematics is quite different.  Your feature
@@ -811,35 +828,36 @@ $ svn propget svn:mergeinfo .
         merge</command> will replicate to your branch.</para>
 
       <screen>
-$ svn mergeinfo .
-Path: .
-  Source path: /trunk
-    Merged ranges: r341:390
-    Eligible ranges: r391:395
+$ cd my-calc-branch
 
+# Which changes have already been merged from trunk to branch?
+$ svn mergeinfo http://svn.example.com/repos/calc/trunk
+r341
+r342
+r343
+&hellip;
+r388
+r389
+r390
+
+# Which changes are still eligible to merge from trunk to branch?
+$ svn mergeinfo http://svn.example.com/repos/calc/trunk --show-revs eligible
+r391
+r392
+r393
+r394
+r395
 </screen>
 
-      <para>The <command>svn mergeinfo</command> command, by default,
-        looks back at the history of the thing you're querying and
-        tries to make a sane guess about the <quote>source</quote>
-        from which you want to be copying changes.  In our prior
-        example, because we're querying our branch working copy, the
-        command assumes we're interested in receiving changes
-        from <filename>/trunk</filename> (since that's where our
-        branch was originally copied from).  However, if another
-        coworker had a different branch going on that we wanted to
-        merge changes from, we could have this command tell us about
-        eligible changesets from that source too:</para>
-
-      <screen>
-$ svn mergeinfo --from-source \
-http://svn.example.com/repos/calc/branches/other-branch  .
-Path: .
-  Source path: /branches/other-branch
-    Merged ranges:
-    Eligible ranges: r360:364
-
-</screen>
+      <para>The <command>svn mergeinfo</command> command requires
+        a <quote>source</quote> URL (where the changes would be coming
+        from), and takes an optional <quote>target</quote> URL (where
+        the changes would be merged to).  If no target URL is given,
+        then it assumes that the current working directory is the
+        target.  In the prior example, because we're querying our
+        branch working copy, the command assumes we're interested in
+        receiving changes to <filename>/branches/mybranch</filename>
+        from the specified trunk URL.</para>
 
       <para>Another way to get a more precise preview of a merge
         operation is to use the <option>--dry-run</option>
@@ -990,17 +1008,27 @@ $ cd my-calc-branch
 $ svn propget svn:mergeinfo .
 /trunk:341-349,355
 
-$ svn mergeinfo .
-Path: .
-  Source path: /trunk
-    Merged ranges: r341:349,r355
-    Eligible ranges: r350:354,r356:360
+# Notice that r355 isn't listed as "eligible" to merge, because
+# it's already been merged.
+$ svn mergeinfo http://svn.example.com/repos/calc/trunk --show-revs eligible
+r350
+r351
+r352
+r353
+r354
+r356
+r357
+r358
+r359
+r360
 
 $ svn merge http://svn.example.com/repos/calc/trunk
 --- Merging r350 through r354 into '.':
+U    .
 U    integer.c
 U    Makefile
 --- Merging r356 through r360 into '.':
+U    .
 U    integer.c
 U    button.c
 </screen>
@@ -1441,8 +1469,10 @@ U    bar.c
 Skipped missing target: 'baz.c'
 U    glub.c
 U    sputter.h
+
 Conflict discovered in 'glorb.h'.
-Select: (p)ostpone, (d)iff, (e)dit, (h)elp for more options : 
+Select: (p) postpone, (df) diff-full, (e) edit,
+        (h) help for more options:
 </screen>
 
       <para>In the previous example it might be the case that
@@ -1510,10 +1540,9 @@ Select: (p)ostpone, (d)iff, (e)dit, (h)elp for more options :
 
       <para>In Subversion 1.5, the only way to block a changeset is to
         make the system believe that the change has
-        <emphasis>already</emphasis> been merged.  You'll need to
-        manually edit the <literal>svn:mergeinfo</literal> property on
-        the branch and add the blocked revision(s) to the
-        list:</para>
+        <emphasis>already</emphasis> been merged.  To do this, one can
+        invoke a merge command with the <option>--record-only</option>
+        option:</para>
 
       <screen>
 $ cd my-calc-branch
@@ -1521,8 +1550,17 @@ $ cd my-calc-branch
 $ svn propget svn:mergeinfo .
 /trunk:1680-3305
 
-$ svn propset svn:mergeinfo "/trunk:1680-3305,3328" .
-property 'svn:mergeinfo' set on '.'
+# Let's make the metadata list r3328 as already merged.
+$ svn merge -c 3328 --record-only http://svn.example.com/repos/calc/trunk
+
+$ svn status
+M     .
+
+$ svn propget svn:mergeinfo .
+/trunk:1680-3305,3328
+
+$ svn commit -m "Block r3328 from being merged to the branch."
+&hellip;
 </screen>
 
       <para>This technique works, but it's also a little bit
@@ -1784,8 +1822,10 @@ A    foo.c
 $ cd calc/trunk
 
 $ svn merge --reintegrate http://svn.example.com/repos/calc/branches/my-calc-branch
+--- Merging differences between repository URLs into '.':
 D   integer.c
 A   whole.c
+U   .
       </screen>
 
       <para>This doesn't look so bad at first glance, but it's also
@@ -2483,12 +2523,14 @@ $ svn update
 At revision 1910.
 
 $ svn merge --reintegrate http://svn.example.com/repos/calc/branches/mybranch@1910
+--- Merging differences between repository URLs into '.':
 U    real.c
 U    integer.c
 A    newdirectory
 A    newdirectory/newfile
-        &hellip;
-      </screen>
+U    .
+&hellip;
+</screen>
 
       <para>Another way of thinking about this pattern is that your
         weekly sync of trunk to branch is analogous to running
@@ -2936,7 +2978,7 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
 
           <row>
             <entry>Block a change from automatic merging</entry>
-            <entry>svn propset svn:mergeinfo newvalue;  svn commit</entry>
+            <entry>svn merge -c REV --record-only URL;  svn commit</entry>
           </row>
 
           <row>
