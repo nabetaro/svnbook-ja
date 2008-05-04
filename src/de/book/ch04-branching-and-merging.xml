@@ -500,7 +500,7 @@ Changed paths:
         you use an issue tracker to manage bugs, you can use the
         revision numbers to refer to particular patches that fix
         bugs&mdash;for example,
-        <quote>this issue was fixed by revision 9238.</quote> Somebody
+        <quote>this issue was fixed by r9238.</quote> Somebody
         can then run <command>svn log -r 9238</command> to read about
         the exact changeset that fixed the bug, and run
         <command>svn diff -c 9238</command> to see the patch itself.
@@ -509,7 +509,7 @@ Changed paths:
         revision numbers.  You can merge specific changesets from one
         branch to another by naming them in the merge
         arguments: <command>svn merge -c 9238</command> would merge
-        changeset #9238 into your working copy.</para>
+        changeset r9238 into your working copy.</para>
 
       </sect2>
 
@@ -525,8 +525,8 @@ Changed paths:
         project's <filename>/trunk</filename>.  It's in your best
         interest to replicate those changes to your own branch, just
         to make sure they mesh well with your changes.  In fact, this
-        is a best practice: by frequently keeping your branch in sync
-        with the main development line, it helps
+        is a best practice: frequently keeping your branch in sync
+        with the main development line helps
         prevent <quote>surprise</quote> conflicts when it comes time
         for you to fold your changes back into the trunk.</para>
 
@@ -571,7 +571,7 @@ M      integer.c
         changes by running <command>svn revert</command> and start a
         long <quote>what's going on?</quote> discussion with your
         collaborators.  If things look good, however, then you can
-        submit your changes into the repository:</para>
+        submit these changes into the repository:</para>
 
       <screen>
 $ svn commit -m "Merged latest trunk changes to my-calc-branch."
@@ -702,6 +702,9 @@ Committed revision 390.
 $ pwd
 /home/user/calc-trunk
 
+$ svn update  # (just to make sure the working copy is at latest everywhere)
+At revision 390.
+
 $ svn merge --reintegrate http://svn.example.com/repos/calc/branches/my-calc-branch
 --- Merging r341 through r390 into '.':
 U    button.c
@@ -725,8 +728,9 @@ Committed revision 391.
         back</quote> is a different sort of work than what you've been
         doing up until now.  Previously, we had been
         asking <command>svn merge</command> to grab the <quote>next
-        set</quote> of changes from one branch and duplicate them to
-        another.  This is fairly straightforward, and each time
+        set</quote> of changes from one line of development (the
+        trunk) and duplicate them to another (your branch).  This is
+        fairly straightforward, and each time
         Subversion knows how to pick up where it left off.  In our
         prior examples, you can see that first it merges the ranges
         345:356 from trunk to branch; later on, it continues by
@@ -747,8 +751,7 @@ Committed revision 391.
 
       <para>Now that your branch is merged to trunk, you'll no longer
         need your branch.  You can destroy your working copy of the
-        branch, and also do some basic housecleaning in the
-        repository:</para>
+        branch, and also remove it from the repository:</para>
 
       <screen>
 $ svn delete http://svn.example.com/repos/calc/branches/my-calc-branch
@@ -800,7 +803,7 @@ $ svn propget svn:mergeinfo .
         its value indicates which changes have already been replicated
         into a particular directory.</para>
 
-      <para>As we saw earlier, there's also a subcommand <command>svn
+      <para>There's also a subcommand <command>svn
         mergeinfo</command>, which can be helpful in seeing not only
         which changesets a directory has absorbed, but also which
         changesets it's still eligible to receive.  This gives a sort
@@ -1012,21 +1015,24 @@ U    button.c
 
       <warning>
         <para>Did you notice how, in the last example, the merge
-        invocation caused two distinct ranges of merges to be applied?
-        The <command>svn merge</command> command applied two
-        independent patches to your working copy in order to skip over
-        changeset 355, which your branch already contained.  There's
-        nothing inherently wrong with this, except that it has the
-        potential to make conflict resolution more tricky.  If the
-        first range of changes creates conflicts,
-        you <emphasis>must</emphasis> resolve them interactively in
-        order for the merge process to continue and apply the second
-        range of changes.  If you postpone a conflict from the first
-        wave of changes, the whole merge command will bail out with an
-        error message.<footnote><para>At least, this is true in
-        Subversion 1.5 at the time of writing.  This behavior may
-        improve in future versions of
-        Subversion.</para></footnote></para>
+          invocation caused two distinct ranges of merges to be
+          applied?  The <command>svn merge</command> command applied
+          two independent patches to your working copy in order to
+          skip over changeset 355, which your branch already
+          contained.  There's nothing inherently wrong with this,
+          except that it has the potential to make conflict resolution
+          more tricky.  If the first range of changes creates
+          conflicts, you <emphasis>must</emphasis> resolve them
+          interactively in order for the merge process to continue and
+          apply the second range of changes.  If you postpone a
+          conflict from the first wave of changes, the whole merge
+          command will bail out with an error message.
+          <footnote>
+            <para>At least, this is true in Subversion 1.5 at the time
+              of writing.  This behavior may improve in future
+              versions of Subversion.</para>
+          </footnote> 
+        </para>
       </warning>
 
       <para>A word of warning: while <command>svn diff</command> and
@@ -1931,7 +1937,8 @@ URL: http://svn.example.com/repos/calc/branches/my-calc-branch
           abandon an existing working copy.  See <xref
           linkend="svn.ref.svn.c.switch"/> for more information and an
           example.</para>
-      </footnote></para>
+      </footnote>
+    </para>
 
     <sidebar>
       <title>Switches and Updates</title>
@@ -1946,7 +1953,7 @@ URL: http://svn.example.com/repos/calc/branches/my-calc-branch
         and then sends a description of the differences back to the
         client.  The only difference between <command>svn
         switch</command> and <command>svn update</command> is that the
-        latter command always compares two identical repositoryx
+        latter command always compares two identical repository
         paths.</para>
 
       <para>That is, if your working copy is a mirror of
