@@ -2769,24 +2769,15 @@ $
     <para>Fortunately, Subversion provides support for
       <firstterm>externals definitions</firstterm>.  An externals
       definition is a mapping of a local directory to the
-      URL&mdash;and ideally a particular revision&mdash;of a
-      versioned directory.  In Subversion, you declare externals
-      definitions in groups using the <literal>svn:externals</literal>
-      property.  You can create or modify this property using
-      <command>svn propset</command> or <command>svn
-      propedit</command> (see <xref linkend="svn.advanced.props.manip"
-      />).  It can be set on any versioned directory, and its value is
-      a multiline table of subdirectories (relative to the versioned
-      directory on which the property is set), optional revision
-      flags, and fully qualified, absolute Subversion repository
-      URLs.</para>
-
-    <screen>
-$ svn propget svn:externals calc
-third-party/sounds             http://sounds.red-bean.com/repos
-third-party/skins              http://skins.red-bean.com/repositories/skinproj
-third-party/skins/toolkit -r21 http://svn.red-bean.com/repos/skin-maker
-</screen>
+      URL&mdash;and ideally a particular revision&mdash;of a versioned
+      directory.  In Subversion, you declare externals definitions in
+      groups using the <literal>svn:externals</literal> property.  You
+      can create or modify this property using <command>svn
+      propset</command> or <command>svn propedit</command> (see <xref
+      linkend="svn.advanced.props.manip" />).  It can be set on any
+      versioned directory, and its value describes both the external
+      repository location and the client-side directory to which that
+      location should be checked out.</para>
 
     <para>The convenience of the <literal>svn:externals</literal>
       property is that once it is set on a versioned directory,
@@ -2804,10 +2795,42 @@ third-party/skins/toolkit -r21 http://svn.red-bean.com/repos/skin-maker
         when it checks out the external working copy.</para>
     </warning>
 
-    <para>Note the previous externals definition example.  When
-      someone checks out a working copy of the
-      <filename>calc</filename> directory, Subversion also continues
-      to check out the items found in its externals definition.</para>
+    <para>You also get in the externals definition design all the
+      regular benefits of Subversion properties.  The definitions are
+      versioned.  If you need to change an externals definition, you
+      can do so using the regular property modification subcommands.
+      When you commit a change to the <literal>svn:externals</literal>
+      property, Subversion will synchronize the checked-out items
+      against the changed externals definition when you next run
+      <command>svn update</command>.  The same thing will happen when
+      others update their working copies and receive your changes to
+      the externals definition.</para>
+
+    <tip>
+      <para>Because the <literal>svn:externals</literal> property has
+        a multiline value, we strongly recommend that you use
+        <command>svn propedit</command> instead of <command>svn
+        propset</command>.</para>
+    </tip>
+
+    <para>Subversion releases prior to 1.5 honor an externals
+      definition format that is a multiline table of subdirectories
+      (relative to the versioned directory on which the property is
+      set), optional revision flags, and fully qualified, absolute
+      Subversion repository URLs.  An example of this might looks as
+      follows:</para>
+
+    <screen>
+$ svn propget svn:externals calc
+third-party/sounds             http://svn.example.com/repos/sounds
+third-party/skins -r148        http://svn.example.com/skinproj
+third-party/skins/toolkit -r21 http://svn.example.com/skin-maker
+</screen>
+
+    <para>When someone checks out a working copy of the
+      <filename>calc</filename> directory referred to in the previous
+      example, Subversion also continues to check out the items found
+      in its externals definition.</para>
 
     <screen>
 $ svn checkout http://svn.example.com/repos/calc
@@ -2830,47 +2853,60 @@ Fetching external item into calc/third-party/skins
 &hellip;
 </screen>
 
-    <para>If you need to change the externals definition, you can do
-      so using the regular property modification subcommands.  When
-      you commit a change to the <literal>svn:externals</literal>
-      property, Subversion will synchronize the checked-out items
-      against the changed externals definition when you next run
-      <command>svn update</command>.  The same thing will happen when
-      others update their working copies and receive your changes to
-      the externals definition.</para>
+    <para>As of Subversion 1.5, though, a new format of the
+      <literal>svn:externals</literal> property is supported.
+      Externals definitions are still multiline, but the order and
+      format of the various pieces of information has changed.  The
+      new syntax more closely mimics the order of arguments you might
+      pass to <command>svn checkout</command>: the optional revision
+      flags come first, then the external Subversion repository URL,
+      and finally the relative local subdirectory.  Notice, though,
+      that this time we didn't say <quote>fully qualified, absolute
+      Subversion repository URLs.</quote> That's because the new
+      format supports relative URLs and URLs that carry peg revisions.
+      The previous example of an externals definition might, in
+      Subversion 1.5, look like the following:</para>
+
+    <screen>
+$ svn propget svn:externals calc
+      http://svn.example.com/repos/sounds third-party/sounds
+-r148 http://svn.example.com/skinproj third-party/skins
+-r21  http://svn.example.com/skin-maker third-party/skins/toolkit
+</screen>
+
+    <para>Or, making use of the peg revision syntax (which we describe
+      in detail in <xref linkend="svn.advanced.pegrevs" />), it might
+      appear as:</para>
+
+    <screen>
+$ svn propget svn:externals calc
+http://svn.example.com/repos/sounds third-party/sounds
+http://svn.example.com/skinproj@148 third-party/skins
+http://svn.example.com/skin-maker@21 third-party/skins/toolkit
+</screen>
 
     <tip>
-      <para>Because the <literal>svn:externals</literal> property has
-        a multiline value, we strongly recommend that you use
-        <command>svn propedit</command> instead of <command>svn
-        propset</command>.</para>
+      <para>You should seriously consider using explicit revision
+        numbers in all of your externals definitions.  Doing so means
+        that you get to decide when to pull down a different snapshot
+        of external information, and exactly which snapshot to pull.
+        Besides avoiding the surprise of getting changes to
+        third-party repositories that you might not have any control
+        over, using explicit revision numbers also means that as you
+        backdate your working copy to a previous revision, your
+        externals definitions will also revert to the way they looked
+        in that previous revision, which in turn means that the
+        external working copies will be updated to match the way
+        <emphasis>they</emphasis> looked back when your repository was
+        at that previous revision.  For software projects, this could
+        be the difference between a successful and a failed build of
+        an older snapshot of your complex codebase.</para> 
     </tip>
 
-    <para>The <command>svn status</command> command also recognizes
-      externals definitions, displaying a status code of
-      <literal>X</literal> for the <firstterm>disjoint</firstterm> (or
-      disconnected) subdirectories into which
-      externals are checked out, and then recursing into those
-      subdirectories to display the status of the external items
-      themselves.</para>
-
-    <para>The support that exists for externals definitions in
-      Subversion is less than ideal, though.  First, an
-      externals definition can only point to directories, not files.
-      Second, the externals definition cannot point to relative paths
-      (such as <filename>../../skins/myskin</filename>).  Third, the
-      working copies created via the externals definition support are
-      still disconnected from the primary working copy (on whose
-      versioned directories the <literal>svn:externals</literal>
-      property was actually set).  And Subversion still only truly
-      operates on nondisjoint working copies.  So, for example, if
-      you want to commit changes that you've made in one or more of
-      those external working copies, you must run <command>svn
-      commit</command> explicitly on those working
-      copies&mdash;committing on the primary working copy will not
-      recurse into any external ones.</para>
-
-    <para>Also, since the definitions themselves use absolute URLs,
+    <para>For most repositories, these three ways of formatting the
+      external definitions have the same ultimate effect.  They all
+      bring the same benefits.  Unfortunately, they all bring the same
+      annoyances, too.  Since the definitions shown use absolute URLs,
       moving or copying a directory to which they are attached will
       not affect what gets checked out as an external (though the
       relative local target subdirectory will, of course, move with
@@ -2919,48 +2955,108 @@ svn: Target path does not exist
 $
 </screen>
 
-    <para>Also, the absolute URLs that externals definitions use
-      can cause problems with repositories that are available via
-      multiple URL schemes.  For example, if your Subversion server is
-      configured to allow everyone to check out the repository over
-      <literal>http://</literal> or <literal>https://</literal>, but
-      only allow commits to come in via <literal>https://</literal>,
-      you have an interesting problem on your hands.  If your
-      externals definitions use the <literal>http://</literal> form
-      of the repository URLs, you won't be able to commit anything
-      from the working copies created by those externals.  On the
-      other hand, if they use the <literal>https://</literal> form of
-      the URLs, anyone who might be checking out via
-      <literal>http://</literal> because their client doesn't support
-      <literal>https://</literal> will be unable to fetch the external
-      items.  Be aware, too, that if you need to re-parent your
-      working copy (using <command>svn switch --relocate</command>),
-      externals definitions will <emphasis>not</emphasis> also be
-      re-parented.</para>
+    <para>Also, absolute URLs can cause problems with repositories
+      that are available via multiple URL schemes.  For example, if
+      your Subversion server is configured to allow everyone to check
+      out the repository over <literal>http://</literal> or
+      <literal>https://</literal>, but only allow commits to come in
+      via <literal>https://</literal>, you have an interesting problem
+      on your hands.  If your externals definitions use the
+      <literal>http://</literal> form of the repository URLs, you
+      won't be able to commit anything from the working copies created
+      by those externals.  On the other hand, if they use the
+      <literal>https://</literal> form of the URLs, anyone who might
+      be checking out via <literal>http://</literal> because their
+      client doesn't support <literal>https://</literal> will be
+      unable to fetch the external items.  Be aware, too, that if you
+      need to re-parent your working copy (using <command>svn switch
+      --relocate</command>), externals definitions will
+      <emphasis>not</emphasis> also be re-parented.</para>
 
-    <tip>
-      <para>You should seriously consider using explicit revision
-        numbers in all of your externals definitions.  Doing so means
-        that you get to decide when to pull down a different snapshot
-        of external information, and exactly which snapshot to pull.
-        Besides avoiding the surprise of getting changes to
-        third-party repositories that you might not have any control
-        over, using explicit revision numbers also means that as you
-        backdate your working copy to a previous revision, your
-        externals definitions will also revert to the way they looked
-        in that previous revision, which in turn means that the
-        external working copies will be updated to match the way
-        <emphasis>they</emphasis> looked back when your repository was
-        at that previous revision.  For software projects, this could
-        be the difference between a successful and a failed build of
-        an older snapshot of your complex codebase.</para> 
-    </tip>
+   <para>Subversion 1.5 takes a huge step in relieving these
+     frustrations.  As mentioned earlier, the URLs used in the new
+     externals definition format can be relative, and Subversion
+     provides syntax magic for specifying multiple flavors of URL
+     relativity.</para>
 
-    <para>Finally, there might be times when you would prefer that
-      <command>svn</command> subcommands would not recognize, or
-      otherwise operate upon, the external working copies.   In those instances,
-      you can pass the <option>--ignore-externals</option> option to
-      the subcommand.</para>
+    <variablelist>
+      <varlistentry>
+        <term>../</term> 
+        <listitem><para>Relative to the URL of the directory on which
+          the <literal>svn:externals</literal> property is
+          set.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>^/</term> 
+        <listitem><para>Relative to the root of the repository in
+          which the <literal>svn:externals</literal> property is
+          versioned.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>//</term> 
+        <listitem><para>Relative to the scheme of the URL of the
+          directory on which the <literal>svn:externals</literal>
+          property is set.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>/</term>
+        <listitem><para>Relative to the root URL of the server on
+          which the <literal>svn:externals</literal> property is
+          versioned.</para></listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>So, looking a fourth time at our previous externals
+      definition example, and making use of the new absolute URL
+      syntax in various ways, we might now see:</para>
+
+    <screen>
+$ svn propget svn:externals calc
+^/sounds third-party/sounds
+/skinproj@148 third-party/skins
+//svn.example.com/skin-maker@21 third-party/skins/toolkit
+</screen>
+
+    <para>The support that exists for externals definitions in
+      Subversion remains less than ideal, though.  An externals
+      definition can only point to directories, not files.  Also, the
+      local subdirectory part of the definition cannot contain
+      <literal>..</literal> parent directory indicators (such as
+      <filename>../../skins/myskin</filename>).  Perhap most
+      disappointinly, the working copies created via the externals
+      definition support are still disconnected from the primary
+      working copy (on whose versioned directories the
+      <literal>svn:externals</literal> property was actually set).
+      And Subversion still only truly operates on nondisjoint working
+      copies.  So, for example, if you want to commit changes that
+      you've made in one or more of those external working copies, you
+      must run <command>svn commit</command> explicitly on those
+      working copies&mdash;committing on the primary working copy will
+      not recurse into any external ones.</para>
+
+    <para>We've already mentioned some of the additional shortcomings
+      of the old <literal>svn:externals</literal> format and how the
+      new Subversion 1.5 format improves upon it.  But be careful when
+      making use of the new format that you don't inadvertantly cause
+      problems for other folks accessing your repository who are using
+      older Subversion clients.  While Subversion 1.5 clients will
+      continue to recognize and support the original externals
+      definition format, older clients will <emphasis>not</emphasis>
+      be able to correctly parse the new format.</para>
+
+    <para>Besides the <command>svn checkout</command>, <command>svn
+      update</command>, <command>svn switch</command>, and
+      <command>svn export</command> commands which actually manage the
+      <firstterm>disjoint</firstterm> (or disconnected) subdirectories
+      into which externals are checked out, the <command>svn
+      status</command> command also recognizes externals definitions.
+      It displays a status code of <literal>X</literal> for the
+      disjoint external subdirectories, and then recurses into those
+      subdirectories to display the status of the external items
+      themselves.  You can pass the
+      <option>--ignore-externals</option> option to any of these
+      subcommands to disable externals definition processing.</para>
+
   </sect1>
 
   <!-- ================================================================= -->
