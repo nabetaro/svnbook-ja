@@ -2449,16 +2449,14 @@ Node-path: spreadsheet/Makefile
 
       <para>Another requirement of the target repository is that the
         <command>svnsync</command> process be allowed to modify
-        certain revision properties.  <command>svnsync</command>
-        stores its bookkeeping information in special revision
-        properties on revision 0 of the destination repository.
-        Because <command>svnsync</command> works within the framework
-        of that repository's hook system, the default state of the
-        repository (which is to disallow revision property changes;
-        see <xref linkend="svn.ref.reposhooks.pre-revprop-change" />)
-        is insufficient.  You'll need to explicitly implement the
+        revision properties.  Because <command>svnsync</command> works
+        within the framework of that repository's hook system, the
+        default state of the repository (which is to disallow revision
+        property changes; see <xref
+        linkend="svn.ref.reposhooks.pre-revprop-change" />) is
+        insufficient.  You'll need to explicitly implement the
         pre-revprop-change hook, and your script must allow
-        <command>svnsync</command> to set and change its special
+        <command>svnsync</command> to set and change revision
         properties.  With those provisions in place, you are ready to
         start mirroring repository revisions.</para>
 
@@ -2702,6 +2700,84 @@ $
         right where it left off.  In fact, as new revisions appear in
         the source repository, this is exactly what you to do
         in order to keep your mirror up to date.</para>
+
+      <sidebar>
+        <title>svnsync Bookkeeping</title>
+
+        <para><command>svnsync</command> needs to be able to set and
+          modify revision properties on the mirror repository because
+          those properties are part of the data it is tasked with
+          mirroring.  As those properties change in the source
+          repository, those changes need to be reflected in the mirror
+          repository, too.  But <command>svnsync</command> also uses a
+          set of custom revision properties&mdash;stored in revision 0
+          of the mirror repository&mdash;for its own internal
+          bookkeeping.  These properties contain information such as
+          the URL and UUID of the source repository, plus some
+          additional state-tracking information.</para>
+
+        <para>One of those pieces of state-tracking information is a
+          flag that essentially just means <quote>there's a
+          synchronization in progress right now.</quote>  This is used
+          to prevent multiple <command>svnsync</command> processes
+          from colliding with each other while trying to mirror data
+          to the same destination repository.  Now, generally you
+          won't need to pay any attention whatsoever to
+          <emphasis>any</emphasis> of these special properties (all of
+          which begin with the prefix <literal>svn:sync-</literal>).
+          Occasionally, though, if a synchronization fails
+          unexpectedly, Subversion never has a chance to remove this
+          particular state flag.  This causes all future
+          synchronization attempts to fail because it appears that a
+          synchronization is still in progress when, in fact, none is.
+          Fortunately, recovering from this situation is as simple as
+          removing the <literal>svn:sync-lock</literal> property which
+          serves as this flag from revision 0 of the mirror
+          repository:</para>
+
+        <screen>
+$ svn pdel --revprop -r0 svn:sync-lock http://svn.example.com/svn-mirror
+property 'svn:sync-lock' deleted from repository revision 0
+$
+</screen>
+
+        <para>That <command>svnsync</command> stores the source
+          repository URL in a bookkeeping property on the mirror
+          repository is the reason why you only have to specify that
+          URL once, during <command>svnsync init</command>.  Future
+          synchronization operations against that mirror simply
+          consult the special <literal>svn:sync-from-url</literal>
+          property stored on the mirror itself in order to know where
+          to synchronize from.  This value is used literally by the
+          synchronization process, though.  So while from within
+          CollabNet's network you can perhaps access our example
+          source URL as <literal>http://svn/repos/svn</literal>
+          (because that first <literal>svn</literal> magically gets
+          <literal>.collab.net</literal> appended to it by DNS
+          voodoo), if you later need to update that mirror from
+          another machine outside CollabNet's network, the
+          synchronization might fail (because the hostname
+          <literal>svn</literal> is ambiguous).  For this reason, it's
+          best to use fully qualified source repository URLs when
+          initializing a mirror repository rather than those that
+          refer to only hostnames or IP addresses (which can change
+          over time).</para>
+
+        <para>Another interesting thing about these special
+          bookkeeping properties is that <command>svnsync</command>
+          will not attempt to mirror any of those properties when they
+          are found in the source repository.  The reason is probably
+          obvious, but basically boils down to
+          <command>svnsync</command> not being able to distinguish the
+          special properties it has merely copied from the source
+          repository from those it needs to consult and maintain for
+          its own bookkeeping needs.  This situation could occur if,
+          for example, you were maintaining a mirror of a mirror of a
+          third repository.  When <command>svnsync</command> sees its
+          own special properties in revision 0 of the source
+          repository, it simple ignores them.</para>
+
+      </sidebar>
 
       <para>There is, however, one bit of inelegance in the process.
         Because Subversion revision properties can be changed at any
