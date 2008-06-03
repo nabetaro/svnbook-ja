@@ -869,7 +869,7 @@ TODO(fitz): doc this:
         </refsect1>
 
         <refsect1>
-          <title>Example</title>
+          <title>Examples</title>
 
           <para>If you want to see blame annotated source for
             <filename>readme.txt</filename> in your test
@@ -887,6 +887,37 @@ $ svn blame http://svn.red-bean.com/repos/test/readme.txt
             the <emphasis>context</emphasis> of the line&mdash;he may
             have just adjusted the whitespace.
           </para>
+
+          <para>If you use the <option>--xml</option> option, you can
+            get xml output describing the blame annotations, but not
+            the contents of the lines themselves:</para>
+
+          <screen>
+$ svn blame --xml http://svn.red-bean.com/repos/test/readme.txt
+&lt;?xml version="1.0"?&gt;
+&lt;blame&gt;
+&lt;target
+   path="sandwich.txt"&gt;
+&lt;entry
+   line-number="1"&gt;
+&lt;commit
+   revision="3"&gt;
+&lt;author&gt;sally&lt;/author&gt;
+&lt;date&gt;2008-05-25T19:12:31.428953Z&lt;/date&gt;
+&lt;/commit&gt;
+&lt;/entry&gt;
+&lt;entry
+   line-number="2"&gt;
+&lt;commit
+   revision="5"&gt;
+&lt;author&gt;harry&lt;/author&gt;
+&lt;date&gt;2008-05-29T03:26:12.293121Z&lt;/date&gt;
+&lt;/commit&gt;
+&lt;/entry&gt;
+&lt;/target&gt;
+&lt;/blame&gt;
+</screen>
+
         </refsect1>
       </refentry>
 
@@ -2068,7 +2099,33 @@ Index: COMMITTERS
 &gt; This is a test
 &gt; 
 </screen>
+
+          <para>Lastly, you can use the <option>--xml</option> option
+            along with the <option>--summarize</option> option to view
+            xml describing the changes that occurred between
+            revisions, but not the contents of the diff itself:</para>
           
+          <screen>
+$ svn diff --summarize --xml http://svn.red-bean.com/repos/test@r2 http://svn.red-bean.com/repos/test
+&lt;?xml version="1.0"?&gt;
+&lt;diff&gt;
+&lt;paths&gt;
+&lt;path
+   props="none"
+   kind="file"
+   item="modified"&amp;gt;http://svn.red-bean.com/repos/test/sandwich.txt&amp;lt;/path&amp;gt;
+&lt;path
+   props="none"
+   kind="file"
+   item="deleted"&amp;gt;http://svn.red-bean.com/repos/test/burrito.txt&amp;lt;/path&amp;gt;
+&lt;path
+   props="none"
+   kind="dir"
+   item="added"&amp;gt;http://svn.red-bean.com/repos/test/snacks&amp;lt;/path&amp;gt;
+&lt;/paths&gt;
+&lt;/diff&gt;
+</screen>
+
         </refsect1>
       </refentry>
 
@@ -2510,8 +2567,36 @@ Lock Comment (1 line):
 My test lock comment
 </screen>
 
+           <para>Lastly, <command>svn info</command> output is
+             available in xml format by passing
+             the<option>--xml</option> option:</para>
 
-          
+           <screen>
+$ svn info --xml http://svn.red-bean.com/repos/test
+&lt;?xml version="1.0"?&gt;
+&lt;info&gt;
+&lt;entry
+   kind="dir"
+   path="."
+   revision="1"&gt;
+&lt;url&gt;http://svn.red-bean.com/repos/test&lt;/url&gt;
+&lt;repository&gt;
+&lt;root&gt;http://svn.red-bean.com/repos/test&lt;/root&gt;
+&lt;uuid&gt;5e7d134a-54fb-0310-bd04-b611643e5c25&lt;/uuid&gt;
+&lt;/repository&gt;
+&lt;wc-info&gt;
+&lt;schedule&gt;normal&lt;/schedule&gt;
+&lt;depth&gt;infinity&lt;/depth&gt;
+&lt;/wc-info&gt;
+&lt;commit
+   revision="1"&gt;
+&lt;author&gt;sally&lt;/author&gt;
+&lt;date&gt;2003-01-15T23:35:12.847647Z&lt;/date&gt;
+&lt;/commit&gt;
+&lt;/entry&gt;
+&lt;/info&gt;
+</screen>
+
         </refsect1>
       </refentry>
 
@@ -2627,6 +2712,30 @@ $ svn list --verbose file:///var/svn/repos
      16 sally         28361 Jan 16 23:18 README.txt
      27 sally             0 Jan 18 15:27 INSTALL
      24 harry               Jan 18 11:27 examples/
+</screen>
+
+          <para>You can also get <command>svn list</command> output in
+            xml format with the <option>--xml</option> option:</para>
+
+          <screen>
+$ svn list --xml http://svn.red-bean.com/repos/test
+&lt;?xml version="1.0"?&gt;
+&lt;lists&gt;
+&lt;list
+   path="http://svn.red-bean.com/repos/test"&gt;
+&lt;entry
+   kind="dir"&gt;
+&lt;name&gt;examples&lt;/name&gt;
+&lt;size&gt;0&lt;/size&gt;
+&lt;commit
+   revision="24"&gt;
+&lt;author&gt;harry&lt;/author&gt;
+&lt;date&gt;2008-01-18T06:35:53.048870Z&lt;/date&gt;
+&lt;/commit&gt;
+&lt;/entry&gt;
+...
+&lt;/list&gt;
+&lt;/lists&gt;
 </screen>
 
           <para>For further details, see the earlier section <xref
@@ -3011,7 +3120,17 @@ r27 | &hellip;
 
           <para>The <option>--incremental</option> option provides
             similar output control when using the
-            <option>--xml</option> option.</para>
+            <option>--xml</option> option:</para>
+
+          <screen>
+$ svn log --xml --incremental -r 1 sandwich.txt
+&lt;logentry
+   revision="1"&gt;
+&lt;author&gt;harry&lt;/author&gt;
+&lt;date&gt;2008-06-03T06:35:53.048870Z&lt;/date&gt;
+&lt;msg&gt;Initial Import.&lt;/msg&gt;
+&lt;/logentry&gt;
+</screen>
 
           <tip>
             <para>If you run <command>svn log</command> on a specific
@@ -3728,6 +3847,23 @@ Rev
 $ svn propget svn:log --revprop -r 20 
 Began journal.
 </screen>
+
+          <para>Lastly, you can get <command>svn propget</command>
+            output in xml format with the <option>--xml</option>
+            option:</para>
+
+          <screen>
+$ svn propget --xml svn:ignore .
+&lt;?xml version="1.0"?&gt;
+&lt;properties&gt;
+&lt;target
+   path=""&gt;
+&lt;property
+   name="svn:ignore"&gt;*.o
+&lt;/property&gt;
+&lt;/target&gt;
+&lt;/properties&gt;
+</screen>
           
         </refsect1>
       </refentry>
@@ -3818,6 +3954,22 @@ Properties on 'foo.c':
   svn:mime-type : text/plain
   svn:keywords : Author Date Rev
   owner : sally
+</screen>
+
+          <para>Lastly, you can get <command>svn proplist</command>
+            output in xml format with the <option>--xml</option>
+            option:</para>
+
+          <screen>
+$ svn proplist --xml 
+&lt;?xml version="1.0"?&gt;
+&lt;properties&gt;
+&lt;target
+   path="."&gt;
+&lt;property
+   name="svn:ignore"/&gt;
+&lt;/target&gt;
+&lt;/properties&gt;
 </screen>
           
         </refsect1>
@@ -4508,6 +4660,8 @@ $ svn status
 --depth ARG
 --quiet (-q)
 --no-ignore
+--incremental
+--xml
 --username USER
 --password PASS
 --no-auth-cache
@@ -4569,6 +4723,41 @@ $ svn status --show-updates --verbose wc
 A  +         965       687 harry        wc/qax.c
              965       687 harry        wc/zig.c
 Head revision:   981
+</screen>
+
+          <para>Lastly, you can get <command>svn status</command>
+            output in xml format with the <option>--xml</option>
+            option:</para>
+
+          <screen>
+$ svn status --xml wc
+&lt;?xml version="1.0"?&gt;
+&lt;status&gt;
+&lt;target
+   path="wc"&gt;
+&lt;entry
+   path="qax.c"&gt;
+&lt;wc-status
+   props="none"
+   item="added"
+   revision="0"&gt;
+&lt;/wc-status&gt;
+&lt;/entry&gt;
+&lt;entry
+   path="bar.c"&gt;
+&lt;wc-status
+   props="normal"
+   item="modified"
+   revision="965"&gt;
+&lt;commit
+   revision="965"&gt;
+&lt;author&gt;sally&lt;/author&gt;
+&lt;date&gt;2008-05-28T06:35:53.048870Z&lt;/date&gt;
+&lt;/commit&gt;
+&lt;/wc-status&gt;
+&lt;/entry&gt;
+&lt;/target&gt;
+&lt;/status&gt;
 </screen>
 
           <para>For many more examples of <command>svn status</command>,
