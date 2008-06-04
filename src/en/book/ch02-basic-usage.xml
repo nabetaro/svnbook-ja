@@ -436,7 +436,7 @@ Checked out revision 8810.
             <para><command>svn update</command></para>
           </listitem>
           <listitem>
-            <para><command>svn resolved</command></para>
+            <para><command>svn resolve</command></para>
           </listitem>
         </itemizedlist>
       </listitem>
@@ -1259,7 +1259,7 @@ Select: (p) postpone, (df) diff-full, (e) edit, (h)elp for more options : d
           script for Subversion to invoke.  After you've edited the
           file, if you're satisfied with the changes you've made, you
           can tell Subversion that the edited file is no longer in
-          conflict by using the <quote>resolved</quote> command
+          conflict by using the <quote>resolve</quote> command
           (<literal>r</literal>).</para>
 
           <!-- TODO(fitz): I think the above detail on the merge tool -->
@@ -1403,42 +1403,40 @@ svn: Commit failed (details follow):
 svn: Aborting commit: '/home/sally/svn-work/sandwich.txt' remains in conflict
 </screen>
 
-        <para>If you've postponed a conflict, you need to do one of three
-          things:</para>
+        <para>If you've postponed a conflict, you need to resolve the
+          conflict before Subversion will allow you to commit your
+          changes.  You'll do this with the <command>svn
+          resolve</command> command and one of several arguments to
+          the <option>--accept</option> option.</para>
 
-          <itemizedlist>
+        <para>If you want to choose the version of the file that you
+          last checked out before making your edits, choose
+          the <replaceable>base</replaceable> argument.</para>
 
-            <listitem>
-              <para>Merge the conflicted text <quote>by hand</quote> (by
-                examining and editing the conflict markers within the
-                file).</para>
-            </listitem>
+        <para>If you want to choose the version that contains only
+          your edits, choose the <replaceable>mine-full</replaceable>
+          argument.</para>
 
-            <listitem>
-              <para>Copy one of the temporary files on top of your
-                working file.</para>
-            </listitem>
+        <para>If you want to choose the version that your most recent
+          update pulled from the server (and thus discarding your
+          edits entirely), choose
+          the <replaceable>theirs-full</replaceable> argument.</para>
 
-            <listitem>
-              <para>Run <command>svn revert &lt;FILENAME&gt;</command>
-                to throw away all of your local changes.</para>
-            </listitem>
+        <para>However, if you want to pick and choose from your
+          changes and the changes that your update fetched from the
+          server, merge the conflicted text <quote>by hand</quote> (by
+          examining and editing the conflict markers within the file)
+          and then choose the <replaceable>working</replaceable>
+          argument.</para>
 
-          </itemizedlist>
-
-        <para>Once you've resolved the conflict, you need to let
-          Subversion know by running <command>svn resolved</command>.
-          This removes the three temporary files, and Subversion no
-          longer considers the file to be in a state of conflict.
-          <footnote>
-            <para>You can always remove the temporary files yourself,
-              but would you really want to do that when Subversion can
-              do it for you?  We didn't think so.</para>
-          </footnote>
-        </para>
+        <para><command>svn resolve</command> removes the three
+          temporary files, accepts the version of the file that you
+          specified with the <option>--accept</option> option, and
+          Subversion no longer considers the file to be in a state of
+          conflict.</para>
 
         <screen>
-$ svn resolved sandwich.txt
+$ svn resolve --accept working sandwich.txt
 Resolved conflicted state of 'sandwich.txt'
 </screen>
 
@@ -1531,18 +1529,20 @@ Creole Mustard
 Bottom piece of bread
 </screen>
 
-        <para>Now run <command>svn resolved</command>, and you're
+        <para>Now run <command>svn resolve</command>, and you're
           ready to commit your changes:</para>
 
         <screen>
-$ svn resolved sandwich.txt
+$ svn resolve --accept working sandwich.txt
+Resolved conflicted state of 'sandwich.txt'
 $ svn commit -m "Go ahead and use my sandwich, discarding Sally's edits."
 </screen>
 
-        <para>Note that <command>svn resolved</command>, unlike most
-          of the other commands we deal with in this chapter, requires
-          an argument.  In any case, you want to be careful and run
-          <command>svn resolved</command> only when you're certain that
+        <para>Note that <command>svn resolve</command>, unlike most of
+          the other commands we deal with in this chapter, requires
+          that you explicitly list any filenames that you wish to
+          resolve.  In any case, you want to be careful and run
+          <command>svn resolve</command> only when you're certain that
           you've fixed the conflict in your file&mdash;once the
           temporary files are removed, Subversion will let you commit
           the file even if it still contains conflict markers.</para>
@@ -1557,22 +1557,25 @@ $ svn commit -m "Go ahead and use my sandwich, discarding Sally's edits."
       </sect3>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-      <sect3 id="svn.tour.cycle.resolve.copyover">
-        <title>Copying a file onto your working file</title>
-
+      <sect3 id="svn.tour.cycle.resolve.theirsfull">
+        <title>Discarding your changes in favor of a newly fetched revision</title>
+  
         <para>If you get a conflict and decide that you want to throw
-          out your changes, you can merely copy one of the temporary
-          files created by Subversion over the file in your working
-          copy:</para>
+          out your changes, you can run <command>svn resolve --accept
+          theirs-full</command> and Subversion will discard your edits
+          and remove the temporary files:</para>
 
-        <screen>
+       <screen>
 $ svn update
-C  sandwich.txt
+Conflict discovered in 'sandwich.txt'.
+Select: (p) postpone, (df) diff-full, (e) edit,
+        (h) help for more options: p
+C    sandwich.txt
 Updated to revision 2.
 $ ls sandwich.*
 sandwich.txt  sandwich.txt.mine  sandwich.txt.r2  sandwich.txt.r1
-$ cp sandwich.txt.r2 sandwich.txt
-$ svn resolved sandwich.txt
+$ svn resolve --accept theirs-full sandwich.txt
+Resolved conflicted state of 'sandwich.txt'
 </screen>
 
       </sect3>
@@ -1581,9 +1584,9 @@ $ svn resolved sandwich.txt
       <sect3 id="svn.tour.cycle.resolve.revert">
         <title>Punting: using <command>svn revert</command></title>
 
-        <para>If you get a conflict and upon examination decide that
-          you want to throw out your changes and start your edits
-          again, just revert your changes:</para>
+        <para>If you decide that you want to throw out your changes
+          and start your edits again (Whether this occurs after a
+          conflict or anytime), just revert your changes:</para>
 
         <screen>
 $ svn revert sandwich.txt
@@ -1593,7 +1596,7 @@ sandwich.txt
 </screen>
 
         <para>Note that when you revert a conflicted file, you don't
-          have to run <command>svn resolved</command>.</para>
+          have to run <command>svn resolve</command>.</para>
 
       </sect3>
 
