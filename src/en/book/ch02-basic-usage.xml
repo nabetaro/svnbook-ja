@@ -49,8 +49,8 @@ usage: import [PATH] URL
 Valid options:
   -q [--quiet]             : print nothing, or only summary information
   -N [--non-recursive]     : obsolete; try --depth=files or --depth=immediates
-  --depth ARG              : pass depth ('empty', 'files', 'immediates', or
-                            'infinity') as ARG
+  --depth ARG              : limit operation by depth ARG ('empty', 'files',
+                             'immediates', or 'infinity')
 &hellip;
 </screen>
 
@@ -468,16 +468,17 @@ U  bar.c
 Updated to revision 2.
 </screen>
 
-      <para>In this case, someone else checked in modifications to
-        both <filename>foo.c</filename> and <filename>bar.c</filename>
-        since the last time you updated, and Subversion has updated
-        your working copy to include those changes.</para>
+      <para>In this case, it appears that someone checked in
+        modifications to both <filename>foo.c</filename>
+        and <filename>bar.c</filename> since the last time you
+        updated, and Subversion has updated your working copy to
+        include those changes.</para>
 
       <para>When the server sends changes to your working copy via
         <command>svn update</command>, a letter code is displayed next
         to each item to let you know what actions Subversion performed
         to bring your working copy up-to-date.  To find out what these
-        letters mean, see <command>svn update</command>.</para>
+        letters mean, run <command>svn help update</command>.</para>
 
     </sect2>
 
@@ -553,8 +554,7 @@ Updated to revision 2.
               underneath <filename>foo</filename> will be scheduled
               for addition.  If you want only to add
               <filename>foo</filename> itself, pass the
-              <option>--non-recursive</option> (<option>-N</option>)
-              option.</para>
+              <option>--depth empty</option> option.</para>
           </listitem>
         </varlistentry>
 
@@ -643,7 +643,7 @@ Updated to revision 2.
           sort of <quote>staging area</quote> to set up your changes
           before committing them to the repository.  Commands that
           operate on URLs don't have this luxury, so when you operate
-          directly on a URL, any of the above actions represent an
+          directly on a URL, any of the above actions represents an
           immediate commit.</para>
 
       </sidebar>
@@ -866,7 +866,7 @@ Status against revision:   46
           useful information&mdash;you'll need to update and get the
           server changes on <filename>README</filename> before you
           commit, or the repository will reject your commit for being
-          out of date.  (more on this subject later).</para>
+          out of date (more on this subject later).</para>
 
           <para><command>svn status</command> can display much more
             information about the files and directories in your
@@ -1026,7 +1026,6 @@ $ svn status foo
 
       <screen>
 $ svn status README
-       README
 
 $ svn delete README
 D         README
@@ -1035,7 +1034,6 @@ $ svn revert README
 Reverted 'README'
 
 $ svn status README
-       README
 </screen>
 
     </sect2>
@@ -1053,7 +1051,8 @@ $ svn update
 U  INSTALL
 G  README
 Conflict discovered in 'bar.c'.
-Select: (p) postpone, (df) diff-full, (e) edit, (h) help for more options: 
+Select: (p) postpone, (df) diff-full, (e) edit,
+        (h) help for more options:
 </screen>
 
       <para>The <computeroutput>U</computeroutput> and
@@ -1141,7 +1140,7 @@ Select: (p) postpone, (df) diff-full, (e) edit, (h) help for more options:
         </varlistentry>
 
         <varlistentry>
-          <term><computeroutput>(m)ine</computeroutput></term>
+          <term><computeroutput>(m)ine-(f)ull</computeroutput></term>
           <listitem>
 
             <para>Discard the newly received changes from the server
@@ -1151,7 +1150,7 @@ Select: (p) postpone, (df) diff-full, (e) edit, (h) help for more options:
         </varlistentry>
 
         <varlistentry>
-          <term><computeroutput>(t)heirs</computeroutput></term>
+          <term><computeroutput>(t)heirs-(f)ull</computeroutput></term>
           <listitem>
 
             <para>Discard your local changes to the file under review
@@ -1200,7 +1199,8 @@ Select: (p) postpone, (df) diff-full, (e) edit, (h) help for more options:
 
         <screen>
 &hellip;
-Select: (p) postpone, (df) diff-full, (e) edit, (h)elp for more options : d
+Select: (p) postpone, (df) diff-full, (e) edit,
+        (h)elp for more options : d
 --- .svn/text-base/sandwich.txt.svn-base      Tue Dec 11 21:33:57 2007
 +++ .svn/tmp/tempfile.32.tmp     Tue Dec 11 21:34:33 2007
 @@ -1 +1,5 @@
@@ -1268,9 +1268,10 @@ Select: (p) postpone, (df) diff-full, (e) edit, (h)elp for more options : d
         <para>If you decide that you don't need to merge any changes,
           but just want to accept one version of the file or the
           other, you can either choose your changes (aka
-          <quote>mine</quote>) by using the <quote>mine</quote>
-          command (<command>m</command>) or choose theirs by using the
-          <quote>theirs</quote> command (<command>t</command>).</para>
+          <quote>mine</quote>) by using the <quote>mine-full</quote>
+          command (<command>mf</command>) or choose theirs by using the
+          <quote>theirs-full</quote> command
+          (<command>tf</command>).</para>
 
       </sect3>
 
@@ -1342,7 +1343,8 @@ Select: (p) postpone, (df) diff-full, (e) edit, (h)elp for more options : d
               </varlistentry>
 
               <varlistentry>
-                <term><filename>filename.rOLDREV</filename></term>
+                <term><filename>filename.r<replaceable>OLDREV</replaceable>
+                      </filename></term>
                 <listitem>
                   <para>This is the file that was the
                     <literal>BASE</literal> revision before you updated
@@ -1353,7 +1355,8 @@ Select: (p) postpone, (df) diff-full, (e) edit, (h)elp for more options : d
               </varlistentry>
 
               <varlistentry>
-                <term><filename>filename.rNEWREV</filename></term>
+                <term><filename>filename.r<replaceable>NEWREV</replaceable>
+                      </filename></term>
                 <listitem>
                   <para>This is the file that your Subversion client
                     just received from the server when you updated your
@@ -1365,9 +1368,9 @@ Select: (p) postpone, (df) diff-full, (e) edit, (h)elp for more options : d
 
             </variablelist>
 
-            <para>Here <literal>OLDREV</literal> is the revision number
+            <para>Here <replaceable>OLDREV</replaceable> is the revision number
               of the file in your <filename>.svn</filename> directory,
-              and <literal>NEWREV</literal> is the revision number of
+              and <replaceable>NEWREV</replaceable> is the revision number of
               the repository <literal>HEAD</literal>.</para>
           </listitem>
 
@@ -1382,7 +1385,8 @@ Select: (p) postpone, (df) diff-full, (e) edit, (h)elp for more options : d
         <screen>
 $ svn update
 Conflict discovered in 'sandwich.txt'.
-Select: (p) postpone, (df) diff-full, (e) edit, (h)elp for more options : p
+Select: (p) postpone, (df) diff-full, (e) edit,
+        (h)elp for more options : p
 C  sandwich.txt
 Updated to revision 2.
 $ ls -1
