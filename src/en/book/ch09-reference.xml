@@ -5522,6 +5522,15 @@ Updated to revision 30.
         </varlistentry>
 
         <varlistentry>
+          <term><option>--use-post-revprop-change-hook</option></term>
+          <listitem>
+            <para>When changing a revision property, run the
+              repository's post-revprop-change hook after changing the
+              revision property.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
           <term><option>--use-pre-commit-hook</option></term>
           <listitem>
             <para>When loading a dump file, run the repository's
@@ -5531,12 +5540,71 @@ Updated to revision 30.
           </listitem>
         </varlistentry>
 
+        <varlistentry>
+          <term><option>--use-pre-revprop-change-hook</option></term>
+          <listitem>
+            <para>When changing a revision property, run the
+              repository's pre-revprop-change hook before changing the
+              revision property.  If the hook fails, abort the
+              modification and terminate.</para>
+          </listitem>
+        </varlistentry>
+
       </variablelist>
     </sect2>
 
     <!-- =============================================================== -->
     <sect2 id="svn.ref.svnadmin.c">
       <title><command>svnadmin</command> Subcommands</title>
+
+      <refentry id="svn.ref.svnadmin.c.crashtest">
+
+        <indexterm>
+          <primary>svnadmin</primary>
+          <secondary>subcommands</secondary>
+          <tertiary>crashtest</tertiary>
+        </indexterm>
+
+        <refnamediv>
+          <refname>svnadmin crashtest</refname>
+          <refpurpose>Simulate a process that crashes.</refpurpose>
+        </refnamediv>
+        <refsect1>
+          <title>Synopsis</title>
+          <programlisting>svnadmin crashtest REPOS_PATH</programlisting>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+
+            <para>Open the repository at REPOS_PATH, then abort, thus
+              simulating a process that crashes while holding an open
+              repository handle.  This is used for testing automatic
+              repository recovery (a new feature in Berkeley DB 4.4).
+              It's unlikely that you'll need to run this
+              command.</para>
+
+          </refsect1>
+
+        <refsect1>
+          <title>Options</title>
+
+          <para>None</para>
+
+        </refsect1>
+
+        <refsect1>
+          <title>Examples</title>
+
+          <screen>
+$ svnadmin crashtest /var/svn/repos
+Abort trap
+</screen>
+
+          <para>Exciting, isn't it?</para>
+          
+        </refsect1>
+      </refentry>
+
       <refentry id="svn.ref.svnadmin.c.create">
 
         <indexterm>
@@ -6325,6 +6393,183 @@ $ svnadmin rmtxns /var/svn/repos/  `svnadmin lstxns /var/svn/repos/`
 $ svnadmin setlog /var/svn/repos/ -r 19 msg
 </screen>
 
+        </refsect1>
+      </refentry>
+
+      <refentry id="svn.ref.svnadmin.c.setrevprop">
+
+        <indexterm>
+          <primary>svnadmin</primary>
+          <secondary>subcommands</secondary>
+          <tertiary>setrevprop</tertiary>
+        </indexterm>
+
+        <refnamediv>
+          <refname>svnadmin setrevprop</refname>
+          <refpurpose>Set the property name on a revision.</refpurpose>
+        </refnamediv>
+        <refsect1>
+          <title>Synopsis</title>
+          <programlisting>svnadmin setrevprop REPOS_PATH -r REVISION NAME FILE</programlisting>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+
+            <para>Set the property <replaceable>NAME</replaceable> on
+              revision <replaceable>REVISION</replaceable> to the
+              contents of <replaceable>FILE</replaceable>. Use
+              <option>--use-pre-revprop-change-hook</option>
+              or <option>--use-post-revprop-change-hook</option> to
+              trigger the revision property-related hooks (e.g., if
+              you want an email notification sent from your post
+              revprop change hook).</para>
+
+          </refsect1>
+
+        <refsect1>
+          <title>Options</title>
+
+          <screen>
+--revision (-r) ARG
+--use-pre-revprop-change-hook
+--use-post-revprop-change-hook
+</screen>
+        </refsect1>
+
+        <refsect1>
+          <title>Examples</title>
+
+          <para>The following sets the revision
+          property <literal>repository-photo</literal> to the contents
+          of the file <literal>sandwich.png</literal>:</para>
+
+          <screen>
+$svnadmin setrevprop /var/svn/repos -r 0 repository-photo sandwich.png
+</screen>
+
+          <para>As you can see, <command>svnadmin setrevprop</command>
+            has no output upon success.</para>
+
+        </refsect1>
+      </refentry>
+
+      <refentry id="svn.ref.svnadmin.c.setuuid">
+
+        <indexterm>
+          <primary>svnadmin</primary>
+          <secondary>subcommands</secondary>
+          <tertiary>setuuid</tertiary>
+        </indexterm>
+
+        <refnamediv>
+          <refname>svnadmin setuuid</refname>
+          <refpurpose>Reset the repository UUID.</refpurpose>
+        </refnamediv>
+        <refsect1>
+          <title>Synopsis</title>
+          <programlisting>svnadmin setuuid REPOS_PATH [NEW_UUID]</programlisting>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+
+            <para>Reset the repository UUID for the repository located
+              at <replaceable>REPOS_PATH</replaceable>.
+              If <replaceable>NEW_UUID</replaceable> is provided, use
+              that as the new repository UUID; otherwise, generate a
+              brand new UUID for the repository.</para>
+
+          </refsect1>
+
+        <refsect1>
+          <title>Options</title>
+
+          <para>None</para>
+
+        </refsect1>
+
+        <refsect1>
+          <title>Examples</title>
+
+          <para>If you've <command>svnsync</command>ed /var/svn/repos
+            to /var/svn/repos-new and intend to use repos-new as your
+            canonical repository, you may want to change the UUID for
+            repos-new to the UUID of repos so that your users don't
+            have to check out a new working copy to accomodate the
+            change:</para>
+
+          <screen>
+$ svnadmin setuuid /var/svn/repos-new 2109a8dd-854f-0410-ad31-d604008985ab
+</screen>
+
+          <para>As you can see, <command>svnadmin setuuid</command>
+            has no output upon success.</para>
+
+        </refsect1>
+      </refentry>
+
+      <refentry id="svn.ref.svnadmin.c.upgrade">
+
+        <indexterm>
+          <primary>svnadmin</primary>
+          <secondary>subcommands</secondary>
+          <tertiary>upgrade</tertiary>
+        </indexterm>
+
+        <refnamediv>
+          <refname>svnadmin upgrade</refname>
+          <refpurpose>Upgrade a repository to the latest supported
+            schema version.</refpurpose>
+        </refnamediv>
+        <refsect1>
+          <title>Synopsis</title>
+          <programlisting>svnadmin upgrade REPOS_PATH</programlisting>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+
+            <para>Upgrade the repository located
+              at <replaceable>REPOS_PATH</replaceable> to the latest
+              supported schema version.</para>
+
+            <para>This functionality is provided as a convenience for
+              repository administrators who wish to make use of new
+              Subversion functionality without having to undertake a
+              potentially costly full repository dump and load
+              operation.  As such, the upgrade performs only the
+              minimum amount of work needed to accomplish this while
+              still maintaining the integrity of the repository.
+              While a dump and subsequent load guarantees the most
+              optimized repository state, <command>svnadmin
+              upgrade</command> does not.</para>
+
+            <warning>
+              <para>You should <emphasis>always</emphasis> backup your
+                repository before upgrading.</para>
+            </warning>
+
+          </refsect1>
+
+        <refsect1>
+          <title>Options</title>
+
+          <para>None</para>
+
+        </refsect1>
+
+        <refsect1>
+          <title>Examples</title>
+
+          <para>Upgrade the repository at
+            path <filename>/var/repos/svn</filename></para>
+
+          <screen>
+$ svnadmin upgrade /var/repos/svn
+Repository lock acquired.
+Please wait; upgrading the repository may take some time...
+
+Upgrade completed.
+</screen>
+          
         </refsect1>
       </refentry>
 
@@ -7559,6 +7804,46 @@ $
 </screen>
 
         </refsect1>
+      </refentry>
+
+      <refentry id="svn.ref.svnsync.c.help">
+
+        <indexterm>
+          <primary>svnsync</primary>
+          <secondary>subcommands</secondary>
+          <tertiary>help</tertiary>
+        </indexterm>
+
+        <refnamediv>
+          <refname>svnsync help</refname> <refpurpose>Help!</refpurpose>
+        </refnamediv>
+        <refsect1>
+
+          <title>Synopsis</title>
+          <programlisting>svnsync SUBCOMMAND</programlisting>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+
+          <para>This subcommand is useful when you're trapped in a
+            foreign prison with neither a net connection nor a copy of
+            this book, but you do have a local wifi network running
+            and you'd like to sync a copy of your repository over to
+            the backup server that Ira The Knife is running over in
+            cell block D.</para>
+            
+        </refsect1>
+
+        <refsect1>
+          <title>Alternate Name</title>
+          <para>None</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Options</title>
+          <para>None</para>
+        </refsect1>
+
       </refentry>
 
       <refentry id="svn.ref.svnsync.c.init">
