@@ -8188,6 +8188,262 @@ $
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <!-- ================================================================= -->
+  <sect1 id="svn.ref.svndumpfilter">
+    <title><command>svndumpfilter</command></title>
+    
+    <para><command>svndumpfilter</command> is a command-line utility
+      for removing history from a Subversion dumpfile by either
+      excluding or including paths beginning with one or more named
+      prefixes.  For details, see
+      <xref linkend="svn.reposadmin.maint.tk.svndumpfilter"/>.</para>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.ref.svndumpfilter.options">
+      <title><command>svndumpfilter</command> Options</title>
+      
+      <para>Options in <command>svndumpfilter</command> are global, just
+        like in <command>svn</command> and
+        <command>svnadmin</command>.</para>
+
+      <variablelist>
+
+        <varlistentry>
+          <term><option>--drop-empty-revs</option></term>
+          <listitem>
+            <para>If filtering causes any revision to be empty (i.e.,
+              cause no change to the repository), remove these
+              revisions from the final dumpfile.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--renumber-revs</option></term>
+          <listitem>
+            <para>Renumbering revisions that remain after
+              filtering.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--skip-missing-merge-sources</option></term>
+          <listitem>
+            <para>Skip merge sources that have been removed as part of
+              the filtering.  Without this
+              option, <command>svndumpfilter</command> will exit with
+              an error if the merge source for a retained path is
+              removed by filtering.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--preserve-revprops</option></term>
+          <listitem>
+            <para>If all nodes in a revision are removed by filtering
+              and <option>--drop-empty-revs</option> is not passed,
+              the default behavior of <command>svndumpfilter</command>
+              is to remove all revision properties except for the date
+              and the log message (which will merely indicate that the
+              revision is empty).  Passing ths option will preserve
+              existing revision properties (which may or may not make
+              sense since the related content is no longer present in
+              the dump file).</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--quiet</option></term>
+          <listitem>
+            <para>Do not display filtering statistics.</para>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.ref.svndumpfilter.c">
+      <title><command>svndumpfilter</command> Subcommands</title>
+
+      <refentry id="svn.ref.svndumpfilter.commands.c.exclude">
+
+        <indexterm>
+          <primary>svndumpfilter</primary>
+          <secondary>subcommands</secondary>
+          <tertiary>exclude</tertiary>
+        </indexterm>
+
+        <refnamediv>
+          <refname>svndumpfilter exclude</refname>
+          <refpurpose>Filter out nodes with given prefixes from dumpstream.</refpurpose>
+        </refnamediv>
+        <refsect1>
+          <title>Synopsis</title>
+          <programlisting>svndumpfilter exclude PATH_PREFIX...</programlisting>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+
+          <para>Can be used to exclude nodes that begin with one or
+            more <replaceable>PATH_PREFIX</replaceable>es from a
+            filtered dumpfile.</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Options</title>
+          
+          <screen>
+--drop-empty-revs
+--renumber-revs
+--skip-missing-merge-sources
+--preserve-revprops
+--quiet
+</screen>
+        </refsect1>
+
+        <refsect1>
+          <title>Example</title>
+
+        <para>If we have a dumpfile from a repository with a number of
+          different picnic-related directories in it, but want to keep
+          everything <emphasis>except</emphasis>
+          the <filename>sandwiches</filename> part of the repository,
+          we'll exclude only that path:</para>
+
+          <screen>
+$ svndumpfilter exclude sandwiches &lt; dumpfile &gt; filtered-dumpfile
+Excluding prefixes:
+   '/sandwiches'
+
+Revision 0 committed as 0.
+Revision 1 committed as 1.
+Revision 2 committed as 2.
+Revision 3 committed as 3.
+Revision 4 committed as 4.
+
+Dropped 1 node(s):
+   '/sandwiches'
+</screen>            
+
+        </refsect1>
+      </refentry>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.ref.svndumpfilter.c.include">
+      <title><command>svndumpfilter</command> Subcommands</title>
+
+      <refentry id="svn.ref.svndumpfilter.commands.c.include">
+
+        <indexterm>
+          <primary>svndumpfilter</primary>
+          <secondary>subcommands</secondary>
+          <tertiary>include</tertiary>
+        </indexterm>
+
+        <refnamediv>
+          <refname>svndumpfilter include</refname>
+          <refpurpose>Filter out nodes without given prefixes from
+            dumpstream.</refpurpose>
+        </refnamediv>
+        <refsect1>
+          <title>Synopsis</title>
+          <programlisting>svndumpfilter include PATH_PREFIX...</programlisting>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+
+          <para>Can be used to include nodes that begin with one or
+            more <replaceable>PATH_PREFIX</replaceable>es in a
+            filtered dumpfile (thus excluding all other paths).</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Options</title>
+          
+          <screen>
+--drop-empty-revs
+--renumber-revs
+--skip-missing-merge-sources
+--preserve-revprops
+--quiet
+</screen>
+        </refsect1>
+
+        <refsect1>
+          <title>Example</title>
+
+        <para>If we have a dumpfile from a repository with a number of
+          different picnic-related directories in it, but only want to
+          keep the <filename>sandwiches</filename> part of the
+          repository, we'll include only that path:</para>
+
+          <screen>
+$ svndumpfilter include sandwiches &lt; dumpfile &gt; filtered-dumpfile
+Including prefixes:
+   '/sandwiches'
+
+Revision 0 committed as 0.
+Revision 1 committed as 1.
+Revision 2 committed as 2.
+Revision 3 committed as 3.
+Revision 4 committed as 4.
+
+Dropped 3 node(s):
+   '/drinks'
+   '/snacks'
+   '/supplies'
+</screen>            
+
+        </refsect1>
+      </refentry>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.ref.svndumpfilter.c.help">
+      <title><command>svndumpfilter</command> Subcommands</title>
+
+      <refentry id="svn.ref.svndumpfilter.commands.c.help">
+
+        <indexterm>
+          <primary>svndumpfilter</primary>
+          <secondary>subcommands</secondary>
+          <tertiary>help</tertiary>
+        </indexterm>
+
+        <refnamediv>
+          <refname>svndumpfilter help</refname>
+          <refpurpose>Help!.</refpurpose>
+        </refnamediv>
+        <refsect1>
+          <title>Synopsis</title>
+          <programlisting>svndumpfilter help [SUBCOMMAND...]</programlisting>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+
+          <para>Displays the help message
+            for <command>svndumpfilter</command>.  Unlike other help
+            commands documented in this chapter, there is no witty
+            commentary for this help command.  The authors of this
+            book deeply regret the omission.</para>
+        </refsect1>
+
+        <refsect1>
+          <title>Options</title>
+          <para>None</para>
+        </refsect1>
+
+      </refentry>
+
+    </sect2>
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
   <sect1 id="svn.ref.svnversion">
 
     <title><command>svnversion</command></title>
