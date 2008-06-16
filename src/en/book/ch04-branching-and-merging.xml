@@ -929,7 +929,7 @@ $ svn status
           After performing a revert, be sure to clean up the working
           copy and remove unversioned files and directories.  The
           output of <command>svn status</command> should be as clean
-          (read: empty) as possible!</para>
+          as possible, ideally showing no output.</para>
       </tip>
 
     </sect2>
@@ -1972,6 +1972,85 @@ U   .
         <xref linkend="svn.reposadmin.create.hooks"/> and
         <xref linkend="svn.ref.reposhooks.start-commit"/> for
         details.</para>
+
+    </sect2>
+
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <sect2 id="svn.branchmerge.advanced.finalword">
+      <title>The Final Word on Merge Tracking</title>
+
+      <para>The bottom line is that Subversion's merge-tracking
+        feature has an extremely complex internal implementation, and
+        the <literal>svn:mergeinfo</literal> property is the only
+        window the user has into the machinery.  As of this writing
+        (Subversion 1.5) there are numbers of edge cases and possible
+        unexpected behaviors that may pop up.</para>
+
+      <para>For example, sometimes mergeinfo will be generated when
+        running a simple <command>svn copy</command> or <command>svn
+        move</command> command.  Sometimes mergeinfo will appear on
+        files that you didn't expect to be touched by an operation.
+        Sometimes mergeinfo won't be generated at all, when you expect
+        it to.  Furthermore, the management of mergeinfo metadata has
+        a whole set of taxonomies and behaviors around it, such
+        as <quote>explicit</quote> versus <quote>implicit</quote>
+        mergeinfo, <quote>operative</quote>
+        versus <quote>inoperative</quote> revisions, specific
+        mechanisms of mergeinfo <quote>elision</quote>, and
+        even <quote>inheritance</quote> from parent to child
+        directories.</para>
+
+      <para>We've chosen not to cover these detailed topics in this
+        book for a couple of reasons.  First, the level of detail is
+        absolutely overwhelming for a typical user.  Second, as
+        Subversion continues to improve, we feel that a typcial
+        user <emphasis>shouldn't</emphasis> have to understand these
+        concepts; they'll eventually fade into the background as pesky
+        implementation details.  All that said, if you enjoy this sort
+        of thing, you can get a fantastic overview in a paper posted
+        at Collabnet's
+        website: <ulink url="http://www.collab.net/community/subversion/articles/merge-info.html">http://www.collab.net/community/subversion/articles/merge-info.html</ulink>.</para>
+
+      <para>For now, if you want to steer clear of bugs and odd
+        behaviors in automatic merging, the Collabnet article
+        recommends you stick to these simple best practices:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>For short-term <quote>feature</quote> branches,
+            follow the simple procedure described throughout
+            <xref linkend="svn.branchmerge.basicmerging"/>.</para>
+        </listitem>
+        <listitem>
+          <para>For long-lived <quote>release</quote> branches (as
+            described in
+            <xref linkend="svn.branchmerge.commonpatterns"/>), only
+            perform merges on the root of the branch, not on 
+            subdirectories.</para>
+        </listitem>
+        <listitem>
+          <para>Never merge into working copies with a mixture of
+            working revision numbers, or with
+            <quote>switched</quote> subdirectories (as described 
+            in <xref linkend="svn.branchmerge.switchwc"/>).  A merge
+            target should be a working copy which represents
+            a <emphasis>single</emphasis> location in the repository
+            at a single point in time.</para>
+        </listitem>
+        <listitem>
+          <para>Don't ever edit the <literal>svn:mergeinfo</literal>
+            property directly; use <command>svn
+            merge --record-only</command> to effect a desired change
+            to the metdata (as demonstrated in
+            <xref linkend="svn.branchmerge.advanced.blockchanges"/>).</para>
+        </listitem>
+        <listitem>
+          <para>Always make sure you have complete read access to
+            all of your merge sources, and that your target working
+            copy is entirely at <option>--depth
+              infinity</option>.</para>
+        </listitem>
+      </itemizedlist>
 
     </sect2>
 
