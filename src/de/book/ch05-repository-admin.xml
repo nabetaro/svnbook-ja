@@ -73,7 +73,7 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
       <varlistentry>
         <term>conf</term>
         <listitem>
-          <para>A directory containing repository configuration files.</para>
+          <para>A directory containing configuration files.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -1298,7 +1298,7 @@ $
           revisions are committed to the repository, Subversion drops
           more files into these two directories&mdash;over time, the
           number of these files in each directory can grow to be quite
-          large.  This has been observed to cause perfomance problems
+          large.  This has been observed to cause performance problems
           on certain network-based filesystems.</para>
 
         <para>Subversion 1.5 creates FSFS-backed repositories using a
@@ -2246,20 +2246,23 @@ Content-length: 0
 
       <para>All that remains now is to create your three new
         repositories, and load each dump file into the right
-        repository:</para>
+        repository, ignoring the UUID found in the dumpstream:</para>
 
       <screen>
-$ svnadmin create calc; svnadmin load calc &lt; calc-dumpfile
+$ svnadmin create calc
+$ svnadmin load --ignore-uuid calc &lt; calc-dumpfile
 &lt;&lt;&lt; Started new transaction, based on original revision 1
      * adding path : Makefile ... done.
      * adding path : button.c ... done.
 &hellip;
-$ svnadmin create calendar; svnadmin load calendar &lt; cal-dumpfile
+$ svnadmin create calendar
+$ svnadmin load --ignore-uuid calendar &lt; cal-dumpfile
 &lt;&lt;&lt; Started new transaction, based on original revision 1
      * adding path : Makefile ... done.
      * adding path : cal.c ... done.
 &hellip;
-$ svnadmin create spreadsheet; svnadmin load spreadsheet &lt; ss-dumpfile
+$ svnadmin create spreadsheet
+$ svnadmin load --ignore-uuid spreadsheet &lt; ss-dumpfile
 &lt;&lt;&lt; Started new transaction, based on original revision 1
      * adding path : Makefile ... done.
      * adding path : ss.c ... done.
@@ -2446,16 +2449,14 @@ Node-path: spreadsheet/Makefile
 
       <para>Another requirement of the target repository is that the
         <command>svnsync</command> process be allowed to modify
-        certain revision properties.  <command>svnsync</command>
-        stores its bookkeeping information in special revision
-        properties on revision 0 of the destination repository.
-        Because <command>svnsync</command> works within the framework
-        of that repository's hook system, the default state of the
-        repository (which is to disallow revision property changes;
-        see <xref linkend="svn.ref.reposhooks.pre-revprop-change" />)
-        is insufficient.  You'll need to explicitly implement the
+        revision properties.  Because <command>svnsync</command> works
+        within the framework of that repository's hook system, the
+        default state of the repository (which is to disallow revision
+        property changes; see <xref
+        linkend="svn.ref.reposhooks.pre-revprop-change" />) is
+        insufficient.  You'll need to explicitly implement the
         pre-revprop-change hook, and your script must allow
-        <command>svnsync</command> to set and change its special
+        <command>svnsync</command> to set and change revision
         properties.  With those provisions in place, you are ready to
         start mirroring repository revisions.</para>
 
@@ -2533,7 +2534,7 @@ USER="$3"
 
 if [ "$USER" = "syncuser" ]; then exit 0; fi
 
-echo "Only the syncuser user may change revision properties" >&amp;2
+echo "Only the syncuser user may change revision properties" &gt;&amp;2
 exit 1
 </programlisting>
       </example>
@@ -2556,7 +2557,7 @@ USER="$2"
 
 if [ "$USER" = "syncuser" ]; then exit 0; fi
 
-echo "Only the syncuser user may commit new revisions" >&amp;2
+echo "Only the syncuser user may commit new revisions" &gt;&amp;2
 exit 1
 </programlisting>
       </example>
@@ -2700,6 +2701,94 @@ $
         the source repository, this is exactly what you to do
         in order to keep your mirror up to date.</para>
 
+      <sidebar>
+        <title>svnsync Bookkeeping</title>
+
+        <para><command>svnsync</command> needs to be able to set and
+          modify revision properties on the mirror repository because
+          those properties are part of the data it is tasked with
+          mirroring.  As those properties change in the source
+          repository, those changes need to be reflected in the mirror
+          repository, too.  But <command>svnsync</command> also uses a
+          set of custom revision properties&mdash;stored in revision 0
+          of the mirror repository&mdash;for its own internal
+          bookkeeping.  These properties contain information such as
+          the URL and UUID of the source repository, plus some
+          additional state-tracking information.</para>
+
+        <para>One of those pieces of state-tracking information is a
+          flag that essentially just means <quote>there's a
+          synchronization in progress right now.</quote>  This is used
+          to prevent multiple <command>svnsync</command> processes
+          from colliding with each other while trying to mirror data
+          to the same destination repository.  Now, generally you
+          won't need to pay any attention whatsoever to
+          <emphasis>any</emphasis> of these special properties (all of
+          which begin with the prefix <literal>svn:sync-</literal>).
+          Occasionally, though, if a synchronization fails
+          unexpectedly, Subversion never has a chance to remove this
+          particular state flag.  This causes all future
+          synchronization attempts to fail because it appears that a
+          synchronization is still in progress when, in fact, none is.
+          Fortunately, recovering from this situation is as simple as
+          removing the <literal>svn:sync-lock</literal> property which
+          serves as this flag from revision 0 of the mirror
+          repository:</para>
+
+        <screen>
+$ svn propdel --revprop -r0 svn:sync-lock http://svn.example.com/svn-mirror
+property 'svn:sync-lock' deleted from repository revision 0
+$
+</screen>
+
+        <para>That <command>svnsync</command> stores the source
+          repository URL in a bookkeeping property on the mirror
+          repository is the reason why you only have to specify that
+          URL once, during <command>svnsync init</command>.  Future
+          synchronization operations against that mirror simply
+          consult the special <literal>svn:sync-from-url</literal>
+          property stored on the mirror itself in order to know where
+          to synchronize from.  This value is used literally by the
+          synchronization process, though.  So while from within
+          CollabNet's network you can perhaps access our example
+          source URL as <literal>http://svn/repos/svn</literal>
+          (because that first <literal>svn</literal> magically gets
+          <literal>.collab.net</literal> appended to it by DNS
+          voodoo), if you later need to update that mirror from
+          another machine outside CollabNet's network, the
+          synchronization might fail (because the hostname
+          <literal>svn</literal> is ambiguous).  For this reason, it's
+          best to use fully qualified source repository URLs when
+          initializing a mirror repository rather than those that
+          refer to only hostnames or IP addresses (which can change
+          over time).  But here again, if you need an existing mirror
+          to start referring to a different URL for the same source
+          repository, you can change the bookkeeping property which
+          houses that information:</para>
+
+        <screen>
+$ svn propset --revprop -r0 svn:sync-from-url <replaceable>NEW-SOURCE-URL</replaceable> \
+      http://svn.example.com/svn-mirror
+property 'svn:sync-from-url' set on repository revision 0
+$
+</screen>
+
+        <para>Another interesting thing about these special
+          bookkeeping properties is that <command>svnsync</command>
+          will not attempt to mirror any of those properties when they
+          are found in the source repository.  The reason is probably
+          obvious, but basically boils down to
+          <command>svnsync</command> not being able to distinguish the
+          special properties it has merely copied from the source
+          repository from those it needs to consult and maintain for
+          its own bookkeeping needs.  This situation could occur if,
+          for example, you were maintaining a mirror of a mirror of a
+          third repository.  When <command>svnsync</command> sees its
+          own special properties in revision 0 of the source
+          repository, it simple ignores them.</para>
+
+      </sidebar>
+
       <para>There is, however, one bit of inelegance in the process.
         Because Subversion revision properties can be changed at any
         time throughout the lifetime of the repository, and because
@@ -2741,6 +2830,28 @@ $
         read access.  It simply copies only the bits of the repository
         that it is permitted to see.  Obviously such a mirror is not
         useful as a backup solution.</para>
+
+      <para>In Subversion 1.5, <command>svnsync</command> grew the
+        ability to also mirror a subset of a repository rather than
+        the whole thing.  The process of setting up and maintaining
+        such a mirror is exactly the same as when mirroring a whole
+        repository, except that instead of specifying the source
+        repository's root URL when running <command>svnsync
+        init</command>, you specify the URL of some subdirectory
+        within that repository.  Synchronization to that mirror will
+        now only copy the bits that changed under that source
+        repository subdirectory.  There are some limitations to this
+        support though.  First, you can't mirror multiple disjoint
+        subdirectories of the source repository into a single mirror
+        repository&mdash;you'd need to instead mirror some parent
+        directory that is common to both.  Secondly, the filtering
+        logic is entirely path-based, so if the subdirectory you are
+        mirroring was renamed at some point in the past, your mirror
+        would only contain the revisions since the directory appeared
+        at the URL you specified.  And likewise, if the source
+        subdirectory is renamed in the future, your synchronization
+        processes will stop mirroring data at the point that the
+        source URL you specified is no longer valid.</para>
 
       <para>As far as user interaction with repositories and mirrors
         goes, it <emphasis>is</emphasis> possible to have a single
@@ -3013,19 +3124,19 @@ $
 </screen>
 
       <para>For folks using versions of Subversion earlier than 1.5,
-        these tasks are a little more complicated.  You can set an
-        explicit UUID on a repository by creating a stub repository
-        dump file that carries that UUID specification, and then
-        loading that into your repository with the
-        <option>--force-uuid</option> option to <command>svnadmin
-        load</command>.</para>
+        these tasks are a little more complicated.  You can explicitly
+        set a repository's UUID by piping a repository dump file stub
+        that carries the new UUID specification through
+        <command>svnadmin load --force-uuid</command>.</para>
 
       <screen>
-$ cat - &lt;&lt;EOF | svnadmin load --force-uuid /var/snv/repos
+$ svnadmin load --force-uuid /var/svn/repos &lt;&lt;EOF
 SVN-fs-dump-format-version: 2
 
 UUID: cf2b9d22-acb5-11dc-bc8c-05e83ce5dbec
 EOF
+$ svnlook uuid /var/svn/repos
+cf2b9d22-acb5-11dc-bc8c-05e83ce5dbec
 $
 </screen>
 
@@ -3063,7 +3174,7 @@ $
       configuration bits for a now-deleted repository.  If you have
       automated processes that publish information from or about your
       repositories, they may need to be updated.  Hook scripts might
-      need to be reconfigured.  Users need to be notified.  The list
+      need to be reconfigured.  Users may need to be notified.  The list
       can go on indefinitely, or at least to the extent that you've
       built processes and procedures around your Subversion
       repository.</para>

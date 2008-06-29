@@ -548,33 +548,50 @@ U    button.c
 U    integer.c
 </screen>
 
-      <para>Your branch working copy now contains new local
-        modifications, and these edits are duplications of all of the
-        changes that have happened on the trunk since you first
+      <para>This basic syntax&mdash;<command>svn merge
+        URL</command>&mdash;tells Subversion to merge all recent
+        changes from the URL to the current working directory (which
+        is typically the root of your working copy.)  After running
+        the prior example, your branch working copy now contains new
+        local modifications, and these edits are duplications of all
+        of the changes that have happened on the trunk since you first
         created your branch:</para>
 
       <screen>
 $ svn status
+ M     .
 M      button.c
 M      integer.c
 </screen>
 
       <para>At this point, the wise thing to do is look at the changes
         carefully with <command>svn diff</command>, and then build and
-        test your branch.  You might need to resolve some conflicts
-        (just as you do with <command>svn update</command>) or
-        possibly make some small edits to get things working properly.
-        (Remember, just because there are
+        test your branch.  Notice that the current working directory
+        (<quote><filename>.</filename></quote>) has also been
+        modified; the <command>svn diff</command> will show that
+        its <literal>svn:mergeinfo</literal> property has been either
+        created or modified.  This is important merge-related metadata
+        that you should <emphasis>not</emphasis> touch, since it will
+        be needed by future <command>svn merge</command> commands.
+        (We'll learn more about this metadata later in the
+        chapter.)</para>
+
+      <para>After performing the merge, you might also need to resolve
+        some conflicts (just as you do with <command>svn
+        update</command>) or possibly make some small edits to get
+        things working properly.  (Remember, just because there are
         no <emphasis>syntactic</emphasis> conflicts doesn't mean there
         aren't any <emphasis>semantic</emphasis> conflicts!)  If you
         encounter serious problems, you can always abort the local
-        changes by running <command>svn revert</command> and start a
+        changes by running <command>svn revert . -R</command> (which
+        will undo all local modifications) and start a
         long <quote>what's going on?</quote> discussion with your
         collaborators.  If things look good, however, then you can
         submit these changes into the repository:</para>
 
       <screen>
 $ svn commit -m "Merged latest trunk changes to my-calc-branch."
+Sending        .
 Sending        button.c
 Sending        integer.c
 Transmitting file data ..
@@ -674,6 +691,7 @@ U    README
 $ # build, test, ...
 
 $ svn commit -m "Final merge of trunk changes to my-calc-branch."
+Sending        .
 Sending        button.c
 Sending        README
 Transmitting file data ..
@@ -691,9 +709,11 @@ Committed revision 390.
         trunk working copy, remember that it's a best practice to do
         your merge into a working copy that
         has <emphasis>no</emphasis> local edits and has been recently
-        updated.  If your working copy isn't <quote>clean</quote> in
-        these ways, you can run into some unnecessary conflict-related
-        headaches.</para>
+        updated (i.e., is not a mixture of local revisions.)  If your
+        working copy isn't <quote>clean</quote> in these ways, you can
+        run into some unnecessary conflict-related headaches
+        and <command>svn merge</command> will likely return an
+        error.</para>
 
       <para>Once you have a clean working copy of the trunk, you're
         ready merge your branch back into it:</para>
@@ -706,14 +726,16 @@ $ svn update  # (just to make sure the working copy is at latest everywhere)
 At revision 390.
 
 $ svn merge --reintegrate http://svn.example.com/repos/calc/branches/my-calc-branch
---- Merging r341 through r390 into '.':
+--- Merging differences between repository URLs into '.':
 U    button.c
 U    integer.c
 U    Makefile
+ U   .
 
 $ # build, test, verify, ...
 
 $ svn commit -m "Merge my-calc-branch back into trunk!"
+Sending        .
 Sending        button.c
 Sending        integer.c
 Sending        Makefile
@@ -724,18 +746,20 @@ Committed revision 391.
       <para>Congratulations, your branch has now been re-merged back
         into the main line of development.  Notice our use of
         the <option>--reintegrate</option> option this time around.
-        The option is needed because this sort of <quote>merge
+        The option is critical for reintegrating changes from a branch
+        back into its original line of development&mdash;don't forget
+        it!  It's needed because this sort of <quote>merge
         back</quote> is a different sort of work than what you've been
         doing up until now.  Previously, we had been
         asking <command>svn merge</command> to grab the <quote>next
         set</quote> of changes from one line of development (the
         trunk) and duplicate them to another (your branch).  This is
-        fairly straightforward, and each time
-        Subversion knows how to pick up where it left off.  In our
-        prior examples, you can see that first it merges the ranges
-        345:356 from trunk to branch; later on, it continues by
-        merging the next contiguously available range, 356:380.  When
-        doing the final sync, it merges the range 380:385.</para>
+        fairly straightforward, and each time Subversion knows how to
+        pick up where it left off.  In our prior examples, you can see
+        that first it merges the ranges 345:356 from trunk to branch;
+        later on, it continues by merging the next contiguously
+        available range, 356:380.  When doing the final sync, it
+        merges the range 380:385.</para>
 
       <para>When merging your branch back to the trunk, however, the
         underlying mathematics is quite different.  Your feature
@@ -749,12 +773,17 @@ Committed revision 391.
         tree:  the resulting difference is exactly your branch
         changes!)</para>
 
-      <para>Now that your branch is merged to trunk, you'll no longer
-        need your branch.  You can destroy your working copy of the
-        branch, and also remove it from the repository:</para>
+      <para>Now that your branch is merged to trunk, you have a couple
+        of options.  You can keep working on your branch, repeating
+        the whole process of occasionally syncing with the trunk and
+        eventually using <option>--reintegrate</option> to merge it
+        back again.  Or, if you're really done with the branch, you
+        can destroy your working copy of it and then remove it from
+        the repository:</para>
 
       <screen>
-$ svn delete http://svn.example.com/repos/calc/branches/my-calc-branch
+$ svn delete http://svn.example.com/repos/calc/branches/my-calc-branch \
+      -m "Remove my-calc-branch."
 Committed revision 392.
 </screen>
 
@@ -768,7 +797,7 @@ Committed revision 392.
         the <filename>/branches</filename> URL will show the entire
         history of your branch.  Your branch can even be resurrected
         at some point, should you desire (see
-        <xref linkend="svn.branchmerge.advanced.resurrect"/>).</para>
+        <xref linkend="svn.branchmerge.basicmerging.resurrect"/>).</para>
 
     </sect2>
 
@@ -796,12 +825,13 @@ $ svn propget svn:mergeinfo .
 
       <para>It is <emphasis>not</emphasis> recommended that you change
         the value of this property yourself, unless you really know
-        what you're doing.  (An example of this comes up in
-        <xref linkend="svn.branchmerge.advanced.blockchanges"/>.)  In
-        general, this property is automatically maintained by
-        Subversion whenever you run <command>svn merge</command>, and
-        its value indicates which changes have already been replicated
-        into a particular directory.</para>
+        what you're doing.  This property is automatically maintained
+        by Subversion whenever you run <command>svn merge</command>.
+        Its value indicates which changes (at a given path) have been
+        replicated into the directory in question.  In this case, the
+        path is <filename>/trunk</filename> and the directory which
+        has received the specific changes
+        is <filename>/branches/my-calc-branch</filename>.</para>
 
       <para>There's also a subcommand <command>svn
         mergeinfo</command>, which can be helpful in seeing not only
@@ -811,35 +841,36 @@ $ svn propget svn:mergeinfo .
         merge</command> will replicate to your branch.</para>
 
       <screen>
-$ svn mergeinfo .
-Path: .
-  Source path: /trunk
-    Merged ranges: r341:390
-    Eligible ranges: r391:395
+$ cd my-calc-branch
 
+# Which changes have already been merged from trunk to branch?
+$ svn mergeinfo http://svn.example.com/repos/calc/trunk
+r341
+r342
+r343
+&hellip;
+r388
+r389
+r390
+
+# Which changes are still eligible to merge from trunk to branch?
+$ svn mergeinfo http://svn.example.com/repos/calc/trunk --show-revs eligible
+r391
+r392
+r393
+r394
+r395
 </screen>
 
-      <para>The <command>svn mergeinfo</command> command, by default,
-        looks back at the history of the thing you're querying and
-        tries to make a sane guess about the <quote>source</quote>
-        from which you want to be copying changes.  In our prior
-        example, because we're querying our branch working copy, the
-        command assumes we're interested in receiving changes
-        from <filename>/trunk</filename> (since that's where our
-        branch was originally copied from).  However, if another
-        coworker had a different branch going on that we wanted to
-        merge changes from, we could have this command tell us about
-        eligible changesets from that source too:</para>
-
-      <screen>
-$ svn mergeinfo --from-source \
-http://svn.example.com/repos/calc/branches/other-branch  .
-Path: .
-  Source path: /branches/other-branch
-    Merged ranges:
-    Eligible ranges: r360:364
-
-</screen>
+      <para>The <command>svn mergeinfo</command> command requires
+        a <quote>source</quote> URL (where the changes would be coming
+        from), and takes an optional <quote>target</quote> URL (where
+        the changes would be merged to).  If no target URL is given,
+        then it assumes that the current working directory is the
+        target.  In the prior example, because we're querying our
+        branch working copy, the command assumes we're interested in
+        receiving changes to <filename>/branches/mybranch</filename>
+        from the specified trunk URL.</para>
 
       <para>Another way to get a more precise preview of a merge
         operation is to use the <option>--dry-run</option>
@@ -868,15 +899,19 @@ $ svn status
           the changes to the immediate target of your merge.  If your
           merge target was a directory, only property differences will
           be displayed.  This is a handy way to see the changes to the
-          svn:mergeinfo property recorded by the merge operation,
-          which will remind you about what you've just merged.</para>
+          <literal>svn:mergeinfo</literal> property recorded by the
+          merge operation, which will remind you about what you've
+          just merged.</para>
       </tip>
 
       <para>Of course, the best way to preview a merge operation is to
         just do it!  Remember, running <command>svn merge</command>
-        isn't an inherently risky thing; if you don't like the
-        results, simply <command>svn revert -R</command> the changes
-        from your working copy and retry the command with different
+        isn't an inherently risky thing (unless you've made local
+        modifications to your working copy&mdash;but we've already
+        stressed that you shouldn't be merging into such an
+        environment.)  If you don't like the results of the merge,
+        simply <command>svn revert . -R</command> the changes from
+        your working copy and retry the command with different
         options.  The merge isn't final until you
         actually <command>svn commit</command> the results.</para>
 
@@ -894,8 +929,242 @@ $ svn status
           After performing a revert, be sure to clean up the working
           copy and remove unversioned files and directories.  The
           output of <command>svn status</command> should be as clean
-          (read: empty) as possible!</para>
+          as possible, ideally showing no output.</para>
       </tip>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.branchmerge.basicmerging.undo">
+      <title>Undoing Changes</title>
+
+      <para>An extremely common use for <command>svn merge</command>
+        is to roll back a change that has already been committed.
+        Suppose you're working away happily on a working copy of
+        <filename>/calc/trunk</filename>, and you discover that the
+        change made way back in revision 303, which changed
+        <filename>integer.c</filename>, is completely wrong.  It never
+        should have been committed.  You can use <command>svn
+        merge</command> to <quote>undo</quote> the change in your
+        working copy, and then commit the local modification to the
+        repository.  All you need to do is to specify a
+        <emphasis>reverse</emphasis> difference.  (You can do this by
+        specifying <option>--revision 303:302</option>, or by an
+        equivalent <option>--change -303</option>.)</para>
+
+
+      <screen>
+$ svn merge -c -303 http://svn.example.com/repos/calc/trunk
+--- Reverse-merging r303 into 'integer.c':
+U    integer.c
+
+$ svn status
+ M     .
+M      integer.c
+
+$ svn diff
+&hellip;
+# verify that the change is removed
+&hellip;
+
+$ svn commit -m "Undoing change committed in r303."
+Sending        integer.c
+Transmitting file data .
+Committed revision 350.
+</screen>
+
+      <para>As we mentioned earlier, one way to think about a
+        repository revision is as a specific changeset.  By using the
+        <option>-r</option> option, you can ask <command>svn
+        merge</command> to apply a changeset, or a whole range of
+        changesets, to your working copy.  In our case of undoing a
+        change, we're asking <command>svn merge</command> to apply
+        changeset #303 to our working copy
+        <emphasis>backwards</emphasis>.</para>
+
+      <para>Keep in mind that rolling back a change like this is just
+        like any other <command>svn merge</command> operation, so you
+        should use <command>svn status</command> and <command>svn
+        diff</command> to confirm that your work is in the state you
+        want it to be in, and then use <command>svn commit</command>
+        to send the final version to the repository.  After
+        committing, this particular changeset is no longer reflected
+        in the <literal>HEAD</literal> revision.</para>
+
+      <para>Again, you may be thinking: well, that really didn't undo
+        the commit, did it?  The change still exists in revision 303.
+        If somebody checks out a version of the
+        <filename>calc</filename> project between revisions 303 and
+        349, they'll still see the bad change, right?</para>
+
+      <para>Yes, that's true.  When we talk about
+        <quote>removing</quote> a change, we're really talking about
+        removing it from the <literal>HEAD</literal> revision.  The
+        original change still exists in the repository's history.  For
+        most situations, this is good enough.  Most people are only
+        interested in tracking the <literal>HEAD</literal> of a
+        project anyway.  There are special cases, however, where you
+        really might want to destroy all evidence of the commit.
+        (Perhaps somebody accidentally committed a confidential
+        document.)  This isn't so easy, it turns out, because
+        Subversion was deliberately designed to never lose
+        information.  Revisions are immutable trees that build upon
+        one another.  Removing a revision from history would cause a
+        domino effect, creating chaos in all subsequent revisions and
+        possibly invalidating all working copies.
+        <footnote>
+          <para>The Subversion project has plans, however, to someday
+            implement a command that would accomplish the task of
+            permanently deleting information.  In the meantime, see
+            <xref linkend="svn.reposadmin.maint.tk.svndumpfilter"/>
+            for a possible workaround.</para>
+        </footnote>
+      </para>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.branchmerge.basicmerging.resurrect">
+      <title>Resurrecting Deleted Items</title>
+
+      <para>The great thing about version control systems is that
+        information is never lost.  Even when you delete a file or
+        directory, it may be gone from the <literal>HEAD</literal>
+        revision, but the object still exists in earlier revisions.
+        One of the most common questions new users ask is, <quote>How
+        do I get my old file or directory back?</quote></para>
+
+      <para>The first step is to define
+        exactly <emphasis role="bold">which</emphasis> item you're
+        trying to resurrect.  Here's a useful metaphor: you can think
+        of every object in the repository as existing in a sort of
+        two-dimensional coordinate system.  The first coordinate is a
+        particular revision tree, and the second coordinate is a path
+        within that tree.  So every version of your file or directory
+        can be defined by a specific coordinate pair.  (Remember the
+        <quote>peg revision</quote>
+        syntax&mdash;foo.c@224&mdash;mentioned back in
+        <xref linkend="svn.advanced.pegrevs"/>.) </para>
+
+      <para>First, you might need to use <command>svn log</command> to
+        discover the exact coordinate pair you wish to resurrect.  A
+        good strategy is to run <command>svn log --verbose</command>
+        in a directory that used to contain your deleted item.  The
+        <option>--verbose</option> (<option>-v</option>) option shows
+        a list of all changed items in each revision; all you need to
+        do is find the revision in which you deleted the file or
+        directory.  You can do this visually, or by using another tool
+        to examine the log output (via <command>grep</command>, or
+        perhaps via an incremental search in an editor).</para>
+
+      <screen>
+$ cd parent-dir
+$ svn log -v
+&hellip;
+------------------------------------------------------------------------
+r808 | joe | 2003-12-26 14:29:40 -0600 (Fri, 26 Dec 2003) | 3 lines
+Changed paths:
+   D /calc/trunk/real.c
+   M /calc/trunk/integer.c
+
+Added fast fourier transform functions to integer.c.
+Removed real.c because code now in double.c.
+&hellip;
+</screen>
+
+      <para>In the example, we're assuming that you're looking for a
+        deleted file <filename>real.c</filename>.  By looking through
+        the logs of a parent directory, you've spotted that this file
+        was deleted in revision 808.  Therefore, the last version of
+        the file to exist was in the revision right before that.
+        Conclusion: you want to resurrect the path
+        <filename>/calc/trunk/real.c</filename> from revision
+        807.</para>
+
+      <para>That was the hard part&mdash;the research.  Now that you
+        know what you want to restore, you have two different
+        choices.</para>
+
+      <para>One option is to use <command>svn merge</command> to apply
+        revision 808 <quote>in reverse.</quote> (We've already
+        discussed how to undo changes in
+        <xref linkend="svn.branchmerge.basicmerging.undo"/>.)  This
+        would have the effect of re-adding <filename>real.c</filename>
+        as a local modification.  The file would be scheduled for
+        addition, and after a commit, the file would again exist
+        in <literal>HEAD</literal>.</para>
+
+      <para>In this particular example, however, this is probably not
+        the best strategy.  Reverse-applying revision 808 would not
+        only schedule <filename>real.c</filename> for addition, but
+        the log message indicates that it would also undo certain
+        changes to <filename>integer.c</filename>, which you don't
+        want.  Certainly, you could reverse-merge revision 808 and
+        then <command>svn revert</command> the local modifications to
+        <filename>integer.c</filename>, but this technique doesn't
+        scale well.  What if there were 90 files changed in revision
+        808?</para>
+
+      <para>A second, more targeted strategy is not to use
+        <command>svn merge</command> at all, but rather the
+        <command>svn copy</command> command.  Simply copy the exact
+        revision and path <quote>coordinate pair</quote> from the
+        repository to your working copy:</para>
+
+      <screen>
+$ svn copy http://svn.example.com/repos/calc/trunk/real.c@807 ./real.c
+
+$ svn status
+A  +   real.c
+
+$ svn commit -m "Resurrected real.c from revision 807, /calc/trunk/real.c."
+Adding         real.c
+Transmitting file data .
+Committed revision 1390.
+</screen>
+
+      <para>The plus sign in the status output indicates that the item
+        isn't merely scheduled for addition, but scheduled for
+        addition <quote>with history.</quote>  Subversion remembers
+        where it was copied from.  In the future, running <command>svn
+        log</command> on this file will traverse back through the
+        file's resurrection and through all the history it had prior
+        to revision 807.  In other words, this new
+        <filename>real.c</filename> isn't really new; it's a direct
+        descendant of the original, deleted file.  This is usually
+        considered a good and useful thing.  If, however, you wanted
+        to resurrect the file <emphasis>without</emphasis>
+        maintaining a historical link to the old file, this technique
+        works just as well:</para>
+
+      <screen>
+$ svn cat http://svn.example.com/repos/calc/trunk/real.c@807 &gt; ./real.c
+
+$ svn add real.c
+A         real.c
+
+$ svn commit -m "Recreated real.c from revision 807."
+Adding         real.c
+Transmitting file data .
+Committed revision 1390.
+</screen>
+
+      <para>Although our example shows us resurrecting a file, note
+        that these same techniques work just as well for resurrecting
+        deleted directories.  Also note that a resurrection doesn't
+        have to happen in your working copy&mdash;it can happen
+        entirely in the repository:</para>
+
+      <screen>
+$ svn copy http://svn.example.com/repos/calc/trunk/real.c@807 \
+           http://svn.example.com/repos/calc/trunk/ \
+      -m "Resurrect real.c from revision 807."
+Committed revision 1390.
+
+$ svn update
+A    real.c
+Updated to revision 1390.
+</screen>
 
     </sect2>
 
@@ -990,17 +1259,27 @@ $ cd my-calc-branch
 $ svn propget svn:mergeinfo .
 /trunk:341-349,355
 
-$ svn mergeinfo .
-Path: .
-  Source path: /trunk
-    Merged ranges: r341:349,r355
-    Eligible ranges: r350:354,r356:360
+# Notice that r355 isn't listed as "eligible" to merge, because
+# it's already been merged.
+$ svn mergeinfo http://svn.example.com/repos/calc/trunk --show-revs eligible
+r350
+r351
+r352
+r353
+r354
+r356
+r357
+r358
+r359
+r360
 
 $ svn merge http://svn.example.com/repos/calc/trunk
 --- Merging r350 through r354 into '.':
+ U   .
 U    integer.c
 U    Makefile
 --- Merging r356 through r360 into '.':
+ U   .
 U    integer.c
 U    button.c
 </screen>
@@ -1164,237 +1443,79 @@ $ svn merge -r 100:200 http://svn.example.com/repos/trunk
         how the working-copy argument is optional; if omitted, it
         defaults to the current directory.</para>
 
-    </sect2>
-
-    <!-- =============================================================== -->
-    <sect2 id="svn.branchmerge.advanced.undo">
-      <title>Undoing Changes</title>
-
-      <para>Another common use for <command>svn merge</command> is to
-        roll back a change that has already been committed.  Suppose
-        you're working away happily on a working copy of
-        <filename>/calc/trunk</filename>, and you discover that the
-        change made way back in revision 303, which changed
-        <filename>integer.c</filename>, is completely wrong.  It never
-        should have been committed.  You can use <command>svn
-        merge</command> to <quote>undo</quote> the change in your
-        working copy, and then commit the local modification to the
-        repository.  All you need to do is to specify a
-        <emphasis>reverse</emphasis> difference.  (You can do this by
-        specifying <option>--revision 303:302</option>, or by an
-        equivalent <option>--change -303</option>.)</para>
-
-
-      <screen>
-$ svn merge -c -303 http://svn.example.com/repos/calc/trunk
---- Reverse-merging r303 into 'integer.c':
-U    integer.c
-
-$ svn status
-M      integer.c
-
-$ svn diff
-&hellip;
-# verify that the change is removed
-&hellip;
-
-$ svn commit -m "Undoing change committed in r303."
-Sending        integer.c
-Transmitting file data .
-Committed revision 350.
-</screen>
-
-      <para>As we mentioned earlier, one way to think about a
-        repository revision is as a specific changeset.  By using the
-        <option>-r</option> option, you can ask <command>svn
-        merge</command> to apply a changeset, or a whole range of
-        changesets, to your working copy.  In our case of undoing a
-        change, we're asking <command>svn merge</command> to apply
-        changeset #303 to our working copy
-        <emphasis>backwards</emphasis>.</para>
-
-      <para>Keep in mind that rolling back a change like this is just
-        like any other <command>svn merge</command> operation, so you
-        should use <command>svn status</command> and <command>svn
-        diff</command> to confirm that your work is in the state you
-        want it to be in, and then use <command>svn commit</command>
-        to send the final version to the repository.  After
-        committing, this particular changeset is no longer reflected
-        in the <literal>HEAD</literal> revision.</para>
-
-      <para>Again, you may be thinking: well, that really didn't undo
-        the commit, did it?  The change still exists in revision 303.
-        If somebody checks out a version of the
-        <filename>calc</filename> project between revisions 303 and
-        349, they'll still see the bad change, right?</para>
-
-      <para>Yes, that's true.  When we talk about
-        <quote>removing</quote> a change, we're really talking about
-        removing it from the <literal>HEAD</literal> revision.  The
-        original change still exists in the repository's history.  For
-        most situations, this is good enough.  Most people are only
-        interested in tracking the <literal>HEAD</literal> of a
-        project anyway.  There are special cases, however, where you
-        really might want to destroy all evidence of the commit.
-        (Perhaps somebody accidentally committed a confidential
-        document.)  This isn't so easy, it turns out, because
-        Subversion was deliberately designed to never lose
-        information.  Revisions are immutable trees that build upon
-        one another.  Removing a revision from history would cause a
-        domino effect, creating chaos in all subsequent revisions and
-        possibly invalidating all working copies.
-        <footnote>
-          <para>The Subversion project has plans, however, to someday
-            implement a command that would accomplish the task of
-            permanently deleting information.  In the meantime, see
-            <xref linkend="svn.reposadmin.maint.tk.svndumpfilter"/>
-            for a possible workaround.</para>
-        </footnote>
-      </para>
+      <para>While the first example shows the <quote>full</quote>
+        syntax of <command>svn merge</command>, it needs to be used
+        very carefully;  it can result in merges which do not record
+        any <literal>svn:mergeinfo</literal> metadata at all.  The
+        next section talks a bit more about this.</para>
 
     </sect2>
 
     <!-- =============================================================== -->
-    <sect2 id="svn.branchmerge.advanced.resurrect">
-      <title>Resurrecting Deleted Items</title>
+    <sect2 id="svn.branchmerge.nomergedata">
+      <title>Merges Without Mergeinfo</title>
 
-      <para>The great thing about version control systems is that
-        information is never lost.  Even when you delete a file or
-        directory, it may be gone from the <literal>HEAD</literal>
-        revision, but the object still exists in earlier revisions.
-        One of the most common questions new users ask is, <quote>How
-        do I get my old file or directory back?</quote></para>
+      <para>Subversion tries to generate merge metadata whenever it
+        can, to make future invocations of <command>svn
+        merge</command> smarter.  There are still situations, however,
+        where <literal>svn:mergeinfo</literal> data is not created or
+        changed.  Remember to be a bit wary of these scenarios:</para>
 
-      <para>The first step is to define
-        exactly <emphasis role="bold">which</emphasis> item you're
-        trying to resurrect.  Here's a useful metaphor: you can think
-        of every object in the repository as existing in a sort of
-        two-dimensional coordinate system.  The first coordinate is a
-        particular revision tree, and the second coordinate is a path
-        within that tree.  So every version of your file or directory
-        can be defined by a specific coordinate pair.  (Remember the
-        <quote>peg revision</quote> syntax&mdash;foo.c@224
-        &mdash;mentioned back in
-        <xref linkend="svn.advanced.pegrevs"/>.) </para>
+      <itemizedlist>
+        <listitem>
+          <para><emphasis>Merging unrelated sources</emphasis>.  If you
+            ask <command>svn merge</command> to compare two URLs that
+            aren't related to each other, a patch will still be
+            generated and applied to your working copy, but no merging
+            metadata will be created.  There's no common history
+            between the two sources, and future <quote>smart</quote>
+            merges depend on that common history.</para>
+        </listitem>
 
-      <para>First, you might need to use <command>svn log</command> to
-        discover the exact coordinate pair you wish to resurrect.  A
-        good strategy is to run <command>svn log --verbose</command>
-        in a directory that used to contain your deleted item.  The
-        <option>--verbose</option> (<option>-v</option>) option shows
-        a list of all changed items in each revision; all you need to
-        do is find the revision in which you deleted the file or
-        directory.  You can do this visually, or by using another tool
-        to examine the log output (via <command>grep</command>, or
-        perhaps via an incremental search in an editor).</para>
+        <listitem>
+          <para><emphasis>Merging from foreign
+            repositories</emphasis>.  While it's possible to run a
+            command such as <command>svn merge -r 100:200
+            http://svn.foreignproject.com/repos/trunk</command>, the
+            resulting patch will also lack any historical merge
+            metadata.  At time of writing, Subversion has no way of
+            representing different repository URLs within
+            the <literal>svn:mergeinfo</literal> property.</para>
+          </listitem>
 
-      <screen>
-$ cd parent-dir
-$ svn log -v
-&hellip;
-------------------------------------------------------------------------
-r808 | joe | 2003-12-26 14:29:40 -0600 (Fri, 26 Dec 2003) | 3 lines
-Changed paths:
-   D /calc/trunk/real.c
-   M /calc/trunk/integer.c
+        <listitem>
+          <para><emphasis>Using <option>--ignore-ancestry</option></emphasis>.
+          If this option is passed to <command>svn merge</command>, it
+          causes the merging logic to mindlessly generate differences
+          the same way that <command>svn diff</command> does, ignoring
+          any historical relationships.  We discuss this later in the
+          chapter in
+          <xref linkend="svn.branchmerge.advanced.ancestry"/>.</para>
+        </listitem>
 
-Added fast fourier transform functions to integer.c.
-Removed real.c because code now in double.c.
-&hellip;
-</screen>
-
-      <para>In the example, we're assuming that you're looking for a
-        deleted file <filename>real.c</filename>.  By looking through
-        the logs of a parent directory, you've spotted that this file
-        was deleted in revision 808.  Therefore, the last version of
-        the file to exist was in the revision right before that.
-        Conclusion: you want to resurrect the path
-        <filename>/calc/trunk/real.c</filename> from revision
-        807.</para>
-
-      <para>That was the hard part&mdash;the research.  Now that you
-        know what you want to restore, you have two different
-        choices.</para>
-
-      <para>One option is to use <command>svn merge</command> to apply
-        revision 808 <quote>in reverse.</quote> (We've already
-        discussed how to undo changes in
-        <xref linkend="svn.branchmerge.advanced.undo"/>.)  This would
-        have the effect of re-adding <filename>real.c</filename> as a
-        local modification.  The file would be scheduled for addition,
-        and after a commit, the file would again exist
-        in <literal>HEAD</literal>.</para>
-
-      <para>In this particular example, however, this is probably not
-        the best strategy.  Reverse-applying revision 808 would not
-        only schedule <filename>real.c</filename> for addition, but
-        the log message indicates that it would also undo certain
-        changes to <filename>integer.c</filename>, which you don't
-        want.  Certainly, you could reverse-merge revision 808 and
-        then <command>svn revert</command> the local modifications to
-        <filename>integer.c</filename>, but this technique doesn't
-        scale well.  What if there were 90 files changed in revision
-        808?</para>
-
-      <para>A second, more targeted strategy is not to use
-        <command>svn merge</command> at all, but rather the
-        <command>svn copy</command> command.  Simply copy the exact
-        revision and path <quote>coordinate pair</quote> from the
-        repository to your working copy:</para>
-
-      <screen>
-$ svn copy http://svn.example.com/repos/calc/trunk/real.c@807 ./real.c
-
-$ svn status
-A  +   real.c
-
-$ svn commit -m "Resurrected real.c from revision 807, /calc/trunk/real.c."
-Adding         real.c
-Transmitting file data .
-Committed revision 1390.
-</screen>
-
-      <para>The plus sign in the status output indicates that the item
-        isn't merely scheduled for addition, but scheduled for
-        addition <quote>with history.</quote>  Subversion remembers
-        where it was copied from.  In the future, running <command>svn
-        log</command> on this file will traverse back through the
-        file's resurrection and through all the history it had prior
-        to revision 807.  In other words, this new
-        <filename>real.c</filename> isn't really new; it's a direct
-        descendant of the original, deleted file.  This is usually
-        considered a good and useful thing.  If, however, you wanted
-        to resurrect the file <emphasis>without</emphasis>
-        maintaining a historical link to the old file, this technique
-        works just as well:</para>
-
-      <screen>
-$ svn cat http://svn.example.com/repos/calc/trunk/real.c@807 > ./real.c
-
-$ svn add real.c
-A         real.c
-
-$ svn commit -m "Recreated real.c from revision 807."
-Adding         real.c
-Transmitting file data .
-Committed revision 1390.
-</screen>
-
-      <para>Although our example shows us resurrecting a file, note
-        that these same techniques work just as well for resurrecting
-        deleted directories.  Also note that a resurrection doesn't
-        have to happen in your working copy&mdash;it can happen
-        entirely in the repository:</para>
-
-      <screen>
-$ svn copy http://svn.example.com/repos/calc/trunk/real.c@807 \
-           http://svn.example.com/repos/calc/trunk/
-Committed revision 1390.
-
-$ svn update
-A    real.c
-Updated to revision 1390.
-</screen>
+        <listitem>
+          <para><emphasis>Applying reverse merges to a target's
+          natural history</emphasis>.  In a prior section
+          (<xref linkend="svn.branchmerge.basicmerging.undo"/>) we
+          discussed how to use <command>svn merge</command> to apply
+          a <quote>reverse patch</quote> as a way of rolling back
+          changes.  If this technique is used to undo a change to a
+          object's personal history (e.g., commit r5 to the trunk,
+          then immediately roll back r5 using <command>svn merge -c
+          -5</command>), this sort of merge doesn't affect the
+          recorded mergeinfo.
+            <footnote><para>Interestingly, after rolling back a
+                revision like this, we wouldn't be able to re-apply
+                the revision using <command>svn merge -c 5</command>,
+                since the mergeinfo would already list r5 as being
+                applied.  We would have to use
+                the <option>--ignore-ancestry</option> option to make
+                the merge command ignore the existing
+                mergeinfo!</para>
+            </footnote>
+          </para>
+        </listitem>
+      </itemizedlist>
 
     </sect2>
 
@@ -1441,8 +1562,10 @@ U    bar.c
 Skipped missing target: 'baz.c'
 U    glub.c
 U    sputter.h
+
 Conflict discovered in 'glorb.h'.
-Select: (p)ostpone, (d)iff, (e)dit, (h)elp for more options : 
+Select: (p) postpone, (df) diff-full, (e) edit,
+        (h) help for more options:
 </screen>
 
       <para>In the previous example it might be the case that
@@ -1510,10 +1633,9 @@ Select: (p)ostpone, (d)iff, (e)dit, (h)elp for more options :
 
       <para>In Subversion 1.5, the only way to block a changeset is to
         make the system believe that the change has
-        <emphasis>already</emphasis> been merged.  You'll need to
-        manually edit the <literal>svn:mergeinfo</literal> property on
-        the branch and add the blocked revision(s) to the
-        list:</para>
+        <emphasis>already</emphasis> been merged.  To do this, one can
+        invoke a merge command with the <option>--record-only</option>
+        option:</para>
 
       <screen>
 $ cd my-calc-branch
@@ -1521,8 +1643,17 @@ $ cd my-calc-branch
 $ svn propget svn:mergeinfo .
 /trunk:1680-3305
 
-$ svn propset svn:mergeinfo "/trunk:1680-3305,3328" .
-property 'svn:mergeinfo' set on '.'
+# Let's make the metadata list r3328 as already merged.
+$ svn merge -c 3328 --record-only http://svn.example.com/repos/calc/trunk
+
+$ svn status
+M     .
+
+$ svn propget svn:mergeinfo .
+/trunk:1680-3305,3328
+
+$ svn commit -m "Block r3328 from being merged to the branch."
+&hellip;
 </screen>
 
       <para>This technique works, but it's also a little bit
@@ -1623,14 +1754,14 @@ Final merge of trunk changes to my-calc-branch.
 r383 | sally | 2002-11-21 03:19:00 -0600 (Thu, 21 Nov 2002) | 2 lines
 Changed paths:
    M /branches/my-calc-branch/button.c
-Result of a merge from: r390
+Merged via: r390
 
 Fix inverse graphic error on button.
 ------------------------------------------------------------------------
 r382 | sally | 2002-11-20 16:57:06 -0600 (Wed, 20 Nov 2002) | 2 lines
 Changed paths:
    M /branches/my-calc-branch/README
-Result of a merge from: r390
+Merged via: r390
 
 Document my last fix in README.
 </screen>
@@ -1650,24 +1781,24 @@ Document my last fix in README.
 
       <screen>
 $ svn blame button.c
-...
+&hellip;
    390    user    retval = inverse_func(button, path);
    390    user    return retval;
    390    user    }
-...
+&hellip;
 </screen>
 
       <para>And while it's true that you did actually commit those
-        three lines in revision 390, two of them were actually writen
+        three lines in revision 390, two of them were actually written
         by Sally back in revision 383:</para>
 
       <screen>
 $ svn blame button.c -g
-...
+&hellip;
 G    383    sally   retval = inverse_func(button, path);
 G    383    sally   return retval;
      390    user    }
-...
+&hellip;
 </screen>
 
       <para>Now we know who to <emphasis>really</emphasis> blame for
@@ -1784,8 +1915,10 @@ A    foo.c
 $ cd calc/trunk
 
 $ svn merge --reintegrate http://svn.example.com/repos/calc/branches/my-calc-branch
+--- Merging differences between repository URLs into '.':
 D   integer.c
 A   whole.c
+U   .
       </screen>
 
       <para>This doesn't look so bad at first glance, but it's also
@@ -1839,6 +1972,84 @@ A   whole.c
         <xref linkend="svn.reposadmin.create.hooks"/> and
         <xref linkend="svn.ref.reposhooks.start-commit"/> for
         details.</para>
+
+    </sect2>
+
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <sect2 id="svn.branchmerge.advanced.finalword">
+      <title>The Final Word on Merge Tracking</title>
+
+      <para>The bottom line is that Subversion's merge-tracking
+        feature has an extremely complex internal implementation, and
+        the <literal>svn:mergeinfo</literal> property is the only
+        window the user has into the machinery.  Because the feature
+        is relatively new, there are numbers of edge cases and
+        possible unexpected behaviors that may pop up.</para>
+
+      <para>For example, sometimes mergeinfo will be generated when
+        running a simple <command>svn copy</command> or <command>svn
+        move</command> command.  Sometimes mergeinfo will appear on
+        files that you didn't expect to be touched by an operation.
+        Sometimes mergeinfo won't be generated at all, when you expect
+        it to.  Furthermore, the management of mergeinfo metadata has
+        a whole set of taxonomies and behaviors around it, such
+        as <quote>explicit</quote> versus <quote>implicit</quote>
+        mergeinfo, <quote>operative</quote>
+        versus <quote>inoperative</quote> revisions, specific
+        mechanisms of mergeinfo <quote>elision</quote>, and
+        even <quote>inheritance</quote> from parent to child
+        directories.</para>
+
+      <para>We've chosen not to cover these detailed topics in this
+        book for a couple of reasons.  First, the level of detail is
+        absolutely overwhelming for a typical user.  Second, as
+        Subversion continues to improve, we feel that a typical user
+        <emphasis>shouldn't</emphasis> have to understand these
+        concepts; they'll eventually fade into the background as pesky
+        implementation details.  All that said, if you enjoy this sort
+        of thing, you can get a fantastic overview in a paper posted
+        at Collabnet's website: <ulink
+        url="http://www.collab.net/community/subversion/articles/merge-info.html"
+        >http://www.collab.net/community/subversion/articles/merge-info.html</ulink>.</para>
+
+      <para>For now, if you want to steer clear of bugs and odd
+        behaviors in automatic merging, the Collabnet article
+        recommends you stick to these simple best practices:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>For short-term feature branches, follow the simple
+            procedure described throughout
+            <xref linkend="svn.branchmerge.basicmerging"/>.</para>
+        </listitem>
+        <listitem>
+          <para>For long-lived release branches (as described in
+            <xref linkend="svn.branchmerge.commonpatterns"/>), only
+            perform merges on the root of the branch, not on
+            subdirectories.</para>
+        </listitem>
+        <listitem>
+          <para>Never merge into working copies with a mixture of
+            working revision numbers, or with
+            <quote>switched</quote> subdirectories (as described 
+            in <xref linkend="svn.branchmerge.switchwc"/>).  A merge
+            target should be a working copy which represents
+            a <emphasis>single</emphasis> location in the repository
+            at a single point in time.</para>
+        </listitem>
+        <listitem>
+          <para>Don't ever edit the <literal>svn:mergeinfo</literal>
+            property directly; use <command>svn
+            merge --record-only</command> to effect a desired change
+            to the metadata (as demonstrated in
+            <xref linkend="svn.branchmerge.advanced.blockchanges"/>).</para>
+        </listitem>
+        <listitem>
+          <para>Always make sure you have complete read access to
+            all of your merge sources, and that your target working
+            copy has no sparse directories.</para>
+        </listitem>
+      </itemizedlist>
 
     </sect2>
 
@@ -1988,8 +2199,8 @@ URL: http://svn.example.com/repos/calc/branches/my-calc-branch
 
           <screen>
 $ svn copy http://svn.example.com/repos/calc/trunk \
-           http://svn.example.com/repos/calc/branches/newbranch
-
+           http://svn.example.com/repos/calc/branches/newbranch \
+      -m "Create branch 'newbranch'."
 Committed revision 353.
 $ svn switch http://svn.example.com/repos/calc/branches/newbranch
 At revision 353.
@@ -2021,7 +2232,7 @@ At revision 353.
     <para>However, people often want to give more human-friendly names
       to tags, such as <literal>release-1.0</literal>.  And they want
       to make snapshots of smaller subdirectories of the filesystem.
-      After all, it's not so easy to remember that release-1.0 of a
+      After all, it's not so easy to remember that release 1.0 of a
       piece of software is a particular subdirectory of revision
       4822.</para>
 
@@ -2047,11 +2258,11 @@ Committed revision 902.
         it doesn't, you can create it using <command>svn
         mkdir</command>.)  After the copy completes, the new
         <filename>release-1.0</filename> directory is forever a
-        snapshot of how the project looked in the
-        <literal>HEAD</literal> revision at the time you made the
-        copy.  Of course you might want to be more precise about
-        exactly which revision you copy, in case somebody else may
-        have committed changes to the project when you weren't
+        snapshot of how the <filename>/trunk</filename> directory
+        looked in the <literal>HEAD</literal> revision at the time you
+        made the copy.  Of course you might want to be more precise
+        about exactly which revision you copy, in case somebody else
+        may have committed changes to the project when you weren't
         looking.  So if you know that revision 901 of
         <filename>/calc/trunk</filename> is exactly the snapshot you
         want, you can specify it by passing <option>-r 901</option> to
@@ -2100,12 +2311,13 @@ Committed revision 902.
         copy that is designed to have specific features and bug fixes.
         You can accomplish this by selectively backdating files or
         directories to particular revisions (using <command>svn update
-        -r</command> liberally) or by switching files and directories
-        to particular branches (making use of <command>svn
-        switch</command>).  When you're done, your working copy is a
-        hodgepodge of repository locations from different revisions.
-        But after testing, you know it's the precise combination of
-        data you need.</para>
+        -r</command> liberally), by switching files and directories to
+        particular branches (making use of <command>svn
+        switch</command>), or even just by making a bunch of local
+        changes.  When you're done, your working copy is a hodgepodge
+        of repository locations from different revisions.  But after
+        testing, you know it's the precise combination of data you
+        need to tag.</para>
 
       <para>Time to make a snapshot.  Copying one URL to another won't
         work here.  In this case, you want to make a snapshot of your
@@ -2119,7 +2331,9 @@ Committed revision 902.
 $ ls
 my-working-copy/
 
-$ svn copy my-working-copy http://svn.example.com/repos/calc/tags/mytag
+$ svn copy my-working-copy \
+           http://svn.example.com/repos/calc/tags/mytag \
+           -m "Tag my existing working copy state."
 
 Committed revision 940.
 </screen>
@@ -2127,16 +2341,16 @@ Committed revision 940.
       <para>Now there is a new directory in the repository,
         <filename>/calc/tags/mytag</filename>, which is an exact
         snapshot of your working copy&mdash;mixed revisions, URLs,
-        and all.</para>
+        local changes and all.</para>
 
       <para>Other users have found interesting uses for this feature.
         Sometimes there are situations where you have a bunch of local
         changes made to your working copy, and you'd like a
         collaborator to see them.  Instead of running <command>svn
         diff</command> and sending a patch file (which won't capture
-        tree changes, symlink changes, or changes in properties), you can
-        instead use <command>svn copy</command> to <quote>upload</quote>
-        your working copy to a private area of the repository.  Your
+        directory, symlink, or property changes), you can instead
+        use <command>svn copy</command> to <quote>upload</quote> your
+        working copy to a private area of the repository.  Your
         collaborator can then either check out a verbatim copy of your
         working copy or use <command>svn merge</command> to receive
         your exact changes.</para>
@@ -2261,7 +2475,8 @@ Committed revision 375.
 
       <screen>
 $ svn copy http://svn.example.com/repos/calc/branches/my-calc-branch@374 \
-           http://svn.example.com/repos/calc/branches/my-calc-branch
+           http://svn.example.com/repos/calc/branches/my-calc-branch \
+           -m "Restore my-calc-branch."
 
 Committed revision 376.
 </screen>
@@ -2282,8 +2497,8 @@ Committed revision 376.
 
       <screen>
 $ svn copy http://svn.example.com/repos/calc/trunk \
-         http://svn.example.com/repos/calc/branches/stable-1.0 \
-         -m "Creating stable branch of calc project."
+           http://svn.example.com/repos/calc/branches/stable-1.0 \
+          -m "Creating stable branch of calc project."
 
 Committed revision 377.
 </screen>
@@ -2473,8 +2688,8 @@ Committed revision 377.
         To do this, begin by doing a final merge of the latest trunk
         changes to the branch.  When that's done, the latest versions
         of branch and trunk will be absolutely identical except for
-        your branch changes.  So in this special case, you would merge
-        back with the <option>--reintegrate</option> option:</para>
+        your branch changes.  You would then merge back with
+        the <option>--reintegrate</option> option:</para>
 
       <screen>
 $ cd trunk-working-copy
@@ -2482,13 +2697,15 @@ $ cd trunk-working-copy
 $ svn update
 At revision 1910.
 
-$ svn merge --reintegrate http://svn.example.com/repos/calc/branches/mybranch@1910
+$ svn merge --reintegrate http://svn.example.com/repos/calc/branches/mybranch
+--- Merging differences between repository URLs into '.':
 U    real.c
 U    integer.c
 A    newdirectory
 A    newdirectory/newfile
-        &hellip;
-      </screen>
+ U   .
+&hellip;
+</screen>
 
       <para>Another way of thinking about this pattern is that your
         weekly sync of trunk to branch is analogous to running
@@ -2883,7 +3100,7 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
       repository.</para>
 
     <para>Remember the Subversion mantra: branches and tags are cheap.
-      So use them liberally!</para>
+      So don't be afraid to use them when needed!</para>
 
     <para>As a helpful reminder of all the operations we've discussed,
       the following table is a handy reference that you can consult as
@@ -2915,7 +3132,7 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
           </row>
 
           <row>
-            <entry>See merge history or eligible changests</entry>
+            <entry>See merge history or eligible changesets</entry>
             <entry>svn mergeinfo target [--from-source=URL]</entry>
           </row>
 
@@ -2936,7 +3153,7 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
 
           <row>
             <entry>Block a change from automatic merging</entry>
-            <entry>svn propset svn:mergeinfo newvalue;  svn commit</entry>
+            <entry>svn merge -c REV --record-only URL;  svn commit</entry>
           </row>
 
           <row>

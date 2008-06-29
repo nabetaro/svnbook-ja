@@ -713,7 +713,7 @@ collabnet = svn.collab.net
                 <filename>.pdf</filename>, there probably isn't an
                 application configured on your system to open all
                 files whose extensions are
-                <filename>.r4321</filename>.</para>
+                <filename>.r4231</filename>.</para>
 
               <para>You can fix this annoyance by using this
                 configuration option, though.  For files with one of
@@ -1161,26 +1161,27 @@ svn: Can't convert string from 'UTF-8' to native encoding:
 
       <para><xref linkend="svn.advanced.externaldifftools.diff.ex-1"/>
         and <xref linkend="svn.advanced.externaldifftools.diff.ex-2"/>
-        are templates for external diff tool wrappers in the Bourne
-        shell and Windows batch scripting languages,
-        respectively.</para>
+        are templates for external diff tool wrappers in the Python
+        and Windows batch scripting languages, respectively.</para>
 
       <example id="svn.advanced.externaldifftools.diff.ex-1">
-        <title>diffwrap.sh</title>
+        <title>diffwrap.py</title>
         <programlisting>
-#!/bin/sh
+#!/usr/bin/env python
+import sys
+import os
 
 # Configure your favorite diff program here.
-DIFF="/usr/local/bin/my-diff-tool"
+DIFF = "/usr/local/bin/my-diff-tool"
 
-# Subversion provides the paths we need as the sixth and seventh 
-# parameters.
-LEFT=${6}
-RIGHT=${7}
+# Subversion provides the paths we need as last two parameters.
+LEFT  = sys.argv[-2]
+RIGHT = sys.argv[-1]
 
 # Call the diff command (change the following line to make sense for
-# your merge program).
-$DIFF --left $LEFT --right $RIGHT
+# your diff program).
+cmd = [DIFF, '--left', LEFT, '--right', RIGHT]
+os.execv(cmd[0], cmd)
 
 # Return an errorcode of 0 if no differences were detected, 1 if some were.
 # Any other errorcode will be treated as fatal.
@@ -1195,13 +1196,14 @@ $DIFF --left $LEFT --right $RIGHT
 REM Configure your favorite diff program here.
 SET DIFF="C:\Program Files\Funky Stuff\My Diff Tool.exe"
 
-REM Subversion provides the paths we need as the sixth and seventh 
-REM parameters.
+REM Subversion provides the paths we need as last two parameters.
+REM These are parameters 6 and 7 (unless you use svn diff -x, in
+REM which case, all bets are off).
 SET LEFT=%6
 SET RIGHT=%7
 
 REM Call the diff command (change the following line to make sense for
-REM your merge program).
+REM your diff program).
 %DIFF% --left %LEFT% --right %RIGHT%
 
 REM Return an errorcode of 0 if no differences were detected, 1 if some were.
@@ -1234,26 +1236,28 @@ REM Any other errorcode will be treated as fatal.
 
       <para><xref linkend="svn.advanced.externaldifftools.diff3.ex-1"/> 
         and <xref linkend="svn.advanced.externaldifftools.diff3.ex-2"/> are
-        templates for external merge tool wrappers in the Bourne shell
+        templates for external merge tool wrappers in the Python
         and Windows batch scripting languages, respectively.</para>
 
       <example id="svn.advanced.externaldifftools.diff3.ex-1">
-        <title>diff3wrap.sh</title>
+        <title>diff3wrap.py</title>
         <programlisting>
-#!/bin/sh
+#!/usr/bin/env python
+import sys
+import os
 
-# Configure your favorite diff3/merge program here.
-DIFF3="/usr/local/bin/my-merge-tool"
+# Configure your favorite diff program here.
+DIFF3 = "/usr/local/bin/my-merge-tool"
 
-# Subversion provides the paths we need as the ninth, tenth, and eleventh 
-# parameters.
-MINE=${9}
-OLDER=${10}
-YOURS=${11}
+# Subversion provides the paths we need as last three parameters.
+MINE  = sys.argv[-3]
+OLDER = sys.argv[-2]
+YOURS = sys.argv[-1]
 
 # Call the merge command (change the following line to make sense for
 # your merge program).
-$DIFF3 --older $OLDER --mine $MINE --yours $YOURS
+cmd = [DIFF3, '--older', OLDER, '--mine', MINE, '--yours', YOURS]
+os.execv(cmd[0], cmd)
 
 # After performing the merge, this script needs to print the contents
 # of the merged file to stdout.  Do that in whatever way you see fit.
@@ -1270,9 +1274,10 @@ $DIFF3 --older $OLDER --mine $MINE --yours $YOURS
 REM Configure your favorite diff3/merge program here.
 SET DIFF3="C:\Program Files\Funky Stuff\My Merge Tool.exe"
 
-REM Subversion provides the paths we need as the ninth, tenth, and eleventh 
-REM parameters.  But we only have access to nine parameters at a time, so we
-REM shift our nine-parameter window twice to let us get to what we need.
+REM Subversion provides the paths we need as last three parameters.
+REM These are parameters 9, 10, and 11.  But we only have access to
+REM nine parameters at a time, so we shift our nine-parameter window
+REM twice to let us get to what we need.
 SHIFT
 SHIFT
 SET MINE=%7
