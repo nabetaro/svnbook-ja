@@ -59,8 +59,7 @@ convfiles:
 
 bookdiff:
 	@mkdir $(BDTMP) || { \
-		echo -n "\"$(BDTMP)\" already exists. Press ENTER to delete it, or CTRL-C to abort..." >&2; \
-		read; \
+		read -p "\"$(BDTMP)\" already exists. Press ENTER to delete it, or CTRL-C to abort..." dummyvariable; \
 		rm -rf $(BDTMP); \
 		mkdir $(BDTMP); \
 	}
@@ -79,8 +78,7 @@ bookdiff:
 	@echo
 	@echo The temporary files are still in $(BDTMP)/ for you to play with.
 	@echo
-	@echo -n Press Enter to launch vimdiff or CTRL-C to exit...
-	@read
+	@read -p "Press Enter to launch vimdiff or CTRL-C to exit..." dummyvariable
 	vimdiff $(BDTMP)/norw.txt $(BDTMP)/eng.txt
 
 engdir:
@@ -96,8 +94,7 @@ sync:
 	@echo ======= START svn status =======
 	@svn status -q
 	@echo ======== END svn status ========
-	@echo -n Press Enter to continue or CTRL-C to abort...
-	@read
+	@read -p "Press Enter to continue or CTRL-C to abort..." dummyvariable
 	@if [ "$(HEAD)" = "" ]; then \
 		svnversion . | tr -d M >HEADREV; \
 	else \
