@@ -459,13 +459,14 @@
         <listitem>
            <para>If you've decided to use either Apache or stock
              <command>svnserve</command>, create a
-             single <literal>svn</literal> user on your system, and
-             run either Apache or svnserve as that user.  Be sure to
-             make the repository directory wholly owned by
-             the <literal>svn</literal> user as well.  These keeps the
-             repository data nicely siloed and protected by operating
-             system filesystem permissions, changeable by only the
-             Subverion server process itself.</para>
+             single <literal>svn</literal> user on your system and run
+             the server process as that user.  Be sure to make the
+             repository directory wholly owned by
+             the <literal>svn</literal> user as well.  From a security
+             point of view, this keeps the repository data nicely
+             siloed and protected by operating system filesystem
+             permissions, changeable by only the Subversion server
+             process itself.</para>
         </listitem>
 
         <listitem>
@@ -473,7 +474,7 @@
             on SSH accounts, and if your users already have system
             accounts on your server machine, then it makes sense to
             deploy an svnserve-over-ssh solution.  Otherwise, we don't
-            recommend this option to the general public.  It's
+            widely recommend this option to the public.  It's
             generally considered safer to have your users access the
             repository via (imaginary) accounts managed
             by <command>svnserve</command> or Apache, rather than by
@@ -490,7 +491,7 @@
             network share, this is a bad idea.  It removes any layers
             of protection between the users and the repository: users
             can accidentally (or intentionally) corrupt the repository
-            database, it becomes hard to take the repository 'offline'
+            database, it becomes hard to take the repository offline
             for inspection or upgrade, and it can lead to a mess of
             file-permissions problems (see
             <xref linkend="svn.serverconfig.multimethod"/>.)  Note
@@ -663,7 +664,7 @@
         (The runtime area is covered in more detail in <xref
         linkend="svn.advanced.confarea"/>.)  Successful credentials are
         cached on disk, keyed on a combination of hostname, port, and
-        authentication realm.</para>  
+        authentication realm.</para>
       @ENGLISH }}} -->
       <para>Heldigvis har Subversion en løsning på dette:
         Et innebygget system for å lagre legitimasjonen på disk.
@@ -713,21 +714,6 @@
 
         <listitem>
           <!-- @ENGLISH {{{
-          <para>The <filename>auth/</filename> caching area is
-            permission-protected so that only the user (owner) can
-            read data from it, not the world at large.  The operating
-            system's own file permissions are protecting the
-            password.</para>
-          @ENGLISH }}} -->
-          <para>Lagringsområdet i <filename>auth/</filename> er 
-            beskyttet av rettigheter så bare brukeren (eieren) kan lese 
-            dataene derfra, ikke resten av verden.
-            Operativsystemets egne filrettigheter beskytter 
-            passordet.</para>
-        </listitem>
-
-        <listitem>
-          <!-- @ENGLISH {{{
           <para>On Windows 2000 and later, the Subversion client uses
             standard Windows cryptography services to encrypt the
             password on disk.  Because the encryption key is managed
@@ -753,16 +739,43 @@
             og spørre etter passord når det er nødvendig.)</para>
         </listitem>
 
+<!-- @TR {{ -->
+        <listitem>
+          <para>Similarly, on Mac OS X, the Subversion client stores all
+            repository passwords in the Keychain service, protected by
+            the user's account passsword.</para>
+        </listitem>
+<!-- @TR }} -->
+
         <listitem>
           <!-- @ENGLISH {{{
-          <para>For the truly paranoid willing to sacrifice all
-            convenience, it's possible to disable credential caching
-            altogether.</para>
+          <para>For other Unix-like operating systems, no standard
+            such <quote>keychain</quote> services exist.  However,
+            the <filename>auth/</filename> caching area is still
+            permission-protected so that only the user (owner) can
+            read data from it, not the world at large.  The operating
+            system's own file permissions are protecting the
+            password.</para>
           @ENGLISH }}} -->
-          <para>For den sanne paranoide som er villig til å ofre alle 
-            behageligheter, er det mulig å deaktivere all lagring av 
-            <!-- ¤ credential igjen. Men egentlig går vel dette? 
-            -->innloggingsdata.</para>
+          <para>For andre Unix-lignende operativsystemer eksisterer det 
+            ingen slike standardiserte 
+            <quote>nøkkelring</quote>-tjenester.
+            Imidlertid er lagringsområdet i <filename>auth/</filename> 
+            fortsatt beskyttet av rettigheter så bare brukeren (eieren) 
+            kan lese dataene derfra, ikke resten av verden.
+            Operativsystemets egne filrettigheter beskytter 
+            passordet.</para>
+        </listitem>
+
+        <listitem>
+          <!-- @ENGLISH {{{
+          <para>For the truly paranoid willing to sacrifice
+            convenience, it's always possible to disable credential
+            caching altogether.</para>
+          @ENGLISH }}} -->
+          <para>For den sanne paranoide som er villig til å ofre 
+            behageligheter, er det alltids mulig å deaktivere all 
+            lagring av legitimasjonsdata.</para>
         </listitem>
 
       </itemizedlist>
@@ -1053,27 +1066,134 @@ END
       <title>Invoking the Server</title>
       @ENGLISH }}} -->
       <title>Starte &the_server;</title>
+<!-- @CHK }} -->
+
+<!-- @TR {{ -->
+      <para>There are a few different ways to run the
+        <command>svnserve</command> program:</para>
+
+      <itemizedlist>
+        <listitem><para>Run <command>svnserve</command> as a
+            standalone daemon, listening for
+            requests.</para></listitem>
+        <listitem><para>Have the Unix <command>inetd</command> daemon
+            temporarily spawn <command>svnserve</command> whenever a
+            request comes in on a certain port.</para></listitem>
+        <listitem><para>Have SSH invoke a
+            temporary <command>svnserve</command> over an encrypted
+            tunnel.</para></listitem>
+        <listitem><para>Run <command>svnserve</command> as a Windows
+            service.</para></listitem>
+      </itemizedlist>
+      <sect3 id="svn.serverconfig.svnserve.invoking.daemon">
+        <title><command>svnserve</command> as Daemon</title>
+
+        <para>The easiest option is to run <command>svnserve</command>
+          as a standalone <quote>daemon</quote> process.  Use the
+          <option>-d</option> option for this:</para>
+
+        <screen>
+$ svnserve -d
+$               # svnserve is now running, listening on port 3690
+</screen>
+<!-- @TR }} -->
+
+<!-- @CHK {{ -->
+        <!-- @ENGLISH {{{
+        <para>When running <command>svnserve</command> in daemon mode,
+          you can use the <option>-&#64738;-listen-port=</option> and
+          <option>-&#64738;-listen-host=</option> options to customize the
+          exact port and hostname to <quote>bind</quote> to.</para>
+        @ENGLISH }}} -->
+        <para>Når <command>svnserve</command> kjøres i daemon-modus, kan 
+          du bruke valgene <option>--listen-port=</option> og 
+          <option>--listen-host=</option> for å sette den eksakte porten 
+          og &server;navn som den skal <!-- ¤ Det er jo referert til 
+          bind(2), men kan man verbe det på en fornuftig måte uten å 
+          miste presensformen? Tror ikke det, så det fornorskes litt. 
+          --><quote>bindes</quote> til:</para>
 
       <!-- @ENGLISH {{{
-      <para>There are a few different ways to invoke the
-        <command>svnserve</command> program.  If invoked with no
-        options, you'll see nothing but a help message.  However, if
-        you're planning to have <command>inetd</command> launch the
-        process, then you can pass the <option>-i</option>
-        (<option>-&#64738;-inetd</option>) option:</para>
+      <para>Once the <command>svnserve</command> program is running,
+        it makes every repository on your system available to the
+        network.  A client needs to specify an
+        <emphasis>absolute</emphasis> path in the repository URL.  For
+        example, if a repository is located at
+        <filename>/usr/local/repositories/project1</filename>, then a
+        client would reach it via
+        <uri>svn://host.example.com/usr/local/repositories/project1</uri>.
+        To increase security, you can pass the <option>-r</option>
+        option to <command>svnserve</command>, which restricts it to
+        exporting only repositories below that path.  For example:</para>
       @ENGLISH }}} -->
-      <para>Det er forskjellige måter å starte 
-        <command>svnserve</command>-programmet.
-        Hvis det kjøres uten noen valg, vil du bare se en hjelpemelding.
-        Hvis du planlegger å la <command>inetd</command> starte 
-        prosessen, kan du angi valget <option>-i</option> 
-        (<option>--inetd</option>):</para>
+      <para>Når <command>svnserve</command>-programmet kjører, gjør det 
+        alle depotene på systemet tilgjengelig på nettverket.
+        En klient må spesifisere en <emphasis>absolutt</emphasis> sti i 
+        depot-URLen.
+        Hvis for eksempel et depot ligger i 
+        <filename>/usr/local/depoter/prosjekt1</filename>, kan en klient 
+        nå det via 
+        <uri>svn://&server;.example.com/usr/local/depoter/prosjekt1</uri>.
+        For å øke sikkerheten kan du angi <option>-r</option>-valget til 
+        <command>svnserve</command> som begrenser den til å kun 
+        ekportere depoter som ligger under denne stien.
+        For eksempel:</para>
+      
+      <!-- @ENGLISH {{{
+      <screen>
+$ svnserve -d -r /usr/local/repositories
+&hellip;
+</screen>
+      @ENGLISH }}} -->
+      <screen>
+$ svnserve -d -r /usr/local/depot
+…
+</screen>
+
+      <!-- @ENGLISH {{{
+      <para>Using the <option>-r</option> option effectively
+        modifies the location that the program treats as the root of
+        the remote filesystem space.  Clients then use URLs that
+        have that path portion removed from them, leaving much
+        shorter (and much less revealing) URLs:</para>
+      @ENGLISH }}} -->
+      <para>Bruken av <option>-r</option>-valget forandrer plasseringen 
+        av roten som programmet bruker på det fjerntliggende 
+        filsystemet.
+        Klienter bruker dermed URLer som har fjernet denne delen av 
+        stien, noe som gir mye kortere (og mindre avslørende) 
+        URLer:</para>
+      
+      <!-- @ENGLISH {{{
+      <screen>
+$ svn checkout svn://host.example.com/project1
+&hellip;
+</screen>
+      @ENGLISH }}} -->
+      <screen>
+$ svn checkout svn://&server;.example.com/prosjekt1
+…
+</screen>
+<!-- @CHK }} -->
+
+      </sect3>
+
+
+<!-- @TR {{ -->
+      <sect3 id="svn.serverconfig.svnserve.invoking.inetd">
+        <title><command>svnserve</command> via <command>inetd</command></title>
+
+        <para>If you want <command>inetd</command> launch the process,
+          then you can pass the <option>-i</option>
+          (<option>--inetd</option>) option:</para>
 
       <screen>
 $ svnserve -i
 ( success ( 1 2 ( ANONYMOUS ) ( edit-pipeline ) ) )
 </screen>
+<!-- @TR }} -->
 
+<!-- @CHK {{ -->
       <!-- @ENGLISH {{{
       <para>When invoked with the <option>-&#64738;-inetd</option> option,
         <command>svnserve</command> attempts to speak with a
@@ -1125,63 +1245,33 @@ svn stream tcp nowait svnbruker /usr/bin/svnserve svnserve -i
         appropriate permissions to access your repositories.  Now, when
         a client connection comes into your server on port 3690,
         <command>inetd</command> will spawn an
-        <command>svnserve</command> process to service it.</para>
+        <command>svnserve</command> process to service it.  Of course,
+        you may also want to add <option>-r</option> to the
+        configuration line as well, to restrict which repositories are
+        exported.</para>
       @ENGLISH }}} -->
       <para>Pass på at <quote>svnbruker</quote> er en bruker som har 
         tilstrekkelige rettigheter til å få tilgang til depotene dine.
         Når nå en klientforbindelse kommer inn til &the_server; på port 
         3690, vil <command>inetd</command> starte en egen 
-        <command>svnserve</command>-prosess for å ta seg av den.</para>
+        <command>svnserve</command>-prosess for å ta seg av den.
+        Du vil selvfølgelig også ønske å legge til <option>-r</option> 
+        til konfigurasjonslinja også, for å begrense hvilke depot som 
+        eksporteres.</para>
 
-      <!-- @ENGLISH {{{
-      <para>On a Windows system, third-party tools exist to run
-      <command>svnserve</command> as a service.  Look on Subversion's
-      website for a list of these tools.</para>
-      @ENGLISH }}} -->
-      <para>På et MS Windows-system finnes det tredjeparts verktøy for å 
-        kjøre <command>svnserve</command> som en tjeneste.
-        Se på Subversions hjemmeside for en liste over disse 
-        verktøyene.</para>
+      </sect3>
 
-      <!-- @ENGLISH {{{
-      <para>A second option is to run <command>svnserve</command> as a
-        standalone <quote>daemon</quote> process.  Use the
-        <option>-d</option> option for this:</para>
-      @ENGLISH }}} -->
-      <para>En annen måte er å kjøre <command>svnserve</command> som en 
-        selvstendig <quote>daemon</quote>-prosess.
-        Bruk <option>-d</option>-valget for dette:</para>
-
+      <sect3 id="svn.serverconfig.svnserve.invoking.tunnel">
         <!-- @ENGLISH {{{
-        <screen>
-$ svnserve -d
-$               # svnserve is now running, listening on port 3690
-</screen>
+        <title><command>svnserve</command> over a Tunnel</title>
         @ENGLISH }}} -->
-      <screen>
-$ svnserve -d
-$               # nå kjører svnserve og lytter på port 3690
-</screen>
+        <title><command>svnserve</command> i en tunnel</title>
 
       <!-- @ENGLISH {{{
-      <para>When running <command>svnserve</command> in daemon mode,
-        you can use the <option>-&#64738;-listen-port=</option> and
-        <option>-&#64738;-listen-host=</option> options to customize the exact
-        port and hostname to <quote>bind</quote> to.</para>
-      @ENGLISH }}} -->
-      <para>Når <command>svnserve</command> kjøres i daemon-modus, kan 
-        du bruke valgene <option>--listen-port=</option> og 
-        <option>--listen-host=</option> for å sette den eksakte porten 
-        og vertsnavn som den skal <!-- ¤ Det er jo referert til bind(2), 
-        men kan man verbe det på en fornuftig måte uten å miste 
-        presensformen? Tror ikke det, så det fornorskes litt. 
-        --><quote>bindes</quote> til:</para>
-
-      <!-- @ENGLISH {{{
-      <para>There's still a third way to invoke
-        <command>svnserve</command>, and that's in <quote>tunnel
-        mode</quote>, with the <option>-t</option> option.  This mode
-        assumes that a remote-service program such as
+      <para>A third way to invoke
+        <command>svnserve</command> is in <quote>tunnel mode</quote>,
+        with the <option>-t</option> option.  This mode assumes that a
+        remote-service program such as
         <command>RSH</command> or <command>SSH</command> has
         successfully authenticated a user and is now invoking a
         private <command>svnserve</command> process <emphasis>as that
@@ -1196,8 +1286,7 @@ $               # nå kjører svnserve og lytter på port 3690
         a local user accessing the repository via
         <literal>file:///</literal> URLs.</para>
       @ENGLISH }}} -->
-      <para>Og det er fortsatt en tredje måte å starte 
-        <command>svnserve</command> på, og det er i 
+      <para>En tredje måte å starte <command>svnserve</command> på, er i 
         <quote>tunnelmodus</quote>, med valget <option>-t</option>.
         Denne modusen forutsetter at et fjerntjenesteprogram som 
         <command>RSH</command> eller <command>SSH</command> har klart å 
@@ -1215,72 +1304,92 @@ $               # nå kjører svnserve og lytter på port 3690
         Det er hovedsaklig det samme prinsippet som når en lokal bruker 
         får tilgang til depotet via 
         <literal>file:///</literal>-URLer.</para>
+<!-- @CHK }} -->
 
-      <!-- @ENGLISH {{{
-      <para>Once the <command>svnserve</command> program is running,
-        it makes every repository on your system available to the
-        network.  A client needs to specify an
-        <emphasis>absolute</emphasis> path in the repository URL.  For
-        example, if a repository is located at
-        <filename>/usr/local/repositories/project1</filename>, then a
-        client would reach it via
-        <uri>svn://host.example.com/usr/local/repositories/project1</uri>.
-        To increase security, you can pass the <option>-r</option>
-        option to <command>svnserve</command>, which restricts it to
-        exporting only repositories below that path:</para>
-      @ENGLISH }}} -->
-      <para>Når <command>svnserve</command>-programmet kjører, gjør det 
-        alle depotene på systemet tilgjengelig på nettverket.
-        En klient må spesifisere en <emphasis>absolutt</emphasis> sti i 
-        depot-URLen.
-        Hvis for eksempel et depot ligger i 
-        <filename>/usr/local/depoter/prosjekt1</filename>, kan en klient 
-        nå det via 
-        <uri>svn://&server;.example.com/usr/local/depoter/prosjekt1</uri>.
-        For å øke sikkerheten kan du angi <option>-r</option>-valget til 
-        <command>svnserve</command> som begrenser den til å kun 
-        ekportere depoter som ligger under denne stien:</para>
-      
-      <!-- @ENGLISH {{{
-      <screen>
-$ svnserve -d -r /usr/local/repositories
-&hellip;
-</screen>
-      @ENGLISH }}} -->
-      <screen>
-$ svnserve -d -r /usr/local/depoter
-…
+<!-- @TR {{ -->
+      <para>This option is described in much more detail in
+        <xref linkend="svn.serverconfig.svnserve.sshauth"/>.</para>
+
+      </sect3>
+
+      <sect3 id="svn.serverconfig.svnserve.invoking.winservice">
+        <title><command>svnserve</command> as Windows Service</title>
+
+        <para>If your Windows system is a descendant of Windows NT
+          (2000, 2003, XP, Vista), then you can
+          run <command>svnserve</command> as a standard Windows
+          service.  You'll need to define the service using a
+          command-line tool <command>SC.EXE</command>.  Much like
+          the <command>inetd</command> configuration line, you must
+          specify an exact invocation of <command>svnserve</command>
+          for Windows to run at start-up time:</para>
+
+        <screen>
+C:\&gt; sc create svn
+        binpath= "C:\svn\bin\svnserve.exe --service [args]"
+        displayname= "Subversion Server"
+        depend= Tcpip
+        start= auto
 </screen>
 
-      <!-- @ENGLISH {{{
-      <para>Using the <option>-r</option> option effectively
-        modifies the location that the program treats as the root of
-        the remote filesystem space.  Clients then use URLs that
-        have that path portion removed from them, leaving much
-        shorter (and much less revealing) URLs:</para>
-      @ENGLISH }}} -->
-      <para>Bruken av <option>-r</option>-valget forandrer plasseringen 
-        av roten som programmet bruker på det fjerntliggende 
-        filsystemet.
-        Klienter bruker dermed URLer som har fjernet denne delen av 
-        stien, noe som gir mye kortere (og mindre avslørende) 
-        URLer:</para>
-      
-      <!-- @ENGLISH {{{
-      <screen>
-$ svn checkout svn://host.example.com/project1
-&hellip;
+        <para>This defines a new Windows service
+          named <quote>svn</quote>, and which executes a
+          particular <command>svnserve.exe</command> command when
+          started.  There are a number of caveats in the prior
+          example, however.</para>
+
+        <para>First, notice that the <command>svnserve.exe</command>
+          program is always invoked with
+          the <option>--service</option> option.  You must always
+          specify this option, and you may <emphasis>not</emphasis>
+          specify other conflicting options such
+          as <option>--daemon</option>, <option>--tunnel</option>,
+          or <option>--inetd</option>.  Options such
+          as <option>-r</option> or <option>--listen-port</option> are
+          fine.  Second, be careful about spaces when invoking
+          the <command>SC.EXE</command> command: the
+          <literal>key= value</literal> patterns must have no
+          spaces between <literal>key=</literal> and exactly one
+          space before the <literal>value</literal>.  Lastly, be
+          careful about spaces in your command-line to be invoked.  If
+          a directory name contains spaces (or other characters that
+          need escaping), place the entire inner value
+          of <literal>binpath</literal> in double-quotes, by escaping
+          them:</para>
+
+        <screen>
+C:\&gt; sc create svn
+        binpath= "\"C:\program files\svn\bin\svnserve.exe\" --service [args]"
+        displayname= "Subversion Server"
+        depend= Tcpip
+        start= auto
 </screen>
-      @ENGLISH }}} -->
-      <screen>
-$ svn checkout svn://&server;.example.com/prosjekt1
-…
+
+        <para>Once the service is defined, it can stopped, started, or
+          queried using standard GUI tools (The Services
+          administrative control panel), or at the command line as
+          well:</para>
+
+        <screen>
+C:\&gt; net stop svn
+C:\&gt; net start svn
 </screen>
- 
+
+        <para>The service can also be uninstalled (i.e. undefined) by
+          deleting its definition:  <literal>sc delete svn</literal>.
+          Just be sure to stop the service first!
+          The <command>SC.EXE</command> program has many other
+          subcommands and options, run <literal>sc /?</literal> to
+          learn more about it.</para>
+<!-- @TR }} -->
+
+      </sect3>
+
     </sect2>
 
     <!-- =============================================================== -->
     <sect2 id="svn.serverconfig.svnserve.auth">
+<!-- @CHK {{ -->
       <!-- @ENGLISH {{{
       <title>Built-in authentication and authorization</title>
       @ENGLISH }}} -->
@@ -4050,7 +4159,7 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           browser.  Since Subversion uses URLs to identify versioned
           resources, those URLs used for HTTP-based repository access
           can be typed directly into a Web browser.  Your browser will
-          issue a <literal>GET</literal> request for that URL, and
+          issue an HTTP <literal>GET</literal> request for that URL, and
           based on whether that URL represents a versioned directory
           or file, mod_dav_svn will respond with a directory listing
           or with file contents.</para>
@@ -4063,10 +4172,11 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           Siden Subversion bruker URLer til å identifisere versjonerte 
           ressurser, kan disse URLene for HTTP-basert depottilgang bli 
           skrevet direkte inn i en nettleser.
-          Nettleseren vil foreta en <literal>GET</literal>-forespørsel 
-          for denne URLen, og avhengig om denne URLen representerer en 
-          versjonert katalog eller fil vil mod_dav_svn svare med en 
-          katalogutlisting eller innholdet av en fil.</para>
+          Nettleseren vil foreta en HTTP 
+          <literal>GET</literal>-forespørsel for denne URLen, og 
+          avhengig om denne URLen representerer en versjonert katalog 
+          eller fil vil mod_dav_svn svare med en katalogutlisting eller 
+          innholdet av en fil.</para>
 
         <!-- @ENGLISH {{{
         <para>Since the URLs do not contain any information about
@@ -4087,78 +4197,6 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           den nyeste versjonen av dette dokumentet.
           Du kan selvfølgelig også til og med bruke URLene som 
           hyperlinker fra andre hjemmesider.</para>
-
-        <!-- @ENGLISH {{{
-        <para>You generally will get more use out of URLs to versioned
-          files&mdash;after all, that's where the interesting content
-          tends to lie.  But you might have occasion to browse a
-          Subversion directory listing, where you'll quickly note that
-          the generated HTML used to display that listing is very
-          basic, and certainly not intended to be aesthetically
-          pleasing (or even interesting).  To enable customization of
-          these directory displays, Subversion provides an XML index
-          feature.  A single <literal>SVNIndexXSLT</literal> directive
-          in your repository's <literal>Location</literal> block of
-          <filename>httpd.conf</filename> will instruct mod_dav_svn to
-          generate XML output when displaying a directory listing, and
-          to reference the XSLT stylesheet of your choice:</para>
-        @ENGLISH }}} -->
-        <para>Vanligvis vil du få mer ut av URLer til versjonerte filer 
-          – det er jo der alt det interessante innholdet har for vane å 
-          ligge.
-          Men noen ganger må du bla direkte gjennom en katalogliste i 
-          Subversion, og da legger du merke til at den genererte HTML-en 
-          som brukes i utlistingen er ganske enkel, og i hvertfall ikke 
-          ment å være en nytelse for øyet.
-          For å gjøre det mulig å tilpasse disse katalogvisningene, har 
-          Subversion en XML-basert <!-- ¤ -->innholdsfunksjonalitet.
-          Et enkelt <literal>SVNIndexXSLT</literal>-direktiv i depotets 
-          <literal>Location</literal>-blokk i 
-          <filename>httpd.conf</filename> vil instruere mod_dav_svn til 
-          å generere XML-data når den viser en katalogutlisting og 
-          referere til XSLT-stilsettet som du har valgt:</para>
- 
-        <!-- @ENGLISH {{{
-        <screen>
-&lt;Location /svn&gt;
-  DAV svn
-  SVNParentPath /usr/local/svn
-  SVNIndexXSLT "/svnindex.xsl"
-  &hellip;
-&lt;/Location&gt;
-</screen>
-        @ENGLISH }}} -->
-        <screen>
-&lt;Location /svn&gt;
-  DAV svn
-  SVNParentPath /usr/local/svn
-  SVNIndexXSLT "/svnindex.xsl"
-  …
-&lt;/Location&gt;
-</screen>
-
-        <!-- @ENGLISH {{{
-        <para>Using the <literal>SVNIndexXSLT</literal> directive and
-          a creative XSLT stylesheet, you can make your directory
-          listings match the color schemes and imagery used in other
-          parts of your website.  Or, if you'd prefer, you can use the
-          sample stylesheets provided in the Subversion source
-          distribution's <filename>tools/xslt/</filename> directory.
-          Keep in mind that the path provided to the
-          <literal>SVNIndexXSLT</literal> directory is actually a URL
-          path&mdash;browsers need to be able to read your stylesheets
-          in order to make use of them!</para>
-        @ENGLISH }}} -->
-        <para>Ved å bruke <literal>SVNIndexXSLT</literal>-direktivet og 
-          et kreativt XSLT-stilsett, kan du få katalogutlistingene til å 
-          følge fargevalgene og utseendet til andre deler av hjemmesiden 
-          din.
-          Eller du kan bruke eksempelstilsettene som ligger i 
-          Subversionkildekodens <filename>tools/xslt</filename>-katalog.
-          Husk på at stien som gis til 
-          <literal>SVNIndexXSLT</literal>-direktivet egentlig er en URL 
-          — nettlesere må være i stand til å lese stilsettene dine for å 
-          kunne bruke dem!</para>
 
         <sidebar>
           <!-- @ENGLISH {{{
@@ -4219,8 +4257,7 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
             <footnote>
               <para>Back then, it was called <quote>ViewCVS</quote>.</para>
             </footnote>
-            and the latest bleeding-edge versions (at
-            the time of writing) are able to understand Subversion
+            and the latest releases are able to understand Subversion
             repositories as well.</para>
           @ENGLISH }}} -->
           <para>Så for å svare på spørsmålet, en åpenbar måte å se på 
@@ -4235,10 +4272,265 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
             Merkes fordi den er kontroversiell. -->web,<footnote>
               <para>På den tiden ble den kalt 
                 <quote>ViewCVS</quote>.</para>
-            </footnote> og de aller siste <!-- ¤ bleeding-edge --> 
-            versjonene (når dette skrives) forstår seg også på 
+            </footnote> og de nyeste versjonene forstår seg også på 
             Subversiondepoter.</para>
         </sidebar>
+
+<!-- @TR {{ -->
+        <sect4 id="svn.serverconfig.httpd.extra.browsing.mimetype">
+          <title>Proper MIME Type</title>
+
+          <para>When browsing a Subversion repository, the web browser
+            gets a clue about how to render a file's contents by
+            looking at the <literal>Content-Type:</literal> header
+            returned in Apache's response to the
+            HTTP <literal>GET</literal> request.  The value of this
+            header is some sort of MIME type.  By default, Apache will
+            tell the web browsers that all repository files are of
+            the <quote>default</quote> MIME type,
+            typically <literal>text/plain</literal>.  This can be
+            frustrating, however, if a user wishes repository files to
+            render as something more meaningful &mdash; for example,
+            it might be nice to have a <filename>foo.html</filename> file
+            in the repository actually render as HTML when
+            browsing.</para>
+
+          <para>To make this happen, you only need to make sure that
+            your files have the
+            proper <literal>svn:mime-type</literal> set.  This is
+            discussed in more detail in
+            <xref linkend="svn.advanced.props.special.mime-type"/>,
+            and you can even configure your client to automatically
+            attach proper <literal>svn:mime-type</literal> properties
+            to files entering the repository for the first time;  see
+            <xref linkend="svn.advanced.props.auto"/>.</para>
+
+          <para>So in our example, if one were to set
+          the <literal>svn:mime-type</literal> property
+          to <literal>text/html</literal> on
+          file <filename>foo.html</filename>, then Apache would
+          properly tell your web browser to render the file as
+          HTML.  One could also attach
+          proper <literal>image/*</literal> mime-type properties to
+          images, and by doing this, ultimately get an entire web
+          site to be viewable directly from a repository!  There's
+          generalyl no problem with doing this, as long as the
+          website doesn't contain any dynamically-generated
+          content.</para>
+
+        </sect4>
+<!-- @TR }} -->
+
+        <sect4 id="svn.serverconfig.httpd.extra.browsing.xslt">
+          <!-- @ENGLISH {{{
+          <title>Customizing the Look</title>
+          @ENGLISH }}} -->
+          <title>Forandre utseendet</title>
+
+          <!-- @ENGLISH {{{
+          <para>You generally will get more use out of URLs to
+            versioned files&mdash;after all, that's where the
+            interesting content tends to lie.  But you might have
+            occasion to browse a Subversion directory listing, where
+            you'll quickly note that the generated HTML used to
+            display that listing is very basic, and certainly not
+            intended to be aesthetically pleasing (or even
+            interesting).  To enable customization of these directory
+            displays, Subversion provides an XML index feature.  A
+            single <literal>SVNIndexXSLT</literal> directive in your
+            repository's <literal>Location</literal> block of
+            <filename>httpd.conf</filename> will instruct mod_dav_svn
+            to generate XML output when displaying a directory
+            listing, and to reference the XSLT stylesheet of your
+            choice:</para>
+          @ENGLISH }}} -->
+          <para>Vanligvis vil du få mer ut av URLer til versjonerte 
+            filer – det er jo der alt det interessante innholdet har for 
+            vane å ligge.
+            Men noen ganger må du bla direkte gjennom en katalogliste i 
+            Subversion, og da legger du merke til at den genererte 
+            HTML-en som brukes i utlistingen er ganske enkel, og i 
+            hvertfall ikke ment å være en nytelse for øyet.
+            For å gjøre det mulig å tilpasse disse katalogvisningene, 
+            har Subversion en XML-basert <!-- ¤ 
+            -->innholdsfunksjonalitet.
+            Et enkelt <literal>SVNIndexXSLT</literal>-direktiv i 
+            depotets <literal>Location</literal>-blokk i 
+            <filename>httpd.conf</filename> vil instruere mod_dav_svn 
+            til å generere XML-data når den viser en katalogutlisting og 
+            referere til XSLT-stilsettet som du har valgt:</para>
+ 
+        <!-- @ENGLISH {{{
+        <screen>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNParentPath /usr/local/svn
+  SVNIndexXSLT "/svnindex.xsl"
+  &hellip;
+&lt;/Location&gt;
+</screen>
+        @ENGLISH }}} -->
+        <screen>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNParentPath /usr/local/svn
+  SVNIndexXSLT "/svnindex.xsl"
+  …
+&lt;/Location&gt;
+</screen>
+
+         <!-- @ENGLISH {{{
+         <para>Using the <literal>SVNIndexXSLT</literal> directive and
+           a creative XSLT stylesheet, you can make your directory
+           listings match the color schemes and imagery used in other
+           parts of your website.  Or, if you'd prefer, you can use
+           the sample stylesheets provided in the Subversion source
+           distribution's <filename>tools/xslt/</filename> directory.
+           Keep in mind that the path provided to the
+           <literal>SVNIndexXSLT</literal> directory is actually a URL
+           path&mdash;browsers need to be able to read your
+           stylesheets in order to make use of them!</para>
+         @ENGLISH }}} -->
+         <para>Ved å bruke <literal>SVNIndexXSLT</literal>-direktivet og 
+           et kreativt XSLT-stilsett, kan du få katalogutlistingene til 
+           å følge fargevalgene og utseendet til andre deler av 
+           hjemmesiden din.
+           Eller du kan bruke eksempelstilsettene som ligger i 
+           Subversionkildekodens 
+           <filename>tools/xslt</filename>-katalog.
+           Husk på at stien som gis til 
+           <literal>SVNIndexXSLT</literal>-direktivet egentlig er en URL 
+           — nettlesere må være i stand til å lese stilsettene dine for 
+           å kunne bruke dem!</para>
+
+         </sect4>
+
+        <sect4 id="svn.serverconfig.httpd.extra.browsing.reposlisting">
+<!-- @TR {{ -->
+          <title>Listing Repositories</title>
+
+          <para>If you're serving a colllection of repositories from a
+            single URL via the <literal>SVNParentPath</literal>
+            directive, then it's also possible to have Apache display
+            all available repositories to a web browser.  Just
+            activate the <literal>SVNListParentPath</literal>
+            directive:</para>
+
+          <screen>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNParentPath /usr/local/svn
+  SVNListParentPath on
+  &hellip;
+&lt;/Location&gt;
+</screen>
+
+          <para>If a user now points her web browser to the
+          URL <literal>http://host.example.com/svn/</literal>, she'll
+          see list of all Subversion repositories sitting
+          in <filename>/usr/local/svn</filename>.  Obviously, this can
+          be a security problem, so this feature is turned off by
+          default.</para>
+
+        </sect4>
+
+      </sect3>
+
+      <sect3 id="svn.serverconfig.httpd.extra.logging">
+        <title>Apache Logging</title>
+
+        <para>Because Apache is an HTTP server at heart, it contains
+          fantastically flexible logging feature.  It's beyond the
+          scope of this book to discuss all ways logging can be
+          configured, but we should point out that even the most
+          generic <filename>httpd.conf</filename> file will cause
+          Apache to produce two logs:
+          <filename>error_log</filename>
+          and <filename>access_log</filename>.  These logs may appear
+          in different places, but are typically created in the
+          logging area of your Apache installation.  (On Unix, they
+          often live
+          in <filename>/usr/local/apache2/logs/</filename>.)</para>
+
+        <para>The <filename>error_log</filename> describes any interal
+          errors that Apache runs into as it works.
+          The <filename>access_log</filename> file records every
+          incoming HTTP request received by Apache.  This makes it
+          easy to see, for example, which IP addresses Subversion
+          clients are coming from, how often particular clients use
+          the server, which users are authenticating properly, and
+          which requests succeed or fail.</para>
+
+        <para>Unfortunately, because HTTP is a stateless protocol,
+          even the simplest Subversion client operation generates
+          multiple network requests.  It's very difficult to look at
+          the <filename>access_log</filename> and deduce what the
+          client was doing &mdash; most operations look like a series
+          of cryptic <literal>PROPPATCH</literal>, <literal>GET</literal>,
+          <literal>PUT</literal>, and <literal>REPORT</literal>
+          requests.  To make things worse, many client operations send
+          nearly-identical series of requests, so it's even harder to
+          tell them apart.</para>
+
+        <para><literal>mod_dav_svn</literal>, however, can come to
+          your aid.  By activating an <quote>operational
+          logging</quote> feature, you can
+          ask <literal>mod_dav_svn</literal> to create a separate log
+          file describing what sort of high-level operations your
+          clients are performing.</para>
+
+        <para>To do this, you need to make use of
+          Apache's <literal>CustomLog</literal> directive (which is
+          explained in more detail in Apache's own documentation).
+          Be sure to invoke this
+          directive <emphasis>outside</emphasis> of your
+          Subversion <literal>Location</literal> block:</para>
+
+        <screen>
+&lt;Location /svn&gt;
+  DAV svn
+  &hellip;
+&lt;/Location&gt;
+
+CustomLog logs/svn_logfile "%t %u %{SVN-ACTION}e" env=SVN-ACTION
+</screen>
+
+        <para>In this example, we're asking Apache to create a special
+          logfile <filename>svn_logfile</filename> in the standard
+          Apache <filename>logs</filename> directory.
+          The <literal>%t</literal> and <literal>%u</literal>
+          variables are replaced by the time and username of the
+          request, respectively.  The really important part are the
+          two instances of <literal>SVN-ACTION</literal>.
+          When Apache sees that variable, it substitutes the value of
+          the <literal>SVN-ACTION</literal> environment variable,
+          which is automatically set by <literal>mod_dav_svn</literal>
+          whenever it detects a high-level client action.</para>
+
+        <para>So instead of having to interpret a
+          traditional <filename>access_log</filename> like
+          this:</para>
+
+        <screen>
+[26/Jan/2007:22:25:29 -0600] "PROPFIND /svn/calc/!svn/vcc/default HTTP/1.1" 207 398
+[26/Jan/2007:22:25:29 -0600] "PROPFIND /svn/calc/!svn/bln/59 HTTP/1.1" 207 449
+[26/Jan/2007:22:25:29 -0600] "PROPFIND /svn/calc HTTP/1.1" 207 647
+[26/Jan/2007:22:25:29 -0600] "REPORT /svn/calc/!svn/vcc/default HTTP/1.1" 200 607
+[26/Jan/2007:22:25:31 -0600] "OPTIONS /svn/calc HTTP/1.1" 200 188
+[26/Jan/2007:22:25:31 -0600] "MKACTIVITY /svn/calc/!svn/act/e6035ef7-5df0-4ac0-b811-4be7c823f998 HTTP/1.1" 201 227
+&hellip;
+</screen>
+
+        <para>&hellip; you can instead peruse a much more
+          intelligible <filename>svn_logfile</filename> like this:</para>
+
+        <screen>
+[26/Jan/2007:22:24:20 -0600] - list-dir '/'
+[26/Jan/2007:22:24:27 -0600] - update '/'
+[26/Jan/2007:22:25:29 -0600] - remote-status '/'
+[26/Jan/2007:22:25:31 -0600] sally commit r60
+</screen>
+<!-- @TR }} -->
 
       </sect3>
 
@@ -4247,7 +4539,7 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
         <title>Other Features</title>
         @ENGLISH }}} -->
         <title>Annen funksjonalitet</title>
-        
+
         <!-- @ENGLISH {{{
         <para>Several of the features already provided by Apache in
           its role as a robust Web server can be leveraged for
@@ -4262,7 +4554,7 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           you desire into Subversion and Apache, and properly
           configure the programs to use those features.</para>
         @ENGLISH }}} -->
-        <para>Mye av funksjonliteten som Apache tilbyr i sin rolle som 
+        <para>Mye av funksjonaliteten som Apache tilbyr i sin rolle som 
           en robust web&server; kan i tillegg bli <!-- ¤ Resten av 
           setninga. --> satt opp for økt funksjonalitet eller sikkerhet 
           i Subversion.
@@ -4275,8 +4567,8 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           minske størrelsen på filer).
           Du trenger bare å kompilere støtte for den funksjonaliteten du 
           ønsker inn i Subversion og Apache og sette programmene opp for 
-          å bruke denne funksjonaliteten.<quote></quote></para>
-    
+          å bruke denne funksjonaliteten.</para>
+
         <!-- @ENGLISH {{{
         <para>Deflate compression places a small burden on the client
           and server to compress and decompress network transmissions
