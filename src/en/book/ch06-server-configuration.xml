@@ -582,13 +582,13 @@ svn stream tcp nowait svnowner /usr/bin/svnserve svnserve -i
         <para>A third way to invoke <command>svnserve</command> is in
           tunnel mode, using the <option>-t</option> option.  This
           mode assumes that a remote-service program such as
-          <command>RSH</command> or <command>SSH</command> has
+          <command>rsh</command> or <command>ssh</command> has
           successfully authenticated a user and is now invoking a
           private <command>svnserve</command> process <emphasis>as
           that user</emphasis>.  (Note that you, the user, will
           rarely, if ever, have reason to invoke
           <command>svnserve</command> with the <option>-t</option> at
-          the command line; instead, the <command>SSH</command> daemon
+          the command line; instead, the SSH daemon
           does so for you.)  The <command>svnserve</command> program
           behaves normally (communicating via
           <emphasis>stdin</emphasis> and <emphasis>stdout</emphasis>)
@@ -688,10 +688,10 @@ C:\&gt; net start svn
 </screen>
 
         <para>The service can also be uninstalled (i.e. undefined) by
-          deleting its definition:  <literal>sc delete svn</literal>.
+          deleting its definition:  <userinput>sc delete svn</userinput>.
           Just be sure to stop the service first!
           The <command>SC.EXE</command> program has many other
-          subcommands and options; run <literal>sc /?</literal> to
+          subcommands and options; run <userinput>sc /?</userinput> to
           learn more about it.</para>
 
       </sect3>
@@ -757,7 +757,7 @@ C:\&gt; net start svn
 
       <para>It's also possible, of course, for the client to be
         externally authenticated via a tunnel agent, such as
-        <command>SSH</command>.  In that case, the server simply
+        <command>ssh</command>.  In that case, the server simply
         examines the user it's running as, and uses this name as the
         authenticated username.  For more on this, see the later
         section <xref
@@ -1201,11 +1201,11 @@ rsh = rsh
         URL scheme that matches the name of your new variable:
         <literal>svn+rsh://host/path</literal>.  When using the new
         URL scheme, the Subversion client will actually be running the
-        command <command>rsh host svnserve -t</command> behind the
+        command <userinput>rsh host svnserve -t</userinput> behind the
         scenes.  If you include a username in the URL (for example,
         <literal>svn+rsh://username@host/path</literal>), the client
-        will also include that in its command (<command>rsh
-        username@host svnserve -t</command>).  But you can define new
+        will also include that in its command (<userinput>rsh
+        username@host svnserve -t</userinput>).  But you can define new
         tunneling schemes to be much more clever than that:</para>
 
       <screen>
@@ -1234,8 +1234,8 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
         the <literal>JOESSH</literal> environment variable, its value
         would override the entire value of the tunnel
         variable&mdash;<command>$JOESSH</command> would be executed
-        instead of <command>/opt/alternate/ssh -p
-        29934</command>.</para>
+        instead of <userinput>/opt/alternate/ssh -p
+        29934</userinput>.</para>
 
     </sect2>
 
@@ -1286,7 +1286,7 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
 
         <para>When the <literal>command</literal> field is set, the
           SSH daemon will run the named program instead of the
-          typical <command>svnserve -t</command> invocation that the
+          typical tunnel-mode <command>svnserve</command> invocation that the
           Subversion client asks for.  This opens the door to a number
           of server-side tricks.  In the following examples, we
           abbreviate the lines of the file as:</para>
@@ -1338,7 +1338,7 @@ joessh = $JOESSH /opt/alternate/ssh -p 29934
           the same account via public-key authentication.  Each of
           them has a custom command that will be executed;
           the <option>--tunnel-user</option> option 
-          tells <command>svnserve -t</command> to assume that the named
+          tells <command>svnserve</command> to assume that the named
           argument is the authenticated user.  Without
           <option>--tunnel-user</option>, it would appear as though
           all commits were coming from the one shared system
@@ -2234,12 +2234,12 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           <quote>unreadable</quote> doesn't get accidentally leaked.
           This means that it needs to closely monitor all of the paths
           and file-contents returned by commands such as <command>svn
-          checkout</command> or <command>svn update</command>
-          commands.  If these commands encounter a path that isn't
+          checkout</command> or <command>svn update</command>.
+          If these commands encounter a path that isn't
           readable according to some authorization policy, then the
           path is typically omitted altogether.  In the case of
           history or rename tracing&mdash;e.g., running a command such
-          as <command>svn cat -r OLD foo.c</command> on a file that
+          as <userinput>svn cat -r OLD foo.c</userinput> on a file that
           was renamed long ago&mdash;the rename tracking will simply
           halt if one of the object's former names is determined to be
           read-restricted.</para>
@@ -2781,7 +2781,7 @@ svnsync copy-revprops http://slave3.example.com/svn-proxy-sync ${REV} &gt; /dev/
             nonissue for you.  However, if lock changes aren't
             replicated from master to slaves, it means that clients
             won't be able to query the status of locks
-            (e.g., <command>svn status -u</command> will show no
+            (e.g., <userinput>svn status -u</userinput> will show no
             information about repository locks).  If this bothers you,
             you can write <filename>post-lock</filename> and
             <filename>post-unlock</filename> hook scripts that run
@@ -2975,7 +2975,7 @@ svnsync copy-revprops http://slave3.example.com/svn-proxy-sync ${REV} &gt; /dev/
       time to define the rules.</para>
 
     <para>The syntax of the file is the same familiar one used
-      by <command>svnserve.conf</command> and the runtime
+      by <filename>svnserve.conf</filename> and the runtime
       configuration files.  Lines that start with a hash
       (<literal>#</literal>) are ignored.  In its simplest form, each
       section names a repository and path within it, as well as the
@@ -3255,11 +3255,11 @@ everyone = @calc-developers, @paint-developers
       repository users is to force every repository-accessing process
       to use a sane umask.  For users accessing the repository
       directly, you can make the <command>svn</command> program into a
-      wrapper script that first sets <command>umask 002</command> and
+      wrapper script that first runs <userinput>umask 002</userinput> and
       then runs the real <command>svn</command> client program.  You
       can write a similar wrapper script for the
-      <command>svnserve</command> program, and add a <command>umask
-      002</command> command to Apache's own startup script,
+      <command>svnserve</command> program, and add a <userinput>umask
+      002</userinput> command to Apache's own startup script,
       <filename>apachectl</filename>.  For example:</para>
 
     <screen>
@@ -3333,7 +3333,7 @@ umask 002
             repository, so make sure that <command>svnserve</command>
             (<filename>/usr/bin/svnserve</filename>, or wherever it
             lives in <literal>$PATH</literal>) is actually a wrapper
-            script that sets <command>umask 002</command> and
+            script that runs <userinput>umask 002</userinput> and
             executes the real <command>svnserve</command>
             binary.</para>
         </listitem>
