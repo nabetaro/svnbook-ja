@@ -236,8 +236,8 @@ Committed revision 341.
           sharing data are hidden from the user, who simply sees
           copies of trees.  The main point here is that copies are
           cheap, both in time and space.  If you create a branch
-          entirely within the repository (by running <command>svn copy
-          URL1 URL2</command>), it's a quick, constant-time operation.
+          entirely within the repository (by running <userinput>svn copy
+          <replaceable>URL1</replaceable> <replaceable>URL2</replaceable></userinput>), it's a quick, constant-time operation.
           Make branches as often as you want.</para>
       </sidebar>
 
@@ -501,14 +501,14 @@ Changed paths:
         revision numbers to refer to particular patches that fix
         bugs&mdash;for example,
         <quote>this issue was fixed by r9238.</quote> Somebody
-        can then run <command>svn log -r 9238</command> to read about
+        can then run <userinput>svn log -r 9238</userinput> to read about
         the exact changeset that fixed the bug, and run
-        <command>svn diff -c 9238</command> to see the patch itself.
+        <userinput>svn diff -c 9238</userinput> to see the patch itself.
         And (as you'll see shortly)
-        Subversion's <command>merge</command> command is able to use
+        Subversion's <command>svn merge</command> command is able to use
         revision numbers.  You can merge specific changesets from one
         branch to another by naming them in the merge
-        arguments: <command>svn merge -c 9238</command> would merge
+        arguments: passing <userinput>-c 9238</userinput> to <command>svn merge</command> would merge
         changeset r9238 into your working copy.</para>
 
       </sect2>
@@ -548,8 +548,8 @@ U    button.c
 U    integer.c
 </screen>
 
-      <para>This basic syntax&mdash;<command>svn merge
-        URL</command>&mdash;tells Subversion to merge all recent
+      <para>This basic syntax&mdash;<userinput>svn merge
+        <replaceable>URL</replaceable></userinput>&mdash;tells Subversion to merge all recent
         changes from the URL to the current working directory (which
         is typically the root of your working copy.)  After running
         the prior example, your branch working copy now contains new
@@ -583,7 +583,7 @@ M      integer.c
         no <emphasis>syntactic</emphasis> conflicts doesn't mean there
         aren't any <emphasis>semantic</emphasis> conflicts!)  If you
         encounter serious problems, you can always abort the local
-        changes by running <command>svn revert . -R</command> (which
+        changes by running <userinput>svn revert . -R</userinput> (which
         will undo all local modifications) and start a
         long <quote>what's going on?</quote> discussion with your
         collaborators.  If things look good, however, then you can
@@ -919,8 +919,8 @@ $ svn status
 
       <tip>
         <para>After performing a merge operation, but before committing
-          the results of the merge, you can use <command>svn diff
-          --depth=empty /path/to/merge/target</command> to see only
+          the results of the merge, you can use <userinput>svn diff
+          --depth=empty <replaceable>/path/to/merge/target</replaceable></userinput> to see only
           the changes to the immediate target of your merge.  If your
           merge target was a directory, only property differences will
           be displayed.  This is a handy way to see the changes to the
@@ -935,7 +935,7 @@ $ svn status
         modifications to your working copy&mdash;but we've already
         stressed that you shouldn't be merging into such an
         environment.)  If you don't like the results of the merge,
-        simply <command>svn revert . -R</command> the changes from
+        simply run <userinput>svn revert . -R</userinput> to revert the changes from
         your working copy and retry the command with different
         options.  The merge isn't final until you
         actually <command>svn commit</command> the results.</para>
@@ -1073,7 +1073,7 @@ Committed revision 350.
 
       <para>First, you might need to use <command>svn log</command> to
         discover the exact coordinate pair you wish to resurrect.  A
-        good strategy is to run <command>svn log --verbose</command>
+        good strategy is to run <userinput>svn log --verbose</userinput>
         in a directory that used to contain your deleted item.  The
         <option>--verbose</option> (<option>-v</option>) option shows
         a list of all changed items in each revision; all you need to
@@ -1500,8 +1500,8 @@ $ svn merge -r 100:200 http://svn.example.com/repos/trunk
         <listitem>
           <para><emphasis>Merging from foreign
             repositories</emphasis>.  While it's possible to run a
-            command such as <command>svn merge -r 100:200
-            http://svn.foreignproject.com/repos/trunk</command>, the
+            command such as <userinput>svn merge -r 100:200
+            <replaceable>http://svn.foreignproject.com/repos/trunk</replaceable></userinput>, the
             resulting patch will also lack any historical merge
             metadata.  At time of writing, Subversion has no way of
             representing different repository URLs within
@@ -1526,12 +1526,12 @@ $ svn merge -r 100:200 http://svn.example.com/repos/trunk
           a <quote>reverse patch</quote> as a way of rolling back
           changes.  If this technique is used to undo a change to a
           object's personal history (e.g., commit r5 to the trunk,
-          then immediately roll back r5 using <command>svn merge -c
-          -5</command>), this sort of merge doesn't affect the
+          then immediately roll back r5 using <userinput>svn merge . -c
+          -5</userinput>), this sort of merge doesn't affect the
           recorded mergeinfo.
             <footnote><para>Interestingly, after rolling back a
                 revision like this, we wouldn't be able to re-apply
-                the revision using <command>svn merge -c 5</command>,
+                the revision using <userinput>svn merge . -c 5</userinput>,
                 since the mergeinfo would already list r5 as being
                 applied.  We would have to use
                 the <option>--ignore-ancestry</option> option to make
@@ -1602,7 +1602,7 @@ Select: (p) postpone, (df) diff-full, (e) edit,
         likely comparing the wrong two trees; they're the classic
         sign of user error.  When this happens, it's easy to
         recursively revert all the changes created by the merge
-        (<command>svn revert --recursive</command>), delete any
+        (<userinput>svn revert . --recursive</userinput>), delete any
         unversioned files or directories left behind after the
         revert, and rerun <command>svn merge</command> with
         different arguments.</para>
@@ -1909,7 +1909,7 @@ A    foo.c
 
       <para>Alas, this scenario doesn't work so well right now and
         is considered one of Subversion's current weak spots.  The
-        problem is that Subversion's <command>update</command>
+        problem is that Subversion's <command>svn update</command>
         command isn't as robust as it should be, particularly when
         dealing with copy and move operations.</para>
 
@@ -2065,7 +2065,7 @@ U   .
         <listitem>
           <para>Don't ever edit the <literal>svn:mergeinfo</literal>
             property directly; use <command>svn
-            merge --record-only</command> to effect a desired change
+            merge</command> with the <option>--record-only</option> option to effect a desired change
             to the metadata (as demonstrated in
             <xref linkend="svn.branchmerge.advanced.blockchanges"/>).</para>
         </listitem>
@@ -2335,8 +2335,8 @@ Committed revision 902.
         of your work, you may decide that you need to create a working
         copy that is designed to have specific features and bug fixes.
         You can accomplish this by selectively backdating files or
-        directories to particular revisions (using <command>svn update
-        -r</command> liberally), by switching files and directories to
+        directories to particular revisions (using <command>svn update</command>
+        with the <option>-r</option> option liberally), by switching files and directories to
         particular branches (making use of <command>svn
         switch</command>), or even just by making a bunch of local
         changes.  When you're done, your working copy is a hodgepodge
