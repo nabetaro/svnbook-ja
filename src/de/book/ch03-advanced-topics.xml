@@ -8,7 +8,7 @@
     check out a working copy from a Subversion repository.  You are
     comfortable with submitting and receiving changes using the
     <command>svn commit</command> and <command>svn update</command>
-    functions.  You've probably even developed a reflex that causes
+    operations.  You've probably even developed a reflex that causes
     you to run the <command>svn status</command> command almost
     unconsciously.  For all intents and purposes, you are ready to
     use Subversion in a typical environment.</para>
@@ -129,7 +129,7 @@
             <para>The revision immediately <emphasis>before</emphasis>
               the last revision in which an item changed.
               Technically, this boils down to
-              <literal>COMMITTED</literal>-1.</para>
+              <literal>COMMITTED</literal>&minus;1.</para>
           </listitem>
         </varlistentry>
         
@@ -396,6 +396,17 @@ $ svn log -r {2006-11-20}:{2006-11-29}
         information that your site needs to display without having to
         read an index file or play path manipulation games.</para>
 
+      <note>
+        <para>While Subversion places few restrictions on the names
+          and values you use for properties, it has not been designed
+          to optimally carry large property values or large sets of
+          properties on a given file or directory.  Subversion
+          commonly holds all the property names and values associated
+          with a single item in memory at the same time, which can
+          cause detrimental performance or failed operations when
+          extremely large property sets are used.</para>
+      </note>
+
       <para>Custom revision properties are also frequently used.  One
         common such use is a property whose value contains an issue
         tracker ID with which the revision is associated, perhaps
@@ -415,7 +426,7 @@ $ svn log -r {2006-11-20}:{2006-11-29}
           more accurately, the available interfaces to them&mdash;have
           a major shortcoming: while it is a simple matter to
           <emphasis>set</emphasis> a custom property,
-          <emphasis>finding</emphasis> that property later is whole
+          <emphasis>finding</emphasis> that property later is a whole
           different ball of wax.</para>
 
         <para>Trying to locate a custom revision property generally
@@ -460,11 +471,11 @@ This fixes a nasty segfault in the wort frabbing process
     <sect2 id="svn.advanced.props.manip">
       <title>Manipulating Properties</title>
 
-      <para>The <command>svn</command> command affords a few ways to
+      <para>The <command>svn</command> program affords a few ways to
         add or modify file and directory properties.  For properties
         with short, human-readable values, perhaps the simplest way to
         add a new property is to specify the property name and value
-        on the command line of the <command>propset</command>
+        on the command line of the <command>svn propset</command>
         subcommand:</para>
 
       <screen>
@@ -477,7 +488,7 @@ $
         offers for your property values.  And if you are planning to
         have a multiline textual, or even binary, property value, you
         probably do not want to supply that value on the command line.
-        So the <command>propset</command> subcommand takes a
+        So the <command>svn propset</command> subcommand takes a
         <option>--file</option> (<option>-F</option>) option for
         specifying the name of a file that contains the new property
         value.</para>
@@ -561,7 +572,7 @@ $ svn propget copyright calc/button.c
 
       <para>There's even a variation of the
         <command>proplist</command> command that will list both the
-        name and value of all of the properties.  Simply supply the
+        name and the value for all of the properties.  Simply supply the
         <option>--verbose</option> (<option>-v</option>) option.</para>
 
       <screen>
@@ -584,8 +595,8 @@ red-beans-and-rice.
       <para>The last property-related subcommand is
         <command>propdel</command>.  Since Subversion allows you to
         store properties with empty values, you can't remove a
-        property altogether using <command>propedit</command> or
-        <command>propset</command>.  For example, this command will
+        property altogether using <command>svn propedit</command> or
+        <command>svn propset</command>.  For example, this command will
         <emphasis>not</emphasis> yield the desired effect:</para>
 
       <screen>
@@ -614,7 +625,7 @@ $
       <para>Remember those unversioned revision properties?  You can
         modify those, too, using the same <command>svn</command>
         subcommands that we just described.  Simply add the
-        <option>--revprop</option> command line parameter and specify
+        <option>--revprop</option> command-line parameter and specify
         the revision whose property you wish to modify.  Since
         revisions are global, you don't need to specify a target path
         to these property-related commands so long as you are
@@ -771,7 +782,7 @@ $
 
       <para>You might also have noticed the nonstandard way that
         Subversion currently displays property differences.  You can
-        still run <command>svn diff</command> and redirect the output
+        still use <command>svn diff</command> and redirect its output
         to create a usable patch file.  The <command>patch</command>
         program will ignore property patches&mdash;as a rule, it
         ignores any noise it can't understand.  This does,
@@ -788,7 +799,7 @@ $
       <para>Properties are a powerful feature of Subversion, acting as
         key components of many Subversion features discussed elsewhere
         in this and other chapters&mdash;textual diff and merge
-        support, keyword substitution, newline translation, etc.  But
+        support, keyword substitution, newline translation, and so on.  But
         to get the full benefit of properties, they must be set on the
         right files and directories.  Unfortunately, that
         step can be easily forgotten in the routine of things, especially
@@ -809,7 +820,7 @@ $
         linkend="svn.advanced.props.special.executable" /> later in
         this chapter for more about this property.)</para>
 
-      <para>Secondly, Subversion tries to determine the file's MIME
+      <para>Second, Subversion tries to determine the file's MIME
         type.  If you've configured a
         <literal>mime-types-files</literal> runtime configuration
         parameter, Subversion will try to find a MIME type mapping in
@@ -818,7 +829,7 @@ $
         <literal>svn:mime-type</literal> property to the MIME type it
         found.  If no mapping file is configured, or no mapping for
         your file's extension could be found, Subversion runs a very
-        basic heuristic to determine if the file contains nontextual
+        basic heuristic to determine whether the file contains nontextual
         content.  If so, it automatically sets the
         <literal>svn:mime-type</literal> property on that file to
         <literal>application/octet-stream</literal> (the generic
@@ -840,7 +851,7 @@ $
         and can not only override the default MIME type decision made
         by Subversion during those operations, but can also set
         additional Subversion or custom properties, too.  For example,
-        you might create a mapping that says that any time you add
+        you might create a mapping that says that anytime you add
         JPEG files&mdash;ones whose names match the pattern
         <literal>*.jpg</literal>&mdash;Subversion should automatically
         set the <literal>svn:mime-type</literal> property on those
@@ -849,7 +860,7 @@ $
         <literal>svn:eol-style</literal> set to
         <literal>native</literal>, and <literal>svn:keywords</literal>
         set to <literal>Id</literal>.  Automatic property support is
-        perhaps the handiest property related tool in the Subversion
+        perhaps the handiest property-related tool in the Subversion
         toolbox.  See <xref
         linkend="svn.advanced.confarea.opts.config"/> for more about
         configuring that support.</para>
@@ -920,10 +931,10 @@ $
         <para>Unfortunately, some of those extensions have changed
           their meanings over time.  When personal computers first appeared,
           a file named <filename>README.DOC</filename> would have
-          almost certainly been a plaintext file, just like today's
-          <filename>.txt</filename> files.  But by the mid-1990's, you
+          almost certainly been a plain-text file, just like today's
+          <filename>.txt</filename> files.  But by the mid-1990s, you
           could almost bet that a file of that name would not be a
-          plaintext file at all, but instead a Microsoft Word document
+          plain-text file at all, but instead a Microsoft Word document
           in a proprietary, non-human-readable format.  But this
           change didn't occur overnight&mdash;there was certainly a
           period of confusion for computer users over what exactly
@@ -942,14 +953,14 @@ $
           dynamically by server-side scripts, there was often no real
           file per se, and therefore no filename.  Web
           servers, for example, needed some other way to tell browsers
-          what they were downloading so the browser could do something
+          what they were downloading so that the browser could do something
           intelligent with that information, whether that was to
           display the data using a program registered to handle that
-          data type or to prompt the user for where on the client
+          datatype or to prompt the user for where on the client
           machine to store the downloaded data.</para>
 
         <para>Eventually, a standard emerged for, among other things,
-          describing the contents of a data stream.  In 1996, RFC2045
+          describing the contents of a data stream.  In 1996, RFC 2045
           was published.  It was the first of five RFCs describing
           MIME.  It describes the concept of media types and subtypes
           and recommends a syntax for the representation of those
@@ -1054,7 +1065,7 @@ $
         <literal>svn:mime-type</literal> property, Subversion
         assumes the file contains human-readable data.  Generally
         speaking, Subversion uses this knowledge only to determine
-        if contextual difference reports for that file are
+        whether contextual difference reports for that file are
         possible.  Otherwise, to Subversion, bytes are bytes.</para>
       
       <para>This means that by default, Subversion doesn't pay any
@@ -1090,7 +1101,7 @@ $
         occur.</para>
 
       <para>But in practice, many common tools either fail to
-        properly read a file with foreign EOL markers, or they
+        properly read a file with foreign EOL markers, or
         convert the file's line endings to the native style when the
         file is saved.  If the former is true for a developer, he
         has to use an external conversion utility (such as
@@ -1101,8 +1112,8 @@ $
         original quite literally on every line!  Prior to committing
         his changes, the user has two choices.  Either he can use a
         conversion utility to restore the modified file to the same
-        line-ending style that it was in before his edits were made.
-        Or, he can simply commit the file&mdash;new EOL markers and
+        line-ending style that it was in before his edits were made,
+        or he can simply commit the file&mdash;new EOL markers and
         all.</para>
 
       <para>The result of scenarios like these include wasted time
@@ -1207,7 +1218,7 @@ $
       these things exist.</para>
 
     <para>So Subversion provides two ways for telling it which files
-      you would prefer for it to simply disregard.  One of the ways
+      you would prefer that it simply disregard.  One of the ways
       involves the use of Subversion's runtime configuration system
       (see <xref linkend="svn.advanced.confarea" />), and therefore
       applies to all the Subversion operations that make use of that
@@ -1257,14 +1268,14 @@ $
         <varlistentry>
           <term><literal>?</literal></term>
           <listitem>
-            <para>Matches any single character.</para>
+            <para>Matches any single character</para>
           </listitem>
         </varlistentry>
         <varlistentry>
           <term><literal>*</literal></term>
           <listitem>
             <para>Matches any string of characters, including the
-              empty string.</para>
+              empty string</para>
           </listitem>
         </varlistentry>
         <varlistentry>
@@ -1272,7 +1283,7 @@ $
           <listitem>
             <para>Begins a character class definition terminated by
               <literal>]</literal>, used for matching a subset of
-              characters.</para>
+              characters</para>
           </listitem>
         </varlistentry>
       </variablelist>
@@ -1398,19 +1409,19 @@ $ svn status calc
       also have some unversioned files: the latest
       <filename>calculator</filename> program that you've compiled
       from your source code, a source file named
-      <filename>data.c</filename>, and a set of debugging output log
-      files.  Now, you know that your build system always results in
+      <filename>data.c</filename>, and a set of debugging output logfiles.
+      Now, you know that your build system always results in
       the <filename>calculator</filename> program being generated.
       <footnote>
         <para>Isn't that the whole point of a build system?</para>
       </footnote>
       And you know that your test suite always leaves those debugging
-      log files lying around.  These facts are true for all working
+      logfiles lying around.  These facts are true for all working
       copies of this project, not just your own.  And you know that
       you aren't interested in seeing those things every time you run
       <command>svn status</command>, and you are pretty sure that
       nobody else is interested in them either.  So you use
-      <command>svn propedit svn:ignore calc</command> to add some
+      <userinput>svn propedit svn:ignore calc</userinput> to add some
       ignore patterns to the <filename>calc</filename> directory.  For
       example, you might add this as the new value of the
       <literal>svn:ignore</literal> property:</para>
@@ -1476,14 +1487,14 @@ I      calc/debug_log.3.gz
       <para>Even if <literal>svn:ignore</literal> is set, you may run
         into problems if you use shell wildcards in a command.  Shell
         wildcards are expanded into an explicit list of targets before
-        Subversion operates on them, so running <command>svn
-        <replaceable>SUBCOMMAND</replaceable> *</command> is just like
-        running <command>svn <replaceable>SUBCOMMAND</replaceable>
-        file1 file2 file3 &hellip;</command>.  In the case of the
+        Subversion operates on them, so running <userinput>svn
+        <replaceable>SUBCOMMAND</replaceable> *</userinput> is just like
+        running <userinput>svn <replaceable>SUBCOMMAND</replaceable>
+        file1 file2 file3 &hellip;</userinput>.  In the case of the
         <command>svn add</command> command, this has an effect similar
         to passing the <option>--no-ignore</option> option.  So
-        instead of using a wildcard, use <command>svn add --force
-        .</command> to do a bulk scheduling of unversioned things for
+        instead of using a wildcard, use <userinput>svn add --force
+        .</userinput> to do a bulk scheduling of unversioned things for
         addition.  The explicit target will ensure that the current
         directory isn't overlooked because of being already under
         version control, and the <option>--force</option> option will
@@ -1515,7 +1526,7 @@ I      calc/debug_log.3.gz
       file changes, and more importantly, just
       <emphasis>after</emphasis> the file changes, it is a hassle
       for any process except the version control system to keep
-      the data completely up-to-date.  Left to human authors, the
+      the data completely up to date.  Left to human authors, the
       information would inevitably grow stale.</para>
 
     <para>For example, say you have a document in which you would
@@ -1533,10 +1544,10 @@ I      calc/debug_log.3.gz
       <literal>$</literal><replaceable>KeywordName</replaceable><literal>$</literal>.</para>
 
     <para>All keywords are case-sensitive where they appear as
-      anchors in files: you must use the correct capitalization in
-      order for the keyword to be expanded.  You should consider the
+      anchors in files: you must use the correct capitalization
+      for the keyword to be expanded.  You should consider the
       value of the <literal>svn:keywords</literal> property to be
-      case-sensitive too&mdash;certain keyword names will be recognized
+      case-sensitive, too&mdash;certain keyword names will be recognized
       regardless of case, but this behavior is deprecated.</para>
 
     <para>Subversion defines the list of keywords available for
@@ -1548,11 +1559,13 @@ I      calc/debug_log.3.gz
         <term><literal>Date</literal></term>
         <listitem>
           <para>This keyword describes the last time the file was
-            known to have been changed in the repository, and
-            is of the form <literal>$Date:
-            2006-07-22 21:42:37 -0700 (Sat, 22 Jul 2006)
-            $</literal>.  It may also be specified as
-            <literal>LastChangedDate</literal>.</para>
+            known to have been changed in the repository, and is of
+            the form <literal>$Date: 2006-07-22 21:42:37 -0700 (Sat,
+            22 Jul 2006) $</literal>.  It may also be specified as
+            <literal>LastChangedDate</literal>.  Unlike the
+            <literal>Id</literal> keyword, which uses UTC, the
+            <literal>Date</literal> keyword displays dates using the
+            local time zone.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -1590,18 +1603,21 @@ I      calc/debug_log.3.gz
       <varlistentry>
         <term><literal>Id</literal></term>
         <listitem>
-          <para>This keyword is a compressed combination of the
-            other keywords.  Its substitution looks something like
+          <para>This keyword is a compressed combination of the other
+            keywords.  Its substitution looks something like
             <literal>$Id: calc.c 148 2006-07-28 21:30:43Z sally
             $</literal>, and is interpreted to mean that the file
             <filename>calc.c</filename> was last changed in revision
             148 on the evening of July 28, 2006 by the user
-            <literal>sally</literal>.</para>
+            <literal>sally</literal>.  The date displayed by this
+            keyword is in UTC, unlike that of the
+            <literal>Date</literal> keyword (which uses the local time
+            zone).</para>
         </listitem>
       </varlistentry>
     </variablelist>
 
-    <para>Several of the previous descriptions use the phrase
+    <para>Several of the preceding descriptions use the phrase
       <quote>last known</quote> or similar wording.  Keep in mind that
       keyword expansion is a client-side operation, and your client
       <quote>knows</quote> only about changes that have occurred in
@@ -1628,8 +1644,7 @@ I      calc/debug_log.3.gz
       subcommands.  The <literal>svn:keywords</literal> property,
       when set on a versioned file, controls which keywords will
       be substituted on that file.  The value is a space-delimited
-      list of the keyword names or aliases found in the previous
-      table.</para>
+      list of keyword names or aliases.</para>
 
     <para>For example, say you have a versioned file named
       <filename>weather.txt</filename> that looks like
@@ -1669,7 +1684,7 @@ $
       substitute text.  Instead of seeing your keyword anchor
       <literal>$LastChangedDate$</literal>, you'll see its
       substituted result.  That result also contains the name of
-      the keyword and continues to be bounded by the dollar sign
+      the keyword and continues to be delimited by the dollar sign
       (<literal>$</literal>) characters.  And as we predicted, the
       <literal>Rev</literal> keyword was not substituted because
       we didn't ask for it to be.</para>
@@ -1767,9 +1782,9 @@ $Date: 2006-03-15 02:33:03 -0500 (Wed, 15 Mar 2006) $:    Date of last commit
       committed revision rolls into a new place value (say, from
       99 to 100), or if another person with a longer username
       commits the file, stuff gets all crooked again.  However, if
-      you are using Subversion 1.2 or better, you can use the new
+      you are using Subversion 1.2 or later, you can use the new
       fixed-length keyword syntax and define some field widths that
-      seem sane so your file might look like this:</para>
+      seem sane, so your file might look like this:</para>
 
     <screen>
 $Rev::               $:  Revision of last commit
@@ -1862,8 +1877,8 @@ Checked out revision 1.
 $
 </screen>
 
-    <para>Now, let's check out the same tree again, but this time,
-      we'll ask Subversion to give us only the top-most directory
+    <para>Now, let's check out the same tree again, but this time
+      we'll ask Subversion to give us only the topmost directory
       with none of its children at all:</para>
 
     <screen>
@@ -1971,7 +1986,7 @@ $
 </screen>
 
     <para>As described, each of these depths is something more than
-      only-the-target, but something less than full recursion.</para>
+      only the target, but something less than full recursion.</para>
 
     <para>We've used <command>svn checkout</command> as an example
       here, but you'll find the <option>--depth</option> option
@@ -1996,8 +2011,8 @@ $
       <option>--set-depth</option>.  It is with this option that you
       can change the sticky depth of a working copy item.  Watch what
       happens as we take our empty-depth checkout and gradually
-      telescope it deeper using <command>svn update
-      --set-depth</command>:</para>
+      telescope it deeper using <userinput>svn update
+      --set-depth <replaceable>NEW-DEPTH</replaceable> <replaceable>TARGET</replaceable></userinput>:</para>
 
     <screen>
 $ svn update --set-depth files mom-empty
@@ -2056,7 +2071,7 @@ $
       in a single working copy doesn't complicate the way you interact
       with that working copy.  You can still make, revert, display,
       and commit local modifications in your working copy without
-      providing any new options (including <option>--depth</option> or
+      providing any new options (including <option>--depth</option> and
       <option>--set-depth</option>) to the relevant subcommands.  Even
       <command>svn update</command> works as it does elsewhere when no
       specific depth is provided&mdash;it updates the working copy
@@ -2070,9 +2085,9 @@ $
       projects or software modules living as siblings in a single
       repository location (<filename>trunk/project1</filename>,
       <filename>trunk/project2</filename>,
-      <filename>trunk/project3</filename>, and so on).  In such
-      scenarios, it might be the case that you personally care only
-      about a handful of those projects&mdash;maybe some primary
+      <filename>trunk/project3</filename>, etc.).  In such
+      scenarios, it might be the case that you personally care 
+      about only a handful of those projects&mdash;maybe some primary
       project and a few other modules on which it depends.  You can
       check out individual working copies of all of these things, but
       those working copies are disjoint and, as a result, it can be
@@ -2089,10 +2104,10 @@ $
     <para>Subversion 1.5's implementation of shallow checkouts is
       good but does not support a couple of interesting behaviors.
       First, you cannot de-telescope a working copy item.  Running
-      <command>svn update --set-depth empty</command> on an
+      <userinput>svn update --set-depth empty</userinput> in an
       infinite-depth working copy will not have the effect of
-      discarding everything but the top-most directory&mdash;it will
-      simply error out.  Secondly, there is no depth value to indicate
+      discarding everything but the topmost directory&mdash;it will
+      simply error out.  Second, there is no depth value to indicate
       that you wish an item to be explicitly excluded.  You have to do
       implicit exclusion of an item by including everything
       else.</para>
@@ -2119,7 +2134,7 @@ $
       granularity of a word or a single character of text.  But common
       among those algorithms is that they generally work only on text
       files.  The landscape starts to look pretty grim when you start
-      talking about content merges of non-textual file formats.  And
+      talking about content merges of nontextual file formats.  And
       when you can't find a tool that can handle that type of merging,
       you begin to run into problems with the copy-modify-merge
       model.</para>
@@ -2128,7 +2143,7 @@ $
       aground.  Harry and Sally are both graphic designers working on
       the same project, a bit of marketing collateral for an
       automobile mechanic.  Central to the design of a particular
-      poster is an image of a car in need of some body work, stored in
+      poster is an image of a car in need of some bodywork, stored in
       a file using the PNG image format.  The poster's layout is
       almost finished, and both Harry and Sally are pleased with the
       particular photo they chose for their damaged car&mdash;a baby
@@ -2145,7 +2160,7 @@ $
       greater impact.  He, too, updates to <literal>HEAD</literal>,
       and then draws some cracks on the vehicle's windshield.  He
       manages to finish his work before Sally finishes hers, and after
-      admiring the fruits of his undeniable talent, commits the
+      admiring the fruits of his undeniable talent, he commits the
       modified image.  Shortly thereafter, Sally is finished with the
       car's new finish and tries to commit her changes.  But, as
       expected, Subversion fails the commit, informing Sally that
@@ -2189,29 +2204,18 @@ $
       checkouts</quote> mechanisms of other version control
       systems.</para>
 
-    <para>Subversion's locking feature serves two main
-      purposes:</para>
-
-    <orderedlist>
-      <listitem>
-        <para><emphasis>Serializing access to a versioned
-          object</emphasis>.  By allowing a user to
-          programmatically claim the exclusive right to change to a
-          file in the repository, that user can be reasonably
-          confident that energy invested on unmergeable changes won't
-          be wasted&mdash;his commit of those changes will succeed.</para>
-      </listitem>
-      
-      <listitem>
-        <para><emphasis>Aiding communication</emphasis>.  By alerting
-          other users that serialization is in effect for a particular
-          versioned object, those other users can reasonably expect
-          that the object is about to be changed by someone else,
-          and they, too, can avoid wasting their time and energy on
-          unmergeable changes that won't be committable due to eventual
-          out-of-dateness.</para>
-      </listitem>
-    </orderedlist>
+    <para>Subversion's locking feature exists ultimately to minimize
+      wasted time and effort.  By allowing a user to programmatically
+      claim the exclusive right to change a file in the repository,
+      that user can be reasonably confident that any energy he invests
+      on unmergeable changes won't be wasted&mdash;his commit of those
+      changes will succeed.  Also, because Subversion communicates to
+      other users that serialization is in effect for a particular
+      versioned object, those users can reasonably expect that the
+      object is about to be changed by someone else.  They, too, can
+      then avoid wasting their time and energy on unmergeable changes
+      that won't be committable due to eventual
+      out-of-dateness.</para>
 
     <para>When referring to Subversion's locking feature, one is
       actually talking about a fairly diverse collection of behaviors,
@@ -2245,7 +2249,7 @@ $
         <command>svn cleanup</command> command, as described in <xref
         linkend="svn.tour.cleanup"/>.</para>
 
-      <para>Thirdly, there are <firstterm>database locks</firstterm>,
+      <para>Third, there are <firstterm>database locks</firstterm>,
         used internally by the Berkeley DB backend to prevent clashes
         between multiple programs trying to access the database.  This
         is the sort of lock whose unwanted persistence after an error
@@ -2278,7 +2282,7 @@ $
         repository will demand two pieces of information&mdash;that
         the client performing the commit be authenticated as the lock
         owner, and that the lock token has been provided as part of
-        the commit process as a sort of proof that client knows which
+        the commit process as a form of proof that the client knows which
         lock it is using.</para>
       
       <para>To demonstrate lock creation, let's refer back to our
@@ -2295,20 +2299,20 @@ $ svn lock banana.jpg -m "Editing file for tomorrow's release."
 $
 </screen>
 
-      <para>There are a number of new things demonstrated in the
-        previous example.  First, notice that Harry passed the
+      <para>The preceding example demonstrates a number of new things.
+        First, notice that Harry passed the
         <option>--message</option> (<option>-m</option>) option to
         <command>svn lock</command>.  Similar to <command>svn
         commit</command>, the <command>svn lock</command> command can
-        take comments (either via <option>--message</option>
+        take comments&mdash;via either <option>--message</option>
         (<option>-m</option>) or <option>--file</option>
-        (<option>-F</option>) to describe the reason for locking the
+        (<option>-F</option>)&mdash;to describe the reason for locking the
         file.  Unlike <command>svn commit</command>, however,
         <command>svn lock</command> will not demand a message by
         launching your preferred text editor.  Lock comments are
         optional, but still recommended to aid communication.</para>
 
-      <para>Secondly, the lock attempt succeeded.  This means that the
+      <para>Second, the lock attempt succeeded.  This means that the
         file wasn't already locked, and that Harry had the latest
         version of the file.  If Harry's working copy of the file had
         been out of date, the repository would have rejected the
@@ -2366,8 +2370,8 @@ $
         <para>A lock token isn't an authentication token, so much as
           an <emphasis>authorization</emphasis> token.  The token
           isn't a protected secret.  In fact, a lock's unique token is
-          discoverable by anyone who runs <command>svn info
-          URL</command>.  A lock token is special only when it lives
+          discoverable by anyone who runs <userinput>svn info
+          <replaceable>URL</replaceable></userinput>.  A lock token is special only when it lives
           inside a working copy.  It's proof that the lock was created
           in that particular working copy, and not somewhere else by
           some other client.  Merely authenticating as the lock owner
@@ -2381,8 +2385,8 @@ $
           authenticated as the lock's owner.  In other words, the lock
           token prevents one piece of Subversion-related software from
           undermining the work of another.  (In our example, if you
-          really need to change the file from an alternate working
-          copy, you would need to <firstterm>break</firstterm> the lock and re-lock the
+          really need to change the file from an alternative working
+          copy, you would need to <firstterm>break</firstterm> the lock and relock the
           file.)</para>
 
       </sidebar>
@@ -2420,7 +2424,7 @@ $
 
       <para>Notice that after the commit is finished, <command>svn
         status</command> shows that the lock token is no longer
-        present in working copy.  This is the standard behavior of
+        present in the working copy.  This is the standard behavior of
         <command>svn commit</command>&mdash;it searches the working
         copy (or list of targets, if you provide such a list) for
         local modifications and sends all the lock tokens it
@@ -2432,8 +2436,8 @@ $
         being sloppy about locking or from holding locks for too long.
         If Harry haphazardly locks 30 files in a directory named
         <filename>images</filename> because he's unsure of which files
-        he needs to change, yet changes only 4 of those files, when he
-        runs <command>svn commit images</command>, the process will
+        he needs to change, yet changes only four of those files, when he
+        runs <userinput>svn commit images</userinput>, the process will
         still release all 30 locks.</para>
 
       <para>This behavior of automatically releasing locks can be
@@ -2461,8 +2465,8 @@ $ svn unlock banana.c
       <title>Discovering Locks</title>
 
       <para>When a commit fails due to someone else's locks, it's
-        fairly easy to learn about them.  The easiest of
-        these is <command>svn status --show-updates</command>:</para>
+        fairly easy to learn about them.  The easiest way is to run
+        <userinput>svn status --show-updates</userinput>:</para>
 
       <screen>
 $ svn status -u
@@ -2474,7 +2478,7 @@ $
 </screen>
 
       <para>In this example, Sally can see not only that her copy of
-        <filename>foo.h</filename> is out of date, but that one of the
+        <filename>foo.h</filename> is out of date, but also that one of the
         two modified files she plans to commit is locked in the
         repository.  The <literal>O</literal> symbol stands for
         <quote>Other,</quote> meaning that a lock exists on the file
@@ -2503,8 +2507,8 @@ Need to make a quick tweak to this image.
 $
 </screen>
 
-      <para>Just as <command>svn info</command> can be used to examine
-        objects in the working copy, it can also be used to examine
+      <para>Just as you can use <command>svn info</command> to examine
+        objects in the working copy, you can also use it to examine
         objects in the repository.  If the main argument to
         <command>svn info</command> is a working copy path, then all
         of the working copy's cached information is displayed; any
@@ -2512,13 +2516,13 @@ $
         lock token (if a file is locked by another user or in another
         working copy, <command>svn info</command> on a working copy
         path will show no lock information at all).  If the main
-        argument to <command>svn info</command> is a URL, then the
+        argument to <command>svn info</command> is a URL, the
         information reflects the latest version of an object in the
         repository, and any mention of a lock describes the current
         lock on the object.</para>
 
       <para>So in this particular example, Sally can see that Harry
-        locked the file on February 16th to <quote>make a quick
+        locked the file on February 16 to <quote>make a quick
         tweak.</quote>  It being June, she suspects that he probably
         forgot all about the lock.  She might phone Harry to complain
         and ask him to release the lock.  If he's unavailable, she
@@ -2567,7 +2571,7 @@ Removed lock on '/project/raisin.jpg'.
 $
 </screen>
 
-      <para>The more interesting option is allowing users to break
+      <para>The more interesting option is to allow users to break
         each other's locks over the network.  To do this, Sally simply
         needs to pass the <option>--force</option> to the <command>svn
         unlock</command> command:</para>
@@ -2602,13 +2606,13 @@ $
         
       <para>Simply breaking a lock may not be enough.  In
         the running example, Sally may not only want to break Harry's
-        long-forgotten lock, but re-lock the file for her own use.
-        She can accomplish this by running <command>svn unlock
-        --force</command> and then <command>svn lock</command>
+        long-forgotten lock, but relock the file for her own use.
+        She can accomplish this by using <command>svn unlock</command>
+        with <option>--force</option> and then <command>svn lock</command>
         back-to-back, but there's a small chance that somebody else
         might lock the file between the two commands.  The simpler thing
-        to is <firstterm>steal</firstterm> the lock, which involves
-        breaking and re-locking the file all in one atomic step.  To
+        to do is to <firstterm>steal</firstterm> the lock, which involves
+        breaking and relocking the file all in one atomic step.  To
         do this, Sally passes the <option>--force</option> option
         to <command>svn lock</command>:</para>
 
@@ -2625,7 +2629,7 @@ $
         the original lock token, but that lock no longer exists.  The
         lock token is said to be <firstterm>defunct</firstterm>.  The
         lock represented by the lock token has either been broken (no
-        longer in the repository), or stolen (replaced with a
+        longer in the repository) or stolen (replaced with a
         different lock).  Either way, Harry can see this by asking
         <command>svn status</command> to contact the
         repository:</para>
@@ -2641,8 +2645,8 @@ $ svn status
 $
 </screen>
 
-      <para>If the repository lock was broken, then <command>svn
-        status --show-updates</command> displays a
+      <para>If the repository lock was broken, then <userinput>svn
+        status --show-updates</userinput> displays a
         <literal>B</literal> (Broken) symbol next to the file.  If a
         new lock exists in place of the old one, then a
         <literal>T</literal> (sTolen) symbol is shown.  Finally,
@@ -2656,10 +2660,10 @@ $
           lock should be.  Some folks argue that locks must be
           strictly enforced at all costs, releasable only by the
           original creator or administrator.  They argue that if
-          anyone can break a lock, then chaos runs rampant and the
+          anyone can break a lock, chaos runs rampant and the
           whole point of locking is defeated.  The other side argues
           that locks are first and foremost a communication tool.  If
-          users are constantly breaking each others' locks, then it
+          users are constantly breaking each other's locks, it
           represents a cultural failure within the team and the
           problem falls outside the scope of software enforcement.</para>
 
@@ -2694,13 +2698,13 @@ $
 
       <para>For example, suppose Harry locks an image file and then
         begins editing it.  Meanwhile, miles away, Sally wants to do
-        the same thing.  She doesn't think to run <command>svn status
-        --show-updates</command>, so she has no idea that Harry has
+        the same thing.  She doesn't think to run <userinput>svn status
+        --show-updates</userinput>, so she has no idea that Harry has
         already locked the file.  She spends hours editing the file,
         and when she tries to commit her change, she discovers that
         either the file is locked or that she's out of date.
         Regardless, her changes aren't mergeable with Harry's.  One of
-        these two people has to throw away their work, and a lot of
+        these two people has to throw away his or her work, and a lot of
         time has been wasted.</para>
       
       <para>Subversion's solution to this problem is to provide a
@@ -2708,22 +2712,22 @@ $
         <emphasis>before</emphasis> the editing begins.  The mechanism
         is a special property:  <literal>svn:needs-lock</literal>.  If
         that property is attached to a file (regardless of its value,
-        which is irrelevant), then Subversion will try to use
+        which is irrelevant), Subversion will try to use
         filesystem-level permissions to make the file read-only&mdash;unless,
         of course, the user has explicitly locked the file.
-        When a lock token is present (as a result of running
-        <command>svn lock</command>), the file becomes read-write.
+        When a lock token is present (as a result of using
+        <command>svn lock</command>), the file becomes read/write.
         When the lock is released, the file becomes read-only
         again.</para>
 
       <para>The theory, then, is that if the image file has this
-        property attached, then Sally would immediately notice
+        property attached, Sally would immediately notice
         something is strange when she opens the file for editing:
         many applications alert users immediately when a read-only
         file is opened for editing, and nearly all would
         prevent her from saving changes to the file.  This
         reminds her to lock the file before editing, whereby she
-        discovers the pre-existing lock:</para>
+        discovers the preexisting lock:</para>
 
       <screen>
 $ /usr/local/bin/gimp raisin.jpg
@@ -2826,7 +2830,7 @@ $
       When you commit a change to the <literal>svn:externals</literal>
       property, Subversion will synchronize the checked-out items
       against the changed externals definition when you next run
-      <command>svn update</command>.  The same thing will happen when
+      <userinput>svn update</userinput>.  The same thing will happen when
       others update their working copies and receive your changes to
       the externals definition.</para>
 
@@ -2880,7 +2884,7 @@ Fetching external item into calc/third-party/skins
     <para>As of Subversion 1.5, though, a new format of the
       <literal>svn:externals</literal> property is supported.
       Externals definitions are still multiline, but the order and
-      format of the various pieces of information has changed.  The
+      format of the various pieces of information have changed.  The
       new syntax more closely mimics the order of arguments you might
       pass to <command>svn checkout</command>: the optional revision
       flags come first, then the external Subversion repository URL,
@@ -2928,12 +2932,12 @@ http://svn.example.com/skin-maker@21 third-party/skins/toolkit
     </tip>
 
     <para>For most repositories, these three ways of formatting the
-      external definitions have the same ultimate effect.  They all
+      externals definitions have the same ultimate effect.  They all
       bring the same benefits.  Unfortunately, they all bring the same
       annoyances, too.  Since the definitions shown use absolute URLs,
       moving or copying a directory to which they are attached will
       not affect what gets checked out as an external (though the
-      relative local target subdirectory will, of course, move with
+      relative local target subdirectory will, of course, move with the
       renamed directory).  This can be confusing&mdash;even
       frustrating&mdash;in certain situations.  For example, say you
       have a top-level directory named
@@ -2969,7 +2973,7 @@ $
 $ svn move -q my-project renamed-project
 $ svn commit -m "Rename my-project to renamed-project."
 Deleting       my-project
-Adding         my-renamed-project
+Adding         renamed-project
 
 Committed revision 12.
 $ svn update
@@ -2990,12 +2994,12 @@ $
       won't be able to commit anything from the working copies created
       by those externals.  On the other hand, if they use the
       <literal>https://</literal> form of the URLs, anyone who might
-      be checking out via <literal>http://</literal> because their
+      be checking out via <literal>http://</literal> because his
       client doesn't support <literal>https://</literal> will be
       unable to fetch the external items.  Be aware, too, that if you
-      need to re-parent your working copy (using <command>svn switch
-      --relocate</command>), externals definitions will
-      <emphasis>not</emphasis> also be re-parented.</para>
+      need to reparent your working copy (using <command>svn switch</command>
+      with the <option>--relocate</option> option), externals definitions will
+      <emphasis>not</emphasis> also be reparented.</para>
 
    <para>Subversion 1.5 takes a huge step in relieving these
      frustrations.  As mentioned earlier, the URLs used in the new
@@ -3008,25 +3012,25 @@ $
         <term>../</term> 
         <listitem><para>Relative to the URL of the directory on which
           the <literal>svn:externals</literal> property is
-          set.</para></listitem>
+          set</para></listitem>
       </varlistentry>
       <varlistentry>
         <term>^/</term> 
         <listitem><para>Relative to the root of the repository in
           which the <literal>svn:externals</literal> property is
-          versioned.</para></listitem>
+          versioned</para></listitem>
       </varlistentry>
       <varlistentry>
         <term>//</term> 
         <listitem><para>Relative to the scheme of the URL of the
           directory on which the <literal>svn:externals</literal>
-          property is set.</para></listitem>
+          property is set</para></listitem>
       </varlistentry>
       <varlistentry>
         <term>/</term>
         <listitem><para>Relative to the root URL of the server on
           which the <literal>svn:externals</literal> property is
-          versioned.</para></listitem>
+          versioned</para></listitem>
       </varlistentry>
     </variablelist>
 
@@ -3043,15 +3047,15 @@ $ svn propget svn:externals calc
 
     <para>The support that exists for externals definitions in
       Subversion remains less than ideal, though.  An externals
-      definition can only point to directories, not files.  Also, the
+      definition can point only to directories, not to files.  Also, the
       local subdirectory part of the definition cannot contain
       <literal>..</literal> parent directory indicators (such as
       <filename>../../skins/myskin</filename>).  Perhap most
-      disappointinly, the working copies created via the externals
+      disappointingly, the working copies created via the externals
       definition support are still disconnected from the primary
       working copy (on whose versioned directories the
       <literal>svn:externals</literal> property was actually set).
-      And Subversion still only truly operates on nondisjoint working
+      And Subversion still truly operates only on nondisjoint working
       copies.  So, for example, if you want to commit changes that
       you've made in one or more of those external working copies, you
       must run <command>svn commit</command> explicitly on those
@@ -3061,7 +3065,7 @@ $ svn propget svn:externals calc
     <para>We've already mentioned some of the additional shortcomings
       of the old <literal>svn:externals</literal> format and how the
       new Subversion 1.5 format improves upon it.  But be careful when
-      making use of the new format that you don't inadvertantly cause
+      making use of the new format that you don't inadvertently cause
       problems for other folks accessing your repository who are using
       older Subversion clients.  While Subversion 1.5 clients will
       continue to recognize and support the original externals
@@ -3128,7 +3132,7 @@ $ svn propget svn:externals calc
       really want.</para>
 
     <para>And thanks to moves, versioned object history can get far
-      more twisted than that, even.  For example, you might have a
+      more twisted than even that.  For example, you might have a
       directory named <filename>concept</filename>, containing some
       nascent software project you've been toying with.  Eventually,
       though, that project matures to the point that the idea seems to
@@ -3161,13 +3165,13 @@ $ svn propget svn:externals calc
       some reason.</para>
 
     <para>In scenarios like these, attempting to instruct
-      Subversion to work with these re-used paths can be a little like
+      Subversion to work with these reused paths can be a little like
       instructing a motorist in Chicago's West Suburbs to drive east
       down Roosevelt Road and turn left onto Main Street.  In a mere
       20 minutes, you can cross <quote>Main Street</quote> in
       Wheaton, Glen Ellyn, and Lombard.  And no, they aren't the same
       street.  Our motorist&mdash;and our Subversion&mdash;need a
-      little more detail in order to do the right thing.</para>
+      little more detail to do the right thing.</para>
 
     <para>In version 1.1, Subversion introduced a way for you to tell
       it exactly which Main Street you meant.  It's called the
@@ -3200,8 +3204,8 @@ $ svn propget svn:externals calc
       </footnote>
       we can think of <quote>Main Street</quote> as our path and
       <quote>Wheaton</quote> as our peg revision.  These two pieces of
-      information identify a unique path that can be travelled (north or
-      south on Main Street), and they keep us from travelling up and
+      information identify a unique path that can be traveled (north or
+      south on Main Street), and they keep us from traveling up and
       down the wrong Main Street in search of our destination.  Now we
       throw in <quote>606 N.</quote> as our operative revision of
       sorts, and we know <emphasis>exactly</emphasis> where to
@@ -3210,7 +3214,7 @@ $ svn propget svn:externals calc
     <sidebar>
       <title>The Peg Revision Algorithm</title>
       
-      <para>The Subversion command-line performs the peg revision
+      <para>The Subversion command-line client performs the peg revision
         algorithm any time it needs to resolve possible ambiguities in
         the paths and revisions provided to it.  Here's an example of
         such an invocation:</para>
@@ -3220,7 +3224,7 @@ $ svn <replaceable>command</replaceable> -r <replaceable>OPERATIVE-REV</replacea
 </screen>
       
       <para>If <replaceable>OPERATIVE-REV</replaceable> is older than
-        <replaceable>PEG-REV</replaceable>, then the algorithm is as
+        <replaceable>PEG-REV</replaceable>, the algorithm is as
         follows:</para>
 
       <orderedlist>
@@ -3237,7 +3241,7 @@ $ svn <replaceable>command</replaceable> -r <replaceable>OPERATIVE-REV</replacea
         <listitem>
           <para>Perform the requested action on that ancestor,
             wherever it is located, or whatever its name might
-            be or have been at that time.</para>
+            be or might have been at that time.</para>
         </listitem>
       </orderedlist>
 
@@ -3260,7 +3264,7 @@ $ svn <replaceable>command</replaceable> -r <replaceable>OPERATIVE-REV</replacea
             can be only one such object.</para>
         </listitem>
         <listitem>
-          <para>Trace the object's history backwards (through any
+          <para>Trace the object's history backward (through any
             possible renames) to its ancestor in the revision
             <replaceable>PEG-REV</replaceable>.</para>
         </listitem>
@@ -3268,7 +3272,7 @@ $ svn <replaceable>command</replaceable> -r <replaceable>OPERATIVE-REV</replacea
           <para>Verify that the object's location (path-wise) in
             <replaceable>PEG-REV</replaceable> is the same as it is in
             <replaceable>OPERATIVE-REV</replaceable>.  If that's the
-            case, then at least the two locations are known to be
+            case, at least the two locations are known to be
             directly related, so perform the requested action on the
             location in <replaceable>OPERATIVE-REV</replaceable>.
             Otherwise, relatedness was not established, so error out
@@ -3290,24 +3294,24 @@ $ svn <replaceable>command</replaceable> -r <replaceable>OPERATIVE-REV</replacea
     </sidebar>
 
     <para>Say that long ago we created our repository, and in revision 1
-      added our first <filename>concept</filename> directory, plus an
+      we added our first <filename>concept</filename> directory, plus an
       <filename>IDEA</filename> file in that directory talking about
       the concept.  After several revisions in which real code was
       added and tweaked, we, in revision 20, renamed this directory to
       <filename>frabnaggilywort</filename>.  By revision 27, we had a
       new concept, a new <filename>concept</filename> directory to
       hold it, and a new <filename>IDEA</filename> file to describe
-      it.  And then 5 years and 20 thousand revisions flew by,
+      it.  And then five years and thousands of revisions flew by,
       just like they would in any good romance story.</para>
 
     <para>Now, years later, we wonder what the
       <filename>IDEA</filename> file looked like back in revision 1.
-      But Subversion needs to know if we are asking about how the
+      But Subversion needs to know whether we are asking about how the
       <emphasis>current</emphasis> file looked back in revision 1, or
-      if we are asking for the contents of whatever file lived at
+      whether we are asking for the contents of whatever file lived at
       <filename>concepts/IDEA</filename> in revision 1.  Certainly
       those questions have different answers, and because of peg
-      revisions, you can ask question.  To find out how the
+      revisions, you can ask those questions.  To find out how the
       current <filename>IDEA</filename> file looked in that old
       revision, you run:</para>
 
@@ -3329,7 +3333,7 @@ svn: Unable to find repository location for 'concept/IDEA' in revision 1
 
     <para>And when executed, it has the expected results.</para>
 
-    <para>The perceptive reader is probably wondering at this point if
+    <para>The perceptive reader is probably wondering at this point whether
       the peg revision syntax causes problems for working copy paths
       or URLs that actually have at signs in them.  After
       all, how does <command>svn</command> know whether
@@ -3441,15 +3445,15 @@ Index: frabnaggilywort/IDEA
       overlap, modifying different files in the same module, or even
       modifying different lines in the same file.</para>
 
-    <para>There are various work methodologies that developers can
-      employ to keep these logical changes organized.  Some use
+    <para>developers can employ various work methodologies
+      to keep these logical changes organized.  Some use
       separate working copies of the same repository to hold each
       individual change in progress.  Others might choose to create
       short-lived feature branches in the repository and use a single
       working copy that is constantly switched to point to one such
       branch or another.  Still others use <command>diff</command> and
       <command>patch</command> tools to back up and restore uncommitted
-      changes to and from patchfiles associated with each change.
+      changes to and from patch files associated with each change.
       Each of these methods has its pros and cons, and to a large
       degree, the details of the changes being made heavily influence
       the methodology used to distinguish them.</para>
@@ -3540,11 +3544,11 @@ $
 
       <para>Harry now sets off to fix the secondary UI problem.  Since
         he knows which file he'll be changing, he assigns that path to
-        a changelist, too.  Unfortunately, Harry careless assigns this
+        a changelist, too.  Unfortunately, Harry carelessly assigns this
         third file to the same changelist as the previous two files:</para>
 
       <screen>
-$ svn changelist math-fix button.c
+$ svn changelist math-fixes button.c
 Path 'button.c' is now a member of changelist 'math-fixes'.
 $ svn status
 
@@ -3617,7 +3621,7 @@ $
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.changelists.asfilters">
-      <title>Changelists as Operation Filters</title>
+      <title>Changelists As Operation Filters</title>
 
       <para>The visual grouping that Harry sees in the output of
         <command>svn status</command> as shown in our previous section
@@ -3711,7 +3715,7 @@ $
         <para>The <option>--changelist</option> option acts only as a
           filter for Subversion command targets, and will not add
           targets to an operation.  For example, on a commit operation
-          specified as <command>svn commit /path/to/dir</command>, the
+          specified as <userinput>svn commit /path/to/dir</userinput>, the
           target is the directory <filename>/path/to/dir</filename>
           and its children (to infinite depth).  If you then add a
           changelist specifier to that command, only those files in
@@ -3756,7 +3760,7 @@ $
         Changelists are artifacts of a particular working copy, which
         means that changelist assignments cannot be propagated to the
         repository or otherwise shared with other users.  Changelists
-        can only be assigned to files&mdash;Subversion doesn't
+        can be assigned only to files&mdash;Subversion doesn't
         currently support the use of changelists with directories.
         Finally, you can have at most one changelist assignment on a
         given working copy file.  Here is where the blog post category
@@ -3796,10 +3800,10 @@ $
         server responds with an appropriate answer.  The details of
         the network protocol are hidden from the user&mdash;the client
         attempts to access a URL, and depending on the URL scheme, a
-        particular protocol is used to contact the server (see <xref
+        particular protocol is used to contact the server (see the sidebar <xref
         linkend="svn.basic.in-action.wc.sb-1"/>).</para>
 
-      <tip><para>Run <command>svn --version</command> to see
+      <tip><para>Run <userinput>svn --version</userinput> to see
         which URL schemes and protocols the client knows how to
         use.</para>
       </tip>
@@ -3811,26 +3815,26 @@ $
         to the server.  Once authentication is complete, the server
         responds with the original information that the client asked for.
         Notice that this system is different from systems such as CVS,
-        where the client pre-emptively offers credentials (<quote>logs
+        where the client preemptively offers credentials (<quote>logs
         in</quote>) to the server before ever making a request.  In
         Subversion, the server <quote>pulls</quote> credentials by
         challenging the client at the appropriate moment, rather than
         the client <quote>pushing</quote> them.  This makes certain
         operations more elegant.  For example, if a server is
         configured to allow anyone in the world to read a repository,
-        then the server will never issue an authentication challenge
+        the server will never issue an authentication challenge
         when a client attempts to <command>svn checkout</command>.</para>
 
       <para>If the particular network requests issued by the client
-        result in a new revision being created in the repository,
-        (e.g., <command>svn commit</command>), then Subversion uses the
+        result in a new revision being created in the repository
+        (e.g., <command>svn commit</command>), Subversion uses the
         authenticated username associated with those requests as the
         author of the revision.  That is, the authenticated user's
         name is stored as the value of the
         <literal>svn:author</literal> property on the new revision
         (see <xref linkend="svn.ref.properties"/>).  If
-        the client was not authenticated (in other words, if the server
-        never issued an authentication challenge), then the revision's
+        the client was not authenticated (i.e., if the server
+        never issued an authentication challenge), the revision's
         <literal>svn:author</literal> property is empty.
       </para>
 
@@ -3860,7 +3864,7 @@ $
         first looks for the appropriate credentials in the user's disk
         cache.  If seemingly suitable credentials are not present, or
         if the cached credentials ultimately fail to authenticate,
-        then the client will, by default, fall back to prompting the
+        the client will, by default, fall back to prompting the
         user for the necessary information.</para>
 
       <para>The security-conscious reader will suspect immediately
@@ -3886,7 +3890,7 @@ $
             password.  (Note that if the user's Windows account password
             is reset by an administrator, all of the cached passwords
             become undecipherable.  The Subversion client will behave
-            as if they don't exist, prompting for passwords when
+            as though they don't exist, prompting for passwords when
             required.)</para>
         </listitem>
 
@@ -3895,7 +3899,7 @@ $
             all repository passwords in the login keyring (managed by
             the Keychain service), which is protected by the user's
             account password.  User preference settings can impose
-            additional policies, such as requiring the user's account
+            additional policies, such as requiring that the user's account
             password be entered each time the Subversion password is
             used.</para>
         </listitem>
@@ -3913,7 +3917,7 @@ $
 
       <para>Of course, for the truly paranoid, none of these
         mechanisms meets the test of perfection.  So for those folks
-        willing to sacrifice convenience for the ultimate security,
+        willing to sacrifice convenience for the ultimate in security,
         Subversion provides various ways of disabling its credentials
         caching system altogether.</para>
 
@@ -3994,13 +3998,13 @@ END
         authentication behavior, specifically regarding the
         <option>--username</option> and <option>--password</option>
         options.  Many client subcommands accept these options, but it
-        is important to understand using these options does
+        is important to understand that using these options does
         <emphasis>not</emphasis> automatically send credentials to the
         server.  As discussed earlier, the server <quote>pulls</quote>
         credentials from the client when it deems necessary; the
         client cannot <quote>push</quote> them at will.  If a username
-        and/or password are passed as options, they will only be
-        presented to the server if the server requests them.  These
+        and/or password are passed as options, they will be
+        presented to the server only if the server requests them.  These
         options are typically used to authenticate as a different user
         than Subversion would have chosen by default (such as your
         system login name) or when trying to avoid interactive
@@ -4012,7 +4016,7 @@ END
           that it never issues an authentication challenge.  When
           users pass <option>--username</option> and
           <option>--password</option> options to the client, they're
-          surprised to see that they're never used; i.e., new
+          surprised to see that they're never used; that is, new
           revisions still appear to have been committed
           anonymously!</para>
       </note>
@@ -4034,7 +4038,7 @@ END
           <para>If no command-line credentials were provided, or the
             provided ones were invalid, the client looks up the server's
             hostname, port, and realm in the runtime configuration's
-            <filename>auth/</filename> area, to see if appropriate 
+            <filename>auth/</filename> area, to see whether appropriate 
             credentials are cached there.  If so, it attempts to use
             those credentials to authenticate.</para>
         </listitem>
@@ -4054,6 +4058,30 @@ END
         earlier).</para>
 
     </sect2>
+
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.advanced.summary">
+    <title>Summary</title>
+
+    <para>After reading this chapter, you should have a firm grasp on
+      some of Subversion's features that, while perhaps not used
+      <emphasis>every</emphasis> time you interact with your version
+      control system, are certainly handy to know about.  But don't
+      stop here!  Read on to the following chapter, where you'll learn
+      about branches, tags, and merging.  Then you'll have nearly full
+      mastery of the Subversion client.  Though our lawyers won't
+      allow us to promise you anything, this additional knowledge
+      could make you measurably more cool.
+      <footnote>
+        <para>No purchase necessary.  Certains terms and conditions
+          apply.  No guarantee of coolness&mdash;implicit or 
+          otherwise&mdash;exists.  Mileage may vary.</para>
+      </footnote>
+    </para>
 
   </sect1>
 
