@@ -487,8 +487,8 @@ $               # svnserve is now running, listening on port 3690
 </screen>
 
         <para>When running <command>svnserve</command> in daemon mode,
-          you can use the <option>--listen-port=</option> and
-          <option>--listen-host=</option> options to customize the
+          you can use the <option>--listen-port</option> and
+          <option>--listen-host</option> options to customize the
           exact port and hostname to <quote>bind</quote> to.</para>
 
       <para>Once we successfully start <command>svnserve</command> as
@@ -1115,7 +1115,7 @@ $ whoami
 harry
 
 $ svn list svn+ssh://host.example.com/repos/project
-harry@host.example.com's password:  *****
+harryssh@host.example.com's password:  *****
 
 foo
 bar
@@ -1126,16 +1126,16 @@ baz
       <para>In this example, the Subversion client is invoking a local
         <command>ssh</command> process, connecting to
         <literal>host.example.com</literal>, authenticating as the
-        user <literal>harry</literal>, then spawning a private
+        user <literal>harryssh</literal> (according to SSH user
+        configuration), then spawning a private
         <command>svnserve</command> process on the remote machine
-        running as the user <literal>harry</literal>.  The
+        running as the user <literal>harryssh</literal>.  The
         <command>svnserve</command> command is being invoked in tunnel
         mode (<option>-t</option>), and its network protocol is being
         <quote>tunneled</quote> over the encrypted connection by
         <command>ssh</command>, the tunnel agent.
-        <command>svnserve</command> is aware that it's running as the
-        user <literal>harry</literal>, and if the client performs a
-        commit, the authenticated username will be used as the author
+        If the client performs a commit, the authenticated username
+        <literal>harryssh</literal> will be used as the author
         of the new revision.</para>
 
       <para>The important thing to understand here is that the
@@ -1369,7 +1369,7 @@ arding,no-X11-forwarding,no-pty TYPE1 KEY1 harry@example.com
           one line&mdash;since SSH <filename>authorized_keys</filename> 
           files do not even allow the conventional backslash character
           (<literal>\</literal>) for line continuation.  The only
-          reason we've formatted it with a line break is to fit it on
+          reason we've shown it with a line break is to fit it on
           the physical page of a book.</para>
 
       </sect3>
@@ -2742,7 +2742,7 @@ Copied properties for revision 2.
 </screen>
 
           <para>After this is done, we configure the master server's
-            <filename>post-commit</filename> hook script to invoke
+            <literal>post-commit</literal> hook script to invoke
             <command>svnsync</command> on each slave server:</para>
 
           <programlisting>
@@ -2759,8 +2759,8 @@ svnsync sync http://slave3.example.com/svn-proxy-sync &gt; /dev/null 2&gt;&amp;1
             commands to run in the background so that the Subversion
             client isn't left waiting forever for the commit to
             finish.  In addition to this
-            <filename>post-commit</filename> hook, you'll need a
-            <filename>post-revprop-change</filename> hook as well so
+            <literal>post-commit</literal> hook, you'll need a
+            <literal>post-revprop-change</literal> hook as well so
             that when a user, say, modifies a log message, the slave
             servers get that change also:</para>
 
@@ -2784,8 +2784,8 @@ svnsync copy-revprops http://slave3.example.com/svn-proxy-sync ${REV} &gt; /dev/
             won't be able to query the status of locks
             (e.g., <userinput>svn status -u</userinput> will show no
             information about repository locks).  If this bothers you,
-            you can write <filename>post-lock</filename> and
-            <filename>post-unlock</filename> hook scripts that run
+            you can write <literal>post-lock</literal> and
+            <literal>post-unlock</literal> hook scripts that run
             <command>svn lock</command> and <command>svn
             unlock</command> on each slave machine, presumably through
             a remote shell method such as SSH.  That's left as an
