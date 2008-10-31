@@ -2891,15 +2891,27 @@ $ svn merge -r 100:200 http://svn.example.com/repos/trunk
 
     <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
     <sect2 id="svn.branchmerge.advanced.mergeconflicts">
+<!--
       <title>More on Merge Conflicts</title>
+-->
+      <title>Mehr über Konflikte beim Zusammenführen</title>
 
+<!--
       <para>Just like the <command>svn update</command> command,
         <command>svn merge</command> applies changes to your working
         copy.  And therefore it's also capable of creating
         conflicts.  The conflicts produced by <command>svn
           merge</command>, however, are sometimes different, and this
         section explains those differences.</para>
+-->
+      <para>Wie der Befehl <command>svn update</command> wendet auch 
+        <command>svn merge</command> Änderungen auf Ihre Arbeitskopie
+        an.  Und deshalb kann er auch Konflikte erzeugen. Die von
+        <command>svn merge</command> hervorgerufenen Konflikte sind
+        jedoch manchmal anders geartet, und dieser Abschnitt erklärt
+        diese Unterschiede.</para>
 
+<!--
       <para>To begin with, assume that your working copy has no
         local edits.  When you <command>svn update</command> to a
         particular revision, the changes sent by the server will
@@ -2910,7 +2922,20 @@ $ svn merge -r 100:200 http://svn.example.com/repos/trunk
         comparison is exactly equal to what you already have, the
         delta is guaranteed to correctly convert your working copy
         into the right hand tree.</para>
+-->
+      <para>Zunächst gehen wir davon aus, dass Ihre Arbeitskopie keine
+        lokalen Änderungen enthält. Wenn Sie mit <command>svn
+          update</command> auf eine bestimmte Revision aktualisieren,
+        werden die vom Server gesendeten Änderungen immer
+        <quote>sauber</quote> auf Ihre Arbeitskopie angewendet. Der
+        Server erzeugt das Delta, indem er zwei Bäume vergleicht: eine
+        virtuelle Momentaufnahme Ihrer Arbeitskopie und der
+        Revisionsbaum, an dem Sie interessiert sind. Da die linke
+        Seite des Vergleichs völlig gleich zu dem ist, was Sie bereits
+        haben, wird das Delta garantiert Ihre Arbeitskopie korrekt in
+        den rechten Baum überführen.</para>
 
+<!--
       <para>But <command>svn merge</command> has no such guarantees
         and can be much more chaotic: the advanced user can ask the
         server to compare <emphasis>any</emphasis> two trees at all,
@@ -2924,6 +2949,23 @@ $ svn merge -r 100:200 http://svn.example.com/repos/trunk
         <quote>failed hunks,</quote> <command>svn merge</command> will
         similarly complain about <quote>skipped
         targets</quote>:</para>
+-->
+      <para><command>svn merge</command> jedoch kann das nicht
+        gewährleisten und kann viel chaotischer sein: Der
+        fortgeschrittene Benutzer kann den Server auffordern,
+        <emphasis>irgendwelche</emphasis> zwei Bäume miteinander zu
+        vergleichen, sogar solche, die nicht mit der Arbeitskopie in
+        Beziehung stehen! Das bedeutet, dass ein hohes Potenzial für
+        menschliche Fehler besteht. Benutzer werden manchmal die
+        falschen zwei Bäume miteinander vergleichen, so dass ein Delta
+        erzeugt wird, das sich nicht sauber anwenden lässt.
+        <command>svn merge</command> wird sein Bestes geben, um soviel
+        wie möglich vom Delta anzuwenden, doch bei einigen Teilen kann
+        das unmöglich sein. So wie der Unix-Befehl
+        <command>patch</command> sich manchmal über <quote>failed
+          hunks</quote> beschwert, wird sich <command>svn
+          merge</command> ähnlich über <quote>skipped
+        targets</quote> beschweren:</para>
 
       <screen>
 $ svn merge -r 1288:1351 http://svn.example.com/repos/branch
@@ -2938,6 +2980,7 @@ Select: (p) postpone, (df) diff-full, (e) edit,
         (h) help for more options:
 </screen>
 
+<!--
       <para>In the previous example, it might be the case that
         <filename>baz.c</filename> exists in both snapshots of the
         branch being compared, and the resultant delta wants to
@@ -2947,11 +2990,28 @@ Select: (p) postpone, (df) diff-full, (e) edit,
         likely comparing the wrong two trees; it's the classic
         sign of user error.  When this happens, it's easy to
         recursively revert all the changes created by the merge
-        (<userinput>svn revert . --recursive</userinput>), delete any
+        (<userinput>svn revert . - -recursive</userinput>), delete any
         unversioned files or directories left behind after the
         revert, and rerun <command>svn merge</command> with
         different arguments.</para>
+-->
+      <para>Im vorangegangenen Beispiel kann es der Fall gewesen sein,
+        dass <filename>baz.c</filename> in beiden Momentaufnahmen des
+        Zweiges vorkommt, die verglichen werden, und das resultierende
+        Delta den Inhalt der Datei verändern will, die in der
+        Arbeitskopie aber nicht vorhanden ist. Wie auch immer, die
+        <quote>skipped</quote>-Nachricht bedeutet, dass der Benutzer
+        höchstwahrscheinlich die falschen Bäume miteinander
+        vergleicht; es ist das klassiche Zeichen für einen
+        Anwenderfehler. Falls dies passiert, ist es einfach, alle
+        durch das Zusammenführen hervorgerufenen Änderungen rekursiv
+        rückgängig zu machen (<userinput>svn revert .
+          --recursive</userinput>), alle unversionierten Dateien oder
+        Verzeichnisse zu löschen, die nach dem Rückgängigmachen
+        zurückgeblieben sind, und <command>svn merge</command> noch
+        einmal mit unterschiedlichen Argumenten aufzurufen.</para>
 
+<!--
       <para>Also notice that the preceding example shows a conflict
         happening on <filename>glorb.h</filename>.  We already
         stated that the working copy has no local edits: how can a
@@ -2960,7 +3020,20 @@ Select: (p) postpone, (df) diff-full, (e) edit,
         delta to the working copy, that delta may contain textual
         changes that don't cleanly apply to a working file, even if
         the file has no local modifications.</para>
+-->
+      <para>Beachten Sie auch, dass das vorangegangene Beispiel einen
+        Konflikt in <filename>glorb.h</filename> anzeigt. Wir
+        bemerkten bereits, dass die Arbeitskopie keine lokalen
+        Änderungen besitzt: Wie kann da ein Konflikt entstehen? Noch
+        einmal: Weil der Benutzer <command>svn merge</command> dazu
+        verwenden kann, ein altes Delta zu definieren und auf die
+        Arbeitskopie anzuwenden, kann es sein, dass dieses alte Delta
+        textuelle Änderungen enthält, die nicht sauber in eine
+        Arbeitsdatei eingearbeitet werden können, selbst dann nicht,
+        wenn die Datei keine lokalen Änderungen vorzuweisen
+        hat.</para>
 
+<!--
       <para>Another small difference between <command>svn
           update</command> and <command>svn merge</command> is the
         names of the full-text files created when a conflict
@@ -2979,6 +3052,27 @@ Select: (p) postpone, (df) diff-full, (e) edit,
         distinguish between conflicts that happened as a result of an
         update and ones that happened as a result of a
         merge.</para>
+-->
+      <para>Ein weiterer kleiner Unterschied zwischen <command>svn
+          update</command> und <command>svn merge</command> sind die
+        Namen der erzeugten Textdateien, falls ein Konflikt entsteht.
+        In <xref linkend="svn.tour.cycle.resolve"/> sahen wir, dass
+        bei einer Aktualisierung die Dateien namens
+        <filename>filename.mine</filename>,
+        <filename>filename.rOLDREV</filename> und
+        <filename>filename.rNEWREV</filename> erzeugt werden. Falls
+        <command>svn merge</command> einen Konflikt hervorruft,
+        erstellt es jedoch drei Dateien namens
+        <filename>filename.working</filename>,
+        <filename>filename.left</filename> und
+        <filename>filename.right</filename>.  In diesem Fall
+        beschreiben die Begriffe  <quote>left</quote> (links) und
+        <quote>right</quote> (rechts) von welcher Seite des Vergleichs
+        zwischen den beiden Bäumen die Datei hergeleitet wurde. Auf
+        alle Fälle werden Ihnen diese unterschiedlichen Namen dabei
+        helfen, zwischen Konflikten zu unterscheiden, die durch eine
+        Aktualisierung entstanden, und solchen die durch eine
+        Zusammenführung hervorgerufen wurden .</para>
 
     </sect2>
 
