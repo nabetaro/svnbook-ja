@@ -861,6 +861,8 @@
 
     <!-- =============================================================== -->
     <sect2 id="svn.serverconfig.svnserve.invoking">
+ 
+<!--
       <title>Invoking the Server</title>
 
       <para>There are a few different ways to run the
@@ -879,9 +881,31 @@
         <listitem><para>Run <command>svnserve</command> as a Microsoft
             Windows service.</para></listitem>
       </itemizedlist>
+-->
+
+	<title>Der Serverstart</title>
+
+      <para>Es gibt mehrere Möglichkeiten einen <command>svnserve</command>
+      zu starten:
+      </para>
+
+      <itemizedlist>
+        <listitem><para>Den <command>svnserve</command> als eigenständigen Dienst (engl. daemon)
+        starten und auf Anfragen von Clients reagieren lassen.</para></listitem>
+        <listitem><para>Den <command>svnserve</command> bei Bedarf mit Hilfe
+        des Unix Dienstes <command>inetd</command> starten, wenn auf einem 
+        festgelegten Port Anfragen eines SVN-Clients ankommen.</para></listitem>
+        <listitem><para>Einen SSH-Server verwenden um <command>svnserve</command>
+        fallweise über einen SSH-Tunnel zu betreiben. </para></listitem>
+        <listitem><para><command>svnserve</command> als Microsoft Windows Dienst laufen lassen.</para></listitem>
+      </itemizedlist>
+
+
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.serverconfig.svnserve.invoking.daemon">
+      
+<!--
         <title>svnserve as daemon</title>
 
         <para>The easiest option is to run <command>svnserve</command>
@@ -927,10 +951,61 @@ $ svn checkout svn://host.example.com/project1
 &hellip;
 </screen>
 
+-->
+
+
+<title>svnserve als Unix-Dienst</title>
+
+        <para>Die einfachste Variante ist, den <command>svnserve</comma als
+          eigenständigen (Unix-)Dienst laufen zu lassen. Verwenden Sie hierfür
+          die <option>-d</option> Option beim Aufruf:
+          </para>
+
+        <screen>
+$ svnserve -d
+$               # svnserve läuft nun als Dienst und lauscht auf Port 3690
+</screen>
+
+        <para>Wird der <command>svnserve</command> als Dienst betrieben, 
+          können Sie mit den Optionen  <option>--listen-port</option> und
+          <option>--listen-host</option> festlegen auf welchem Port und unter 
+          welchem Hostnamen er lauschen soll.</para>
+
+      <para>Wurde der <command>svnserve</command> auf diese Weise erfolgreich gestartet,
+        stehen nun alle Repositorys auf dem Server für Nutzer im Netzwerk zur Verfügung.
+        Für einen Zugriff muss ein Client den <emphasis>absoluten</emphasis> Pfad zum
+        Repository in der URL angeben. Ist das Repository beispielsweise im Verzeichnis
+        <filename>/var/svn/project1</filename> gespeichert, so sieht eine entsprechende URL
+        für den Zugriff folgendermaßen aus: <uri>svn://host.example.com/var/svn/project1</uri>
+        Um die Sicherheit zu erhöhen kann der <command>svnserve</command> beim Start mit Hilfe
+        der  <option>-r</option> an ein bestimmtes Verzeichnis gebunden werden - so das nur noch
+        die darin liegenden Repositorys im Netz verfügbar sind. Ein Beispiel:</para>
+      
+      <screen>
+$ svnserve -d -r /var/svn
+&hellip;
+</screen>
+
+      <para>Mit der <option>-r</option> - Option wird festgelegt welches
+        Verzeichnis vom <command>svnserve</command> bei Anfragen als
+        Wurzelverzeichnis (engl. root) verwendet wird. Ein Client muss
+        nun in seiner URL nur noch den Pfad relativ zum neuen Wurzelverzeichnis
+        des <command>svnserve</command> angeben, was die URL erheblich verkürzt und
+        die Verzeichnisstruktur etwas verschleiert:</para>
+
+      <screen>
+$ svn checkout svn://host.example.com/project1
+&hellip;
+</screen>
+
+
       </sect3>
+
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.serverconfig.svnserve.invoking.inetd">
+      
+<!--
         <title>svnserve via inetd</title>
 
         <para>If you want <command>inetd</command> to launch the
@@ -981,9 +1056,63 @@ svn stream tcp nowait svnowner /usr/bin/svnserve svnserve -i
         exported.</para>
 
       </sect3>
+-->
+
+
+<title>svnserve über inetd starten</title>
+
+        <para>Wenn Sie den <command>inetd</command> zum Start des 
+          <command>svnserve</command>-Prozesses verwenden wollen,
+          so übergeben Sie dem <command>svnserve</command> beim Aufruf
+          die Option <option>-i</option> (<option>--inetd</option>). Im folgenden Beispiel sehen
+          wir die Ausgaben beim Aufruf von <literal>svnserve -i</literal>
+          auf der Kommandozeile. Beachten Sie aber bitte das dies nicht
+          der Weg ist wie der Dienst normalerweise gestartet wird - eine genaue
+          Beschreibung wie der <command>svnserve</command> mittels des <command>inetd</command> gestartet
+          wird folgt anschließend.</para>
+
+      <screen>
+$ svnserve -i
+( success ( 1 2 ( ANONYMOUS ) ( edit-pipeline ) ) )
+</screen>
+
+      <para>Mit der <option>--inetd</option>-Option versucht der <command>svnserve</command>
+        mit dem Subversion-Client unter Verwendung eines Standardprotokolls via   
+       <filename>stdin</filename> und <filename>stdout</filename> zu sprechen.
+       Dies ist der normale Weg für ein Programm welches mit Hilfe des  <command>inetd</command>
+       gestartet wurde. Die IANA (Internet Assigned Numbers Authority) hat für das 
+       Subversionsprotokoll den Port 3690 reserviert - auf einem Unix-ähnlichem System
+       fügen Sie einfach folgende Zeilen (wenn noch nicht vorhanden) in die Datei 
+       <filename>/etc/services</filename> ein:</para>
+
+      <screen>
+svn           3690/tcp   # Subversion
+svn           3690/udp   # Subversion
+</screen>
+
+      <para>Wenn Sie den klassischen Unix-<command>inetd</command>
+        verwenden, fügen Sie bitte folgende Zeile in die Datei <filename>/etc/inetd.conf</filename> ein:</para>
+
+      <screen>
+svn stream tcp nowait svnowner /usr/bin/svnserve svnserve -i
+</screen>
+
+      <para>Stellen Sie sicher das <quote>svnowner</quote> der Nutzer ist
+        welcher alle notwendigen Zugriffsrechte auf ihre Repositories hat.
+        Kommt nun eine Anfrage eines Subversionsclient auf Port 3690 rein,
+        so wird der  <command>inetd</command> einen <command>svnserve</command>-
+        Prozess starten um die Anfrage zu bedienen. Wahrscheinlich möchten Sie
+        noch die <option>-r</option>-Option zur oben genannten Zeile hinzu fügen,
+        um festzulegen welche Repositories exportiert werden.</para>
+
+      </sect3>
+
+
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.serverconfig.svnserve.invoking.tunnel">
+      
+<!--
         <title>svnserve over a tunnel</title>
 
         <para>A third way to invoke <command>svnserve</command> is in
@@ -1012,9 +1141,37 @@ svn stream tcp nowait svnowner /usr/bin/svnserve svnserve -i
           linkend="svn.serverconfig.svnserve.sshauth"/>.</para>
 
       </sect3>
+-->
+
+
+<title>svnserve über eine Tunnel verwenden</title>
+
+        <para>Eine dritte Möglichkeit ist den <command>svnserve</command> mittels
+          der <option>-t</option> - Option im Tunnel-Modus aufzurufen.
+          Bei diesem Aufruf wird vorausgesetzt das ein anderes Programm für
+          den Remote-Zugriff - etwa <command>rsh</command> oder <command>ssh</command> -
+          den Nutzer bereits erfolgreich authentifiziert hat, um nun einen privaten
+          <command>svnserve</command>-Prozess unter <emphasis>diesem Nutzer</emphasis>
+          zu starten. (Beachten Sie das für Sie, als Nutzer, selten bis nie die
+          Notwendigkeit bestehen wird den <command>svnserve</command> mit der 
+          <option>-t</option> - Option von Hand auf der Kommandozeile aufzurufen - 
+          der SSH-Dienst wird dies in der Regel für Sie machen.) Der <command>svnserve</command>
+          wird sich nun normal verhalten (abwickeln der Kommunikation via <filename>stdin</filename>
+          und <filename>stdout</filename>) und davon ausgehen das alle Daten mit Hilfe des Tunnels
+          zum Client weiter geleitet werden. Wird der <command>svnserve</command> wie in diesem Fall
+          durch ein Tunnel-Programm aufgerufen, ist es notwendig das der aufrufende Nutzer volle Lese-
+          und Schreibrechte  auf die Dateien der Repository-Datenbank hat.
+          Es verhält sich dabei im Grunde genommen so, als wenn der Nutzer mit der  
+          <literal>file://</literal>-URL auf ein Repository zugreifen würde.</para>
+
+        <para>Wir werden diese Option noch genau in diesem Kapitel behandeln und zwar in <xref
+          linkend="svn.serverconfig.svnserve.sshauth"/>.</para>
+
+      </sect3>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.serverconfig.svnserve.invoking.winservice">
+<!--
         <title>svnserve as Windows service</title>
 
         <para>If your Windows system is a descendant of Windows NT
@@ -1104,6 +1261,90 @@ C:\&gt; net start svn
       </sect3>
 
     </sect2>
+ -->
+    
+ <title>svnserve als Dienst unter Windows</title>
+
+        <para>Gehört ihr Windows zur NT-Familie (2000, 2003, XP oder Vista),
+          so können Sie den <command>svnserve</command> auch als normalen
+          Windows-Dienst laufen lassen. Dies ist wesentlich sinnvoller als
+          die <option>--daemon (-d)</option> - Option zu verwenden und ihn
+          als Standalone-Dienst zu betreiben. Sie müssten dann immer eine
+          Konsole (cmd) öffnen, den passenden Befehl aufrufen und die Konsole
+          anschließend die ganze Zeit geöffnet lassen. Ein Windows-Dienst dagegen
+          läuft im Hintergrund, kann bereits beim Hochfahren des Servers 
+          automatisch starten und läßt sich wie jeder andere Windows-Dienst auch
+          mit dem selben Administrationsprogramm starten und stoppen.</para>
+
+        <para>Es ist notwendig den neuen Windows-Dienst unter Verwendung des
+          Kommandozeilenprogramms <command>SC.EXE</command> einzurichten.
+          Ähnlich der <command>inetd</command>-Konfigurationszeile
+          müssen Sie den genauen Aufruf für den Start des
+          <command>svnserve</command> festlegen:</para>
+
+        <screen>
+C:\&gt; sc create svn
+        binpath= "C:\svn\bin\svnserve.exe --service -r C:\repos"
+        displayname= "Subversion Server"
+        depend= Tcpip
+        start= auto
+</screen>
+
+        <para>Hiermit erzeugen Sie einen neuen Windows-Dienst mit dem
+          Namen <quote>svn</quote>, welcher jedes mal das Programm
+          <command>svnserve.exe</command> startet (und in diesem Fall
+          <filename>C:\repos</filename> als Wurzelverzeichnis verwendet).
+          In diesem Beispiel müssen einige wichtige Punkte beachtet werden.</para>
+
+        <para>Als erstes ist es wichtig, dass das Programm <command>svnserve.exe</command>
+          immer mit der Option <option>--service</option> aufgerufen wird.
+          Alle weiteren Optionen müssen in der selben Zeile folgen, allerdings
+          dürfen sich widersprechende Option nicht verwendet werden - wie etwa
+          <option>--daemon (-d)</option>, <option>--tunnel</option> oder <option>--inetd (-i)</option>.
+          Optionen wie <option>-r</option> oder <option>--listen-port</option> sind 
+          hingegen in Ordnung. Zweitens, seien Sie beim Aufruf von <command>SC.EXE</command>
+          mit Leerzeichen vorsichtig: Beim Schreiben der <literal>Schlüssel= Wert</literal> - Zeile
+          darf zwischen dem <literal>Schlüssel</literal> und dem <literal>=</literal> kein 
+          Leerzeichen stehen, danach dann ein Leerzeichen und dann der <literal>Wert</literal>.
+          Seien Sie zuletzt auch bei der Verwendung von Leerzeichen innerhalb ihres 
+          Kommandozeilenaufrufes vorsichtig. Sollten Verzeichnisangaben etwa Leerzeichen
+          (oder andere zu schützende Zeichen) enthalten, so umschließen Sie sie mit
+          zusätzlichen doppelten Anführungszeichen:</para>
+
+        <screen>
+C:\&gt; sc create svn
+        binpath= "\"C:\program files\svn\bin\svnserve.exe\" --service -r C:\repos"
+        displayname= "Subversion Server"
+        depend= Tcpip
+        start= auto
+</screen>
+
+        <para>Beachten Sie bitte auch, dass das Wort <literal>binpath</literal>
+          etwas irreführend ist - sein Wert ist eine <emphasis>Kommandozeile</emphasis>
+          und nicht der Pfad zu einem Programm. Dies ist der Grund warum
+          Sie vorhandene Leerzeichen mit doppelten Anführungszeichen schützen müssen.</para>
+
+        <para>Ist der Dienst erstmal eingerichtet, können Sie ihn mit Hilfe
+          von grafischen Programmen (etwa der Microsoft Management Console)
+          stoppen, starten oder seinen Status abfragen. Alternativ steht ihnen
+          auch die Kommandozeile zur Verfügung:</para>
+
+        <screen>
+C:\&gt; net stop svn
+C:\&gt; net start svn
+</screen>
+
+        <para>Der Dienst kann natürlich auch wieder deinstalliert werden indem
+          Sie den Befehl <userinput>sc delete svn</userinput> aufrufen.
+          Stoppen Sie den Dienst aber vorher!
+          Das Programm <command>SC.EXE</command> kennt noch etliche andere nützliche
+          Optionen und Parameter, ein Aufruf von <userinput>sc /?</userinput> verrät
+          ihnen welche das sind.</para>
+
+      </sect3>
+
+    </sect2>
+ 
 
     <!-- =============================================================== -->
     <sect2 id="svn.serverconfig.svnserve.auth">
