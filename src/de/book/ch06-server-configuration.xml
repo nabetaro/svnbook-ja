@@ -1348,6 +1348,8 @@ C:\&gt; net start svn
 
     <!-- =============================================================== -->
     <sect2 id="svn.serverconfig.svnserve.auth">
+<!--
+
       <title>Built-in Authentication and Authorization</title>
 
       <para>When a client connects to an <command>svnserve</command>
@@ -1422,6 +1424,75 @@ C:\&gt; net start svn
         contains specific variables that can be set (<literal>variable
         = value</literal>).  Let's walk through these files and learn
         how to use them.</para>
+-->
+
+
+<title>Integrierte Authentifikation und Autorisation</title>
+
+      <para>Wenn sich ein Subversionsclient mit einem laufendem <command>svnserve</command>-
+        Prozess verbindet, geschieht folgendes:</para>
+
+      <itemizedlist>
+        <listitem><para>Der Client wählt ein bestimmtes Repository.</para></listitem>
+
+        <listitem><para>Der Server liest die zum Repository gehörende Datei <filename>conf/svnserve.conf</filename>
+        und führt die darin enthaltenden Regeln für die Authentifikation (Legitimation, Identitätsprüfung)
+        und die Autorisation (Berechtigungen, Befugnisse) aus.</para></listitem>
+
+        <listitem><para>Je nach festlegten Regeln und Einstellungen geht es mit einen
+        der folgenden Punkten weiter:</para>
+
+          <itemizedlist>
+            <listitem><para>Der Client kann seine Anfragen anonym, also ohne eine 
+              vorhergehende Authentifikationsanfrage senden.</para></listitem>
+
+            <listitem><para>Der Client kann jederzeit eine Anmeldeaufforderung erhalten.</para></listitem>
+
+            <listitem><para>Läuft die Verbindung über einen Tunnel, so erklärt der Client,
+              dass eine externe Anmeldung stattgefunden hat (meistens durch SSH).</para></listitem>
+          </itemizedlist>
+        </listitem>
+
+      </itemizedlist>
+
+      <para>Der <command>svnserve</command> - Server beherrscht als Standardeinstellung
+        nur den CRAM-MD5
+       <footnote>
+          <para>See RFC 2195.</para>
+        </footnote>
+        -Anmeldedialog. Im Kern läuft dieser wie folgt ab:
+        Der Server sendet einen kleinen Datensatz als Anfrage an den Client. 
+        Dieser erzeugt mittels des MD5-Hash-Algorithmus einen 
+        Fingerprint/Hash des Passwortes zusammen mit dem Datensatz
+        und sendet diesen Fingerprint als Antwort zurück an den Server.
+        Der Server vollzieht nun die selbe Operation mit dem Passwort und dem
+        Datensatz und vergleicht anschließend seinen Fingerprint mit dem 
+        des Clients. Während des ganzen Vorgangs wird das eigentliche Passwort
+        nicht einmal über das Netzwerk gesendet.</emphasis></para>
+
+      <para>Enthält ihr <command>svnserve</command> - Server Unterstützung für
+        SASL, so beherrscht er nicht nur die CRAM-MD5-Anmeldung, sondern noch 
+        eine Menge an anderen Verfahren zur Authentifikation.
+        Lesen Sie <xref linkend="svn.serverconfig.svnserve.sasl"/> weiter unten
+        um zu lernen wie die einzelnen Möglichkeiten zur Authentifikation
+        und Verschlüsselung in SASL eingerichtet werden.</para>
+
+      <para>Es ist selbstverständlich auch möglich, dass sich der Client
+        über ein eigenständiges Tunnel-Programm anmeldet, etwa <command>ssh</command>.
+        In einem solchem Fall stellt der Server nur fest unter welchem Nutzer
+        er gestartet wurde, und verwendet diesen für die weitere Anmeldung.
+        Mehr dazu im Kapitel <xref linkend="svn.serverconfig.svnserve.sshauth"/>.</para>
+
+      <para>Wie Sie sicher bereits bemerkt haben, ist die Datei <filename>svnserve.conf</filename>
+        in jedem Repository die zentrale Anlaufstelle für alle Regeln im Rahmen der
+        Nutzeranmeldung und Rechtevergabe. Die Datei hat das selbe Format wie die anderen
+        Konfigurationsdateien auch (siehe <xref linkend="svn.advanced.confarea"/>):
+        Die Abschnittsbezeichnugen sind von eckigen Klammern umschlossen 
+        (<literal>[</literal> und <literal>]</literal>), Kommentare werden mit Rauten
+        (<literal>#</literal>) eingeleitet und jeder Abschnitt enthält spezielle Variablen
+        denen Werte zugewiesen werden (<literal>variable = value</literal>).
+        Lassen Sie uns einen Blick in diese Dateien werfen um zu sehen wie sie verwendet werden.</para>
+
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.serverconfig.svnserve.auth.users">
