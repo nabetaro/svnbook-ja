@@ -1,6 +1,10 @@
 <chapter id="svn.reposadmin">
+<!--
   <title>Repository Administration</title>
+-->
+  <title>Verwaltung des Repositorys</title>
 
+<!--
   <para>The Subversion repository is the central storehouse of all
     your versioned data.  As such, it becomes an obvious candidate for
     all the love and attention an administrator can offer.  While the
@@ -8,7 +12,16 @@
     understand how to properly configure and care for it so that
     potential problems are avoided, and so actual problems are safely
     resolved.</para>
+-->
+  <para>Das Subversion-Repository ist die zentrale Lagerhalle für
+    Ihre versionierten Daten. In dieser Rolle kann es sich aller Liebe
+    und Zuneigung des Administrators gewiss sein. Obwohl das
+    Repository an sich im Allgemeinen wenig Pflege erfordert, ist es
+    wichtig, zu wissen, wie es angemessen konfiguriert und gepflegt
+    wird, um etwaige Probleme zu vermeiden und bestehende Probleme
+    sicher aufzulösen.</para>
 
+<!--
   <para>In this chapter, we'll discuss how to create and configure a
     Subversion repository.  We'll also talk about repository
     maintenance, providing examples of how and when to use the
@@ -16,7 +29,17 @@
     provided with Subversion.  We'll address some common questions and
     mistakes and give some suggestions on how to arrange the data in
     the repository.</para>
+-->
+  <para>In diesem Kapitel werden wir erörtern, wie ein
+    Subversion-Repository aufgesetzt und konfiguriert wird. Wir werden
+    auch über die Repository-Pflege reden und Beispiele dafür geben,
+    wann und wie die mit Subversion mitgelieferten Werkzeuge
+    <command>svnlook</command> und <command>svnadmin</command>
+    verwendet werden. Wir werden einige verbreitete Fragen und Fehler
+    besprechen und Vorschläge unterbreiten, wie die Daten im
+    Repository organisiert werden können.</para>
 
+<!--
   <para>If you plan to access a Subversion repository only in the
     role of a user whose data is under version control (i.e., via
     a Subversion client), you can skip this chapter altogether.
@@ -29,14 +52,32 @@
         data hangs out.</para>
     </footnote>
     this chapter is for you.</para>
+-->
+  <para>Falls Sie vorhaben, das Repository lediglich in der Rolle
+    eines Benutzers zu verwenden, der seine Daten unter
+    Versionskontrolle stellen möchte (d.h. über einen
+    Subversion-Client), können Sie dieses Kapitel vollständig
+    überspringen. Wenn Sie jedoch ein
+    Subversion-Repository-Administrator sind oder werden wollen
+    <footnote>
+      <para>Das hört sich vielleicht prestigeträchtig und hochmütig
+        an, doch wir meinen lediglich jeden, der an diesem mysteriösen
+        Bereich hinter der Arbeitskopie interessiert ist, wo sich alle
+        Daten befinden.</para>
+    </footnote>,
+    dann ist dieses Kapitel für Sie gemacht.</para>
 
 
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.reposadmin.basics">
+<!--
     <title>The Subversion Repository, Defined</title>
+-->
+    <title>Das Subversion Repository, Definition</title>
 
+<!--
     <para>Before jumping into the broader topic of repository
       administration, let's further define what a repository is.  How
       does it look?  How does it feel?  Does it take its tea hot or
@@ -46,7 +87,20 @@
       acts with respect to non-Subversion tools&mdash;and from a
       logical perspective&mdash;dealing with how data is represented
       <emphasis>inside</emphasis> the repository.</para>
+-->
+    <para>Bevor wir uns in das weite Feld der Repository-Verwaltung
+      begeben, wollen wir definieren, was ein Repository ist. Wie
+      sieht es aus? Wie fühlt es sich an? Trinkt es seinen Tee heiß
+      oder mit Eis, gesüßt oder mit Zitrone? Als Administrator wird
+      von Ihnen erwartet, dass Sie den Aufbau eines Repositorys sowohl
+      auf der physischen Betriebssystemebene verstehen &ndash; wie sich
+      ein Subversion-Repository aussieht und wie es sich gegenüber
+      Nicht-Subversion-Werkzeugen verhält &ndash; als auch aus einer
+      logischen Perspektive &ndash; wie Daten
+      <emphasis>innerhalb</emphasis> des Repositorys repräsentiert
+      werden.</para>
 
+<!--
     <para>Seen through the eyes of a typical file browser application
       (such as Windows Explorer) or command-line based filesystem
       navigation tools, the Subversion repository is just another
@@ -58,68 +112,118 @@
       chaos.  So a shallow glance into a typical repository from a
       nuts-and-bolts perspective is sufficient to reveal the basic
       components of the repository:</para>
-            
+-->
+    <para>Mit den Augen eines typischen Dateibrowsers (wie Windows
+      Explorer) oder von kommandozeilenorientierten
+      Dateisystem-Navigationswerkzeugen ist das Subversion-Repository
+      bloß ein weiteres gewöhnliches Verzeichnis voller Zeugs. Es gibt
+      einige Unterverzeichnisse mit Konfigurationsdateien, die für
+      Menschen lesbar sind, einige Unterverzeichnisse mit weniger
+      lesbaren Datendateien usw. Wie in anderen Bereichen des
+      Subversion-Designs, wird auch hier viel Wert auf Modularität
+      gesetzt, und hierarchische Organisation wird vollgepfropftem
+      Chaos vorgezogen. Ein flacher Blick in ein typisches Repository
+      aus praxisbezogener Sicht reicht aus, um die grundlegenden
+      Komponenten des Repositorys zu offenbaren.</para>
+
     <screen>
 $ ls repos
 conf/  dav/  db/  format  hooks/  locks/  README.txt
 </screen>
 
+<!--
     <para>Here's a quick fly-by overview of what exactly you're seeing
       in this directory listing.  (Don't get bogged down in the
       terminology&mdash;detailed coverage of these components exists
       elsewhere in this and other chapters.)</para>
+-->
+    <para>Hier ist ein schneller, oberflächlicher Überblick über das,
+      was Sie in diesem Verzeichnislisting sehen. (Verzetteln Sie sich
+      nicht mit den Fachausdrücken &ndash; eine detaillierte
+      Behandlung dieser Komponenten erfolgt an anderer Stelle in
+      diesem und in anderen Kapiteln.)</para>
 
     <variablelist>
       <varlistentry>
         <term>conf</term>
         <listitem>
+<!--
           <para>A directory containing configuration files</para>
+-->
+          <para>Ein Verzeichnis, das Konfigurationsdateien enthält.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>dav</term>
         <listitem>
+<!--
           <para>A directory provided to
             <filename>mod_dav_svn</filename> for its private
             housekeeping data</para>
+-->
+          <para>Ein Verzeichnis, das  bereitgestellt wurde, damit
+            <filename>mod_dav_svn</filename> seine privaten
+            Verwaltungsdaten dort ablegen kann</para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>db</term>
         <listitem>
+<!--
           <para>The data store for all of your versioned data</para>
+-->
+          <para>Der Datenspeicher für all Ihre versionierten Daten</para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>format</term>
         <listitem>
+<!--
           <para>A file that contains a single integer that
             indicates the version number of the repository layout</para>
+-->
+          <para>Eine Datei, die eine einzelne Ganzzahl beinhaltet, die
+            die Version der Repository-Struktur angibt</para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>hooks</term>
         <listitem>
+<!--
           <para>A directory full of hook script templates (and hook
             scripts themselves, once you've installed some)</para>
+-->
+          <para>Ein Verzeichnis voller Hook-Script-Vorlagen (und den
+            eigentlichen Hook-Scripten, sofern Sie welche installiert
+            haben)</para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>locks</term>
         <listitem>
+<!--
           <para>A directory for Subversion's repository lock
             files, used for tracking accessors to the repository</para>
+-->
+          <para>Ein Verzeichnis für die Sperrdateien des
+            Subversion-Repositorys, die benutzt werden, um die
+            Zugreifenden auf das Repository zu verfolgen</para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>README.txt</term>
         <listitem>
+<!--
           <para>A file whose contents merely inform its readers that
             they are looking at a Subversion repository</para>
+-->
+          <para>Eine Datei, deren Inhalt die Leser darüber informiert,
+            dass sie in ein Subversion-Repository schauen</para>
         </listitem>
       </varlistentry>
     </variablelist>
 
+<!--
     <para>Of course, when accessed via the Subversion libraries, this
       otherwise unremarkable collection of files and directories
       suddenly becomes an implementation of a virtual, versioned
@@ -131,6 +235,19 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
       revisions, keeping all the changes you've ever made to them
       safely stored and forever accessible.  This is where the
       entirety of your versioned data lives.</para>
+-->
+    <para>Selbstverständlich wird diese sonst so unauffällige
+      Ansammlung aus Dateien und Verzeichnissen, wenn auf sie über die
+      Subversion-Bibliotheken zugegriffen wird, eine Implementierung
+      eines virtuellen, versionierten Dateisystems, vollständig mit
+      anpassbaren Ereignis-Triggern. Dieses Dateisystem hat seine
+      eigene Auffassung von Verzeichnissen und Dateien, sehr ähnlich
+      den Auffassungen, die echte Dateisysteme (wie NTFS, FAT32, ext3
+      usw.) von solchen Dingen haben. Aber dies ist ein spezielles
+      Dateisystem &ndash; es hängt diese Dateien und Verzeichnisse an
+      Revisionen und hält alle Änderungen, die Sie daran vorgenommen
+      haben, sicher abgespeichert und für immer abrufbereit. Hier lebt
+      die Gesamtheit Ihrer versionierten Daten.</para>
 
   </sect1>
  
