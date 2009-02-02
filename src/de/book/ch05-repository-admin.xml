@@ -1034,13 +1034,22 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
       <sect3 id="svn.reposadmin.basics.backends.bdb">
         <title>Berkeley DB</title>
         
+<!--
         <para>When the initial design phase of Subversion was in
           progress, the developers decided to use Berkeley DB for a
           variety of reasons, including its open source license,
           transaction support, reliability, performance, API
           simplicity, thread safety, support for cursors, and so
           on.</para>
+-->
+        <para>In der anfänglichen Entwurfsphase von Subversion
+          entschieden sich die Entwickler aus einer Reihe von Gründen,
+          Berkeley DB zu verwenden. Hierzu zählen die quelloffene
+          Lizenz, Transaktionsunterstützung, Zuverlässigkeit,
+          Arbeitsleistung, Einfachheit der Programmierschnittstelle,
+          Thread-Sicherheit, Cursor-Unterstützung usw.</para>
 
+<!--
         <para>Berkeley DB provides real transaction
           support&mdash;perhaps its most powerful feature.  Multiple
           processes accessing your Subversion repositories don't have
@@ -1055,7 +1064,25 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           it never happened, and Subversion gracefully retries the
           operation against a new, updated (and yet still static) view
           of the database.</para>
+-->
+        <para>Berkeley DB bietet echte Transaktionsunterstützung
+          &ndash; vielleicht seine stärkste Funktion. Mehrere
+          Prozesse, die auf Ihre Subversion-Repositorys zugreifen,
+          brauchen sich keine Sorgen machen, dass sie sich
+          versehentlich gegenseitig die Daten zerschießen. Die durch
+          das Transaktiossystem gebotene Isolation bedeutet, dass der
+          Subversion-Repository-Programmcode für jede gegebene
+          Operation eine statische Sicht auf die Datenbank hat &ndash;
+          keine sich durch die Einflüsse anderer Prozesse ständig
+          ändernde Datenbank &ndash; und basierend auf dieser Sicht
+          Entscheidungen treffen kann. Falls die getroffene
+          Entscheidung zu einem Konflikt damit führt, was eine anderer
+          Prozess macht, wird die gesamte Transaktion zurückgerollt,
+          als wäre sie nie passiert, und Subversion versucht höflich,
+          die Operation mithilfe einer aktualisierten (aber immer noch
+          statischen) Sicht der Datenbank erneut durchzuführen.</para>
 
+<!--
         <para>Another great feature of Berkeley DB is <firstterm>hot
           backups</firstterm>&mdash;the ability to back up the
           database environment without taking it
@@ -1064,7 +1091,18 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           linkend="svn.reposadmin.maint.backup"/>), but the benefits
           of being able to make fully functional copies of your
           repositories without any downtime should be obvious.</para>
+-->
+        <para>Eine weitere großartige Funktion von Berkeley DB sind
+          <firstterm>Hot Backups</firstterm> &ndash; die Fähigkeit,
+          die Datenbankumgebung zu sichern, ohne sie <quote>vom
+          Netz</quote> zu nehmen. Wir besprechen später in diesem
+          Kapitel, wie Sie Ihr Repository sichern (in <xref
+          linkend="svn.reposadmin.maint.backup"/>), doch sollten die
+          Vorteile offensichtlich sein, die dadurch entstehen, dass
+          Sie vollständige Sicherheitskopien Ihrer Repositorys ohne
+          Wartungszeiträume machen können.</para>
 
+<!--
         <para>Berkeley DB is also a very reliable database system when
           properly used.  Subversion uses Berkeley DB's logging
           facilities, which means that the database first writes to
@@ -1077,7 +1115,25 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           transactions until the data is restored to a usable state.
           See <xref linkend="svn.reposadmin.maint.diskspace"/> later
           in this chapter for more about Berkeley DB logfiles.</para>
+-->
+        <para>Bei Berkeley DB handelt es sich auch um ein sehr
+          zuverlässiges Datenbanksystem, wenn es richtig verwendet
+          wird. Subversion benutzt das Protokollierungssystem von
+          Berkeley DB, was bedeutet, dass die Datenbank zunächst eine
+          Beschreibung der Veränderungen in Protokolldateien auf der
+          Platte schreibt, bevor die Veränderungen selbst durchgeführt
+          werden. Dies stellt sicher, dass, falls etwas schief geht,
+          die Datenbank zu einem früheren
+          <firstterm>Sicherungspunkt</firstterm> zurückgehen kann
+          &ndash; eine Stelle in den Protokolldateien, von der bekannt
+          ist, dass sie eine nicht beschädigte Datenbank bezeichnet
+          &ndash; und Transaktionen solange wiederholen kann, bis die
+          Daten sich wieder in einem brauchbaren zustand befinden.
+          Siehe <xref linkend="svn.reposadmin.maint.diskspace"/>
+          weiter unten in diesem Kapitel für weitere Informationen zu
+          Berkeley-DB-Protokolldateien.</para>
 
+<!--
         <para>But every rose has its thorn, and so we must note some
           known limitations of Berkeley DB.  First, Berkeley DB
           environments are not portable.  You cannot simply copy a
@@ -1089,7 +1145,22 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           operate on Windows 95/98 systems&mdash;if you need to house
           a BDB-backed repository on a Windows machine, stick with
           Windows 2000 or later.</para>
+-->
+        <para>Doch keine Rose ohne Dornen, uns so müssen wir auch
+          einige bekannte Einschränkungen von Berkeley DB ansprechen.
+          Erstens sind Berkeley-DB -Umgebungen nicht portierbar. Sie
+          können nicht einfach ein unter Unix erzeugtes
+          Subversion-Repository auf ein Windows-System kopieren und
+          erwarten, dass es funktioniert. Obwohl ein Großteil des
+          Berkeley-DB-Datenbankformats architekturunabhängig ist, sind
+          es andere Teile der Umgebung nicht. Zweitens benutzt
+          Subversion Berkeley DB auf eine Weise, die nicht auf Windows
+          95/98 funktioniert &ndash; falls Sie ein BDB-basiertes
+          Repository auf einer Windows-Maschine unterbringen müssen,
+          bleiben Sie bei Windows 2000 oder einem seiner
+          Nachfolger.</para>
 
+<!--
         <para>While Berkeley DB promises to behave correctly on
           network shares that meet a particular set of specifications,
           <footnote>
@@ -1105,7 +1176,24 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           clients of that share at once (which quite often is the
           whole point of having the repository live on a network share
           in the first place).</para>
+-->
+        <para>Obwohl Berkeley DB verspricht, sich korrekt auf
+          freigegebenen Netzlaufwerken zu verhalten, die bestimmte
+          Anforderungen erfüllen
+          <footnote>
+            <para>Berkeley DB setzt voraus, dass das zugrundeliegende
+              Dateisystem strenge POSIX-Sperrmechanismen implementiert
+              und, noch wichtiger, die Fähigkeit mitbringt, Dateien
+              direkt in den Prozessspeicher abzubilden.</para>
+          </footnote>, bieten die meisten Netz-Dateisysteme
+          <emphasis>keine</emphasis> derartige Unterstützung. Und
+          keinesfalls dürfen Sie zulassen, dass gleichzeitig von
+          mehreren Clients auf ein BDB-basiertes Repository auf einer
+          Netzfreigabe zugegriffen wird (was eigentlich der Hauptgrund
+          dafür ist, das Repository auf einer Netzfreigabe
+          unterzubringen).</para>
 
+<!--
         <warning>
           <para>If you attempt to use Berkeley DB on a noncompliant
             remote filesystem, the results are unpredictable&mdash;you
@@ -1115,7 +1203,20 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
             FSFS data store for repositories that need to live on a
             network share.</para>
         </warning>
-          
+-->
+        <warning>
+          <para>Falls Sie versuchen sollten, Berkeley DB auf einem
+            Netz-Dateisystem unterzubringen, das die Anforderungen
+            nicht erfüllt, ist das Ergebnis unvorhersehbar &ndash; es
+            kann sein, dass Sie sofort mysteriöse Fehler wahrnehmen
+            oder es kann Monate dauern, bis Sie bemerken, dass Ihre
+            Repository-Datenbank fast unmerklich beschädigt ist. Sie
+            sollten ernsthaft erwägen, das FSFS-Speicherverfahren für
+            Repositorys zu verwenden, die auf einer Netzfreigabe
+            untergebracht werden sollen.</para>
+        </warning>
+
+<!--
         <para>Finally, because Berkeley DB is a library linked
           directly into Subversion, it's more sensitive to
           interruptions than a typical relational database system.
@@ -1135,8 +1236,33 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           Other things can cause a repository to <quote>wedge</quote>
           besides crashed processes, such as programs conflicting over
           ownership and permissions on the database files.</para>
+-->
+        <para>Schließlich ist Berkeley DB empfindlicher gegenüber
+          Unterbrechungen als ein typisches relationales
+          Datenbanksystem, da es sich um eine Bibliothek handelt, die
+          direkt in Subversion eingebunden ist. Beispielsweise haben
+          die meisten SQL-Systeme einen dedizierten Server-Prozess,
+          der alle Tabellenzugriffe vermittelt. Falls ein auf die
+          Datenbank zugreifendes Programm aus irgendeinem Grund
+          abstürzt, bemerkt der Datenbank-Dämon die verlorene
+          Verbindung und räumt anschließend auf. Und da der
+          Datenbank-Dämon der einzige Prozess ist, der auf die
+          Tabellen zugreift, brauchen sich Anwendungsprogramme nicht
+          um Berechtigungskonflikte zu kümmern. Das trifft allerdings
+          nicht auf Berkeley DB zu. Subversion (und jedes Programm,
+          das die Subversion-Bibliotheken verwendet) greift direkt auf
+          die Datenbanktabellen zu, was bedeutet, dass ein
+          Programmabsturz die Datenbank vorübergehend in einem
+          inkonsistenten, nicht zugreifbaren Zustand hinterlassen
+          kann, so dass ein Administrator Berkeley DB dazu auffordern
+          muss, zu einem Sicherungspunkt zurückzugehen, was etwas
+          ärgerlich ist. Neben abgestürzten Prozessen können andere
+          Dinge das Repository <quote>verklemmen</quote>, wie etwa
+          Programme, die sich wegen Eigentums- und Zugriffsrechten auf
+          Datenbankdateien ins Gehege kommen.</para>
 
         <note>
+<!--
           <para>Berkeley DB 4.4 brings (to Subversion 1.4 and later)
             the ability for Subversion to automatically and
             transparently recover Berkeley DB environments in need of
@@ -1149,7 +1275,22 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
             wedging, but it does drastically reduce the amount of
             human interaction required to recover from them.</para>
         </note>
+-->
+          <para>Berkeley DB 4.4 bietet (für Subversion 1.4 und spätere
+            Versionen) die Fähigkeit, dass Subversion automatisch und
+            Transparent Berkeley-DB-Umgebungen falls erforderlich
+            wiederherstellt. Wenn sich ein Subversion-Prozess an die
+            Berkeley-DB-Umgebung hängt, verwendet er eine Art
+            Prozess-Buchhaltung, um unsaubere Verbindungsabbrüche
+            früherer Prozesse zu entdecken, führt die notwendige
+            Wiederherstellung durch und fährt fort, als wäre nichts
+            passiert. Dies verhindert das Vorkommen von Verklemmungen
+            zwar nicht vollständig, verringert allerdings erheblich
+            den Aufwand an menschlichen Eingriffen, um sich hiervon zu
+            erholen.</para>
+        </note>
 
+<!--
         <para>So while a Berkeley DB repository is quite fast and
           scalable, it's best used by a single server process running
           as one user&mdash;such as Apache's <command>httpd</command>
@@ -1160,6 +1301,19 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           DB repository directly as multiple users, be sure to read
           <xref linkend="svn.serverconfig.multimethod"/> later in this
           chapter.</para>
+-->
+        <para>Während ein Berkeley-DB-Repository ziemlich schnell und
+          skalierbar ist, wird es am besten von einem einzelnen
+          Server-Prozess unter einer Benutzerkennung verwendet &ndash;
+          so wie Apaches <command>httpd</command> oder
+          <command>svnserve</command> (siehe <xref
+          linkend="svn.serverconfig"/>) &ndash; statt darauf mit
+          mehreren Benutzern über <literal>file://</literal> oder
+          <literal>svn+ssh://</literal> URLs zuzugreifen.  Falls Sie
+          mit mehreren Benutzern direkt auf ein Berkeley-DB-Repository
+          zugreifen wollen, sollten Sie unbedingt <xref
+          linkend="svn.serverconfig.multimethod"/> weiter unten in
+          diesem Kapitel lesen.</para>
 
       </sect3>
       
