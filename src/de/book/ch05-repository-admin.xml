@@ -1321,6 +1321,7 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
       <sect3 id="svn.reposadmin.basics.backends.fsfs">
         <title>FSFS</title>
 
+<!--
         <para>In mid-2004, a second type of repository storage
           system&mdash;one that doesn't use a database at
           all&mdash;came into being.  An FSFS repository stores the
@@ -1334,7 +1335,23 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           unchanging, the repository also can be backed up while
           <quote>hot,</quote> just like a BDB-backed
           repository.</para>
+-->
+        <para>Mitte 2004 entstand ein zweiter Typ eines
+          Repository-Speichersystems &ndash; eins, das überhaupt keine
+          Datenbank verwendet. Ein FSFS-Repository speichert die zu
+          einer Revision gehörenden Änderungen in einer einzelnen
+          Datei, so dass sich alle Revisionen eines Repositorys in
+          einem Verzeichnis voller numerierter Dateien befinden.
+          Transaktionen werden als individuelle Dateien in getrennten
+          Verzeichnissen erzeugt. Sobald sie vollständig ist, wird die
+          Transaktionsdatei umbenannt und in das Revisionsverzeichnis
+          verschoben, so dass die Atomizität von Übergaben
+          gewährleistet ist. Und da eine Revisionsdatei dauerhaft und
+          unveränderlich ist, kann das Repository auch im laufenden
+          Betrieb gesichert werden, genauso wie ein BDB-basiertes
+          Repository.</para>
 
+<!--
         <para>The FSFS revision files describe a revision's
           directory structure, file contents, and deltas against files
           in other revision trees.  Unlike a Berkeley DB database,
@@ -1345,7 +1362,20 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           and examined in a read-only environment.  The lack of
           database overhead also means the overall repository
           size is a bit smaller.</para>
+-->
+        <para>Die FSFS-Revisionsdateien beschreiben die
+          Verzeichnisstruktur einer Revision, Dateiinhalte und Deltas
+          zu Dateien in anderen Revisionsbäumen. Anders als eine
+          Berkeley-DB-Datenbank, ist dieses Speicherformat auf
+          verschiedene Betriebssysteme übertragbar und nicht von einer
+          CPU-Architektur abhängig. Da weder Journaldateien noch
+          Dateien für gemeinsam benutzten Speicher verwendet werden,
+          kann auf das Repository sicher über ein Netzdateisystem
+          zugegriffen und es in einer Nur-Lese-Umgebung untersucht
+          werden. Das Fehlen der Datenbankverwaltung bedeutet
+          ebenfalls eine etwas geringere Größe des Repositorys.</para>
 
+<!--
         <para>FSFS has different performance characteristics, too.
           When committing a directory with a huge number of files,
           FSFS is able to more quickly append directory entries.  On
@@ -1356,7 +1386,21 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           also has a longer delay when finalizing a commit, which
           could in extreme cases cause clients to time out while
           waiting for a response.</para>
+-->
+        <para>FSFS hat auch eine unterschiedliche Charakteristik, was
+          den Durchsatz anbelangt. Wenn eine große Zahl an Dateien
+          übergeben wird, kann FSFS schneller Verzeichniseinträge
+          hinzufügen. Andererseits schreibt FSFS die letzte Version
+          einer Datei als ein Delta gegenüber einer älteren Version,
+          was bedeutet, dass das Auschecken des letzten Baums etwas
+          langsamer ist als die vollständigen Texte zu holen, die in
+          einer Berkeley-DB HEAD-Revision gespeichert sind. FSFS hat
+          auch eine längere Verzögerung beim Fertigstellen einer
+          Übergabe, was im Extremfall dazu führen kann, dass bei
+          Clients Zeitüberschreitungen beim Warten auf eine Antwort
+          auftreten.</para>
 
+<!--
         <para>The most important distinction, however, is FSFS's
           imperviousness to wedging when something goes wrong.  If a
           process using a Berkeley DB database runs into a permissions
@@ -1365,7 +1409,20 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           same scenarios happen to a process using an FSFS repository,
           the repository isn't affected at all.  At worst, some
           transaction data is left behind.</para>
+-->
+        <para>Der wichtigste Unterschied jedoch ist die
+          Unempfänglichkeit von FSFS gegenüber Verklemmungen, wenn
+          etwas schief geht. Falls ein Prozess, der eine
+          Berkeley-DB-Datenbank benutzt, ein Berechtigungsproblem
+          bekommt oder plötzlich abstürzt, kann das die Datenbank in
+          einen unbrauchbaren Zustand bringen, bis ein Administrator
+          sie wiederherstellt. Falls ein Prozess, der ein
+          FSFS-Repository benutzt, in dieselbe Situation gerät, ist
+          das Repository hiervon überhaupt nicht betroffen. Das
+          Schlimmste, was passieren kann, ist, dass einige
+          Transaktionsdaten nicht abgearbeitet werden können.</para>
 
+<!--
         <para>The only real argument against FSFS is its relative
           immaturity compared to Berkeley DB.  Unlike Berkeley DB,
           which has years of history, its own dedicated development
@@ -1381,6 +1438,24 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           become the backend of choice for some of the largest public
           and private Subversion repositories, and it promises a lower
           barrier to entry for Subversion across the board.</para>
+-->
+        <para>Das einzige echte Argument, was gegen FSFS spricht, ist
+          seine relative Unreife im Gegensatz zu Berkeley DB. Anders
+          als Berkeley DB, das auf eine jahrelange Geschichte
+          zurückblicken kann, ein eigenes Entwicklerteam hat und sich
+          nun mit dem mächtigen Namen Oracle schmücken darf,
+          <footnote>
+            <para>Oracle kaufte Sleepycat und sein Vorzeigeprogramm,
+              Berkeley DB, am Valentinstag 2006.</para>
+          </footnote>
+          ist FSFS eine neuere Technik. Vor Subversion 1.4 purzelten
+          immer noch einige ernsthafte Fehler in Bezug auf die
+          Unversehrtheit der Daten heraus, die, obwohl sie sehr selten
+          ausgelöst wurden, dennoch auftraten.  Nichtsdestoweniger
+          ist FSFS schnell zum Speicherverfahren der Wahl für einige
+          der größten öffentlichen und privaten Subversion-Repositorys
+          geworden und verspricht durch die Bank eine niedrigere
+          Einstiegshürde für Subversion.</para>
 
       </sect3>
     </sect2>
