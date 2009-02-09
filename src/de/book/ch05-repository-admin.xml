@@ -1666,8 +1666,12 @@ $
 
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.create.hooks">
+<!--
       <title>Implementing Repository Hooks</title>
+-->
+      <title>Erstellen von  Repository Hooks</title>
 
+<!--
       <para>A <firstterm>hook</firstterm> is a program triggered by
         some repository event, such as the creation of a new revision
         or the modification of an unversioned property.  Some hooks
@@ -1681,11 +1685,33 @@ $
         information to tell what that event is (or was), the specific
         repository changes proposed (or completed), and the username
         of the person who triggered the event.</para>
-            
+-->
+      <para>Ein <firstterm>Hook</firstterm> (Haken) ist ein Programm,
+        das durch einige Repository-Ereignisse gestartet wird, wie
+        etwa die Erzeugung einer neuen Revision oder die Veränderung
+        eines unversionierten Propertys. Einige Hooks (die sogenannten
+        <quote>Pre-Hooks</quote>) starten vor einer
+        Repository-Operation und bieten eine Möglichkeit sowohl zu
+        berichten, was passieren wird, als auch zu verhindern, dass es
+        überhaupt passiert. Andere Hooks (die
+        <quote>Post-Hooks</quote>) starten nach Abschluss eines
+        Repository-Ereignisses und sind nützlich für Aufgaben, die das
+        Repository inspizieren &ndash; aber nicht verändern. Jedem
+        Hook werden ausreichende Informationen übergeben, um
+        festzustellen, um welches Ereignis es sich handelt (oder
+        handelte), welche genauen Änderungen am Repository
+        beabsichtigt sind (oder durchgeführt wurden) und der Name des
+        Benutzers, der das Ereignis ausgelöst hat.</para>
+
+<!--
       <para>The <filename>hooks</filename> subdirectory is, by
         default, filled with templates for various repository
         hooks:</para>
-            
+-->
+      <para>Das Verzeichnis für die <filename>Hooks</filename> ist
+        standardmäßig mit Vorlagen für verschiedene Repository-Hooks
+        gefüllt:</para>
+
       <screen>
 $ ls repos/hooks/
 post-commit.tmpl          post-unlock.tmpl  pre-revprop-change.tmpl
@@ -1693,7 +1719,8 @@ post-lock.tmpl            pre-commit.tmpl   pre-unlock.tmpl
 post-revprop-change.tmpl  pre-lock.tmpl     start-commit.tmpl
 $
 </screen>
-            
+
+<!--
       <para>There is one template for each hook that the Subversion
         repository supports; by examining the contents of those
         template scripts, you can see what triggers each script
@@ -1706,7 +1733,21 @@ $
         which can be executed as the name (such as
         <command>start-commit</command> or
         <command>post-commit</command>) of the hook.</para>
+-->
+      <para>Es gibt eine Vorlage für jeden Hook, den Subversion
+        unterstützt. Sie können sehen, wodurch jedes dieser Scripte
+        gestartet wird und welche Daten übergeben werden, indem Sie
+        den Inhalt der Scripte inspizieren. In vielen dieser Vorlagen
+        befinden sich auch Beispiele dafür, wie dieses Script zusammen
+        mit anderen Programmen aus dem Lieferumfang von Subversion
+        verwendet werden, um häufige, nützliche Aufgaben zu erledigen.
+        Um einen funktionierenden Hook zu installieren, brauchen Sie
+        nur ein ausführbares Programm oder Script im Verzeichnis
+        <filename>repos/hooks</filename> abzulegen, das unter dem
+        Namen des Hooks (etwa <command>start-commit</command> oder
+        <command>post-commit</command>) gestartet werden kann.</para>
 
+<!--
       <para>On Unix platforms, this means supplying a script or
         program (which could be a shell script, a Python program, a
         compiled C binary, or any number of other things) named
@@ -1723,7 +1764,26 @@ $
         recognized by Windows for executable programs, such as
         <filename>.exe</filename> for programs and
         <filename>.bat</filename> for batch files.</para>
+-->
+      <para>Auf Unix Plattformen bedeutet das, ein Script oder
+        Programm bereitzustellen (welches ein Shell-Script, ein
+        Python-Programm, ein übersetztes C-Binärprogramm oder
+        sonstetwas sein kann), das genauso heißt wie der Hook.
+        Natürlich sind die Vorlagen nicht nur zur Information da
+        &ndash; die einfachste Möglichkeit, unter Unix einen Hook zu
+        installieren, ist es, einfach die passende Vorlagedatei in
+        eine Datei zu kopieren, der die Dateiendung
+        <filename>.tmpl</filename> fehlt, den Inhalt anzupassen und
+        sicherzustellen, dass das Script ausführbar ist. Unter Windows
+        werden jedoch Dateiendungen verwendet, um festzustellen, ob
+        ein Programm ausführbar ist, so dass Sie ein Programm zur
+        Verfügung stellen müssen, dessen Basisname dem Hook entspricht
+        und dessen Endung einer derjenigen entspricht, die Windows für
+        ausführbare Programme hält, etwa <filename>.exe</filename> für
+        Programme und <filename>.bat</filename> für
+        Batch-Dateien.</para>
 
+<!--
       <tip>
         <para>For security reasons, the Subversion repository executes
           hook programs with an empty environment&mdash;that is, no
@@ -1735,7 +1795,21 @@ $
           set any necessary environment variables in your hook program
           and/or use absolute paths to programs.</para>
       </tip>
+-->
+      <tip>
+        <para>Aus Sicherheitsgründen führt Subversion Hook-Programme
+          in einer leeren Umgebung aus &ndash; d.h., es sind überhaupt
+          keine Umgebungsvariablen gesetzt, nicht einmal
+          <literal>$PATH</literal> (oder <literal>%PATH%</literal>
+          unter Windows). Deshalb sind viele Administratoren verwirrt,
+          wenn deren Hook-Programme normal starten, wenn sie manuell
+          aufgerufen werden, aber nicht laufen, wenn sie Subversion
+          startet. Stellen Sie sicher, dass Sie entweder alle
+          notwendigen Umgebungsvariablen in Ihren Hook-Programmen
+          ausdrücklich setzen und/oder absolute Pfade zu Programmen
+          verwenden.</para> </tip>
 
+<!--
       <para>Subversion executes hooks as the same user who owns the
         process that is accessing the Subversion repository.  In most
         cases, the repository is being accessed via a Subversion
@@ -1748,7 +1822,23 @@ $
         In other words, be alert to potential permission-related
         problems that could prevent the hook from performing the tasks
         it is designed to perform.</para>
+-->
+      <para>Subversion führt die Hooks unter der Benutzerkennung aus,
+        die auch der Prozess besitzt, der auf das Repository zugreift.
+        Meistens wird auf das Repository über einen Subversion-Server
+        zugegriffen, so dass die Benutzerkennung der des
+        Serverprozesses entspricht. Die Hooks müssen deshalb mit den
+        entsprechenden Berechtigungen des Betriebssystems versehen
+        werden, damit diese Benutzerkennung sie ausführen kann. Das
+        bedeutet auch, dass der direkte oder indirekte Zugriff auf
+        irgendwelche Programme oder Dateien (einschließlich des
+        Subversion-Repositorys) durch den Hook auch unter derselben
+        Kennung erfolgt. Mit anderen Worten: Achten Sie auf mögliche
+        Probleme im Zusammenhang mit Zugriffsrechten, die den Hook
+        daran hindern könnten, die Ihm zugeteilten Aufgaben
+        wahrzunehmen.</para>
 
+<!--
       <para>There are serveral hooks implemented by the Subversion
         repository, and you can get details about each of them in
         <xref linkend="svn.ref.reposhooks" />.  As a repository
@@ -1761,7 +1851,22 @@ $
         to determine which users are permitted to commit
         changes to your repository, you don't need to do this
         sort of access control via the hook system.</para>
+-->
+      <para>Es gibt mehrere im Subversion-Repository implementierte
+        Hooks; Details zu jedem können Sie in <xref
+        linkend="svn.ref.reposhooks" /> nachlesen. Als
+        Repository-Administrator müssen Sie entscheiden, welche Hooks
+        sie einrichten wollen (indem Sie ein entsprechend benanntes
+        und mit den nötigen Zugriffsrechten versehenes Hook-Programm
+        bereitstellen) und wie das geht. Wenn Sie diese Entscheidung
+        treffen, dann behalten Sie das Gesamtbild der
+        Repository-Einsatzes im Auge.  Wenn Sie beispielsweise die
+        Konfiguration des Servers verwenden, um festzustellen, welche
+        Benutzer Änderungen an Ihr Repository übergeben dürfen,
+        benötigen Sie für diese Zugriffskontrolle nicht das
+        Hook-System.</para>
 
+<!--
       <para>There is no shortage of Subversion hook programs and
         scripts that are freely available either from the Subversion community
         itself or elsewhere.  These scripts cover a wide range of
@@ -1769,7 +1874,18 @@ $
         issue tracker integration, email- or syndication-based commit
         notification, and beyond.  Or, if you wish to write your own,
         see <xref linkend="svn.developer" />.</para>
+-->
+      <para>Es gibt keinen Mangel an Subversion-Hook-Programmen und
+        Scripten, die frei verfügbar sind, entweder von der
+        Subversion-Gemeinschaft oder von woanders her. Diese Scripte
+        decken ein breites Spektrum ab &ndash; grundlegende
+        Zugriffskontrolle, Kontrolle der Prozesstreue,
+        Fehlersystemanbindung, E-Mail-basierte oder syndizierte
+        Benachrichtigungen bei Übergaben und noch viel mehr. Oder,
+        falls Sie Ihren eigenen schreiben wollen, siehe <xref
+        linkend="svn.developer" />.</para>
 
+<!--
       <warning>
         <para>While hook scripts can do almost
           anything, there is one dimension in which hook script
@@ -1788,6 +1904,29 @@ $
           if it does not meet the desired requirements.  As a
           bonus, your users will learn the value of careful,
           compliance-minded work habits.</para>
+      </warning>
+-->
+      <warning>
+        <para>Obwohl Hook-Scripts fast alles machen können, gibt es
+          eine Dimension, in der sich Hook-Script-Autoren zurückhalten
+          sollten: Ändern Sie <emphasis>keine</emphasis>
+          Übergabe-Transaktion mithilfe von Hook-Scripten. Trotz der
+          Verlockung, Hook-Scripte zur automatischen Korrektur von
+          Fehlern, Unzulänglichkeiten oder Prozessverletzungen
+          innerhalb der zu übergebenden Dateien einzusetzen, kann das
+          zu Problemen führen. Subversion hält bestimmte
+          Repository-Daten in clientseitigen Caches vor, und wenn Sie
+          auf diese Art eine Übergabe-Transaktion verändern, werden
+          die im Cache befindlichen Informationen ungültig, ohne dass
+          jemand etwas merkt. Diese Inkonsistenz kann zu
+          überraschenden und unerwarteten Verhalten führen. Statt die
+          Transaktion zu verändern, sollten Sie sie einfach im
+          <filename>pre-commit</filename>-Hook auf
+          <emphasis>Gültigkeit </emphasis> prüfen und die Übergabe
+          ablehnen, falls sie den Anforderungen nicht entspricht. Als
+          Nebeneffekt werden Ihre Benutzer lernen, wie wertvoll eine
+          sorgfältige, sich an den Vorgaben orientierende Arbeitsweise
+          ist.</para>
       </warning>
 
     </sect2>
