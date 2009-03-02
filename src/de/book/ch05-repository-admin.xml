@@ -3200,8 +3200,12 @@ $
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.reposadmin.maint.diskspace.bdblogs">
+<!--
         <title>Purging unused Berkeley DB logfiles</title>
+-->
+        <title>Entfernen unbenutzter Protokolldateien von Berkeley DB</title>
 
+<!--
         <para>Until recently, the largest offender of disk space usage
           with respect to BDB-backed Subversion repositories were the
           logfiles in which Berkeley DB performs its prewrites before
@@ -3212,7 +3216,20 @@ $
           logfiles contain all of the many changes along the way
           <emphasis>between</emphasis> states.  Thus, they can grow
           and accumulate quite rapidly.</para>
+-->
+        <para>Bis vor kurzer Zeit waren die größten
+          Plattenplatzfresser bei BDB-basierten Subversion-Repositorys
+          die Protokolldateien, in die Berkeley DB zunächst alle
+          Schritte hineinschreibt, bevor es die eigentlichen
+          Datenbankdateien verändert. Diese Dateien halten alle
+          Aktionen der Datenbank auf dem Weg von einem Zustand zum
+          nächsten fest &ndash; während die Datenbankdateien zu jeder
+          Zeit einen bestimmten Zustand widerspiegeln, beinhalten die
+          Protokolldateien all die vielen Änderungen auf dem Weg
+          <emphasis>zwischen</emphasis> den Zuständen. Somit können
+          sie sehr schnell wachsen und sich anhäufen.</para>
 
+<!--
         <para>Fortunately, beginning with the 4.2 release of Berkeley
           DB, the database environment has the ability to remove its
           own unused logfiles automatically.  Any
@@ -3220,7 +3237,7 @@ $
           when compiled against Berkeley DB version 4.2 or later
           will be configured for this automatic logfile removal.  If
           you don't want this feature enabled, simply pass the
-          <option>--bdb-log-keep</option> option to the
+          <option>- -bdb-log-keep</option> option to the
           <command>svnadmin create</command> command.  If you forget
           to do this or change your mind at a later time, simply edit
           the <filename>DB_CONFIG</filename> file found in your
@@ -3231,7 +3248,28 @@ $
           force the configuration changes to take effect.  See <xref
           linkend="svn.reposadmin.create.bdb"/> for more information about
           database configuration.</para>
+-->
+        <para>Glücklicherweise hat die Datenbankumgebung beginnend mit
+          der Version 4.2 der Berkeley DB die Fähigkeit, ihre eigenen
+          unbenutzten Protokolldateien automatisch zu entfernen. Alle
+          Repositorys, die mit einem <command>svnadmin</command>
+          angelegt wurden, das mit Berkeley DB Version 4.2 oder später
+          übersetzt wurde, werden mit automatischer
+          Protokolldateientfernung konfiguriert. Wenn Sie diese
+          Funktion nicht möchten, geben Sie dem Befehl
+          <command>svnadmin create</command> einfach die Option
+          <option>--bdb-log-keep</option> mit. Sollten Sie das
+          vergessen oder es sich später anders überlegen, editieren
+          Sie einfach die Datei <filename>DB_CONFIG</filename> im
+          Verzeichnis <filename>db</filename> Ihres Repositorys indem
+          Sie die Zeile mit der Direktive <literal>set_flags
+          DB_LOG_AUTOREMOVE</literal> auskommentieren und starten dann
+          <command>svnadmin recover</command> auf Ihrem Repository, um
+          die Konfigurationsänderung zu aktivieren.  Siehe <xref
+          linkend="svn.reposadmin.create.bdb"/> für weitere
+          Informationen zur Datenbankkonfiguration.</para>
 
+<!--
         <para>Without some sort of automatic logfile removal in
           place, logfiles will accumulate as you use your repository.
           This is actually somewhat of a feature of the database
@@ -3243,7 +3281,22 @@ $
           to conserve space.  Use the <command>svnadmin
           list-unused-dblogs</command> command to list the unused
           logfiles:</para>
+-->
+        <para>Ohne eine Art automatische Protokolldateientfernung
+          aktiviert zu haben, häufen sich die Protokolldateien während
+          der Nutzung des Repositorys an. Es ist eigentlich ein
+          Merkmal des Datenbanksystems &ndash; Sie sollten
+          ausschließlich  mit Hilfe der Protokolldateien in der Lage
+          sein, Ihre gesamte Datenbank zu rekonstruieren, so dass
+          diese Protokolldateien sehr nützlich für eine
+          Wiederherstellung im Katastrophenfall sein können. Jedoch
+          möchten Sie normalerweise die nicht mehr von Berkeley DB
+          verwendeten Protokolldateien archivieren und sie zur
+          Platzersparnis von der Platte entfernen. Verwenden Sie den
+          Befehl <command>svnadmin list-unused-dblogs</command>, um
+          die unbenutzten Protokolldateien anzuzeigen:</para>
 
+<!--
         <screen>
 $ svnadmin list-unused-dblogs /var/svn/repos
 /var/svn/repos/log.0000000031
@@ -3253,8 +3306,19 @@ $ svnadmin list-unused-dblogs /var/svn/repos
 $ rm `svnadmin list-unused-dblogs /var/svn/repos`
 ## disk space reclaimed!
 </screen>
+-->
+        <screen>
+$ svnadmin list-unused-dblogs /var/svn/repos
+/var/svn/repos/log.0000000031
+/var/svn/repos/log.0000000032
+/var/svn/repos/log.0000000033
+&hellip;
+$ rm `svnadmin list-unused-dblogs /var/svn/repos`
+## Pattenplatz zurückgewonnen!
+</screen>
 
         <warning>
+<!--
           <para>BDB-backed repositories whose logfiles are used as
             part of a backup or disaster recovery plan should
             <emphasis>not</emphasis> make use of the logfile
@@ -3265,6 +3329,18 @@ $ rm `svnadmin list-unused-dblogs /var/svn/repos`
             backup system has a chance to copy them elsewhere, the
             incomplete set of backed-up logfiles is essentially
             useless.</para> </warning>
+-->
+          <para>BDB-basierte Repositorys, deren Protokolldateien ein
+            Bestandteil eines Sicherungs- oder Notfallplans sind,
+            sollten <emphasis>nicht</emphasis> die automatische
+            Entfernung verwenden. Die Wiederherstellung der Daten
+            eines Repositorys kann nur gewährleistet werden, wenn
+            <emphasis>alle</emphasis> Protokolldateien verfügbar sind.
+            Falls einige der Protokolldateien von der Platte entfernt
+            werden, bevor das Sicherungssystem die Gelegenheit
+            bekommt, sie woandershin zu kopieren, ist die
+            unvollständige Menge gesicherter Protokolldateien
+            tatsächlich nutzlos.</para> </warning>
 
       </sect3>
 
