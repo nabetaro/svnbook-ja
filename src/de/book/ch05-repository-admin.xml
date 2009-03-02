@@ -2961,8 +2961,12 @@ $ svnadmin setlog myrepos newlog.txt -r 388
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.reposadmin.maint.diskspace.deadtxns">
+<!--
         <title>Removing dead transactions</title>
+-->
+        <title>Entfernen unvollendeter Transaktionen</title>
 
+<!--
         <para>Though they are uncommon, there are circumstances in
           which a Subversion commit process might fail, leaving behind
           in the repository the remnants of the revision-to-be that
@@ -2975,10 +2979,28 @@ $ svnadmin setlog myrepos newlog.txt -r 388
           They don't do any real harm, other than consuming disk
           space.  A fastidious administrator may nonetheless wish to
           remove them.</para>
+-->
+        <para>Obwohl es selten vorkommt, gibt es Umstände, unter denen
+          der Übetrgabeprozess mit einem Fehler abbricht und die Reste
+          einer Revision in Spe  hinterlässt &ndash; eine unvollendete
+          Transaktion samt aller Datei- und Verzeichnisänderungen, die
+          dazugehören. Dies kann aus verschiedenen Gründen passieren:
+          Vielleicht wurde die Operation des Clients vom Benutzer
+          unsauber beendet oder es trat mittendrin ein Netzfehler auf.
+          Aus welchem Grund auch immer, es können unvollendete
+          Transaktionen auftreten. Sie verursachen keine tatsächlichen
+          Schäden, außer Plattenplatz zu verschwenden. Ein penibler
+          Administrator möchte sie vielleicht dennoch
+          entfernen.</para>
 
+<!--
         <para>You can use the <command>svnadmin lstxns</command>
           command to list the names of the currently outstanding
           transactions:</para>
+-->
+        <para>Sie können den Befehl <command>svnadmin lstxns</command>
+          verwenden, um die Namen der aktuell ausstehenden
+          Transaktionen anzuzeigen:</para>
 
         <screen>
 $ svnadmin lstxns myrepos
@@ -2988,9 +3010,10 @@ a45
 $
 </screen>
 
+<!--
         <para>Each item in the resultant output can then be used with
           <command>svnlook</command> (and its
-          <option>--transaction</option> (<option>-t</option>) option)
+          <option>- -transaction</option> (<option>-t</option>) option)
           to determine who created the transaction, when it was
           created, what types of changes were made in the
           transaction&mdash;information that is helpful in determining
@@ -3001,12 +3024,28 @@ $
           <command>svnadmin rmtxns</command> can take its input
           directly from the output of
           <command>svnadmin lstxns</command>!</para>
+-->
+        <para>Jeder Eintrag der Ausgabe kann dann mit dem Befehl
+          <command>svnlook</command> (und seiner Option
+          <option>--transaction</option> (<option>-t</option>))
+          aufgerufen werden, um festzustellen, wer die Transaktion
+          erzeugt hat, wann sie erzeugt wurde und welche Änderungen
+          sie beinhaltet &ndash; Informationen, die bei der
+          Entscheidung helfen können, ob eine Transaktion ein sicherer
+          Kandidat zum Löschen ist! Wenn Sie tatsächlich eine
+          Transaktion löschen wollen, kann deren Name an den Befehl
+          <command>svnadmin rmtxns</command> übergeben werden, der
+          dann die Transaktion aufräumt. <command>svnadmin
+          rmtxns</command> kann seine Eingabe auch direkt aus der
+          Ausgabe von <command>svnadmin lstxns</command>
+          beziehen!</para>
 
         <screen>
 $ svnadmin rmtxns myrepos `svnadmin lstxns myrepos`
 $
 </screen>
 
+<!--
         <para>If you use these two subcommands like this, you should
           consider making your repository temporarily inaccessible to
           clients.  That way, no one can begin a legitimate
@@ -3015,10 +3054,25 @@ $
           contains a bit of shell-scripting that can quickly generate
           information about each outstanding transaction in your
           repository.</para>
+-->
+        <para>Falls Sie auf diese Weise diese beiden Unterbefehle
+          verwenden, sollten Sie vorübergehend das Repository für
+          Clients unzugänglich machen. So kann niemand eine
+          berechtigte Transaktion beginnen, bevor Sie aufgeräumt
+          haben.  <xref
+          linkend="svn.reposadmin.maint.diskspace.deadtxns.ex-1" />
+          enthält ein kleines Shell-Script, das schnell eine Übersicht
+          über jede ausstehende Transaktion in Ihrem Repository
+          erzeugen kann.</para>
 
+<!--
         <example id="svn.reposadmin.maint.diskspace.deadtxns.ex-1">
           <title>txn-info.sh (reporting outstanding transactions)</title>
+-->
+        <example id="svn.reposadmin.maint.diskspace.deadtxns.ex-1">
+          <title>txn-info.sh (ausstehende Transaktionen anzeigen)</title>
 
+<!--
           <programlisting>
 #!/bin/sh
 
@@ -3032,41 +3086,94 @@ if [ "x$REPOS" = x ] ; then
 fi
 
 for TXN in `svnadmin lstxns ${REPOS}`; do 
-  echo "---[ Transaction ${TXN} ]-------------------------------------------"
+  echo "- -[ Transaction ${TXN} ]- - - - - - - - - - - - - - - - - - - - - -"
+  svnlook info "${REPOS}" -t "${TXN}"
+done
+</programlisting>
+-->
+          <programlisting>
+#!/bin/sh
+
+### Erzeuge Informationen über alle ausstehenden Transaktionen eines
+### Subversion Repositorys.
+
+REPOS="${1}"
+if [ "x$REPOS" = x ] ; then
+  echo "Aufruf: $0 REPOS_PATH"
+  exit
+fi
+
+for TXN in `svnadmin lstxns ${REPOS}`; do 
+  echo "---[ Transaktion ${TXN} ]-------------------------------------------"
   svnlook info "${REPOS}" -t "${TXN}"
 done
 </programlisting>
         </example>
 
+<!--
         <para>The output of the script is basically a concatenation of
           several chunks of <command>svnlook info</command> output
           (see <xref linkend="svn.reposadmin.maint.tk.svnlook"/>) and
           will look something like this:</para>
+-->
+        <para>Die Ausgabe des Scriptes ist im Grunde genommen eine
+          Aneinanderreihung mehrerer Teile von <command>svnlook
+          info</command>-Ausgaben (siehe <xref
+          linkend="svn.reposadmin.maint.tk.svnlook"/>) und sieht etwa
+          so aus:</para>
 
+<!--
         <screen>
 $ txn-info.sh myrepos
----[ Transaction 19 ]-------------------------------------------
+- -[ Transaction 19 ]- - - - - - - - - - - - - - - - - - - - - -
 sally
 2001-09-04 11:57:19 -0500 (Tue, 04 Sep 2001)
 0
----[ Transaction 3a1 ]-------------------------------------------
+- -[ Transaction 3a1 ]- - - - - - - - - - - - - - - - - - - - - -
 harry
 2001-09-10 16:50:30 -0500 (Mon, 10 Sep 2001)
 39
 Trying to commit over a faulty network.
----[ Transaction a45 ]-------------------------------------------
+- -[ Transaction a45 ]- - - - - - - - - - - - - - - - - - - - - -
+sally
+2001-09-12 11:09:28 -0500 (Wed, 12 Sep 2001)
+0
+$
+</screen>
+-->
+        <screen>
+$ txn-info.sh myrepos
+---[ Transaktion 19 ]-------------------------------------------
+sally
+2001-09-04 11:57:19 -0500 (Tue, 04 Sep 2001)
+0
+---[ Transaktion 3a1 ]-------------------------------------------
+harry
+2001-09-10 16:50:30 -0500 (Mon, 10 Sep 2001)
+39
+Versuch, über eine schlechte Netzverbindung abzuliefern.
+---[ Transaktion a45 ]-------------------------------------------
 sally
 2001-09-12 11:09:28 -0500 (Wed, 12 Sep 2001)
 0
 $
 </screen>
 
+<!--
         <para>A long-abandoned transaction usually represents some
           sort of failed or interrupted commit.  A transaction's
           datestamp can provide interesting information&mdash;for
           example, how likely is it that an operation begun nine
           months ago is still active?</para>
+-->
+        <para>Eine vor langer Zeit aufgegebene Transaktion bedeutet
+          normalerweise eine Art fehlgeschlagenen oder unterbrochenen
+          Übergabeversuch. Der Zeitstempel einer Transaktion kann eine
+          interessante Information sein &ndash; ist es beispielsweise
+          wahrscheinlich, dass eine vor neun Monaten begonnene
+          Operation immer noch aktiv ist?</para>
 
+<!--
         <para>In short, transaction cleanup decisions need not be made
           unwisely.  Various sources of information&mdash;including
           Apache's error and access logs, Subversion's operational
@@ -3075,6 +3182,19 @@ $
           administrator can often simply communicate with a seemingly
           dead transaction's owner (via email, e.g.) to verify
           that the transaction is, in fact, in a zombie state.</para>
+-->
+        <para>Kurz gesagt, Entscheidungen zur Bereinigung von
+          Transaktionen sollten klug getroffen werden. Verschiedene
+          Informationsquellen &ndash; hierzu gehören die Fehler- und
+          Zugriffsprotokolldateien von Apache, die operativen
+          Protokolldateien von Subversion, die Revisions-Historie von
+          Subversion usw. &ndash; können während des
+          Entscheidungsprozesses hinzugezogen werden. Natürlich kann
+          sich ein Administrator auch einfach  mit dem Eigentümer
+          einer anscheinend abgebrochenen Transaktion in Verbindung
+          setzen (z.B. per E-Mail), um sicherzustellen, dass die
+          Transaktion sich tatsächlich in einem Zombiezustand
+          befindet.</para>
 
       </sect3>
 
