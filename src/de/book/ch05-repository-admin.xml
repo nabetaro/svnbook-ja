@@ -3348,8 +3348,12 @@ $ rm `svnadmin list-unused-dblogs /var/svn/repos`
 
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.maint.recovery">
+<!--
       <title>Berkeley DB Recovery</title>
+-->
+      <title>Wiederherstellung von Berkeley DB</title>
 
+<!--
       <para>As mentioned in <xref
         linkend="svn.reposadmin.basics.backends.bdb"/>, a Berkeley DB
         repository can sometimes be left in a frozen state if not closed
@@ -3362,7 +3366,22 @@ $ rm `svnadmin list-unused-dblogs /var/svn/repos`
         resilient in these types of situations.  Still, wedged
         Berkeley DB repositories do occur, and an administrator needs
         to know how to safely deal with this circumstance.</para>
+-->
+      <para>Wie in <xref
+        linkend="svn.reposadmin.basics.backends.bdb"/> erwähnt wurde,
+        kann ein Berkeley-DB-Repository manchmal einfrieren, falls es
+        nicht ordnungsgemäß geschlossen wird. Wenn das passiert, muss
+        ein Administrator die Datenbank in einen konsistenten Zustand
+        zurückfahren. Das gilt aber nur für BDB-basierte Repositorys
+        &ndash; falls Sie FSFS-basierte verwenden, sind Sie davon
+        nicht betroffen. Und falls Sie Subversion 1.4 mit Berkeley DB
+        4.4 oder später verwenden, werden Sie feststellen, dass
+        Subversion für diese Situationen wesentlich unempfindlicher
+        geworden ist. Trotzdem kommt es vor, dass sich
+        Berkeley-DB-Repositorys verklemmen, und Administratoren müssen
+        wissen, wie sie sicher damit umgehen.</para>
 
+<!--
       <para>To protect the data in your repository, Berkeley
         DB uses a locking mechanism.  This mechanism ensures that
         portions of the database are not simultaneously modified by
@@ -3379,7 +3398,25 @@ $ rm `svnadmin list-unused-dblogs /var/svn/repos`
         the repository; we try to clear up the confusion caused by
         this terminology collision in the sidebar <xref
         linkend="svn.advanced.locking.meanings" />.)</para>
+-->
+      <para>Um die Daten in Ihrem Repository zu schützen, verwendet
+        Berkeley DB einen Sperrmechanismus. Dieser Mechanismus stellt
+        sicher, dass Teile der Datenbank nicht gleichzeitig durch
+        mehrere Zugriffe verändert werden und jeder Prozess die Daten
+        beim Lesen aus der Datenbank im korrekten Zustand sieht.  Wenn
+        ein Prozess irgendetwas in der Datenbank ändern muss, prüft er
+        zunächst, ob eine Sperre auf den Zieldaten liegt.  Sind die
+        Daten nicht gesperrt, sperrt der Prozess die Daten, nimmt die
+        Änderungen vor und entsperrt die Daten wieder.  Andere
+        Prozesse müssen auf die Freigabe der Sperre warten, bevor sie
+        wieder auf diesen Datenbankabschnitt zugreifen dürfen. (Das
+        hat nichts mit den Sperren zu tun, die Sie als Benutzer auf
+        versionierte Dateien im Repository vergeben können; wir
+        versuchen die Verwirrung, die durch diese Terminologie
+        verursacht wird, in <xref
+        linkend="svn.advanced.locking.meanings" /> zu klären.)</para>
 
+<!--
       <para>In the course of using your Subversion repository, fatal
         errors or interruptions can prevent a process from having the
         chance to remove the locks it has placed in the database.  The
@@ -3388,7 +3425,17 @@ $ rm `svnadmin list-unused-dblogs /var/svn/repos`
         access the repository hang indefinitely (since each new
         accessor is waiting for a lock to go away&mdash;which isn't
         going to happen).</para>
+-->
+      <para>Während der Nutzung Ihres Repositorys können fatale Fehler
+        oder Unterbrechungen einen Prozess daran hindern, die von ihm
+        in der Datenbank gesetzten Sperren wieder zu entfernen. Als
+        Ergebnis ist das Datenbanksystem <quote>verklemmt</quote>.
+        Wenn das passiert, laufen alle Versuche ins Leere, auf die
+        Datenbank zuzugreifen (da jeder neue Prozess darauf wartet,
+        dass die Sperre entfernt wird &ndash; was aber nicht passieren
+        wird).</para>
 
+<!--
       <para>If this happens to your repository, don't panic.  The
         Berkeley DB filesystem takes advantage of database
         transactions, checkpoints, and prewrite journaling to
@@ -3400,30 +3447,72 @@ $ rm `svnadmin list-unused-dblogs /var/svn/repos`
         sufficiently paranoid repository administrator will have made
         off-site backups of the repository data in some fashion, but
         don't head off to the tape backup storage closet just yet.</para>
+-->
+      <para>Keine Panik, falls das Ihrem Repository widerfahren
+        sollte! Das Berkeley-DB-Dateisystem nutzt die Vorteile von
+        Datenbanktransaktionen, Sicherungspunkten sowie
+        vorausschreibender Journalierung, um zu gewährleisten, dass
+        nur die katastrophalsten Ereignisse
+        <footnote>
+          <para>Beispielsweise Festplatte + starker Elektromagnet =
+            Desaster.</para>
+        </footnote>
+        dauerhaft die Datenbankumgebung zerstören können. Ein
+        ausreichend paranoider Repository-Administrator wird irgendwie
+        Sicherungen der Daten des Repositorys an einem anderen Ort
+        verwahren, doch rennen Sie noch nicht zum Schrank mit den
+        Sicherungsbändern.</para>
 
+<!--
       <para>Instead, use the following recipe to attempt to
         <quote>unwedge</quote> your repository:</para>
-   
+-->
+      <para>Verwenden Sie stattdessen das folgende Rezept, um Ihr
+        Repositorys zu <quote>entklemmen</quote>:</para>
+
       <orderedlist>
         <listitem>
+<!--
           <para>Make sure no processes are accessing (or
             attempting to access) the repository.  For networked
             repositories, this also means shutting down the Apache HTTP
             Server or svnserve daemon.</para>
+-->
+          <para>Stellen Sie sicher, dass keine Prozesse auf das
+            Repository zugreifen (oder einen Zugriffsversuch machen).
+            Für netzbasierte Repositorys bedeutet das, auch den
+            Apache-HTTP-Server oder den svnserve-Dämon zu
+            stoppen.</para>
         </listitem>
         <listitem> 
+<!--
           <para>Become the user who owns and manages the repository.
             This is important, as recovering a repository while
             running as the wrong user can tweak the permissions of the
             repository's files in such a way that your repository will
             still be inaccessible even after it is 
             <quote>unwedged.</quote></para>
+-->
+          <para>Melden Sie sich als der Benutzer an, dem das
+            Repository gehört und der es verwaltet. Das ist wichtig,
+            da eine Wiederherstellung unter einer falschen
+            Benutzerkennung dazu führen kann, dass die Berechtigungen
+            auf den Dateien eines Repositorys derart verändert werden
+            können, dass der Zugriff auf das Repository auch dann
+            nicht mehr möglich wird, wenn es <quote>entklemmt</quote>
+            ist.</para>
         </listitem>
         <listitem>
+<!--
           <para>Run the command <userinput>svnadmin recover
             /var/svn/repos</userinput>.  You should see output such as
             this:</para>
-              
+-->
+          <para>Starten Sie den Befehl <userinput>svnadmin recover
+            /var/svn/repos</userinput>. Sie sollten eine Ausgabe
+              ähnlich dieser sehen:</para>
+
+<!--
           <screen>
 Repository lock acquired.
 Please wait; recovering the repository may take some time...
@@ -3431,13 +3520,29 @@ Please wait; recovering the repository may take some time...
 Recovery completed.
 The latest repos revision is 19.
 </screen>
+-->
+          <screen>
+Exklusiven Zugriff auf das Projektarchiv erlangt
+Bitte warten, die Wiederherstellung des Projektarchivs kann einige Zeit dauern ...
+
+Wiederherstellung vollständig abgeschlossen. 
+Die neueste Revision des Projektarchivs ist 19.
+</screen>
+<!--
           <para>This command may take many minutes to complete.</para>
+-->
+          <para>Die Ausführung dieses Befehls kann viele Minuten
+            dauern.</para>
         </listitem>
         <listitem>
+<!--
           <para>Restart the server process.</para>
+-->
+          <para>Machen Sie einen Neustart des Server-Prozesses.</para>
         </listitem>
       </orderedlist>
-            
+
+<!--
       <para>This procedure fixes almost every case of repository
         wedging.  Make sure that you run this command as the user that
         owns and manages the database, not just as
@@ -3448,7 +3553,22 @@ The latest repos revision is 19.
         are owned by <literal>root</literal>, which means that even
         after you restore connectivity to your repository, regular
         users will be unable to access it.</para>
+-->
+      <para>Dieses Vorgehen behebt fast jeden Fall von
+        Repository-Verklemmung. Stellen Sie sicher, dass Sie diesen
+        Befehl als der Benutzer ausführen, der Eigentümer und
+        Verwalter der Datenbank ist, nicht einfach als
+        <literal>root</literal>. Ein Teil des
+        Wiederherstellungsprozesses könnte diverse Datenbankdateien
+        völlig neu erzeugen (z.B. gemeinsame Speicherbereiche). Wenn
+        Sie die Wiederherstellung als <literal>root</literal>
+        ausführen, werden diese Dateien dem Benutzer
+        <literal>root</literal> zugeordnet, was bedeutet, dass selbst
+        nach der Wiederherstellung der Verbindung zur Außenwelt
+        gewöhnliche Benutzer keinen Zugriff mehr bekommen
+        werden.</para>
 
+<!--
       <para>If the previous procedure, for some reason, does not
         successfully unwedge your repository, you should do two
         things.  First, move your broken repository directory aside
@@ -3458,6 +3578,18 @@ The latest repos revision is 19.
         users mailing list (at <email>users@subversion.tigris.org</email>)
         describing your problem in detail.  Data integrity is an
         extremely high priority to the Subversion developers.</para>
+-->
+      <para>Falls das oben beschriebene Vorgehen aus irgendwelchen
+        Gründen die Verklemmung Ihres Repository nicht beseitigt,
+        sollten Sie zwei Dinge tun. Schieben Sie zunächst ihr
+        beschädigtes Repository an die Seite (indem Sie es etwa in
+        <filename>repos.BROKEN</filename> umbenennen) und spielen
+        seine jüngste Sicherung ein. Schicken Sie dann eine E-Mail an
+        die Subversion-Mailing-Liste
+        (<email>users@subversion.tigris.org</email>), in der Sie Ihr
+        Problem detailliert beschreiben. Die Integrität der Daten
+        genießt bei den Entwicklern von Subversion allerhöchste
+        Priorität.</para>
 
     </sect2>
 
