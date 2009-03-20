@@ -4763,8 +4763,12 @@ Node-path: spreadsheet/Makefile
   
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.maint.replication">
+<!--
       <title>Repository Replication</title>
+-->
+      <title>Repository Replikation</title>
 
+<!--
       <para>There are several scenarios in which it is quite handy to
         have a Subversion repository whose version history is exactly
         the same as some other repository's.  Perhaps the most obvious
@@ -4774,7 +4778,19 @@ Node-path: spreadsheet/Makefile
         Other scenarios include deploying mirror repositories to
         distribute heavy Subversion load across multiple servers, use
         as a soft-upgrade mechanism, and so on.</para>
+-->
+      <para>Es gibt mehrere Szenarien, in denen es sehr passend ist,
+        ein Subversion-Repository zu haben, dessen Versionshistorie
+        genau dieselbe wie die eines anderen Repositorys ist.
+        Vielleicht das offensichtlichste ist die Aufrechterhaltung
+        eines Repositorys als einfache Sicherheitskopie, das verwendet
+        wird, wenn das primäre Repository wegen Materialdefekt,
+        Netzausfall oder ähnlichen Ärgernissen unzugänglich geworden
+        ist. Andere Szenarien umfassen den Einsatz von
+        Spiegel-Repositorys, um heftige Subversion-Last über mehrere
+        Server zu verteilen, zum sanften Aufrüsten usw.</para>
 
+<!--
       <para>As of version 1.4, Subversion provides a program for
         managing scenarios such as
         these&mdash;<command>svnsync</command>.  This works by
@@ -4788,13 +4804,35 @@ Node-path: spreadsheet/Makefile
         interfaces.  All it requires is read access to the source
         repository and read/write access to the destination
         repository.</para>
+-->
+      <para>Seit Version 1.4 stellt Subversion ein Programm zur
+        Handhabung solcher Szenarien zur Verfügung &ndash;
+        <command>svnsync</command>. Im Wesentlichen funktioniert das,
+        indem der Subversion-Server aufgefordert wird, Revisionen zu
+        <quote>wiederholen</quote>, eine nach der anderen. Dann wird
+        die Information dieser Revision benutzt, um eine Übergabe
+        derselben an ein anderes Repository zu imitieren. Keins der
+        Repositorys muss lokal auf der Maschine liegen, auf der
+        <command>svnsync</command> läuft &ndash; seine Parameter sind
+        Repository-URLs, und es verrichtet seine gesamte Arbeit über
+        die Repository-Access-Schnittstellen (RA) von Subversion. Das
+        Einzige, was benötigt wird, ist Lesezugriff auf das
+        Quell-Repository und Lese-/Schreibzugriff auf das
+        Ziel-Repository.</para>
 
       <note>
+<!--
         <para>When using <command>svnsync</command> against a remote
           source repository, the Subversion server for that repository
           must be running Subversion version 1.4 or later.</para>
+-->
+        <para>Wenn Sie <command>svnsync</command> mit einem entfernt
+          liegenden Quell-Repository verwenden, muss auf dem
+          Subversion-Server für dieses Repository Subversion 1.4 oder
+          neuer laufen.</para>
       </note>
 
+<!--
       <para>Assuming you already have a source repository that you'd
         like to mirror, the next thing you need is an empty target
         repository that will actually serve as that mirror.  This
@@ -4816,16 +4854,50 @@ Node-path: spreadsheet/Makefile
         allowing the revision history in the target repository to
         change by any mechanism other than the mirroring process is a
         recipe for disaster.</para>
+-->
+      <para>Angenommen, Sie haben bereits ein Repository, das Sie
+        gerne spiegeln möchten. Als nächstes brauchen Sie ein leeres
+        Ziel-Repository, das als Spiegel dienen soll. Dieses
+        Repository kann eins der verfügbaren Speicherverfahren
+        benutzen (siehe <xref
+        linkend="svn.reposadmin.basics.backends" />), doch es darf
+        noch keine Versionshistorie enthalten. Das von
+        <command>svnsync</command> verwendete Protokoll zur
+        Übermittlung der Revisionsinformation ist sehr empfindlich
+        gegenüber nicht übereinstimmenden Versionshistorien im
+        Quell- und Ziel-Repository. Aus dem Grund, dass
+        <command>svnsync</command> nicht
+        <emphasis>verlangen</emphasis> kann, dass das Ziel-Repository
+        nur lesbar ist,
+        <footnote>
+          <para>Tatsächlich kann es gar nicht nur lesbar sein, denn
+            sonst hätte <command>svnsync</command> ein echtes Problem,
+            die Versionshistorie hineinzukopieren.</para>
+        </footnote>
+        ist die Katastrophe programmiert, wenn erlaubt wird, die
+        Revisions-Historie im Ziel-Repository mit anderen Mitteln als
+        durch das Spiegeln zu verändern.</para>
 
       <warning>
+<!--
         <para>Do <emphasis>not</emphasis> modify a mirror repository
           in such a way as to cause its version history to deviate
           from that of the repository it mirrors.  The only commits
           and revision property modifications that ever occur on that
           mirror repository should be those performed by the
           <command>svnsync</command> tool.</para>
+-->
+        <para>Verändern Sie ein Spiegel-Repository
+          <emphasis>nicht</emphasis> auf eine Art und Weise, die dazu
+          führt, dass die Versionshistorie von der des
+          Original-Repositorys abweicht. Die einzigen Übergaben und
+          Änderungen an Revisions-Propertys die in diesem
+          Spiegel-Repository stattfinden, sollten ausschließlich durch
+          den Befehl <command>svnsync</command> vorgenommen
+          werden.</para>
       </warning>
 
+<!--
       <para>Another requirement of the target repository is that the
         <command>svnsync</command> process be allowed to modify
         revision properties.  Because <command>svnsync</command> works
@@ -4838,20 +4910,50 @@ Node-path: spreadsheet/Makefile
         <command>svnsync</command> to set and change revision
         properties.  With those provisions in place, you are ready to
         start mirroring repository revisions.</para>
+-->
+      <para>Eine weitere Anforderung an das Ziel-Repository ist, dass
+        dem <command>svnsync</command>-Prozess erlaubt wird,
+        Revisions-Propertys zu verändern. Da
+        <command>svnsync</command> im Rahmen des Hook-Systems
+        ausgeführt wird, ist der standardmäßige Zustand des
+        Repositorys (welcher keine Änderungen an Revisions-Propertys
+        zulässt; siehe <xref
+        linkend="svn.ref.reposhooks.pre-revprop-change" />) nicht
+        ausreichend. Sie müssen ausdrücklich den
+        pre-revprop-change-Hook bereitstellen, der
+        <command>svnsync</command> erlaubt, Revisions-Propertys zu
+        definieren und zu ändern. Mit diesen Vorkehrungen sind Sie
+        gerüstet, um Repository-Revisionen zu spiegeln.</para>
 
       <tip>
+<!--
         <para>It's a good idea to implement authorization measures
           that allow your repository replication process to perform
           its tasks while preventing other users from modifying the
           contents of your mirror repository at all.</para>
+-->
+        <para>Es ist eine gute Idee, Autorisierungsmaßnahmen zu
+          ergreifen, um Ihrem Repository-Replikations-Prozess die
+          Arbeit zu ermöglichen, wohingegen anderen Benutzern die
+          Veränderung der Inhalte des Spiegel-Repositorys verwehrt
+          wird.</para>
       </tip>
 
+<!--
       <para>Let's walk through the use of <command>svnsync</command>
         in a somewhat typical mirroring scenario.  We'll pepper this
         discourse with practical recommendations, which you are free to
         disregard if they aren't required by or suitable for your
         environment.</para>
+-->
+      <para>Lassen Sie uns nun die Benutzung von
+        <command>svnsync</command> bei einem Rundgang in einem
+        typischen Spiegel-Szenario erklären. Wir werden diesen Diskurs
+        mit Empfehlungen würzen, die Sie jedoch getrost missachten
+        können, falls sie für Ihre Umgebung nicht benötigt werden oder
+        nicht passend sind.</para>
 
+<!--
       <para>As a service to the fine developers of our favorite
         version control system, we will be mirroring the public
         Subversion source code repository and exposing that mirror
@@ -4867,12 +4969,38 @@ Node-path: spreadsheet/Makefile
         that it makes for a more interesting example, we'll be driving
         the replication process from a third machine&mdash;the one that
         we currently find ourselves using.</para>
+-->
+      <para>Als Dienst an den ausgezeichneten Entwicklern unseres
+        Lieblings-Versionskontrollsystems wollen wir das öffentliche
+        Subversion-Quelltext-Repository spiegeln und diesen Spiegel
+        von einer anderen Maschine als der, auf der das ursprüngliche
+        Subversion-Quelltext-Repository untergebracht ist, im Internet
+        veröffentlichen. Dieser entfernt liegende Rechner besitzt eine
+        globale Konfiguration, die es anonymen Benutzern erlaubt, den
+        Inhalt von Repositorys auf diesem Rechner zu lesen, aber zum
+        Ändern dieser Repositorys eine Authentifizierung der Benutzer
+        erforderlich macht. (Vergeben Sie uns bitte, dass wir für den
+        Augenblick über die Details der
+        Subversion-Server-Konfiguration hinwegsehen &ndash; sie werden
+        in <xref linkend="svn.serverconfig" /> behandelt.) Und aus dem
+        alleinigen Grund, es noch interessanter machen zu wollen,
+        werden wir den Replikationsprozess von einer dritten Maschine
+        aus steuern &ndash; diejenige, die wir aktuell
+        benutzen.</para>
 
+<!--
       <para>First, we'll create the repository which will be our
         mirror.  This and the next couple of steps do require shell
         access to the machine on which the mirror repository will
         live.  Once the repository is all configured, though, we
         shouldn't need to touch it directly again.</para>
+-->
+      <para>Zunächst erstellen wir das Repository, das unser Spiegel
+        sein soll. Dieser und die folgenden paar Schritte erfordern
+        einen Shell-Zugang auf die Maschine, die das
+        Spiegel-Repository beherbergen soll. Sobald das Repository
+        jedoch konfiguriert ist, sollten wir nicht mehr direkt darauf
+        zugreifen müssen.</para>
 
       <screen>
 $ ssh admin@svn.example.com \
@@ -4881,6 +5009,7 @@ admin@svn.example.com's password: ********
 $
 </screen>
 
+<!--
       <para>At this point, we have our repository, and due to our
         server's configuration, that repository is now
         <quote>live</quote> on the Internet.  Now, because we don't
@@ -4890,7 +5019,19 @@ $
         for our process.  Only commits and revision property
         modifications performed by the special username
         <literal>syncuser</literal> will be allowed.</para>
+-->
+      <para>Zu diesem Zeitpunkt haben wir unser Repository, und wegen
+        unserer Server-Konfiguration ist das Repository nun
+        <quote>live</quote> im Internet. Da wir aber außer unserem
+        Replikationsprozess niemanden erlauben wollen, das Repository
+        zu ändern, benötigen wir eine Möglichkeit, diesen Prozess von
+        anderen potentiellen Zugriffen zu unterscheiden. Um dies zu
+        machen, verwenden wir einen ausgezeichneten Benutzernamen für
+        unseren Prozess. Nur Übergaben und Änderungen an
+        Revisions-Propertys unter dem Benutzerkonto
+        <literal>syncuser</literal> werden erlaubt.</para>
 
+<!--
       <para>We'll use the repository's hook system both to allow the
         replication process to do what it needs to do and to enforce
         that only it is doing those things.  We accomplish this by
@@ -4902,10 +5043,28 @@ $
         />, and basically verifies that the user attempting the
         property changes is our <literal>syncuser</literal> user.  If
         so, the change is allowed; otherwise, it is denied.</para>
+-->
+      <para>Wir verwenden das Hook-System des Repositorys sowohl, um
+        dem Replikationsprozess seine Arbeit zu ermöglichen, als auch,
+        um sicherzustellen, dass nur er diese Dinge tut. Wir
+        bewerkstelligen dies, indem wir zwei der
+        Repository-Ereignis-Hooks implementieren &ndash;
+        pre-revprop-change und start-commit. Unser
+        <filename>pre-revprop-change</filename>-Hook-Script finden Sie
+        in <xref
+        linkend="svn.reposadmin.maint.replication.pre-revprop-change"
+        />; grundsätzlich stellt es sicher, dass der Benutzer, der die
+        Propertys ändern möchte, unser <literal>syncuser</literal>
+        ist. Falls dies zutrifft, ist die Änderung erlaubt,
+        anderenfalls wird die Änderung abgelehnt.</para>
 
       <example id="svn.reposadmin.maint.replication.pre-revprop-change">
+<!--
         <title>Mirror repository's pre-revprop-change hook script</title>
+-->
+        <title>pre-revprop-change-Hook-Script des Spiegel-Repositorys</title>
 
+<!--
         <programlisting>
 #!/bin/sh 
 
@@ -4916,8 +5075,20 @@ if [ "$USER" = "syncuser" ]; then exit 0; fi
 echo "Only the syncuser user may change revision properties" &gt;&amp;2
 exit 1
 </programlisting>
+-->
+        <programlisting>
+#!/bin/sh 
+
+USER="$3"
+
+if [ "$USER" = "syncuser" ]; then exit 0; fi
+
+echo "Ausschließlich der Benutzer syncuser darf Revisions-Propertys ändern" &gt;&amp;2
+exit 1
+</programlisting>
       </example>
 
+<!--
       <para>That covers revision property changes.  Now we need to
         ensure that only the <literal>syncuser</literal> user is
         permitted to commit new revisions to the repository.  We do
@@ -4925,10 +5096,22 @@ exit 1
         such as the one in <xref
         linkend="svn.reposadmin.maint.replication.start-commit"
         />.</para>
+-->
+      <para>Das deckt Änderungen an Revisions-Propertys ab. Nun müssen
+        wir sicherstellen, dass nur der Benutzer
+        <literal>syncuser</literal> neue Revisionen an das Repository
+        übergeben darf. Wir machen das, indem wir ein
+        <filename>start-commit</filename>-Hook-Script wie das in <xref
+        linkend="svn.reposadmin.maint.replication.start-commit" />
+        benutzen.</para>
 
       <example id="svn.reposadmin.maint.replication.start-commit">
+<!--
         <title>Mirror repository's start-commit hook script</title>
+-->
+        <title>start-commit-Hook-Script des Spiegel-Repositorys</title>
 
+<!--
         <programlisting>
 #!/bin/sh 
 
@@ -4939,13 +5122,32 @@ if [ "$USER" = "syncuser" ]; then exit 0; fi
 echo "Only the syncuser user may commit new revisions" &gt;&amp;2
 exit 1
 </programlisting>
+-->
+        <programlisting>
+#!/bin/sh 
+
+USER="$2"
+
+if [ "$USER" = "syncuser" ]; then exit 0; fi
+
+echo "Ausschließlich der Benutzer syncuser darf neue Revisionen übergeben" &gt;&amp;2
+exit 1
+</programlisting>
       </example>
 
+<!--
       <para>After installing our hook scripts and ensuring that they
         are executable by the Subversion server, we're finished with
         the setup of the mirror repository.  Now, we get to actually
         do the mirroring.</para>
+-->
+      <para>Nachdem wir unsere Hook-Scripte installiert und uns
+        vergewissert haben, dass sie auf dem Subversion-Server
+        ausführbar sind, sind wir mit dem Aufsetzen des
+        Spiegel-Repositorys fertig. Nun kommen wir zum eigentlichen
+        Spiegeln.</para>
 
+<!--
       <para>The first thing we need to do with
         <command>svnsync</command> is to register in our target
         repository the fact that it will be a mirror of the source
@@ -4956,7 +5158,19 @@ exit 1
         full mirroring of repositories is permitted.  In Subversion
         1.5, though, you can use <command>svnsync</command> to mirror
         only some subtree of the repository, too.</para>
+-->
+      <para>Das Erste, was wir machen müssen ist, unserem
+        Ziel-Repository mit <command>svnsync</command> zu sagen, dass
+        es ein Spiegel des Quell-Repositorys sein wird. Wir machen das
+        mit dem Unterbefehl <command>svnsync initialize</command>. Die
+        URLs, die wir mitgeben, zeigen auf die Wurzelverzeichnisse des
+        Ziel- bzw. Quell-Repositorys. In Subversion 1.4 ist das
+        erforderlich &ndash; nur die vollständige Spiegelung von
+        Repositorys ist erlaubt. In Subversion 1.5 jedoch können Sie
+        <command>svnsync</command> auch zum Spiegeln von Teilbäumen
+        des Repositorys verwenden.</para>
 
+<!--
       <screen>
 $ svnsync help init
 initialize (init): usage: svnsync initialize DEST_URL SOURCE_URL
@@ -4966,41 +5180,87 @@ another repository.
 &hellip;
 $ svnsync initialize http://svn.example.com/svn-mirror \
                      http://svn.collab.net/repos/svn \
-                     --sync-username syncuser --sync-password syncpass
+                     - -sync-username syncuser - -sync-password syncpass
 Copied properties for revision 0.
 $
 </screen>
+-->
+      <screen>
+$ svnsync help init
+initialize (init): Aufruf: svnsync initialize ZIEL_URL QUELL_URL
 
+Bereitet ein Zielprojektarchiv auf die Synchronisation mit einem
+anderen Projektarchiv vor.
+&hellip;
+$ svnsync initialize http://svn.example.com/svn-mirror \
+                     http://svn.collab.net/repos/svn \
+                     --sync-username syncuser --sync-password syncpass
+Eigenschaften für Revision 0 kopiert.
+$
+</screen>
+
+<!--
       <para>Our target repository will now remember that it is a
         mirror of the public Subversion source code repository.
         Notice that we provided a username and password as arguments
         to <command>svnsync</command>&mdash;that was required by the
         pre-revprop-change hook on our mirror repository.</para>
+-->
+      <para>Unser Ziel-Repository wird sich nun erinnern, dass es ein
+        Spiegel des öffentlichen Subversion-Quelltext-Repositorys ist.
+        Beachten Sie, dass wir einen Benutzernamen und ein Passwort an
+        <command>svnsync</command> übergeben haben &ndash; das war für
+        den pre-revprop-change-Hook in unserem Spiegel-Repository
+        erforderlich.</para>
 
       <note>
+<!--
         <para>In Subversion 1.4, the values given to
-          <command>svnsync</command>'s <option>--username</option> and
-          <option>--password</option> command-line options were used
+          <command>svnsync</command>'s <option>- -username</option> and
+          <option>- -password</option> command-line options were used
           for authentication against both the source and destination
           repositories.  This caused problems when a user's
           credentials weren't exactly the same for both repositories,
           especially when running in noninteractive mode (with the
-          <option>--non-interactive</option> option).</para>
+          <option>- -non-interactive</option> option).</para>
+-->
+        <para>In Subversion 1.4 wurden die an die
+          Kommandozeilenoptionen <option>--username</option> und
+          <option>--password</option> von <command>svnsync</command>
+          übergebenen Werte sowohl für die Authentifizierung gegenüber
+          dem Quell-Repository als auch gegenüber dem Ziel-Repository
+          verwendet. Das führte zu Problemen, falls die Zugangsdaten
+          eines Benutzers nicht für beide Repositorys identisch waren,
+          insbesonders im nicht-interaktiven Modus (mit der Option
+          <option>--non-interactive</option>).</para>
 
+<!--
         <para>This has been fixed in Subversion 1.5 with the
           introduction of two new pairs of options.  Use
-          <option>--source-username</option> and
-          <option>--source-password</option> to provide authentication
+          <option>- -source-username</option> and
+          <option>- -source-password</option> to provide authentication
           credentials for the source repository; use
-          <option>--sync-username</option> and
-          <option>--sync-password</option> to provide credentials for
+          <option>- -sync-username</option> and
+          <option>- -sync-password</option> to provide credentials for
           the destination repository.  (The old
-          <option>--username</option> and <option>--password</option>
+          <option>- -username</option> and <option>- -password</option>
           options still exist for compatibility, but we advise against
           using them.)</para>
+-->
+        <para>Dies ist in Subversion 1.5 mit der Einführung von zwei
+          neuen Optionspaaren behoben worden. Benutzen Sie
+          <option>--source-username</option> und
+          <option>--source-password</option> für die Zugangsdaten des
+          Quell-Repositorys sowie <option>--sync-username</option> und
+          <option>--sync-password</option> für das Ziel-Repository.
+          (Die alten Optionen <option>--username</option> und
+          <option>--password</option> bleiben aus
+          Kompatibilitätsgründen bestehen, doch raten wir von deren
+          Verwendung ab.)</para>
 
       </note>
 
+<!--
       <para>And now comes the fun part.  With a single subcommand, we
         can tell <command>svnsync</command> to copy all the
         as-yet-unmirrored revisions from the source repository to the
@@ -5024,7 +5284,32 @@ $
         resultant response from the source repository's server, it
         begins forwarding those revisions to the target repository's
         server as new commits.</para>
+-->
+      <para>Und nun kommt der lustige Teil. Mit einem einfachen
+        Unterbefehl können wir <command>svnsync</command> auffordern,
+        alle bislang ungespiegelten Revisionen aus dem
+        Quell-Repository zum Ziel zu kopieren.
+        <footnote>
+          <para>Seien Sie jedoch vorgewarnt, dass, obwohl der
+            durchschnittliche Leser nur ein paar Sekunden benötigt, um
+            diesen Absatz und die ihm folgende Beispielausgabe zu
+            erfassen, die tatsächlich für eine vollständige Spiegelung
+            erforderliche Zeit um Einiges länger ist.</para>
+        </footnote>
+        Der Unterbefehl <command>svnsync synchronize</command> wird
+        die bereits vorher im Ziel-Repository gespeicherten besonderen
+        Revisions-Propertys untersuchen und sowohl ermitteln, welches
+        Repository es spiegelt und dass die zuletzt gespiegelte
+        Revision die Revision 0 war. Dann fragt es das Quell-Repository
+        ab, welches die jüngste Revision in diesem Repository ist.
+        Schließlich fordert es den Server des Quell-Repositorys auf,
+        alle Revisionen zwischen 0 und dieser letzten Revision
+        zu wiederholen. Sobald <command>svnsync</command> die
+        entsprechende Antwort vom Quell-Repository-Server erhält,
+        leitet es diese Revisionen als neue Übergaben an den Server
+        des Ziel-Repositorys weiter.</para>
 
+<!--
       <screen>
 $ svnsync help synchronize
 synchronize (sync): usage: svnsync synchronize DEST_URL
@@ -5054,7 +5339,38 @@ Committed revision 23408.
 Copied properties for revision 23408.
 $
 </screen>
+-->
+      <screen>
+$ svnsync help synchronize
+synchronize (sync): Aufruf: svnsync synchronize ZIEL_URL
 
+Überträgt alle laufenden Revisionen von der Quelle, mit der es
+initialisiert wurde, zum Ziel.
+&hellip;
+$ svnsync synchronize http://svn.example.com/svn-mirror
+Übertrage Daten ........................................
+Revision 1 übertragen.
+Eigenschaften für Revision 1 kopiert.
+Übertrage Daten ..
+Revision 2 übertragen.
+Eigenschaften für Revision 2 kopiert.
+Übertrage Daten .....
+Revision 3 übertragen.
+Eigenschaften für Revision 3 kopiert.
+&hellip;
+Übertrage Daten ..
+Revision 23406 übertragen.
+Eigenschaften für Revision 23406 kopiert.
+Übertrage Daten .
+Revision 23407 übertragen.
+Eigenschaften für Revision 23407 kopiert.
+Übertrage Daten ....
+Revision 23408 übertragen.
+Eigenschaften für Revision 23408 kopiert.
+$
+</screen>
+
+<!--
       <para>Of particular interest here is that for each mirrored
         revision, there is first a commit of that revision to the
         target repository, and then property changes follow.  This is
@@ -5069,7 +5385,25 @@ $
         for that revision in the source repository.  This also has the
         effect of fixing the author and datestamp of the revision to
         match that of the source repository.</para>
+-->
+      <para>Von besonderem Interesse ist hier, dass für jede
+        gespiegelte Revision zunächst eine Übergabe der Revision an
+        das Ziel-Repository erfolgt und dann die Änderungen der
+        Propertys folgen. Das kommt daher, dass die anfängliche
+        Übergabe durch den Benutzer <literal>syncuser</literal>
+        durchgeführt (und ihm auch zugeschrieben) wird und mit dem
+        Zeitstempel der Erzeugung dieser Revision versehen wird.
+        Darüberhinaus erlauben die Subversion zugrundeliegenden
+        Repository-Zugriffs-Schnittstellen nicht das beliebige Setzen
+        von Revisions-Propertys als Teil einer Übergabe. Deshalb folgt
+        <command>svnsync</command> mit einer unmittelbaren Serie von
+        Änderungen an den Propertys, die all die Propertys dieser
+        Revision vom Quell-Repository ins Ziel-Repository kopieren.
+        Das hat auch den Effekt, dass der Autor und der Zeitstempel so
+        korrigiert werden, dass diese den entsprechenden Werten im
+        Quell-Repository entsprechen.</para>
 
+<!--
       <para>Also noteworthy is that <command>svnsync</command>
         performs careful bookkeeping that allows it to be safely
         interrupted and restarted without ruining the integrity of the
@@ -5079,10 +5413,26 @@ $
         right where it left off.  In fact, as new revisions appear in
         the source repository, this is exactly what you to do
         to keep your mirror up to date.</para>
+-->
+      <para>Bemerkenswert ist ebenfalls, dass
+        <command>svnsync</command> eine sorgfältige Buchführung
+        vornimmt, die es ihm erlaubt, sicher unterbrochen und erneut
+        gestartet zu werden, ohne die Integrität der gespiegelten
+        Daten zu gefährden. Falls während des Spiegelns ein
+        Netzproblem entsteht, wiederholen Sie einfach den Befehl
+        <command>svnsync synchronize</command>, und er wird einfach
+        damit weitermachen, womit er aufgehört hat. Das ist
+        tatsächlich genau das, was Sie machen, um Ihren Spiegel
+        aktuell zu halten, wenn neue Revisionen im Quell-Repository
+        auftauchen.</para>
 
       <sidebar>
+<!--
         <title>svnsync Bookkeeping</title>
+-->
+        <title>svnsync-Buchhaltung</title>
 
+<!--
         <para><command>svnsync</command> needs to be able to set and
           modify revision properties on the mirror repository because
           those properties are part of the data it is tasked with
@@ -5094,7 +5444,21 @@ $
           bookkeeping.  These properties contain information such as
           the URL and UUID of the source repository, plus some
           additional state-tracking information.</para>
+-->
+        <para><command>svnsync</command> muss in der Lage sein,
+          Revisions-Propertys im Ziel-Repository zu setzen und zu
+          verändern, da diese Propertys Teil der Daten sind, die es
+          spiegeln soll. Wenn sich diese Propertys im Quell-Repository
+          ändern, müssen sie im Ziel-Repository nachgezogen werden.
+          Allerdings verwendet <command>svnsync</command> auch eine
+          Menge von speziellen Revisions-Propertys &ndash;
+          gespeichert in Revision 0 des Spiegel-Repositorys &ndash;
+          für seine eigene interne Buchhaltung. Diese Propertys
+          beinhalten Informationen wie etwa der URL oder die UUID des
+          Quell-Repositorys plus einige Informationen zur
+          Zustandsverfolgung.</para>
 
+<!--
         <para>One of those pieces of state-tracking information is a
           flag that essentially just means <quote>there's a
           synchronization in progress right now.</quote>  This is used
@@ -5113,13 +5477,41 @@ $
           removing the <literal>svn:sync-lock</literal> property which
           serves as this flag from revision 0 of the mirror
           repository:</para>
+-->
+        <para>Ein Teil dieser Zustandsverfolgungsinformation ist ein
+          Flag, das bedeutet: <quote>momentan findet eine
+          Synchronisierung statt</quote>. Dies wird verwendet, um zu
+          verhindern, dass mehrere <command>svnsync</command>-Prozesse
+          miteinander kollidieren, während sie versuchen, Daten in
+          dasselbe Ziel-Repository zu spiegeln. Im Allgemeinen
+          brauchen Sie auf <emphasis>keins</emphasis> dieser
+          besonderen Propertys zu achten (sie beginnen alle mit dem
+          Präfix <literal>svn:sync-</literal>). Gelegentlich jedoch,
+          falls eine Synchronisierung unerwartet fehlschlägt, bekommt
+          Subversion keine Chance, dieses besondere Zustands-Flag zu
+          entfernen. Das führt dazu, dass alle weiteren
+          Synchronisierungsversuche fehlschlagen, da es scheint, dass
+          eine Synchronisierung gerade durchgeführt wird, obwohl
+          tatsächlich keine stattfindet. Glücklicherweise kann dies
+          behoben werden, indem einfach das Property
+          <literal>svn:sync-lock</literal> von Revision 0 des
+          Spiegel-Repositorys entfernt wird, das als dieses Flag
+          dient.</para>
 
+<!--
         <screen>
-$ svn propdel --revprop -r0 svn:sync-lock http://svn.example.com/svn-mirror
+$ svn propdel - -revprop -r0 svn:sync-lock http://svn.example.com/svn-mirror
 property 'svn:sync-lock' deleted from repository revision 0
 $
 </screen>
+-->
+        <screen>
+$ svn propdel --revprop -r0 svn:sync-lock http://svn.example.com/svn-mirror
+Eigenschaft »svn:sync-lock« wurde von Revision 0 im Projektarchiv gelöscht
+$
+</screen>
 
+<!--
         <para>That <command>svnsync</command> stores the source
           repository URL in a bookkeeping property on the mirror
           repository is the reason why you have to specify that
@@ -5144,14 +5536,49 @@ $
           to start referring to a different URL for the same source
           repository, you can change the bookkeeping property which
           houses that information:</para>
+-->
+        <para>Dass <command>svnsync</command> den URL des
+          Quell-Repositorys zur Buchhaltung in einem Property des
+          Spiegel-Repositorys speichert, ist der Grund dafür, dass Sie
+          diesen URL nur einmal angeben müssen: bei <command>svnsync
+          init</command>. Künftige Synchronisierungs-Operationen mit
+          diesem Spiegel lesen einfach das besondere Property
+          <literal>svn:sync-from-url</literal>, das auf dem Spiegel
+          gespeichert ist, um zu wissen, woher synchronisiert werden
+          soll. Dieser Wert wird vom Synchronisierungsprozess jedoch
+          wortwörtlich benutzt. Während Sie vielleicht innerhalb des
+          Netzes von CollabNet auf unseren Beispiel-URL
+          <literal>http://svn/repos/svn</literal> zugreifen können
+          (weil das erste <literal>svn</literal> durch
+          DNS-Voodoo-Zauber ein <literal>.collab.net</literal>
+          angehängt bekommt), kann der Zugriff fehlschlagen, falls Sie
+          später einmal den Spiegel von außerhalb des CollabNet-Netzes
+          aktualisieren müssen (da der Rechnername
+          <literal>svn</literal> mehrdeutig ist). Aus diesem Grund ist
+          es am besten, beim Initialisieren von Spiegel-Repositorys
+          vollqualifizierte Quell-Repository-URLs zu verwenden,
+          anstatt solche, die nur auf Rechnernamen oder IP-Adressen
+          verweisen (die sich im Lauf der Zeit ändern können). Aber
+          auch hier können Sie das Property zur Buchhaltung ändern,
+          falls ein bestehender Spiegel einen unterschiedlichen URL
+          für dasselbe Quell-Repository benötigt:</para>
 
+<!--
         <screen>
-$ svn propset --revprop -r0 svn:sync-from-url <replaceable>NEW-SOURCE-URL</replaceable> \
+$ svn propset - -revprop -r0 svn:sync-from-url <replaceable>NEW-SOURCE-URL</replaceable> \
       http://svn.example.com/svn-mirror
 property 'svn:sync-from-url' set on repository revision 0
 $
 </screen>
+-->
+        <screen>
+$ svn propset --revprop -r0 svn:sync-from-url <replaceable>NEUER-QUELL-URL</replaceable> \
+      http://svn.example.com/svn-mirror
+Eigenschaft »svn:sync-from-url« wurde für Revision 0 im Projektarchiv gesetzt
+$
+</screen>
 
+<!--
         <para>Another interesting thing about these special
           bookkeeping properties is that <command>svnsync</command>
           will not attempt to mirror any of those properties when they
@@ -5165,9 +5592,25 @@ $
           third repository.  When <command>svnsync</command> sees its
           own special properties in revision 0 of the source
           repository, it simply ignores them.</para>
+-->
+        <para>Eine weitere interessante Angelegenheit an diesen
+          speziellen Propertys zur Buchhaltung ist, dass
+          <command>svnsync</command> nicht versucht, diese Propertys
+          zu spiegeln, wenn sie im Quell-Repository gefunden werden.
+          Der Grund ist wahrscheinlich offensichtlich, aber im Grunde
+          läuft es darauf hinaus, dass <command>svnsync</command>
+          nicht zu unterscheiden vermag, welche der speziellen
+          Propertys es bloß aus dem Quell-Repository kopiert hat und
+          welche es für seine Buchhaltung benötigt und verwaltet.
+          Diese Situation kann auftreten, falls Sie beispielsweise
+          einen Spiegel eines Spiegels eines dritten Repositorys
+          vorhalten. Wenn <command>svnsync</command> seine eigenen
+          speziellen Propertys in Revision 0 des Quell-Repositorys
+          entdeckt, ignoriert es sie einfach.</para>
 
       </sidebar>
 
+<!--
       <para>There is, however, one bit of inelegance in the process.
         Because Subversion revision properties can be changed at any
         time throughout the lifetime of the repository, and because
@@ -5181,7 +5624,22 @@ $
         around) the <command>svnsync copy-revprops</command>
         subcommand, which simply rereplicates all the revision
         properties for a particular revision or range thereof.</para>
+-->
+      <para>In diesem Prozess ist jedoch eine kleine Unfeinheit. Da
+        die Revisions-Propertys von Subversion jederzeit während der
+        Lebenszeit eines Repository geändert werden können, ohne zu
+        protokollieren, wann sie geändert wurden, müssen replizierende
+        Prozesse ein besonderes Augenmerk auf sie richten. Wenn Sie
+        bereits die ersten 15 Revisionen eines Repositorys gespiegelt
+        haben, und dann jemand ein Revisions-Property von Revision 12
+        ändert, weiß <command>svnsync</command> nicht, dass es
+        zurückgehen und die Kopie der Revision 12 korrigieren muss.
+        Sie müssen es ihm manuell mitteilen, indem Sie den Unterbefehl
+        <command>svnsync copy-revprops</command> verwenden, der
+        einfach alle Propertys einer bestimmten Revision oder eines
+        Revisionsintervalls erneut repliziert.</para>
 
+<!--
       <screen>
 $ svnsync help copy-revprops
 copy-revprops: usage: svnsync copy-revprops DEST_URL [REV[:REV2]]
@@ -5193,7 +5651,20 @@ $ svnsync copy-revprops http://svn.example.com/svn-mirror 12
 Copied properties for revision 12.
 $
 </screen>
+-->
+      <screen>
+$ svnsync help copy-revprops
+copy-revprops: Aufruf: svnsync copy-revprops ZIEL_URL [REV[:REV2]]
 
+Kopiert die Revisionseigenschaften in einem gegebenen Revisionsbereich
+von der Quelle, mit der es initialisiert wurde, auf das Ziel.
+&hellip;
+$ svnsync copy-revprops http://svn.example.com/svn-mirror 12
+Eigenschaften für Revision 12 kopiert.
+$
+</screen>
+
+<!--
       <para>That's repository replication in a nutshell.  You'll
         likely want some automation around such a process.  For
         example, while our example was a pull-and-push setup, you
@@ -5202,14 +5673,34 @@ $
         post-revprop-change hook implementations.  This would enable
         the mirror to be up to date in as near to real time as is
         likely possible.</para>
+-->
+      <para>Das ist Repository-Replikation in aller Kürze.
+        Sehrwahrscheinlich möchten Sie einen solchen Prozess etwas
+        automatisieren. Während unser Beispiel ein
+        Ziehen-und-Schieben-Szenario beschrieb, möchten Sie
+        vielleicht, dass Ihr primäres Repository als Teil der
+        post-commit- und post-revprop-change-Hooks Änderungen an einen
+        oder mehrere ausgesuchte Spiegel weiterschiebt. Das würde es
+        ermöglichen, dass der Spiegel beinahe in Echtzeit aktuell
+        gehalten werden kann.</para>
 
+<!--
       <para>Also, while it isn't very commonplace to do so,
         <command>svnsync</command> does gracefully mirror repositories
         in which the user as whom it authenticates has only partial
         read access.  It simply copies only the bits of the repository
         that it is permitted to see.  Obviously, such a mirror is not
         useful as a backup solution.</para>
+-->
+      <para>Es ist auch möglich, wenn auch nicht sehr verbreitet, dass
+        <command>svnsync</command> Repositorys spiegelt, in denen der
+        Benutzer unter dessen Kennung es läuft, nur eingeschränkte
+        Rechte besitzt. Es werden dann einfach nur die Teile des
+        Repositorys kopiert, die der Benutzer sehen darf.
+        Offensichtlich taugt so ein Spiegel nicht als
+        Sicherheitskopie.</para>
 
+<!--
       <para>In Subversion 1.5, <command>svnsync</command> grew the
         ability to also mirror a subset of a repository rather than
         the whole thing.  The process of setting up and maintaining
@@ -5231,7 +5722,28 @@ $
         subdirectory is renamed in the future, your synchronization
         processes will stop mirroring data at the point that the
         source URL you specified is no longer valid.</para>
+-->
+      <para>In Subversion 1.5 entwickelte <command>svnsync</command>
+        auch die Fähigkeit, eine Teilmenge eines Repositorys statt des
+        Ganzen zu spiegeln. Das Anlegen und Pflegen eines solchen
+        Spiegels unterscheidet sich nicht vom Spiegeln eines
+        kompletten Repositorys; anstatt den Wurzel-URL des
+        Quell-Repositorys bei <command>svnsync init</command>
+        anzugeben, nennen Sie einfach den URL eines
+        Unterverzeichnisses dieses Repositorys. Hierbei gibt es
+        allerdings einige Einschränkungen. Als Erstes können Sie nicht
+        mehrere disjunkte Unterverzeichnisse des Quell-Repositorys in
+        ein einzelnes Ziel-Repository spiegeln &ndash; stattdessen
+        müssen Sie ein Eltern-Verzeichnis spiegeln, das allen
+        gemeinsam ist. Zum Zweiten ist die Filterlogik vollständig
+        pfadbasiert, so dass bei Verzeichnissen, die in der
+        Vergangenheit einmal umbenannt wurden, Ihr Spiegel nur die
+        Revisionen seit dem Zeitpunkt enthält an dem das Verzeichnis
+        unter diesem URL zu finden war. Auch wenn das Unterverzeichnis
+        künftig umbenannt wird, werden Revisionen nur bis zu dem
+        Zeitpunkt gespiegelt, an dem der URL ungültig wird.</para>
 
+<!--
       <para>As far as user interaction with repositories and mirrors
         goes, it <emphasis>is</emphasis> possible to have a single
         working copy that interacts with both, but you'll have to jump
@@ -5240,9 +5752,20 @@ $
         same repository UUID (which is not the case by default).  See
         <xref linkend="svn.reposadmin.maint.uuids" /> later in this
         chapter for more about this.</para>
-        
+-->
+      <para>Was das Zusammenspiel von Benutzern mit Repositorys und
+        Spiegeln betrifft, <emphasis>ist</emphasis> es möglich eine
+        einzelne Arbeitskopie zu haben, die mit beiden kommuniziert,
+        doch müssen Sie hierfür einige Verrenkungen machen. Zunächst
+        müssen Sie sicherstellen, dass sowohl das primäre Repository
+        als auch das Spiegel-Repository dieselbe Repository-UUID haben
+        (was standardmäßig nicht der Fall ist). Mehr darüber unter
+        <xref linkend="svn.reposadmin.maint.uuids" /> später in diesem
+        Kapitel.</para>
+
+<!--
       <para>Once the two repositories have the same UUID, you can use
-        <command>svn switch</command> with the <option>--relocate</option> option to point your working
+        <command>svn switch</command> with the <option>- -relocate</option> option to point your working
         copy to whichever of the repositories you wish to operate
         against, a process that is described in <xref
         linkend="svn.ref.svn.c.switch" />.  There is a possible danger
@@ -5257,7 +5780,26 @@ $
         repository is up to date, or backdate your working copy to a
         revision you know is present in the sync repository, and then
         retry the relocation.</para>
+-->
+      <para>Sobald beide Repositorys dieselbe UUID haben, können Sie
+        <command>svn switch</command> mit der Option
+        <option>--relocate</option> benutzen, um das Repository
+        auszuwählen, mit dem Sie arbeiten wollen; dieser Prozess ist
+        in <xref linkend="svn.ref.svn.c.switch" /> beschrieben. Eine
+        mögliche Gefahr besteht allerdings, wenn das Haupt- und das
+        Spiegel-Repository nicht zeitnah synchronisiert sind. Eine
+        Arbeitskopie, die auf das Haupt-Repository zeigt und gegenüber
+        diesem aktuell ist, wird nach dem Umschalten auf den nicht
+        aktuellen Spiegel durch den plötzlichen Verlust von
+        Revisionen, die sie dort erwartet, verwirrt werden und deshalb
+        Fehler ausgeben. Falls dies auftritt, können Sie entweder Ihre
+        Arbeitskopie wieder zurück auf das Haupt-Repository schalten
+        und warten bis das Spiegel-Repository aktuell ist oder Ihre
+        Arbeitskopie auf eine Revision zurücksetzen, von der Sie
+        wissen, dass sie im synchronisierten Repository vorhanden ist,
+        und dann noch einmal das Umschalten versuchen. </para>
 
+<!--
       <para>Finally, be aware that the revision-based replication
         provided by <command>svnsync</command> is only
         that&mdash;replication of revisions.  Only information carried
@@ -5268,6 +5810,17 @@ $
         repository or server configuration data, uncommitted
         transactions, or information about user locks on repository
         paths.</para>
+-->
+      <para>Zum Schluss sollte Ihnen bewusst sein, dass die von
+        <command>svnsync</command> angebotene revisionsbasierte
+        Replikation genau das ist &ndash; die Replikation von
+        Revisionen. Nur die durch das Format der
+        Subversion-Auszugsdateien übertragene Information ist
+        replizierbar. Somit hat <command>svnsync</command> dieselben
+        Einschränkungen wie der Auszugsstrom und beinhaltet nicht
+        Dinge wie Hook-Implementierungen, Repository- oder
+        Server-Konfigurationen, unvollständige Transaktionen oder
+        Benutzersperren auf Repository-Pfaden.</para>
 
     </sect2>
 
