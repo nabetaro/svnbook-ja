@@ -5826,8 +5826,12 @@ $
 
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.maint.backup">
+<!--
       <title>Repository Backup</title>
+-->
+      <title>Sicherung des Repositorys</title>
 
+<!--
       <para>Despite numerous advances in technology since the birth of
         the modern computer, one thing unfortunately rings true with
         crystalline clarity&mdash;sometimes things go very, very
@@ -5837,7 +5841,18 @@ $
         administrator.  And so we arrive at a very important
         topic&mdash;how to make backup copies of your repository
         data.</para>
+-->
+      <para>Trotz zahlreicher technischer Fortschritte seit der Geburt
+        des modernen Computers bleibt eine Sache unglücklicherweise
+        wahr: manchmal geht etwas richtig schief. Eine kleine Auswahl
+        von schlimmen Dingen, die das Schicksal auch auf den
+        gewissenhaftesten Administrator loslassen kann, sind
+        Stromausfälle, Netzzusammenbrüche, defekter Speicher und
+        Festplattenabstürze. So kommen wir zu einem sehr wichtigen
+        Thema: Wie mache ich Sicherheitskopien von den Daten meines
+        Repositorys?</para>
 
+<!--
       <para>There are two types of backup methods available for
         Subversion repository administrators&mdash;full and
         incremental.  A full backup of the repository involves
@@ -5849,7 +5864,19 @@ $
         backups are lesser things:  backups of only the portion of the
         repository data that has changed since the previous
         backup.</para>
+-->
+      <para>Dem Administrator stehen zwei Arten von Sicherungsmethoden
+        zur Verfügung: vollständig und inkrementell. Eine vollständige
+        Sicherungskopie des Repositorys beinhaltet eine umfassende
+        Speicherung aller Informationen, die für die Wiederherstellung
+        des Repositorys im Katastrophenfall benötigt werden. Dies
+        bedeutet gewöhnlich eine Kopie des gesamten
+        Repository-Verzeichnisses (inklusive der Berkeley-DB- oder
+        FSFS-Umgebung). Inkrementelle Sicherungen haben einen
+        geringeren Umfang: nur die Teile des Repositorys, die sich
+        seit der letzten Sicherung geändert haben.</para>
 
+<!--
       <para>As far as full backups go, the naïve approach might seem
         like a sane one, but unless you temporarily disable all other
         access to your repository, simply doing a recursive directory
@@ -5864,27 +5891,60 @@ $
         And its invocation is as trivial as the Unix
         <command>cp</command> or Windows <command>copy</command>
         operations:</para>
+-->
+      <para>Was eine vollständige Sicherung betrifft, scheint der
+        naive Ansatz vernünftig zu sein; jedoch besteht beim einfachen
+        rekursiven Kopieren des Verzeichnisses das Risiko, eine
+        fehlerhafte Sicherung zu erstellen, sofern nicht alle anderen
+        Zugriffe auf das Repository verhindert werden. Für Berkeley DB
+        beschreibt die Dokumentation eine bestimmte Reihenfolge, in
+        der die Datenbankdateien kopiert werden können, um eine
+        gültige Sicherungskopie zu gewährleisten. Eine ähnliche
+        Reihenfolge gibt es für FSFS-Daten. Allerdings brauchen Sie
+        diese Algorithmen nicht selbst zu implementieren, da das
+        Subversion-Entwicklerteam das bereits getan hat. Der Befehl
+        <command>svnadmin hotcopy</command> kümmert sich um die
+        Details, die für eine Sicherungskopie während des Betriebes
+        erforderlich sind. Der Aufruf ist so trivial wie die Bedienung
+        von Unix' <command>cp</command> oder Windows'
+        <command>copy</command>:</para>
 
       <screen>
 $ svnadmin hotcopy /var/svn/repos /var/svn/repos-backup
 </screen>
 
+<!--
       <para>The resultant backup is a fully functional Subversion
         repository, able to be dropped in as a replacement for your
         live repository should something go horribly wrong.</para>
+-->
+      <para>Das Ergebnis der Sicherung ist ein vollständig
+        funktionsfähiges Subversion-Repository, das jederzeit die
+        Aufgaben Ihres Repositorys übernehmen kann, falls irgendetwas
+        Schlimmes passieren sollte.</para>
 
+<!--
       <para>When making copies of a Berkeley DB repository, you can
         even instruct <command>svnadmin hotcopy</command> to purge any
         unused Berkeley DB logfiles (see <xref
         linkend="svn.reposadmin.maint.diskspace.bdblogs" />) from the
         original repository upon completion of the copy.  Simply
-        provide the <option>--clean-logs</option> option on the
+        provide the <option>- -clean-logs</option> option on the
         command line.</para>
+-->
+      <para>Bei der Erstellung von Kopien eines
+        Berkeley-DB-Repositorys können Sie <command>svnadmin
+        hotcopy</command> sogar mitteilen, nach Abschluss der Kopie
+        unbenötigte Berkeley-DB-Protokolldateien (siehe <xref
+        linkend="svn.reposadmin.maint.diskspace.bdblogs" />) aus dem
+        Original-Repository  zu löschen. Geben Sie einfach die Option
+        <option>--clean-logs</option> auf der Kommandozeile an.</para>
 
       <screen>
 $ svnadmin hotcopy --clean-logs /var/svn/bdb-repos /var/svn/bdb-repos-backup
 </screen>
 
+<!--
       <para>Additional tooling around this command is available, too.
         The <filename>tools/backup/</filename> directory of the
         Subversion source distribution holds the
@@ -5902,14 +5962,33 @@ $ svnadmin hotcopy --clean-logs /var/svn/bdb-repos /var/svn/bdb-repos-backup
         (such as <command>cron</command> on Unix systems), which can
         cause it to run nightly (or at whatever granularity of time
         you deem safe).</para>
+-->
+      <para>Ein zusätzliches Werkzeug für diesen Befehl steht auch zur
+        Verfügung. Im Verzeichnis <filename>tools/backup/</filename>
+        des Subversion-Quelltextpaketes liegt das Script
+        <command>hot-backup.py</command>. Dieses Script ergänzt
+        <command>svnadmin hotcopy</command> um ein wenig
+        Sicherungsverwaltung, indem es Ihnen erlaubt, lediglich eine
+        konfigurierbare Anzahl der letzten Sicherungskopien jedes
+        Repositorys zu behalten. Es verwaltet automatisch die Namen
+        der gesicherten Repository-Verzeichnisse, um Kollisionen mit
+        vorherigen Sicherungen zu vermeiden und löscht ältere
+        Sicherungen, so dass nur die jüngsten übrig bleiben. Selbst
+        wenn Sie ebenfalls eine inkrementelle Sicherung haben, sollten
+        Sie dieses Programm regelmäßig aufrufen. Sie könnten
+        beispielsweise <command>hot-backup.py</command> mit einem
+        Programmstarter (so wie <command>cron</command> auf Unix
+        Systemen) verwenden, der es jede Nacht (oder in einem
+        Zeitintervall, das Ihnen sicher erscheint) aufruft.</para>
 
+<!--
       <para>Some administrators use a different backup mechanism built
         around generating and storing repository dump data.  We
         described in <xref linkend="svn.reposadmin.maint.migrate" />
-        how to use <command>svnadmin dump</command> with the <option>--incremental</option> option to
+        how to use <command>svnadmin dump</command> with the <option>- -incremental</option> option to
         perform an incremental backup of a given revision or range of
         revisions.  And of course, you can achieve a full backup variation of
-        this by omitting the <option>--incremental</option>
+        this by omitting the <option>- -incremental</option>
         option to that command.  There is some value in these methods,
         in that the format of your backed-up information is
         flexible&mdash;it's not tied to a particular platform,
@@ -5922,7 +6001,33 @@ $ svnadmin hotcopy --clean-logs /var/svn/bdb-repos /var/svn/bdb-repos-backup
         revisions won't get picked up by a nonoverlapping,
         incremental dump generation.  For these reasons, we recommend
         against relying solely on dump-based backup approaches.</para>
+-->
+      <para>Einige Administratoren verwenden einen unterschiedlichen
+        Sicherungsmechanismus, der auf der Erzeugung und Speicherung
+        von Repository-Auszugs-Daten basiert. In <xref
+        linkend="svn.reposadmin.maint.migrate" /> haben wir
+        beschrieben, wie <command>svnadmin dump</command> mit der
+        Option <option>--incremental</option> verwendet werden kann,
+        um eine inkrementelle Sicherung einer Revision oder eines
+        Bereichs von Revisionen zu erstellen. Natürlich können Sie
+        davon eine vollständige Sicherung bekommen, wenn Sie die
+        Option <option>--incremental</option> weglassen. Der Vorteil
+        dieser Methode besteht darin, dass das Format der gesicherten
+        Information flexibel ist &ndash; es erfordert keine bestimmte
+        Plattform, keinen bestimmten Typ eines versionierten
+        Dateisystems, keine bestimmte Version von Subversion oder
+        Berkeley DB. Diese Flexibilität kommt alledings zu dem Preis,
+        dass die Wiederherstellung der Daten sehr lange dauern kann
+        &ndash; länger mit jeder neuen Revision, die ins Repository
+        übergeben wird. Wie bei vielen verschiedenen
+        Sicherungsmethoden werden auch hier Änderungen an
+        Revisions-Propertys bereits gesicherter Revisionen nicht
+        berücksichtigt, sofern es sich um eine nicht-überlappende
+        inkrementelle Sicherung handelt. Wir raten aus diesen Gründen
+        davon ab, sich ausschließlich auf Sicherungsstrategien zu
+        verlassen, die alleine auf Auszügen basieren.</para>
 
+<!--
       <para>As you can see, each of the various backup types and
         methods has its advantages and disadvantages.  The easiest is
         by far the full hot backup, which will always result in a
@@ -5938,7 +6043,27 @@ $ svnadmin hotcopy --clean-logs /var/svn/bdb-repos /var/svn/bdb-repos-backup
         own peculiarities.  Administrators need to find the balance
         between the cost of making the backup and the cost of
         restoring it.</para>
+-->
+      <para>Wie Sie sehen können, hat jeder der verschiedenen
+        Sicherungstypen seine Vor- und Nachteile. Bei weitem am
+        einfachsten ist die vollständige Sicherungskopie im laufenden
+        Betrieb, die stets ein perfektes, einsatzfähiges Abbild Ihres
+        Repositorys erzeugt. Falls Ihrem Repository irgendetwas
+        Schlimmes widerfahren sollte, können Sie es durch eine
+        einfache rekursive Verzeichniskopie aus der Sicherung
+        wiederherstellen. Falls Sie mehrere Sicherungen Ihres
+        Repositorys vorhalten, benötigt leider jede dieser
+        vollständigen Kopien genausoviel Plattenplatz wie das
+        Original. Im Gegensatz dazu lassen sich inkrementelle
+        Sicherungen schneller erzeugen und platzsparender sichern.
+        Allerdings kann die Wiederherstellung eine Plage sein, da oft
+        mehrere inkrementelle Sicherungen eingespielt werden müssen.
+        Andere Methoden wiederum haben auch ihre Besonderheiten.
+        Administratoren müssen das Gleichgewicht zwischen den Kosten
+        der Sicherung und den Kosten der Wiederherstellung
+        finden.</para>
 
+<!--
       <para>The <command>svnsync</command> program (see <xref
         linkend="svn.reposadmin.maint.replication" />) actually
         provides a rather handy middle-ground approach.  If you are
@@ -5952,7 +6077,24 @@ $ svnadmin hotcopy --clean-logs /var/svn/bdb-repos /var/svn/bdb-repos-backup
         might live in the physical repository directory but not
         <emphasis>inside</emphasis> the repository's virtual versioned
         filesystem are not handled by <command>svnsync</command>.</para>
+-->
+      <para>Das Programm <command>svnsync</command> (siehe <xref
+        linkend="svn.reposadmin.maint.replication" />) bietet
+        tatsächlich einen handlichen Ansatz dazwischen. Falls Sie
+        regelmäßig einen nur lesbaren Spiegel mit Ihrem
+        Haupt-Repository synchronisieren, stellt der Spiegel einen
+        ausgezeichneten Kandidaten dar, um für Ihr Haupt-Repository
+        einzuspringen, falls es mal umkippt. Der Hauptnachteil dieses
+        Ansatzes besteht darin, dass nur versionierte Repository-Daten
+        synchronisiert werden &ndash;
+        Repository-Konfigurationsdateien, benutzerdefinierte Sperren
+        auf Repository-Pfaden und andere Dinge, die sich zwar im
+        physikalischen Repository-Verzeichnis befinden können, jedoch
+        nicht <emphasis>innerhalb</emphasis> des virtuellen
+        versionierten Dateisystems des Repositorys, werden durch
+        <command>svnsync</command> nicht berücksichtigt.</para>
 
+<!--
       <para>In any backup scenario, repository administrators need
         to be aware of how modifications to unversioned revision
         properties affect their backups.  Since these changes do not
@@ -5969,7 +6111,27 @@ $ svnadmin hotcopy --clean-logs /var/svn/bdb-repos /var/svn/bdb-repos-backup
         latest few revisions might not catch a property modification
         to a revision that was included as part of a previous 
         backup.</para>
+-->
+      <para>In jedem Sicherungsszenario müssen sich
+        Repository-Administratoren bewusst sein, inwiefern Änderungen
+        an unversionierten Revisions-Propertys Auswirkungen auf die
+        Sicherungen haben. Da diese Änderungen allein keine Revisionen
+        erzeugen, werden auch keine post-commit-Hooks ausgelöst; es
+        kann sogar sein, dass die Hooks pre-revprop-change und
+        post-revprop-change nicht ausgelöst werden.
+        <footnote>
+          <para><command>svnadmin setlog</command> kann auf eine Art
+            aufgerufen werden, dass die Hook-Schnittstelle völlig
+            umgangen wird.</para>
+        </footnote>  
+        Und da Sie Revisions-Propertys ohne Rücksicht auf die
+        zeitliche Abfolge ändern können &ndash; Sie können jederzeit
+        die Propertys jeder Revision ändern &ndash; könnte eine
+        inkrementelle Sicherung der letzten paar Revisionen eine
+        Änderung an einer Revision aus einer vorangegangenen Sicherung
+        übersehen.</para>
 
+<!--
       <para>Generally speaking, only the truly paranoid would need to
         back up their entire repository, say, every time a commit
         occurred.  However, assuming that a given repository has some
@@ -5979,7 +6141,19 @@ $ svnadmin hotcopy --clean-logs /var/svn/bdb-repos /var/svn/bdb-repos-backup
         repository administrator would want to include as part of a
         system-wide nightly backup.  It's your data&mdash;protect it
         as much as you'd like.</para>
-            
+-->
+      <para>Im Allgemeinen braucht nur ein echter Paranoiker nach
+        jeder Übergabe eine vollständige Sicherung des Repositorys.
+        Eine vollständige Sicherheitskopie des Repositorys im
+        laufenden Betrieb im Rahmen einer systemweiten, nächtlichen
+        Sicherung sollte ein Repository-Administrator jedoch erwägen,
+        unter der Voraussetzung, dass das Repository bereits
+        irgendeinen Redundanzmechanismus mit der nötigen Granularität
+        verwendet (etwa Übergabe-E-Mails oder inkrementelle Auszüge).
+        Es sind Ihre Daten &ndash; schützen Sie sie, wie es Ihnen
+        passt.</para>
+
+<!--
       <para>Often, the best approach to repository backups is a
         diversified one that leverages combinations of the methods
         described here.  The Subversion developers, for example, back
@@ -6000,6 +6174,26 @@ $ svnadmin hotcopy --clean-logs /var/svn/bdb-repos /var/svn/bdb-repos-backup
         </footnote>
         it should certainly help you recover from those trying 
         times.</para>
+-->
+      <para>Oftmals ist der beste Ansatz für die Repository-Sicherung
+        ein diversifizierter, der die Stärken von Kombinationen der
+        hier beschriebenen Methoden ausspielt. Die
+        Subversion-Entwickler beispielsweise sichern jede Nacht das
+        Subversion-Quelltext-Repository mit
+        <command>hot-backup.py</command> und einem
+        <command>rsync</command> dieser vollständigen Sicherungen von
+        einem entfernten Standort aus; sie halten mehrere Archive
+        aller Übergabe- und Property-Änderungs-E-Mails vor und sie
+        haben Spiegel des Repositorys, die von Freiwilligen mit
+        <command>svnsync</command> verwaltet werden. Ihre Lösung
+        könnte ähnlich aussehen, sollte aber Ihren Bedürfnissen
+        entsprechen und das empfindliche Gleichgewicht zwischen
+        Bequemlichkeit und Paranoia aufrechterhalten. Egal, was Sie
+        machen: überprüfen Sie Ihre Sicherungen ab und an &ndash; was
+        nutzt ein Reservereifen mit einem Loch? Obwohl all das Ihr
+        Material nicht vor der eisernen Faust des Schicksals zu retten
+        vermag, sollte es Ihnen sicherlich helfen, sich aus diesen
+        schwierigen Zeiten zu erholen.</para>
 
     </sect2>
 
