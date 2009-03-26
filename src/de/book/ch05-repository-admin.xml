@@ -6199,8 +6199,12 @@ $ svnadmin hotcopy --clean-logs /var/svn/bdb-repos /var/svn/bdb-repos-backup
 
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.maint.uuids">
+<!--
       <title>Managing Repository UUIDs</title>
+-->
+      <title>Verwaltung von Repository UUIDs</title>
 
+<!--
       <para>Subversion repositories have a universally unique
         identifier (UUID) associated with them.  This is used by
         Subversion clients to verify the identity of a repository when
@@ -6210,7 +6214,21 @@ $ svnadmin hotcopy --clean-logs /var/svn/bdb-repos /var/svn/bdb-repos-backup
         need to think about repository UUIDs as anything more than a
         trivial implementation detail of Subversion.  Sometimes,
         however, there is cause for attention to this detail.</para>
+-->
+      <para>Subversion-Repositories haben eine mit ihnen verknüpfte,
+        universelle, eindeutige Identifizierung (universally unique
+        identifier, UUID). Dieser UUID wird von Subversion-Clients
+        verwendet, um die Identität eines Repositorys zu verifizieren,
+        falls andere Methoden nicht ausreichend sind (wie die
+        Überprüfung des Repository-URLs, der sich im Lauf der Zeit
+        ändern kann). Selten, wenn überhaupt, müssen sich
+        Subversion-Repository-Administratoren weitergehende
+        Gedanken über Repository UUIDs machen, anstatt sie als
+        triviales Implementierungsdetail von Subversion zu betrachten.
+        Manchmal jedoch gibt es einen Grund, der Aufmerksamkeit für
+        dieses Detail verlangt.</para>
 
+<!--
       <para>As a general rule, you want the UUIDs of your live
         repositories to be unique.  That is, after all, the point of
         having UUIDs.  But there are times when you want the
@@ -6226,7 +6244,25 @@ $ svnadmin hotcopy --clean-logs /var/svn/bdb-repos /var/svn/bdb-repos-backup
         stream to the repository in which you are loading the data.  The
         particular circumstance will dictate the correct
         behavior.</para>
+-->
+      <para>Im Allgemeinen möchten Sie, dass die UUIDs Ihrer aktiven
+        Repositorys eindeutig sind. Das ist schließlich der Sinn von
+        UUIDs. Jedoch gibt es Gelegenheiten, bei denen Sie möchten,
+        dass die UUIDs zweier Repositorys identisch sind. Wenn Sie
+        beispielsweise zu Sicherungszwecken eine Kopie eines
+        Repositorys machen, möchten Sie, dass die Sicherungskopie ein
+        perfektes Abbild des Originals ist, so dass die Benutzer nach
+        einer Wiederherstellung des Repositorys aus der
+        Sicherheitskopie nicht das Gefühl haben, es mit einem
+        unterschiedlichen Repository zu tun zu haben. Beim Erstellen
+        bzw. beim Laden eines Auszugs der Repository-Historie (wie
+        oben in <xref linkend="svn.reposadmin.maint.migrate" />
+        beschrieben) können Sie entscheiden, ob der im Auszugsstrom
+        befindliche UUID auf das Repository angewendet werden soll, in
+        das Sie die Daten laden. Die besonderen Umstände diktieren
+        hier das richtige Verhalten.</para>
 
+<!--
       <para>There are a couple of ways to set (or reset) a
         repository's UUID, should you need to.  As of Subversion 1.5,
         this is as simple as using the <command>svnadmin
@@ -6235,7 +6271,17 @@ $ svnadmin hotcopy --clean-logs /var/svn/bdb-repos /var/svn/bdb-repos-backup
         well-formed and then set the repository UUID to that value.
         If you omit the UUID, a brand-new UUID will be generated for
         your repository.</para>
+-->
+      <para>Eine Repository-UUID kann auf verschiedene Art und Weise
+        gesetzt (oder zurückgesetzt) werden, falls sie es müssen.
+        Seit Subversion 1.5 wird einfach der Befehl <command>svnadmin
+        setuuid</command> verwendet. Wenn Sie diesem Befehl einen
+        ausdrücklichen UUID mitgeben, wird die Wohlgeformtheit des
+        UUID überprüft und der UUID des Repositorys auf diesen Wert
+        gesetzt. Wenn Sie den UUID weglassen, wird ein nagelneuer UUID
+        für Ihr Repository erzeugt.</para>
 
+<!--
       <screen>
 $ svnlook uuid /var/svn/repos
 cf2b9d22-acb5-11dc-bc8c-05e83ce5dbec
@@ -6248,12 +6294,34 @@ $ svnlook uuid /var/svn/repos
 cf2b9d22-acb5-11dc-bc8c-05e83ce5dbec
 $
 </screen>
+-->
+      <screen>
+$ svnlook uuid /var/svn/repos
+cf2b9d22-acb5-11dc-bc8c-05e83ce5dbec
+$ svnadmin setuuid /var/svn/repos   # neuen UUID erzeugen
+$ svnlook uuid /var/svn/repos
+3c3c38fe-acc0-11dc-acbc-1b37ff1c8e7c
+$ svnadmin setuuid /var/svn/repos \
+           cf2b9d22-acb5-11dc-bc8c-05e83ce5dbec  # alten UUID wiederherstellen
+$ svnlook uuid /var/svn/repos
+cf2b9d22-acb5-11dc-bc8c-05e83ce5dbec
+$
+</screen>
 
+<!--
       <para>For folks using versions of Subversion earlier than 1.5,
         these tasks are a little more complicated.  You can explicitly
         set a repository's UUID by piping a repository dump file stub
         that carries the new UUID specification through
-        <userinput>svnadmin load --force-uuid <replaceable>REPOS-PATH</replaceable></userinput>.</para>
+        <userinput>svnadmin load - -force-uuid <replaceable>REPOS-PATH</replaceable></userinput>.</para>
+-->
+      <para>Für Benutzer älterer Versionen als Subversion 1.5 sieht
+        die Sache etwas komplizierter aus. Sie können den UUID eines
+        Repositorys ausdrücklich setzen, indem Sie einen
+        Repository-Auszugs-Fragment mit dem neuen UUID durch den
+        Befehl <userinput>svnadmin load --force-uuid
+        <replaceable>REPOS-PATH</replaceable></userinput>
+        leiten.</para>
 
       <screen>
 $ svnadmin load --force-uuid /var/svn/repos &lt;&lt;EOF
@@ -6266,10 +6334,11 @@ cf2b9d22-acb5-11dc-bc8c-05e83ce5dbec
 $
 </screen>
 
-      <para>Having older versions of Subversion generate a brand-new
-        UUID is not quite as simple to do, though.  Your best bet here
-        is to find some other way to generate a UUID, and then
-        explicitly set the repository's UUID to that value.</para>
+      <para>Die Erzeugung eines nagelneuen UUID mit älteren Versionen
+        von Subversion gestaltet sich jedoch nicht so einfach. Am
+        besten finden Sie eine andere Möglichkeit zum Erzeugen des
+        UUIDs und setzen anschließend den Repository-UUID auf diesen
+        Wert.</para>
 
     </sect2>
 
