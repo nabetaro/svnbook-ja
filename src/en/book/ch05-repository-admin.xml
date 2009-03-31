@@ -1004,6 +1004,19 @@ $
         <command>svnadmin recover</command>).</para>
 
     </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.reposadmin.create.fsfs">
+      <title>FSFS Configuration</title>
+
+      <para>As of Subversion 1.6, FSFS filesystems have several
+        configurable parameters which an administrator can use to
+        fine-tune the performance or disk usage of their repositories.
+        You can find these options&mdash;and the documentation for
+        them&mdash;in the <filename>db/fsfs.conf</filename> file in
+        the repository.</para>
+
+    </sect2>
   </sect1>
 
 
@@ -1669,6 +1682,75 @@ $ rm `svnadmin list-unused-dblogs /var/svn/repos`
 
       </sect3>
 
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.reposadmin.maint.diskspace.fsfspacking">
+        <title>Packing FSFS filesystems</title>
+
+        <para>FSFS-backed Subversion repositories create, by default,
+          a new on-disk file for each revision added to the
+          repository.  Having thousands of these files present on your
+          Subversion server&mdash;even when housed in separate
+          directories as part of shards&mdash;can lead to
+          inefficiencies.</para>
+
+        <para>The first problem is that the operating system has to
+          reference many different files over a short period of time.
+          This leads to inefficient use of disk caches and, as a
+          result, more time spent seeking across large disks.  Because
+          of this, Subversion pays a performance penalty when
+          accessing your versioned data.</para>
+
+        <para>The second problem is a bit more subtle.  Because of the
+          ways that most filesystems allocate disk space, each file
+          claims more space on the disk than it actually uses.  The
+          amount of extra space required to house a single file can
+          average anywhere from 2 to 16 kilobytes <emphasis>per
+          file</emphasis>, depending on the underlying operating
+          system filesystem in use.  This penalty translates directly
+          into a per-revision disk usage penalty for FSFS-backed
+          repositories.  The effect is most pronounced in repositories
+          which have many small revisions, since the overhead involved
+          in storing the revision file quickly outgrows the size of
+          the actual data being stored.</para>
+
+        <para>To solve these problems, Subversion 1.6 introduced the
+          <command>svnadmin pack</command> command.  By concatenating
+          all the files of a completed shard into a single "pack" file
+          and then removing the original per-revision
+          files, <command>svnadmin pack</command> reduces the file
+          count within a given shard down to just a single file.  In
+          doing so, it aids filesystem caches and reduces (to one) the
+          number of times a file storage overhead penalty is
+          paid.</para>
+
+        <para>Subversion can pack existing sharded repositories which
+          have been upgraded to the 1.6 filesystem format (see
+          <xref linkend="svn.ref.svnadmin.c.upgrade"/>).  To do so,
+          just run <command>svnadmin pack</command> on the
+          repository:</para>
+
+        <screen>
+$ svnadmin pack /var/svn/repos
+Packing shard 0...done.
+Packing shard 1...done.
+Packing shard 2...done.
+&hellip;
+Packing shard 34...done.
+Packing shard 35...done.
+Packing shard 36...done.
+$
+</screen>
+
+        <para>Because the packing process obtains the required locks
+          before doing its work, you can run it on live repositories,
+          or even as part of a post-commit hook.  Repacking packed
+          shards is legal, but will have no effect on the disk usage
+          of the repository.</para>
+
+        <para><command>svnadmin pack</command> has no affect on
+          BDB-backed Subversion repositories.</para>
+
+      </sect3>
     </sect2>
         
     <!-- =============================================================== -->
