@@ -688,6 +688,41 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
           <quote>hot,</quote> just like a BDB-backed
           repository.</para>
 
+        <sidebar id="svn.reposadmin.basics.backends.fsfs.revfiles">
+          <title>Revision files and shards</title>
+
+          <para>FSFS repositories contain files that describe the
+            changes made in a single revision, and files that contain
+            the revision properties associated with a single revision.
+            Repositories created in versions of Subversion prior to
+            1.5 keep these files in two directories&mdash;one for each
+            type of file.  As new revisions are committed to the
+            repository, Subversion drops more files into these two
+            directories&mdash;over time, the number of these files in
+            each directory can grow to be quite large.  This has been
+            observed to cause performance problems on certain
+            network-based filesystems.</para>
+
+          <para>Subversion 1.5 creates FSFS-backed repositories using
+            a slightly modified layout in which the contents of these
+            two directories are <firstterm>sharded</firstterm>, or
+            scattered across several subdirectories.  This can greatly
+            reduce the time it takes the system to locate any one of
+            these files, and therefore increases the overall
+            performance of Subversion when reading from the
+            repository.</para>
+
+          <para>Subversion 1.6 takes the sharded layout one step
+            further, allowing administrators to
+            optionally <firstterm>pack</firstterm> each of their
+            repository shards up into a single multi-revision file.
+            This can have both performance and disk usage benefits.
+            See
+            <xref linkend="svn.reposadmin.maint.diskspace.fsfspacking"/>
+            for more information.</para>
+
+        </sidebar>
+
         <para>The FSFS revision files describe a revision's
           directory structure, file contents, and deltas against files
           in other revision trees.  Unlike a Berkeley DB database,
@@ -1302,35 +1337,24 @@ $
           (found in the <filename>tools/server-side</filename>
           directory of the Subversion source distribution) is a useful
           performance tuning tool for administrators of FSFS-backed
-          Subversion repositories.  FSFS repositories contain files
-          that describe the changes made in a single revision, and
-          files that contain the revision properties associated with
-          a single revision.  Repositories created in versions of
-          Subversion prior to 1.5 keep these files in two
-          directories&mdash;one for each type of file.  As new
-          revisions are committed to the repository, Subversion drops
-          more files into these two directories&mdash;over time, the
-          number of these files in each directory can grow to be quite
-          large.  This has been observed to cause performance problems
-          on certain network-based filesystems.</para>
+          Subversion repositories.  As described in the sidebar
+          <xref linkend="svn.reposadmin.basics.backends.fsfs.revfiles"/>,
+          FSFS repositories use individual files to house information
+          about each revision.  Sometimes these files all live in a
+          single directory; sometimes they are sharded across many
+          directories.  But the neat thing is that the number of
+          directories used used to house these files is
+          configurable.  That's where
+          <command>fsfs-reshard.py</command> comes in.</para>
 
-        <para>Subversion 1.5 creates FSFS-backed repositories using a
-          slightly modified layout in which the contents of these two
-          directories are <firstterm>sharded</firstterm>, or scattered
-          across several subdirectories.  This can greatly reduce the
-          time it takes the system to locate any one of these files,
-          and therefore increases the overall performance of
-          Subversion when reading from the repository.  The number of
-          subdirectories used to house these files is configurable,
-          though, and that's where
-          <command>fsfs-reshard.py</command> comes in.  This script
-          reshuffles the repository's file structure into a new
-          arrangement that reflects the requested number of sharding
-          subdirectories.  This is especially useful for converting an
-          older Subversion repository into the new Subversion 1.5
-          sharded layout (which Subversion will not automatically do
-          for you) or for fine-tuning an already sharded
-          repository.</para>
+        <para><command>fsfs-reshard.py</command> reshuffles the
+          repository's file structure into a new arrangement that
+          reflects the requested number of sharding subdirectories and
+          updates the repository configuration to preserve this
+          change.  This is especially useful for converting an older
+          Subversion repository into the new Subversion 1.5 sharded
+          layout (which Subversion will not automatically do for you)
+          or for fine-tuning an already sharded repository.</para>
 
       </sect3>
 
@@ -1686,12 +1710,13 @@ $ rm `svnadmin list-unused-dblogs /var/svn/repos`
       <sect3 id="svn.reposadmin.maint.diskspace.fsfspacking">
         <title>Packing FSFS filesystems</title>
 
-        <para>FSFS-backed Subversion repositories create, by default,
-          a new on-disk file for each revision added to the
-          repository.  Having thousands of these files present on your
-          Subversion server&mdash;even when housed in separate
-          directories as part of shards&mdash;can lead to
-          inefficiencies.</para>
+        <para>As described in the sidebar
+          <xref linkend="svn.reposadmin.basics.backends.fsfs.revfiles"/>,
+          FSFS-backed Subversion repositories create, by default, a
+          new on-disk file for each revision added to the repository.
+          Having thousands of these files present on your Subversion
+          server&mdash;even when housed in separate shard
+          directories&mdash;can lead to inefficiencies.</para>
 
         <para>The first problem is that the operating system has to
           reference many different files over a short period of time.
