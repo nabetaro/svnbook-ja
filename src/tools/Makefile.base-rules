@@ -73,10 +73,14 @@ $(PS_TARGET): $(FO_TARGET) $(IMAGES)
 	$(TOOLS_DIR)/bin/run-fop.sh -fo $(FO_TARGET) -ps $(PS_TARGET)
 
 # Requires at least docbook-xsl-1.74
-epub: $(EPUB_TARGET)
+epub: book/svn-book.xml $(EPUB_TARGET)
 $(EPUB_TARGET): $(ALL_SOURCE) 
 	$(ENSURE_XSL)
-	$(TOOLS_DIR)/xsl/epub/bin/dbtoepub $(XML_SOURCE)
+	$(TOOLS_DIR)/xsl/epub/bin/dbtoepub book/svn-book.xml
+	mv svn-book.epub $(EPUB_TARGET)
+
+book/svn-book.xml: version
+	xmllint --nonet --noent --xinclude --postvalid --output book/svn-book.xml book/book.xml
 
 # Install targets
 $(INSTALL_SUBDIR):
@@ -110,10 +114,9 @@ install-ps: $(PS_TARGET) $(INSTALL_SUBDIR)
 clean:
 	rm -f $(VERSION_SOURCE) $(HTML_TARGET)
 	rm -f $(HTML_ARCH_TARGET) $(HTML_CHUNK_ARCH_TARGET)
-	rm -f $(FO_TARGET) $(PDF_TARGET) $(PS_TARGET)
+	rm -f $(FO_TARGET) $(PDF_TARGET) $(PS_TARGET) $(EPUB_TARGET)
 	rm -rf $(HTML_CHUNK_DIR)
 
 # Utility targets
 valid: $(VERSION_SOURCE)
 	$(XMLLINT) --noout --nonet --valid $(XML_SOURCE)
-
