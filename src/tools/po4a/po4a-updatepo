@@ -1,0 +1,234 @@
+#! /usr/bin/env perl
+eval 'exec perl -S $0 ${1+"$@"}'
+    if $running_under_some_shell;
+
+# pod-updatepo -- Update the po translation of POD data.
+# $Id: po4a-updatepo,v 1.44 2009-03-07 12:33:10 nekral-guest Exp $
+#
+# Copyright 2002, 2003, 2004 by Martin Quinson (mquinson#debian.org)
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of GPL (see COPYING).
+
+=head1 NAME
+
+po4a-updatepo - update the translation (in po format) of documentation
+
+=head1 SYNOPSIS
+
+po4a-updatepo -f E<lt>fmtE<gt> (-m E<lt>master.docE<gt>)+ (-p E<lt>XX.poE<gt>)+
+
+(XX.po are the outputs, all others are inputs)
+
+=head1 DESCRIPTION
+
+The po4a (po for anything) project goal is to ease translations (and more
+interestingly, the maintenance of translations) using gettext tools on
+areas where they were not expected like documentation.
+
+The C<po4a-updatepo> script is in charge of updating po files to make
+them reflect the changes made to the original documentation file. For that,
+it converts the documentation file to a pot file, and call L<msgmerge(1)>
+on this new pot and on the provided po files.
+
+It is possible to give more than one po file (if you want to update several
+languages at once), and several documentation files (if you want to store
+the translations of several documents in the same po file).
+
+If the master document has non-ascii characters, it will convert the po files
+to utf-8 (if they weren't already), in order to allow non-standard characters
+in a culture independent way.
+
+=head1 COMMAND-LINE OPTIONS
+
+=over 4
+
+=item -f, --format
+
+Format of the documentation you want to handle. Use the --help-format
+option to see the list of available formats.
+
+=item -m, --master
+
+File(s) containing the master document to translate.
+
+=item -M, --master-charset
+
+Charset of the files containing the document to translate. Note that all
+files must have the same charset.
+
+=item -p, --po
+
+Po file(s) to update. If these files do not exist, they are created by
+C<po4a-updatepo>.
+
+=item -o, --option
+
+Extra option(s) to pass to the format plugin and other po4a internal module.
+Specify each option in the 'name=value' format. See the documentation of
+each plugin for more information about the valid options and their meanings.
+
+=item --previous
+
+This option adds '--previous' to the options passed to msgmerge.
+It requires gettext 0.16 or later.
+
+=item --msgmerge-opt options
+
+Extra options for msgmerge.
+
+=item -h, --help
+
+Show a short help message.
+
+=item --help-format
+
+List the documentation format handled by po4a.
+
+=item -V, --version
+
+Display the version of the script and exit.
+
+=item -v, --verbose
+
+Increase the verbosity of the program.
+
+=item -d, --debug
+
+Output some debugging information.
+
+=back
+
+=head1 SEE ALSO
+
+L<po4a(7)>, L<po4a-gettextize(1)>, L<po4a-translate(1)>, L<po4a-normalize(1)>.
+
+=head1 AUTHORS
+
+ Denis Barbier <barbier@linuxfr.org>
+ Martin Quinson (mquinson#debian.org)
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2002, 2003, 2004, 2005 by SPI, inc.
+
+This program is free software; you may redistribute it and/or modify it
+under the terms of GPL (see the COPYING file).
+
+=cut
+
+use 5.006;
+use strict;
+use warnings;
+
+use Getopt::Long qw(GetOptions);
+use Locale::Po4a::Po;
+
+use Locale::Po4a::Chooser;
+use Locale::Po4a::TransTractor;
+use Locale::Po4a::Common;
+
+use Pod::Usage qw(pod2usage);
+
+use File::Temp;
+
+Locale::Po4a::Common::textdomain('po4a');
+
+sub show_version {
+    Locale::Po4a::Common::show_version("po4a-updatepo");
+    exit 0;
+}
+
+
+# init commandline parser
+Getopt::Long::config('bundling', 'no_getopt_compat', 'no_auto_abbrev');
+
+# Parse our options
+my (@masterfiles,@pofiles);
+my ($help,$help_fmt,$verbose,$debug,$format,@options);
+my $mastchar;
+my $previous;
+my $msgmerge_opt = "";
+GetOptions('help|h'      => \$help,
+	   'help-format' => \$help_fmt,
+
+	   'master|m=s'  => \@masterfiles,
+	   'po|p=s'      => \@pofiles,
+	   'format|f=s'  => \$format,
+
+	   'master-charset|M=s' => \$mastchar,
+
+	   'option|o=s'  => \@options,
+
+	   'previous'    => \$previous,
+	   'msgmerge-opt=s' => \$msgmerge_opt,
+    
+	   'verbose|v'   => \$verbose,
+	   'debug|d'     => \$debug,
+	   'version|V'   => \&show_version)
+    or pod2usage();
+
+$help && pod2usage (-verbose => 1, -exitval => 0);
+$help_fmt && Locale::Po4a::Chooser::list(0);
+pod2usage () if scalar @masterfiles < 1 || scalar @pofiles < 1;
+
+$msgmerge_opt .= " --previous" if $previous;
+
+my %options = (
+    "verbose" => $verbose,
+    "debug" => $debug);
+
+foreach (@options) {
+    if (m/^([^=]*)=(.*)$/) {
+	$options{$1}="$2";
+    } else {
+	$options{$_}=1;
+    }
+}
+
+# parser
+my ($doc)=Locale::Po4a::Chooser::new($format,%options);
+
+map { -e $_ || die wrap_msg(gettext("File %s does not exist."), $_) } @masterfiles;
+map { die wrap_msg(gettext("po4a-updatepo can't take the input po from stdin."))
+	if $_ eq '-'  && !-e '-'} @pofiles;
+
+my ($pot_filename);
+(undef,$pot_filename)=File::Temp->tempfile("po4a-updatepoXXXX",
+					   SUFFIX => ".pot",
+					   OPEN   => 0,
+					   UNLINK => 0)
+    or die wrap_msg(gettext("Can't create a temporary pot file: %s"), $!);
+
+
+print STDERR wrap_msg(gettext("Parse input files... ")) if $verbose;
+
+$doc->{TT}{utf_mode} = 1;
+
+$doc->process('file_in_name'    => \@masterfiles,
+	      'file_in_charset' => $mastchar,
+	      'po_out_name'     => $pot_filename,
+	      'debug'           => $debug,
+	      'verbose'         => $verbose);
+
+print STDERR wrap_msg(gettext("done.")) if $verbose;
+
+
+while (my $po_filename=shift @pofiles) {
+    if (-e $po_filename) {
+	print STDERR wrap_msg(gettext("Updating %s:"), $po_filename)
+	    if $verbose;
+	my $cmd = "msgmerge $msgmerge_opt -U $po_filename $pot_filename";
+	system ($cmd) == 0
+	    or die wrap_msg(gettext("Error while running msgmerge: %s"), $!);
+	system "msgfmt --statistics -v -o /dev/null $po_filename"
+	  if $verbose;
+    } else {
+	print STDERR wrap_msg(gettext("Creating %s:"), $po_filename)
+	    if $verbose;
+	system ("cp",$pot_filename,$po_filename) == 0
+	    or die wrap_msg(gettext("Error while copying the po file: %s"), $!);
+    }
+}
+
+unlink($pot_filename);
