@@ -8,8 +8,8 @@
   <xsl:param name="fop.extensions" select="1" />
   <xsl:param name="variablelist.as.blocks" select="1" />
   <xsl:param name="body.start.indent">0pt</xsl:param>
-  <xsl:param name="body.font.family">sans-serif</xsl:param>
-  <xsl:param name="dingbat.font.family">sans-serif</xsl:param>
+  <xsl:param name="body.font.family">serif,SimSun</xsl:param>
+  <xsl:param name="dingbat.font.family">serif,SimSun</xsl:param>
   <xsl:param name="admon.textlabel" select="0" />
   <xsl:param name="admon.graphics" select="1" />
   <xsl:param name="admon.graphics.path">images/</xsl:param>
