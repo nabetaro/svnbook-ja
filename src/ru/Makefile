@@ -3,7 +3,7 @@ default: html-chunk
 include ../tools/Makefile.base
 
 # Makefile.base overrides
-FO_XSLTPROC_OPTS = --stringparam paper.type A4
+FO_XSLTPROC_OPTS = --param fop.extensions 1 --stringparam paper.type A4
 L10N_REVISION = редакции
 
 dist-html-chunk:

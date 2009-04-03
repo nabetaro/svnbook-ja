@@ -4,6 +4,8 @@
 
 include ../tools/Makefile.base-vars
 
+INSTALL_SUBDIR = $(DESTDIR)/usr/share/doc/subversion
+
 UPDATEPO = PERLLIB=../../tools/po4a/lib ../../tools/po4a/po4a-updatepo -M UTF-8 \
        -f docbook -o doctype='docbook' -o includeexternal \
        -o nodefault='<programlisting> <screen>' \
@@ -28,6 +30,8 @@ clean:
 	@rm -fr build po/*.mo book
 
 all: html html-chunk epub
+all-html: html html-chunk
+install: install-html install-html-chunk install-epub
 
 stat:
 	@( \
@@ -77,40 +81,66 @@ build/source/svnbook.xml: $(filter-out ../en/book/version.xml, $(wildcard ../en/
 	$(TRANSLATE) -m build/source/svnbook-en.xml -p po/svnbook.po -l build/source/svnbook.xml
 	$(MAKE) validate
 
+valid: validate
 validate: build/source/svnbook.xml
 	xmllint --nonet --noout --postvalid --xinclude $<
 
-epub: build/svnbook.epub
-build/svnbook.epub: build/source/svnbook.xml
+epub: build/svn-book.epub
+build/svn-book.epub: build/source/svnbook.xml
 	$(ENSURE_XSL)
-	(cd build/source; ../../../tools/xsl/epub/bin/dbtoepub -c styles.css -v svnbook.xml; mv svnbook.epub ..)
+	(cd build/source; \
+	../../../tools/xsl/epub/bin/dbtoepub -c styles.css -v svnbook.xml; \
+	mv svnbook.epub ../svn-book.epub)
 
-html-chunk: build/svnbook-html-chunk/index.html
-build/svnbook-html-chunk/index.html: build/source/svnbook.xml stylesheets/chunk.xsl ../tools/base-html-stylesheet.xsl ../tools/chunk-stylesheet.xsl
+html-chunk-arch: html-chunk
+html-chunk: build/svn-book-html-chunk/index.html
+build/svn-book-html-chunk/index.html: build/source/svnbook.xml stylesheets/chunk.xsl ../tools/base-html-stylesheet.xsl ../tools/chunk-stylesheet.xsl
 	$(ENSURE_XSL)
-	mkdir -p build/svnbook-html-chunk/images
-	cp build/source/styles.css build/svnbook-html-chunk
-	cp build/source/images/*.png build/svnbook-html-chunk/images
-	xsltproc --output build/svnbook-html-chunk/ \
+	mkdir -p build/svn-book-html-chunk/images
+	cp build/source/styles.css build/svn-book-html-chunk
+	cp build/source/images/*.png build/svn-book-html-chunk/images
+	xsltproc --output build/svn-book-html-chunk/ \
 	    stylesheets/chunk.xsl build/source/svnbook.xml
-	(cd build; tar czf svnbook-html-chunk.tgz svnbook-html-chunk)
+	(cd build; tar cjf svn-book-html-chunk.tar.bz2 svn-book-html-chunk)
 
-html: build/svnbook-html/svnbook.html
-build/svnbook-html/svnbook.html: build/source/svnbook.xml stylesheets/html.xsl ../tools/base-html-stylesheet.xsl ../tools/html-stylesheet.xsl
+html-arch: html
+html: build/svn-book-html/svn-book.html
+build/svn-book-html/svn-book.html: build/source/svnbook.xml stylesheets/html.xsl ../tools/base-html-stylesheet.xsl ../tools/html-stylesheet.xsl
 	$(ENSURE_XSL)
-	mkdir -p build/svnbook-html/images
-	cp ../en/book/styles.css build/svnbook-html
-	cp ../en/book/images/*.png build/svnbook-html/images
-	xsltproc --output build/svnbook-html/svnbook.html \
+	mkdir -p build/svn-book-html/images
+	cp ../en/book/styles.css build/svn-book-html
+	cp ../en/book/images/*.png build/svn-book-html/images
+	xsltproc --output build/svn-book-html/svn-book.html \
 	    stylesheets/html.xsl build/source/svnbook.xml
-	(cd build; tar czf svnbook-html.tgz svnbook-html)
+	(cd build; tar cjf svn-book-html.tar.bz2 svn-book-html)
 
 # 
 # Requires at least fop 0.96 and configure Chinese fonts
 #
-pdf: build/svnbook.pdf
-build/svnbook.pdf: build/source/svnbook.xml stylesheets/fo.xsl ../tools/fo-stylesheet.xsl
+pdf: build/svn-book.pdf
+build/svn-book.pdf: build/source/svnbook.xml stylesheets/fo.xsl ../tools/fo-stylesheet.xsl
 	$(ENSURE_XSL)
-	xsltproc --output build/source/svnbook.fo --param fop1.extensions 1 \
+	xsltproc --output build/source/svn-book.fo --param fop1.extensions 1 \
 	    stylesheets/fo.xsl build/source/svnbook.xml
-	(cd build/source && ../../../tools/fop1.sh -c ../../../tools/fop1-userconfig.xml svnbook.fo ../svnbook.pdf)
+	(cd build/source && ../../../tools/fop1.sh -c ../../../tools/fop1-userconfig.xml -fo svn-book.fo -pdf ../svn-book.pdf)
+
+$(INSTALL_SUBDIR):
+	$(MKDIR) $(INSTALL_SUBDIR)
+
+install-epub: build/svn-book.epub $(INSTALL_SUBDIR)
+	$(INSTALL_DATA) build/svn-book.epub $(INSTALL_SUBDIR)
+
+install-pdf: build/svn-book.pdf $(INSTALL_SUBDIR)
+	$(INSTALL_DATA) build/svn-book.pdf $(INSTALL_SUBDIR)
+
+install-html: build/svn-book-html/svn-book.html $(INSTALL_SUBDIR)
+	$(INSTALL_DATA) build/svn-book-html/* $(INSTALL_SUBDIR)
+
+install-html-arch: build/svn-book-html/svn-book.html $(INSTALL_SUBDIR)
+	$(INSTALL_DATA) build/svn-book-html.tar.bz2 $(INSTALL_SUBDIR)
+
+install-html-chunk: build/svn-book-html-chunk/index.html $(INSTALL_SUBDIR)
+	$(INSTALL_DATA) build/svn-book-html-chunk/* $(INSTALL_SUBDIR)
+
+install-html-chunk-arch: build/svn-book-html-chunk/index.html $(INSTALL_SUBDIR)
+	$(INSTALL_DATA) build/svn-book-html-chunk.tar.bz2 $(INSTALL_SUBDIR)

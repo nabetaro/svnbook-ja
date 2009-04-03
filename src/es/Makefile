@@ -4,6 +4,7 @@
 default: all-html
 
 include ../tools/Makefile.base
+FO_XSLTPROC_OPTS = --param fop.extensions 1
 
 BOOK_ASPELL_FILES = appa appb book foreword ch00 ch01 ch02 ch03 ch04 \
 	ch05 ch06 ch07 ch08 ch09

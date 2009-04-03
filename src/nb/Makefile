@@ -1,7 +1,8 @@
 include ../tools/Makefile.base
 
 # Makefile.base overrides
-FO_XSLTPROC_OPTS = --stringparam paper.type A4
+HTML_XSLTPROC_OPTS = --stringparam l10n.gentext.language nb
+FO_XSLTPROC_OPTS = --param fop.extensions 1 --stringparam paper.type A4 --stringparam l10n.gentext.language nb
 L10N_REVISION = revisjon
 
 # Stuff below here is added for building the Norwegian version.
