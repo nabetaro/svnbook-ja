@@ -7,6 +7,9 @@
 
   <xsl:param name="l10n.gentext.language" select="'zh'"/>
 
+  <xsl:param name="hyphenate">false</xsl:param>
+  <xsl:param name="paper.type" select="'A4'"></xsl:param>
+
   <!-- Chinese font related settings -->
   <xsl:param name="body.font.master">12</xsl:param>
   <xsl:param name="title.font.family">Calibri,sans-serif,SimHei</xsl:param>
