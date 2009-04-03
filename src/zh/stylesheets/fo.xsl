@@ -8,6 +8,7 @@
   <xsl:param name="l10n.gentext.language" select="'zh'"/>
 
   <xsl:param name="hyphenate">false</xsl:param>
+  <xsl:param name="section.autolabel" select="1" />
   <xsl:param name="paper.type" select="'A4'"></xsl:param>
 
   <!-- Chinese font related settings -->

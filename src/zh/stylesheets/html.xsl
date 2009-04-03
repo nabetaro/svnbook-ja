@@ -5,4 +5,6 @@
 
   <xsl:param name="l10n.gentext.language" select="'zh'"/>
 
+  <xsl:param name="section.autolabel" select="1" />
+
 </xsl:stylesheet>
