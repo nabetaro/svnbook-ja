@@ -48,30 +48,32 @@ updatepo:
 	$(MAKE) tidypo
 
 build/source/svnbook.xml: $(filter-out ../en/book/version.xml, $(wildcard ../en/book/*.xml)) po/svnbook.po
-	mkdir -p build/source/images book
-	cp stylesheets/styles.css build/source
+	mkdir -p build/source/images
 	cp ../en/book/images/*.png build/source/images
+	cp ../en/book/*.xml build/source
+	cp stylesheets/styles.css build/source
 	cp images/*.png build/source/images
-	cp ../en/book/*.xml book
 
-	cat book/book.xml | \
+	cat build/source/book.xml | \
 	  sed 's/..\/..\/tools\/dtd\/docbook-4.4\/docbookx.dtd/http:\/\/www.oasis-open.org\/docbook\/xml\/4.5\/docbookx.dtd/' \
-	  > book/book.xml.tmp
-	mv book/book.xml.tmp book/book.xml
+	  > build/source/book.xml.tmp
+	mv build/source/book.xml.tmp build/source/book.xml
 	@if svn info . > /dev/null; then \
-	  echo '<!ENTITY svn.l10n_revision "'`LC_ALL=C svn info po | awk '{if(/^Last Changed Rev/) print "r"$$4}'`'">' > book/version.xml.tmp; \
-	  echo '<!ENTITY svn.version "'`LC_ALL=C svn info ../en/book | awk '{if(/^Last Changed Rev/) print "/r"$$4}'`'">' >> book/version.xml.tmp; \
+	  echo '<!ENTITY svn.l10n_revision "'`LC_ALL=C svn info po | awk '{if(/^Last Changed Rev/) print "r"$$4}'`'">' > \
+	    build/source/version.xml.tmp; \
+	  echo '<!ENTITY svn.version "'`LC_ALL=C svn info ../en/book | awk '{if(/^Last Changed Rev/) print "/r"$$4}'`'">' >> \
+	    build/source/version.xml.tmp; \
 	else \
-	  echo '<!ENTITY svn.l10n_revision "'`date +%Y-%m-%d`'">' > book/version.xml.tmp; \
-	  echo '<!ENTITY svn.version "">' >> book/version.xml.tmp; \
+	  echo '<!ENTITY svn.l10n_revision "'`date +%Y-%m-%d`'">' > build/source/version.xml.tmp; \
+	  echo '<!ENTITY svn.version "">' >> build/source/version.xml.tmp; \
 	fi
-	@if cmp -s book/version.xml book/version.xml.tmp; then \
-	  rm book/version.xml.tmp; \
+	@if cmp -s build/source/version.xml build/source/version.xml.tmp; then \
+	  rm build/source/version.xml.tmp; \
 	else \
-	  mv book/version.xml.tmp book/version.xml; \
+	  mv build/source/version.xml.tmp build/source/version.xml; \
 	fi
 
-	xmllint --nonet --noent --xinclude --postvalid --output build/source/svnbook-en.xml book/book.xml
+	xmllint --nonet --noent --xinclude --postvalid --output build/source/svnbook-en.xml build/source/book.xml
 	$(TRANSLATE) -m build/source/svnbook-en.xml -p po/svnbook.po -l build/source/svnbook.xml
 	$(MAKE) validate
 
@@ -84,31 +86,31 @@ build/svnbook.epub: build/source/svnbook.xml
 	(cd build/source; ../../../tools/xsl/epub/bin/dbtoepub -c styles.css -v svnbook.xml; mv svnbook.epub ..)
 
 html-chunk: build/svnbook-html-chunk/index.html
-build/svnbook-html-chunk/index.html: build/source/svnbook.xml stylesheets/chunk.xsl stylesheets/$(LINGUA)/chunk.xsl
+build/svnbook-html-chunk/index.html: build/source/svnbook.xml stylesheets/chunk.xsl ../tools/base-html-stylesheet.xsl ../tools/chunk-stylesheet.xsl
 	$(ENSURE_XSL)
 	mkdir -p build/svnbook-html-chunk/images
 	cp build/source/styles.css build/svnbook-html-chunk
 	cp build/source/images/*.png build/svnbook-html-chunk/images
 	xsltproc --output build/svnbook-html-chunk/ \
-	    stylesheets/$(LINGUA)/chunk.xsl build/source/svnbook.xml
+	    stylesheets/chunk.xsl build/source/svnbook.xml
 	(cd build; tar czf svnbook-html-chunk.tgz svnbook-html-chunk)
 
 html: build/svnbook-html/svnbook.html
-build/svnbook-html/svnbook.html: build/source/svnbook.xml stylesheets/html.xsl stylesheets/$(LINGUA)/html.xsl
+build/svnbook-html/svnbook.html: build/source/svnbook.xml stylesheets/html.xsl ../tools/base-html-stylesheet.xsl ../tools/html-stylesheet.xsl
 	$(ENSURE_XSL)
 	mkdir -p build/svnbook-html/images
 	cp ../en/book/styles.css build/svnbook-html
 	cp ../en/book/images/*.png build/svnbook-html/images
 	xsltproc --output build/svnbook-html/svnbook.html \
-	    stylesheets/$(LINGUA)/html.xsl build/source/svnbook.xml
+	    stylesheets/html.xsl build/source/svnbook.xml
 	(cd build; tar czf svnbook-html.tgz svnbook-html)
 
 # 
 # Requires at least fop 0.96 and configure Chinese fonts
 #
 pdf: build/svnbook.pdf
-build/svnbook.pdf: build/source/svnbook.xml stylesheets/fo.xsl stylesheets/$(LINGUA)/fo.xsl
+build/svnbook.pdf: build/source/svnbook.xml stylesheets/fo.xsl ../tools/fo-stylesheet.xsl
 	$(ENSURE_XSL)
 	xsltproc --output build/source/svnbook.fo --param fop1.extensions 1 \
-	    stylesheets/$(LINGUA)/fo.xsl build/source/svnbook.xml
+	    stylesheets/fo.xsl build/source/svnbook.xml
 	(cd build/source && ../../../tools/fop1.sh -c ../../../tools/fop1-userconfig.xml svnbook.fo ../svnbook.pdf)

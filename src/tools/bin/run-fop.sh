@@ -8,6 +8,9 @@
 # Arguments are passed along to `fop'.
 
 # If the user has a .foprc, source it.
+if [ -f "$HOME/.fop/fop.conf" ] ; then
+  . $HOME/.fop/fop.conf
+fi
 if [ -f ${HOME}/.foprc ]; then
   . ${HOME}/.foprc
 fi
@@ -44,4 +47,4 @@ fi
 
 echo "(Using '${FOP_PGM}' for FOP)"
 
-${FOP_PGM} "$@"
+${FOP_PGM} ${FOP_CFG} "$@"
