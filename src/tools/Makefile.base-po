@@ -54,9 +54,19 @@ updatepo:
 build/source/svnbook.xml: $(filter-out ../en/book/version.xml, $(wildcard ../en/book/*.xml)) po/svnbook.po
 	mkdir -p build/source/images
 	cp ../en/book/images/*.png build/source/images
-	cp ../en/book/*.xml build/source
+	cp ../en/book/index.xml build/source
 	cp stylesheets/styles.css build/source
 	cp images/*.png build/source/images
+
+	(for i in ../en/book/*.xml; do \
+	  case $$i in \
+	    "../en/book/index.xml");; \
+	    "../en/book/svn-book.xml");; \
+	    "../en/book/version.xml");; \
+	    *) $(TRANSLATE) -m $$i -p po/svnbook.po -l build/source/`basename $$i`; \
+	  esac \
+	done \
+	)
 
 	cat build/source/book.xml | \
 	  sed 's/..\/..\/tools\/dtd\/docbook-4.4\/docbookx.dtd/http:\/\/www.oasis-open.org\/docbook\/xml\/4.5\/docbookx.dtd/' \
@@ -77,8 +87,7 @@ build/source/svnbook.xml: $(filter-out ../en/book/version.xml, $(wildcard ../en/
 	  mv build/source/version.xml.tmp build/source/version.xml; \
 	fi
 
-	xmllint --nonet --noent --xinclude --postvalid --output build/source/svnbook-en.xml build/source/book.xml
-	$(TRANSLATE) -m build/source/svnbook-en.xml -p po/svnbook.po -l build/source/svnbook.xml
+	xmllint --nonet --noent --xinclude --postvalid --output build/source/svnbook.xml build/source/book.xml
 	$(MAKE) validate
 
 valid: validate
