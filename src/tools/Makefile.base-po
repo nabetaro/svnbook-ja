@@ -11,7 +11,9 @@ UPDATEPO = PERLLIB=../../tools/po4a/lib ../../tools/po4a/po4a-updatepo -M UTF-8 
        -o nodefault='<programlisting> <screen>' \
        -o untranslated='<programlisting> <screen>'
 TRANSLATE = PERLLIB=../tools/po4a/lib ../tools/po4a/po4a-translate -M UTF-8 \
-       -f docbook -o doctype='docbook' \
+       -f docbook -o doctype='docbook' -o includeexternal \
+       -o nodefault='<programlisting> <screen>' \
+       -o untranslated='<programlisting> <screen>' \
        -k 0
 
 help:
@@ -54,24 +56,16 @@ updatepo:
 build/source/svnbook.xml: $(filter-out ../en/book/version.xml, $(wildcard ../en/book/*.xml)) po/svnbook.po
 	mkdir -p build/source/images
 	cp ../en/book/images/*.png build/source/images
-	cp ../en/book/index.xml build/source
 	cp stylesheets/styles.css build/source
 	cp images/*.png build/source/images
 
-	(for i in ../en/book/*.xml; do \
-	  case $$i in \
-	    "../en/book/index.xml");; \
-	    "../en/book/svn-book.xml");; \
-	    "../en/book/version.xml");; \
-	    *) $(TRANSLATE) -m $$i -p po/svnbook.po -l build/source/`basename $$i`; \
-	  esac \
-	done \
-	)
+	$(TRANSLATE) -m ../en/book/book.xml -p po/svnbook.po -l build/source/book.xml
 
 	cat build/source/book.xml | \
 	  sed 's/..\/..\/tools\/dtd\/docbook-4.4\/docbookx.dtd/http:\/\/www.oasis-open.org\/docbook\/xml\/4.5\/docbookx.dtd/' \
 	  > build/source/book.xml.tmp
 	mv build/source/book.xml.tmp build/source/book.xml
+
 	@if svn info . > /dev/null; then \
 	  echo '<!ENTITY svn.l10n_revision "'`LC_ALL=C svn info po | awk '{if(/^Last Changed Rev/) print "r"$$4}'`'">' > \
 	    build/source/version.xml.tmp; \
@@ -87,12 +81,12 @@ build/source/svnbook.xml: $(filter-out ../en/book/version.xml, $(wildcard ../en/
 	  mv build/source/version.xml.tmp build/source/version.xml; \
 	fi
 
-	xmllint --nonet --noent --xinclude --postvalid --output build/source/svnbook.xml build/source/book.xml
+	xmllint --nonet --xinclude --postvalid --noent --output build/source/svnbook.xml build/source/book.xml
 	$(MAKE) validate
 
 valid: validate
 validate: build/source/svnbook.xml
-	xmllint --nonet --noout --postvalid --xinclude $<
+	xmllint --nonet --xinclude --postvalid --noout $<
 
 epub: build/svn-book.epub
 build/svn-book.epub: build/source/svnbook.xml
