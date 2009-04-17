@@ -2329,8 +2329,12 @@ REM Jeder andere Rückgabewert wird als fatal betrachtet.
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.externaldifftools.diff3">
+<!--
       <title>External diff3</title>
+-->
+      <title>Externes diff3</title>
 
+<!--
       <para>Subversion calls external merge programs with parameters
         suitable for the GNU diff3 utility, expecting that the
         external program will return with a successful error code and that
@@ -2348,14 +2352,43 @@ REM Jeder andere Rückgabewert wird als fatal betrachtet.
         error code of 0 if the merge was successful, or 1 if unresolved
         conflicts remain in the output&mdash;any other error code is
         considered a fatal error.</para>
+-->
+      <para>Subversion ruft externe Zusammenführungsprogramme mit
+        Parametern auf, die für das GNU diff3-Werkzeug passen und
+        erwartet, dass das externe Programm einen Erfolg
+        signalisierenden Rückgabewert liefert und der vollständige
+        Inhalt als Ergebnis der beendeten Zusammenführung in den
+        Standardausgabestrom geschrieben wird (damit Subversion diesen
+        in die entsprechende Datei unter Versionskontrolle umleiten
+        kann). Für die meisten alternativen Zusammenführungsprogramme
+        sind nur die Argumente an neunter, zehnter und elfter Stelle
+        interessant, die die Pfade der Dateien, die die Eingaben
+        <quote>eigene</quote>, <quote>ältere</quote> bzw.
+        <quote>fremde</quote> repräsentieren. Beachten Sie, dass Ihr
+        Skript nicht beendet werden darf, bevor die Ausgabe an
+        Subversion abgeliefert wurde, da Subversion auf die Ausgabe
+        Ihres Zusammenführungsprogramms angewiesen ist. Wenn es
+        schließlich beendet wird, sollte es einen Rückgabewert 0 im
+        Erfolgsfall und 1 bei verbleibenden Konflikten zurückgeben
+        &ndash; jeder andere Rückgabewert wird als fataler Fehler
+        angesehen.</para>
 
+<!--
       <para><xref linkend="svn.advanced.externaldifftools.diff3.ex-1"/> 
         and <xref linkend="svn.advanced.externaldifftools.diff3.ex-2"/> are
         templates for external merge tool wrappers in the Python
         and Windows batch scripting languages, respectively.</para>
+-->
+      <para><xref linkend="svn.advanced.externaldifftools.diff3.ex-1"/> 
+        und <xref
+        linkend="svn.advanced.externaldifftools.diff3.ex-2"/> sind
+        <quote>Verpackungs</quote>-Vorlagen für externe
+        Zusammenführungsprogramme in den Skriptsprachen Python bzw.
+        Windows-Batch.</para>
 
       <example id="svn.advanced.externaldifftools.diff3.ex-1">
         <title>diff3wrap.py</title>
+<!--
         <programlisting>
 #!/usr/bin/env python
 import sys
@@ -2371,13 +2404,39 @@ YOURS = sys.argv[-1]
 
 # Call the merge command (change the following line to make sense for
 # your merge program).
-cmd = [DIFF3, '--older', OLDER, '--mine', MINE, '--yours', YOURS]
+cmd = [DIFF3, '- -older', OLDER, '- -mine', MINE, '- -yours', YOURS]
 os.execv(cmd[0], cmd)
 
 # After performing the merge, this script needs to print the contents
 # of the merged file to stdout.  Do that in whatever way you see fit.
 # Return an errorcode of 0 on successful merge, 1 if unresolved conflicts
 # remain in the result.  Any other errorcode will be treated as fatal.
+</programlisting>
+-->
+        <programlisting>
+#!/usr/bin/env python
+import sys
+import os
+
+# Geben Sie hier Ihr bevorzugtes diff-Programm an.
+DIFF3 = "/usr/local/bin/my-merge-tool"
+
+# Subversion liefert die benötigten Pfade als die letzten drei Parameter.
+MINE  = sys.argv[-3]
+OLDER = sys.argv[-2]
+YOURS = sys.argv[-1]
+
+# Aufruf des merge-Befehls (ändern Sie die folgende Zeile passend für
+# Ihr merge-Programm).
+cmd = [DIFF3, '--older', OLDER, '--mine', MINE, '--yours', YOURS]
+os.execv(cmd[0], cmd)
+
+# Nach der Zusammenführung muss dieses Skript den Inhalt der
+# zusammengeführten Datei nach stdout schreiben. Machen Sie das, wie
+# Sie wollen.
+# Rückgabewert 0 bei erfolgreicher Zusammenführung, 1 falls noch
+# unaufgelöste Konflikte vorhanden. Alles andere wird als fatal
+# betrachtet,
 </programlisting>
       </example>
 
@@ -2386,27 +2445,30 @@ os.execv(cmd[0], cmd)
         <programlisting>
 @ECHO OFF
 
-REM Configure your favorite diff3/merge program here.
+REM Geben Sie hier Ihr bevorzugtes diff-Programm an.
 SET DIFF3="C:\Program Files\Funky Stuff\My Merge Tool.exe"
 
-REM Subversion provides the paths we need as the last three parameters.
-REM These are parameters 9, 10, and 11.  But we have access to only
-REM nine parameters at a time, so we shift our nine-parameter window
-REM twice to let us get to what we need.
+REM Subversion liefert die benötigten Pfade als die letzten drei Parameter.
+REM Das sind die Parameter 9, 10 und 11. Allerdings haben wir zu einem
+REM gegebenen Zeitpunkt nur Zugriff auf neun Parameter, so dass wir
+REM unser Fenster aus neun Parametern zweimal verschieben, um das zu
+REM bekommen, was wir benötigen.
 SHIFT
 SHIFT
 SET MINE=%7
 SET OLDER=%8
 SET YOURS=%9
 
-REM Call the merge command (change the following line to make sense for
-REM your merge program).
+REM Aufruf des merge-Befehls (ändern Sie die folgende Zeile passend für
+REM Ihr merge-Programm).
 %DIFF3% --older %OLDER% --mine %MINE% --yours %YOURS%
 
-REM After performing the merge, this script needs to print the contents
-REM of the merged file to stdout.  Do that in whatever way you see fit.
-REM Return an errorcode of 0 on successful merge, 1 if unresolved conflicts
-REM remain in the result.  Any other errorcode will be treated as fatal.
+REM Nach der Zusammenführung muss dieses Skript den Inhalt der
+REM zusammengeführten Datei nach stdout schreiben. Machen Sie das, wie
+REM Sie wollen.
+REM Rückgabewert 0 bei erfolgreicher Zusammenführung, 1 falls noch
+REM unaufgelöste Konflikte vorhanden. Alles andere wird als fatal
+REM betrachtet,
 </programlisting>
       </example>
 
