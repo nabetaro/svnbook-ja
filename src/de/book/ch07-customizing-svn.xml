@@ -2150,31 +2150,34 @@ svn: Kann Zeichenkette nicht von »UTF-8« in die eigene Codierung konvertieren:
 -->
     <para>Subversion 1.5 führt die interaktive Auflösung von
       Konflikten ein (in <xref linkend="svn.tour.cycle.resolve" />
-      beschrieben), und eine der den Benutzern angebotene Option ist
-      die Fähigkeit, ein Zusammenführungsprogramm eines Drittanbieters
-      zu starten. Wenn dieses Vorgehen gewählt wird, ermittelt
-      Subversion über die Laufzeitoption
-      <literal>merge-tool-cmd</literal> den Namen eines externen
-      Zusammenführungsprogramms und startet dies mit den
-      entsprechenden Eingabedateien, sofern eins gefunden wird. Dies
-      ist in vielerlei Hinsicht ein Unterschied zum konfigurierbaren
-      Dreiwege-Vergleichsprogramm. Erstens wird das Vergleichsprogramm
-      stets verwendet, um Dreiwege-Vergleiche vorzunehmen, wohingegen
-      das Zusammenführungsprogramm nur dann angewendet wird, falls das
-      Dreiwege-Vergleichsprogramm einen Konflikt entdeckt hat.
-      Zweitens ist die Schnittstelle sehr viel sauberer &ndash; Ihr
-      konfiguriertes Zusammenführungsprogramm braucht nur vier
-      Pfadangaben als Kommandozeilenparameter zu akzeptieren: die
-      Basisdatei, die <quote>fremde</quote> Datei (die die Änderungen
-      aus dem Repository enthält), die <quote>eigene</quote> Datei
-      (die lokale Änderungen enthält) und den Pfad der Datei, in der
-      der endgültige Inhalt nach Konfliktauflösung gespeichert werden
-      soll.</para>
+      beschrieben), und eine den Benutzern angebotene Option ist die
+      Fähigkeit, ein Zusammenführungsprogramm eines Drittanbieters zu
+      starten. Wenn dieses Vorgehen gewählt wird, ermittelt Subversion
+      über die Laufzeitoption <literal>merge-tool-cmd</literal> den
+      Namen eines externen Zusammenführungsprogramms und startet dies
+      mit den entsprechenden Eingabedateien, sofern es gefunden wird.
+      Dies ist in vielerlei Hinsicht ein Unterschied zum
+      konfigurierbaren Dreiwege-Vergleichsprogramm. Erstens wird das
+      Vergleichsprogramm stets verwendet, um Dreiwege-Vergleiche
+      vorzunehmen, wohingegen das Zusammenführungsprogramm nur dann
+      angewendet wird, falls das Dreiwege-Vergleichsprogramm einen
+      Konflikt entdeckt hat.  Zweitens ist die Schnittstelle sehr viel
+      sauberer &ndash; Ihr konfiguriertes Zusammenführungsprogramm
+      braucht nur vier Pfadangaben als Kommandozeilenparameter zu
+      akzeptieren: die Basisdatei, die <quote>fremde</quote> Datei
+      (die die Änderungen aus dem Repository enthält), die
+      <quote>eigene</quote> Datei (die lokale Änderungen enthält) und
+      den Pfad der Datei, in der der endgültige Inhalt nach
+      Konfliktauflösung gespeichert werden soll.</para>
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.externaldifftools.diff">
+<!--
       <title>External diff</title>
+-->
+      <title>Externes diff</title>
 
+<!--
       <para>Subversion calls external diff programs with parameters
         suitable for the GNU diff utility, and expects only that the
         external program will return with a successful error code.  For
@@ -2195,14 +2198,47 @@ svn: Kann Zeichenkette nicht von »UTF-8« in die eigene Codierung konvertieren:
             differences were found, and 2 means trouble.</quote></para>
         </footnote>
       </para>
+-->
+      <para>Subversion ruft externe diff-Programme mit Parametern auf,
+        die für GNU diff passen und erwartet lediglich, dass das
+        externe Programm mit einem Erfolg signalisierenden
+        Rückgabewert zurückkommt. Für die meisten alternativen
+        diff-Programme sind nur die Argumente an sechster und siebter
+        Stelle interessant &ndash; die Pfade der Dateien, die die
+        linke bzw. rechte Seite des Vergleichs repräsentieren.
+        Beachten Sie, dass Subversion das diff-Programm jeweils einmal
+        pro modifizierter Datei aufruft, die die Subversion-Operation
+        berührt, falls Ihr Programm also asynchron läuft (oder als
+        <quote>Hintergrundprozess</quote>), könnte es sein, dass 
+        mehrere Instanzen gleichzeitig ausgeführt werden. Schließlich
+        erwartet Subversion, dass Ihr Programm den Rückgabewert 1
+        liefert, falls es Unterschiede entdeckt hat, oder 0, falls
+        nicht &ndash; jeder andere Rückgabewert wird als fataler
+        Fehler angesehen.
+        <footnote>
+          <para>Das Handbuch zu GNU diff beschreibt es so: <quote>Ein
+            Rückgabewert 0 bedeutet, dass keine Unterschiede gefunden
+            wurden, 1 bedeutet, dass einige Unterschiede gefunden
+            wurden und 2 bedeutet Ärger.</quote></para>
+        </footnote>
+      </para>
+<!--
 
       <para><xref linkend="svn.advanced.externaldifftools.diff.ex-1"/>
         and <xref linkend="svn.advanced.externaldifftools.diff.ex-2"/>
         are templates for external diff tool wrappers in the Python
         and Windows batch scripting languages, respectively.</para>
+-->
+
+      <para><xref linkend="svn.advanced.externaldifftools.diff.ex-1"/>
+        und <xref linkend="svn.advanced.externaldifftools.diff.ex-2"/>
+        sind <quote>Verpackungs</quote>-Vorlagen für externe
+        diff-Werkzeuge in den Skriptsprachen Python bzw.
+        Windows-Batch.</para>
 
       <example id="svn.advanced.externaldifftools.diff.ex-1">
         <title>diffwrap.py</title>
+<!--
         <programlisting>
 #!/usr/bin/env python
 import sys
@@ -2217,16 +2253,38 @@ RIGHT = sys.argv[-1]
 
 # Call the diff command (change the following line to make sense for
 # your diff program).
-cmd = [DIFF, '--left', LEFT, '--right', RIGHT]
+cmd = [DIFF, '- -left', LEFT, '- -right', RIGHT]
 os.execv(cmd[0], cmd)
 
 # Return an errorcode of 0 if no differences were detected, 1 if some were.
 # Any other errorcode will be treated as fatal.
 </programlisting>
+-->
+        <programlisting>
+#!/usr/bin/env python
+import sys
+import os
+
+# Geben Sie hier Ihr bevorzugtes diff-Programm an.
+DIFF = "/usr/local/bin/my-diff-tool"
+
+# Subversion liefert die benötigten Pfade als die letzten beiden Parameter.
+LEFT  = sys.argv[-2]
+RIGHT = sys.argv[-1]
+
+# Aufruf des diff-Befehls (ändern Sie die folgende Zeile passend für
+# Ihr diff-Programm).
+cmd = [DIFF, '--left', LEFT, '--right', RIGHT]
+os.execv(cmd[0], cmd)
+
+# Rückgabewert 0 falls keine Unterschiede, 1 falls doch.
+# Jeder andere Rückgabewert wird als fatal betrachtet.
+</programlisting>
       </example>
 
       <example id="svn.advanced.externaldifftools.diff.ex-2">
         <title>diffwrap.bat</title>
+<!--
         <programlisting>
 @ECHO OFF
 
@@ -2241,10 +2299,30 @@ SET RIGHT=%7
 
 REM Call the diff command (change the following line to make sense for
 REM your diff program).
-%DIFF% --left %LEFT% --right %RIGHT%
+%DIFF% - -left %LEFT% - -right %RIGHT%
 
 REM Return an errorcode of 0 if no differences were detected, 1 if some were.
 REM Any other errorcode will be treated as fatal.
+</programlisting>
+-->
+        <programlisting>
+@ECHO OFF
+
+REM  Geben Sie hier Ihr bevorzugtes diff-Programm an.
+SET DIFF="C:\Program Files\Funky Stuff\My Diff Tool.exe"
+
+REM Subversion liefert die benötigten Pfade als die letzten beiden Parameter.
+REM Das sind die Parameter 6 und 7 (außer Sie benutzen svn diff -x, dann
+REM ist alles möglich).
+SET LEFT=%6
+SET RIGHT=%7
+
+REM Aufruf des diff-Befehls (ändern Sie die folgende Zeile passend für
+REM Ihr diff-Programm).
+%DIFF% --left %LEFT% --right %RIGHT%
+
+REM Rückgabewert 0 falls keine Unterschiede, 1 falls doch.
+REM Jeder andere Rückgabewert wird als fatal betrachtet.
 </programlisting>
       </example>
     </sect2>
