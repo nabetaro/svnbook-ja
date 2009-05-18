@@ -809,8 +809,12 @@
 
     <!-- =============================================================== -->
     <sect2 id="svn.developer.layerlib.ra">
+<!--
       <title>Repository Access Layer</title>
+-->
+      <title>Repository-Zugriffs-Schicht</title>
 
+<!--
       <para>If the Subversion Repository layer is at <quote>the other
         end of the line,</quote> the Repository Access (RA) layer is
         the line itself.  Charged with marshaling data between the
@@ -825,7 +829,25 @@
         the <filename>mod_dav_svn</filename> Apache module or
         <filename>libsvn_ra_svn</filename>'s server,
         <command>svnserve</command>).</para>
+-->
+      <para>Wenn die Subversion-Repository-Schicht das <quote>andere
+        Ende der Leitung</quote> repräsentiert, stellt die
+        Repository-Zugriffs-Schicht (RA) die Leitung selbst dar. Ihre
+        Aufgabe ist das Umherschaufeln von Daten zwischen den
+        Client-Bibliotheken und dem Repository. Diese Schicht umfasst
+        die Bibliothek  <filename>libsvn_ra</filename> zum Laden von
+        Modulen, die eigentlichen RA-Module (momentan
+        <filename>libsvn_ra_neon</filename>,
+        <filename>libsvn_ra_local</filename>,
+        <filename>libsvn_ra_serf</filename> und
+        <filename>libsvn_ra_svn</filename>) und alle zusätzlichen
+        Bibliotheken, die von einer oder mehreren dieser RA-Module
+        benötigt werden (so wie das Apache-Modul
+        <filename>mod_dav_svn</filename> oder
+        <command>svnserve</command>, der Server von
+        <filename>libsvn_ra_svn</filename>).</para>
 
+<!--
       <para>Since Subversion uses URLs to identify its repository
         resources, the protocol portion of the URL scheme (usually
         <literal>file://</literal>, <literal>http://</literal>,
@@ -837,10 +859,25 @@
         to use for the task at hand.  You can determine which RA
         modules are available to the Subversion command-line client,
         and what protocols they claim to support, by running
-        <userinput>svn --version</userinput>:</para>
-     
+        <userinput>svn - -version</userinput>:</para>
+-->
+      <para>Da Subversion URLs zum Identifizieren seiner
+        Repository-Quellen benutzt, wird der Protokollteil des
+        URL-Schemas (normalerweise <literal>file://</literal>,
+        <literal>http://</literal>, <literal>https://</literal>,
+        <literal>svn://</literal> oder <literal>svn+ssh://</literal>)
+        verwendet, um festzustellen, welches RA-Modul die
+        Kommunikation abwickelt. Jedes Modul hinterlegt eine Liste von
+        Protokollen, die es <quote>versteht</quote>, so dass der
+        RA-Lader zur Laufzeit bestimmen kann, welches Modul für die
+        aktuelle Aufgabe benutzt werden kann. Sie können feststellen,
+        welche RA-Module für der Kommandozeilen-Client zur Verfügung
+        stehen und welche Protokolle sie zu verstehen vorgeben, indem
+        Sie <userinput>svn --version</userinput> aufrufen:</para>
+
+<!--
       <screen>
-$ svn --version
+$ svn - -version
 svn, version 1.5.0 (r31699)
    compiled Jun 18 2008, 09:57:36
 
@@ -863,7 +900,34 @@ The following repository access (RA) modules are available:
 
 $
 </screen>
+-->
+      <screen>
+$ svn --version
+svn, Version 1.5.0 (r31699)
+   übersetzt Jun 18 2008, 09:57:36
 
+Copyright (C) 2000-2008 CollabNet.
+Subversion ist Open-Source-Software, siehe http://subversion.tigris.org/
+Dieses Produkt enthält Software, die von CollabNet (http://www.Collab.Net/) entwickelt wurde.
+
+Die folgenden ZugriffsModule (ZM) für Projektarchive stehen zur Verfügung:
+
+* ra_neon : Modul zum Zugriff auf ein Projektarchiv über das Protokoll WebDAV mittels Neon.
+  - behandelt Schema »http«
+  - behandelt Schema »https«
+* ra_svn : Modul zum Zugriff auf ein Projektarchiv über das svn-Netzwerkprotokoll.
+  - mit Cyrus-SASL-Authentifizierung
+  - behandelt Schema »svn«
+* ra_local : Modul zum Zugriff auf ein Projektarchiv auf der lokalen Festplatte
+  - behandelt Schema »file«
+* ra_serf : Modul zum Zugriff auf ein Projektarchiv über das Protokoll WebDAV mittels serf.
+  - behandelt Schema »http«
+  - behandelt Schema »https«
+
+$
+</screen>
+
+<!--
       <para>The public API exported by the RA layer contains
         functionality necessary for sending and receiving versioned
         data to and from the repository.  And each of the available RA
@@ -875,7 +939,21 @@ $
         <filename>libsvn_ra_svn</filename> speaks a custom network
         protocol with the <command>svnserve</command> program; and so
         on.</para>
+-->
+      <para>Die von der RA-Schicht exportierte API beinhaltet
+        Funktionen, die zum Senden und Empfangen versionierter Daten
+        zum und vom Repository notwendig sind. Jedes der verfügbaren
+        RA-Plug-Ins kann diese Aufgabe mithilfe eines besonderen
+        Protokolls erledigen &ndash;
+        <filename>libsvn_ra_dav</filename> kommuniziert über
+        HTTP/WebDAV (optional mit SSL-Verschlüsselung) mit einem
+        Apache-HTTP-Server auf dem das Subversion-Server-Modul
+        <filename>mod_dav_svn</filename> läuft;
+        <filename>libsvn_ra_svn</filename> kommuniziert über ein
+        maßgeschneidertes Netzprotokoll mit dem
+        <command>svnserve</command> Programm usw.</para>
 
+<!--
       <para>For those who wish to access a Subversion repository
         using still another protocol, that is precisely why the
         Repository Access layer is modularized!  Developers can simply
@@ -886,6 +964,20 @@ $
         (IPC) calls, or&mdash;let's get crazy, shall we?&mdash;you
         could even implement an email-based protocol.  Subversion
         supplies the APIs; you supply the creativity.</para>
+-->
+      <para>Für diejenigen, die über ein völlig anderes Protokoll auf
+        das Repository zugreifen möchten, sei gesagt, dass genau das
+        der Grund für die Modularisierung der
+        Repository-Zugriffsschicht ist. Entwickler können einfach eine
+        neue Bibliothek schreiben, die auf der einen Seite die
+        RA-Schnittstelle implementiert und auf der anderen Seite mit
+        dem Repository kommuniziert. Ihre neue Bibliothek kann
+        bestehende Netzprotokolle verwenden, oder Sie können Ihr
+        eigenes erfinden. Sie könnten Aufrufe über
+        Interprozess-Kommunikation (IPC) machen oder &ndash; mal etwas
+        verrücktes &ndash; sogar ein auf E-Mail basiertes Protokoll
+        implementieren. Subversion liefert die APIs, Sie sorgen für
+        die Kreativität.</para>
 
     </sect2>
 
