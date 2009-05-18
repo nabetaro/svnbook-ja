@@ -320,8 +320,12 @@
 
     <!-- =============================================================== -->
     <sect2 id="svn.developer.layerlib.repos">
+<!--
       <title>Repository Layer</title>
+-->
+      <title>Repository-Schicht</title>
 
+<!--
       <para>When referring to Subversion's Repository layer, we're
         generally talking about two basic concepts&mdash;the versioned
         filesystem implementation (accessed via
@@ -335,7 +339,24 @@
         the Client layer via the Repository Access layer, and is, from
         the perspective of the Subversion user, the stuff at the
         <quote>other end of the line.</quote></para>
+-->
+      <para>Wenn wir uns auf die Repository-Schicht von Subversion
+        beziehen, reden wir üblicherweise über zwei grundlegende
+        Konzepte &ndash; die Implementierung des versionierten
+        Dateisystems (auf das mittels <filename>libsvn_fs</filename>
+        zugegriffen wird, unterstützt durch dessen Plug-Ins
+        <filename>libsvn_fs_base</filename> und
+        <filename>libsvn_fs_fs</filename>) und die Logik des
+        Repositorys, die es umgibt (implementiert in
+        <filename>libsvn_repos</filename>). Diese Bibliotheken liefern
+        die Speicher- und Auswertungsmechanismen für die verschiedenen
+        Revisionen Ihrer versionskontrollierten Daten. Diese Schicht
+        ist mit der Client-Schicht über die
+        Repository-Zugriffs-Schicht verbunden und stellt, aus der
+        Sicht des Benutzers von Subversion, das <quote>andere Ende der
+        Leitung</quote> dar.</para>
 
+<!--
       <para>The Subversion filesystem is not a kernel-level filesystem
         that one would install in an operating system (such as the
         Linux ext2 or NTFS), but instead is a virtual filesystem.
@@ -356,7 +377,31 @@
         members of its open source team had written a new proprietary
         Subversion filesystem plug-in that used Google's ultra-scalable
         Bigtable database for its storage.</para>
+-->
+      <para>Das Dateisystem von Subversion ist kein Dateisystem auf
+        Kernel-Ebene, das im Betriebssystem installiert würde (so wie
+        Linux ext3 oder NTFS), sondern ein virtuelles Dateisystem.
+        Anstatt <quote>Dateien</quote> und
+        <quote>Verzeichnisse</quote> als echte Dateien und
+        Verzeichnisse abzulegen (in denen Sie mit Ihrem bevorzugten
+        Shell-Programm navigieren können), verwendet es eins von zwei
+        verfügbaren abstrakten Speicherungsverfahren &ndash; entweder
+        eine Berkeley-DB-Datenbankumgebung oder eine Repräsentation
+        über einfache Dateien. (Um mehr über die zwei Verfahren
+        kennenzulernen, siehe <xref
+        linkend="svn.reposadmin.basics.backends"/>.) Es hat seitens
+        der Entwicklergemeinschaft ein beträchtliches Interesse
+        bestanden, künftigen Versionen von Subversion die Fähigkeit zu
+        verleihen, andere Datenbanksysteme zu verwenden, etwa über
+        einen Mechanismus wie Open Database Connectivity (ODBC).
+        Tatsächlich hat Google etwas ähliches gemacht, bevor der
+        Dienst Google Code Project Hosting gestartet wurde: Mitte 2006
+        wurde angekündigt, dass Mitarbeiter des Open-Source-Teams ein
+        neues proprietäres Dateisystem-Plug-In für Subversion
+        geschrieben hätten, welches Googles höchstskalierbare
+        Bigtable-Datenbank zum Speichern verwendet.</para>
 
+<!--
       <para>The filesystem API exported by
         <filename>libsvn_fs</filename> contains the kinds of
         functionality you would expect from any other filesystem
@@ -372,34 +417,79 @@
         And the previous ones.  And so on, all the way back through
         versioning time to (and just beyond) the moment you first
         started adding things to the filesystem.</para>
+-->
+      <para>Die von <filename>libsvn_fs</filename> exportierte
+        Dateisystem-Programmierschnittstelle enthält die Funktionen,
+        die Sie auch von jeder anderen Programmierschnittstelle für
+        ein Dateisystem erwarten würden &ndash; Sie können Dateien und
+        Verzeichnisse anlegen und löschen, kopieren und verschieben,
+        den Inhalt verändern usw. Sie besitzt auch Funktionen, die
+        nicht so verbreitet sind, wie etwa die Fähigkeit, Metadaten
+        (<quote>Propertys</quote>) an jede Datei oder jedes
+        Verzeichnis anzufügen, zu verändern oder zu entfernen. Zudem
+        ist das Dateisystem von Subversion ein versioniertes
+        Dateisystem, d.h., während Sie Ihren Verzeichnisbaum ändern,
+        merkt sich Subversion, wie er vor Ihren Änderungen ausgesehen
+        hat. Und vor den vorhergehenden Änderungen. Und davor. Und so
+        weiter durch die gesamte versionierte Zeitachse bis zu dem
+        Moment (und kurz davor), an dem Sie das erste Mal etwas dem
+        Dateisystem hinzugefügt hatten.</para>
 
+<!--
       <para>All the modifications you make to your tree are done
         within the context of a Subversion commit transaction.  The
         following is a simplified general routine for modifying your
         filesystem:</para>
+-->
+      <para>Alle Änderungen, die Sie an Ihrem Baum vornehmen,
+        geschehen im Kontext einer Subversion-Übergabe-Transaktion.
+        Das Folgende ist eine vereinfachte allgemeine Vorgehensweise
+        beim Ändern Ihres Dateisystems:</para>
 
       <orderedlist>
         <listitem>
+<!--
           <para>Begin a Subversion commit transaction.</para>
+-->
+          <para>Eine Subversion-Übergabe-Transaktion starten.</para>
         </listitem>
         <listitem>
+<!--
           <para>Make your changes (adds, deletes, property
             modifications, etc.).</para>
+-->
+          <para>Nehmen Sie Ihre Änderungen vor (Ergänzungen,
+            Löschungen, Änderungen an Propertys usw.).</para>
         </listitem>
         <listitem>
+<!--
           <para>Commit your transaction.</para>
+-->
+          <para>Schließen Sie Ihre Transaktion ab.</para>
         </listitem>
       </orderedlist>
 
+<!--
       <para>Once you have committed your transaction, your filesystem
         modifications are permanently stored as historical artifacts.
         Each of these cycles generates a single new revision of your
         tree, and each revision is forever accessible as an immutable
         snapshot of <quote>the way things were.</quote></para>
+-->
+      <para>Sobald Sie Ihre Transaktion abgeschlossen haben, werden
+        Ihre Änderungen am Dateisystem dauerhaft als historische
+        Artefakte gespeichert. Jeder dieser Zyklen erzeugt eine
+        einzelne neue Revision Ihres Baums, und jede Revision ist für
+        immer verfügbar als unveränderliche Momentaufnahme <quote>der
+        Dinge, wie sie mal waren</quote>.</para>
 
       <sidebar>
+<!--
         <title>The Transaction Distraction</title>
+-->
+        <title>Die Transaktionsablenkung</title>
 
+<!--
         <para>The notion of a Subversion transaction can become easily
           confused with the transaction support provided by the
           underlying database itself, especially given the former's
@@ -412,7 +502,22 @@
           get treated as though <emphasis>none</emphasis> of them ever
           happened&mdash;and in a way that does not interfere with
           other processes acting on the data.</para>
+-->
+        <para>Der Begriff einer Subversion-Transaktion kann leicht mit
+          der Transaktionsunterstützung der darunterliegenden
+          Datenbank verwechselt werden, besonders bei der großen Nähe
+          der ersteren zum Berkeley-DB-Datenbank-Code in
+          <filename>libsvn_fs_base</filename>. Beide Transaktionstypen
+          dienen der Atomizität und Isolation. Mit anderen Worten:
+          Transaktionen ermöglichen Ihnen, eine Serie von Aktionen
+          durchzuführen, bei denen entweder alle oder keine ausgeführt
+          wird &ndash; entweder werden alle Aktionen erfolgreich
+          abgeschlossen oder <emphasis>keine</emphasis> wird überhaupt
+          ausgeführt &ndash; und das auf eine Weise, dass andere
+          Prozesse nicht behindert werden, die auf den Daten
+          arbeiten.</para>
 
+<!--
         <para>Database transactions generally encompass small
           operations related specifically to the modification of data
           in the database itself (such as changing the contents of a
@@ -426,7 +531,24 @@
           creation of a Subversion transaction fails, the database will
           look as though we had never attempted that creation in the first
           place)!</para>
+-->
+        <para>Datenbanktransaktionen umfassen im Allgemeinen kleinere
+          Operationen, die in Zusammenhang mit der Änderung von Daten
+          in der Datenbank selbst stehen (etwa die Änderung einer
+          Tabellenzeile). Transaktionen von Subversion haben einen
+          größeren Umfang und umfassen Operationen auf einer höheren
+          Ebene, so etwa Änderungen an einer Menge aus Dateien und
+          Verzeichnissen, die als nächste Revision im Dateisystembaum
+          gespeichert werden sollen. Sollte das nicht bereits genug
+          Verwirrung gestiftet haben, betrachten Sie die Tatsache,
+          dass Subversion eine Datenbanktransaktion während der
+          Erstellung einer Subversion-Transaktion benutzt (so dass
+          beim Misslingen der Erstellung der Subversion-Transaktion
+          die Datenbank in dem Zustand verbleibt, als hätten wir
+          niemals versucht, eine Subversion-Transaktion zu
+          starten)!</para>
 
+<!--
         <para>Fortunately for users of the filesystem API, the
           transaction support provided by the database system itself
           is hidden almost entirely from view (as should be expected
@@ -434,9 +556,18 @@
           when you start digging into the implementation of the
           filesystem itself that such things become visible (or
           interesting).</para>
+-->
+        <para>Glücklicherweise bleibt den Benutzern der
+          Dateisystem-API die Transaktionsunterstützung des
+          Datrenbanksystems fast vollständig verborgen (wie es von
+          einem ordentlich modularisierten Bibliotheksschema auch
+          erwartet werden kann). Nur wenn Sie anfangen, in der
+          Implementierung des Dateisystems herumzuwühlen, werden diese
+          Dinge sichtbar (oder interessant).</para>
 
       </sidebar>
 
+<!--
       <para>Most of the functionality the filesystem
         interface provides deals with actions that occur on individual
         filesystem paths.  That is, from outside the filesystem, the
@@ -447,7 +578,21 @@
         favorite shell program.  You add new files and directories by
         passing their paths-to-be to the right API functions.  You
         query for information about them by the same mechanism.</para>
+-->
+      <para>Die meisten von der Dateisystemschnittstellen angebotenen
+        Funktionen drehen sich um Aktionen, die auf einzelnen
+        Dateisystempfaden stattfinden. Von außerhalb des Dateisystems
+        betrachtet heißt das, dass der Hauptmechanismus zur
+        Beschreibung und Handhabung einzelner Datei- und
+        Verzeichnisrevisionen über Pfadzeichenketten wie
+        <filename>/foo/bar</filename> erfolgt, genauso, als ob Sie
+        Dateien und Verzeichnisse über Ihr bevorzugtes Shell-Programm
+        ansprechen würden. Sie fügen neue Dateien und Verzeichnisse
+        hinzu, indem Sie die künftigen Pfade an die passenden
+        API-Funktionen übergeben. Sie können Informationen über den
+        gleichen Mechanismus abrufen.</para>
 
+<!--
       <para>Unlike most filesystems, though, a path alone is not
         enough information to identify a file or directory in
         Subversion.  Think of a directory tree as a two-dimensional
@@ -456,12 +601,25 @@
         subdirectories represents a downward motion.  <xref
         linkend="svn.developer.layerlib.repos.dia-1"/> shows a typical
         representation of a tree as exactly that.</para>
+-->
+      <para>Im Gegensatz zu den meisten Dateisystemen reicht jedoch
+        ein Pfad alleine nicht aus, um in Subversion eine Datei oder
+        ein Verzeichnis zu identifizieren. Stellen Sie sich einen
+        Verzeichnisbaum als ein zweidimensionales System vor, in dem
+        Nachbarknoten eine Art horizontale und die Unterverzeichnisse
+        eines Knotens eine vertikale Bewegung repräsentieren. <xref
+        linkend="svn.developer.layerlib.repos.dia-1"/> zeigt genau das
+        als typische Repräsentierung eines Baums.</para>
 
       <figure id="svn.developer.layerlib.repos.dia-1">
+<!--
         <title>Files and directories in two dimensions</title>
+-->
+        <title>Dateien und Verzeichnisse in zwei Dimensionen</title>
         <graphic fileref="images/ch08dia1.png"/>
       </figure>
 
+<!--
       <para>The difference here is that the Subversion filesystem has a
         nifty third dimension that most filesystems do not
         have&mdash;Time!
@@ -484,12 +642,41 @@
         linkend="svn.developer.layerlib.repos.dia-2"/> shows revision
         history as an added dimension to the Subversion filesystem
         universe.</para>
+-->
+      <para>Der Unterschied ist hier, dass das Dateisystem von
+        Subversion eine raffinierte dritte Dimension hat, die den
+        meisten Dateisystemen fehlt &ndash; Zeit!
+        <footnote>
+          <para>Wir sind uns bewusst, dass das für
+            Science-Fiction-Fans, die lange Zeit davon ausgegangen
+            sind, dass Zeit eigentlich die <emphasis>vierte</emphasis>
+            Dimension ist, ein Schock sein kann, und wir bitten um
+            Entschuldigung, falls die Geltendmachung einer
+            unterschiedlichen Theorie unsererseits zu einem seelischen
+            Schock führen sollte.</para>
+        </footnote>
+        Fast jede Funktion der Dateisystemschnittstelle, die ein
+        <parameter>path</parameter>-Argument erwartet, benötigt auch
+        ein <parameter>root</parameter>-Argument. Dieses Argument vom
+        Typ  <literal>svn_fs_root_t</literal> beschreibt entweder eine
+        Revision oder eine Subversion-Transaktion (welche einfach eine
+        Revision in Arbeit ist) und stellt die dritte Dimension des
+        Kontexts zur Verfügung, die benötigt wird, um den Unterschied
+        zwischen <filename>/foo/bar</filename> in Revision 32 und
+        demselben Pfad in Revision 98 zu verstehen. <xref
+        linkend="svn.developer.layerlib.repos.dia-2"/> zeigt die
+        Revisionsgeschichte als eine zusätzliche Dimension im
+        Subversion-Dateisystem-Universum.</para>
 
       <figure id="svn.developer.layerlib.repos.dia-2">
+<!--
         <title>Versioning time&mdash;the third dimension!</title>
+-->
+        <title>Versionierung der Zeit &ndash; die dritte Dimension!</title>
         <graphic fileref="images/ch08dia2.png"/>
       </figure>
 
+<!--
       <para>As we mentioned earlier, the
         <filename>libsvn_fs</filename> API looks and feels like any
         other filesystem, except that it has this wonderful versioning
@@ -500,7 +687,20 @@
         and directory versioning support, Subversion wants
         more&mdash;and that is where <filename>libsvn_repos</filename>
         comes in.</para>
+-->
+      <para>Wie bereits erwähnt, mutet die
+        <filename>libsvn_fs</filename>-API wie jedes andere
+        Dateisystem an, außer dass es diese wundervolle
+        Versionierungsmöglichkeit hat. Sie wurde entworfen, um für
+        jedes Programm nutzbar zu sein, das an einem versionierten
+        Dateisystem interessiert ist. Nicht nur zufällig hat
+        Subversion selbst Interesse an dieser Funktion. Doch obwohl
+        die Unterstützung der Dateisystemschnittstelle ausreichend für
+        die einfache Versionierung von Dateien und Verzeichnissen ist,
+        braucht Subversion mehr &ndash; und hier hat
+        <filename>libsvn_repos</filename> seinen Auftritt.</para>
 
+<!--
       <para>The Subversion repository library
         (<filename>libsvn_repos</filename>) sits (logically speaking)
         atop the <filename>libsvn_fs</filename> API, providing
@@ -515,42 +715,95 @@
         them.  A repository hook system is not strictly related to
         implementing a versioning filesystem, so it lives in the
         repository wrapper library.</para>
-      
+-->
+      <para>Die Subversion-Repository-Bibliothek
+        (<filename>libsvn_repos</filename>) sitzt (logisch) oberhalb
+        der <filename>libsvn_fs</filename>-API und stellt zusätzliche
+        Funktionen zur Verfügung, die über die grundlegende Logik
+        eines versionierten Dateisystem hinausgehen. Sie umhüllt nicht
+        alle Dateisystemfunktionen vollständig &ndash; lediglich
+        bestimmte größere Scritte im allgemeinen Zyklus der
+        Dateisystemaktivität. Einige dieser Schritte umfassen die
+        Erzeugung und den Abschluss von Subversion-Transaktionen und
+        die Änderung von Revision-Propertys. Diese besonderen
+        Ereignisse werden durch die Repository-Schicht gekapselt, da
+        mit ihnen Hooks verknüpft sind. Ein System mit
+        Repository-Hooks hat strenggenommen nichts mit der
+        Implementierung eines versionierten Dateisystems zu tun, so
+        dass es in der Repository-Bibliothek untergebracht ist.</para>
+
+<!--
       <para>The hooks mechanism is but one of the reasons for the
         abstraction of a separate repository library from the rest of
         the filesystem code.  The <filename>libsvn_repos</filename>
         API provides several other important utilities to Subversion.
         These include the abilities to:</para>
+-->
+      <para>Der Hook-Mechanismus ist aber nur ein Grund für die
+        Abstraktion einer eigenständigen Repository-Bibliothek vom
+        Rest des Dateisystemcodes. Die API
+        <filename>libsvn_repos</filename> stellt mehrere andere
+        wichtige Werkzeuge für Subversion zur Verfügung. Darunter
+        fallen Fähigkeiten, um</para>
 
       <itemizedlist>
         <listitem>
+<!--
           <para>Create, open, destroy, and perform recovery steps on a
             Subversion repository and the filesystem included in that
             repository.</para>
+-->
+          <para>ein Subversion-Repository und das darin enthaltene
+            Dateisystem zu erzeugen, zu öffnen, zu zerstören und
+            hierauf Schritte zur Wiederherstellung auszuführen.</para>
         </listitem>
         <listitem>
+<!--
           <para>Describe the differences between two filesystem
             trees.</para>
+-->
+          <para>die Unterschiede zwischen zwei Dateisystem-Bäumen zu
+            beschreiben.</para>
         </listitem>
         <listitem>
+<!--
           <para>Query for the commit log messages associated with all
             (or some) of the revisions in which a set of files was
             modified in the filesystem.</para>
+-->
+          <para>die Übergabe-Protokollnachrichten aller (oder einiger)
+            Revisionen abzurufen, in denen eine Menge aus Dateien im
+            Dateisystem verändert wurde.</para>
         </listitem>
         <listitem>
+<!--
           <para>Generate a human-readable <quote>dump</quote> of the
             filesystem&mdash;a complete representation of the revisions in
             the filesystem.</para>
+-->
+          <para>einen menschenlesbaren <quote>Auszug</quote> des
+            Dateisystems zu erzeugen &mdash; eine vollständige
+            Repräsentierung der Revisionen im Dateisystem.</para>
         </listitem>
         <listitem>
+<!--
           <para>Parse that dump format, loading the dumped revisions
             into a different Subversion repository.</para>
+-->
+          <para>dieses Auszugsformat zu lesen und die Revisionen in
+            ein anderes Subversion-Repository zu laden.</para>
         </listitem>
       </itemizedlist>
 
+<!--
       <para>As Subversion continues to evolve, the repository library
         will grow with the filesystem library to offer increased
         functionality and configurable option support.</para>
+-->
+      <para>Während sich Subversion weiterentwickelt, wird die
+        Repository-Bibliothek gemeinsam mit der Dateisystem-Bibliothek
+        wachsen und erweiterte Funktionen und konfigurierbare Optionen
+        unterstützen.</para>
 
     </sect2>
 
