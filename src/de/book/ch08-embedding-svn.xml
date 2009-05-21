@@ -210,7 +210,7 @@
         <listitem><para>Apache authorization module for Subversion
           repositories access via WebDAV</para></listitem>
 -->
-        <listitem><para>Apache-Authorisierungs-Modul für den
+        <listitem><para>Apache-Autorisierung-Modul für den
           Subversion-Zugriff über WebDAV</para></listitem>
       </varlistentry>
       <varlistentry>
@@ -394,7 +394,7 @@
         bestanden, künftigen Versionen von Subversion die Fähigkeit zu
         verleihen, andere Datenbanksysteme zu verwenden, etwa über
         einen Mechanismus wie Open Database Connectivity (ODBC).
-        Tatsächlich hat Google etwas ähliches gemacht, bevor der
+        Tatsächlich hat Google etwas ähnliches gemacht, bevor der
         Dienst Google Code Project Hosting gestartet wurde: Mitte 2006
         wurde angekündigt, dass Mitarbeiter des Open-Source-Teams ein
         neues proprietäres Dateisystem-Plug-In für Subversion
@@ -504,7 +504,7 @@
           other processes acting on the data.</para>
 -->
         <para>Der Begriff einer Subversion-Transaktion kann leicht mit
-          der Transaktionsunterstützung der darunterliegenden
+          der Transaktionsunterstützung der darunter liegenden
           Datenbank verwechselt werden, besonders bei der großen Nähe
           der ersteren zum Berkeley-DB-Datenbank-Code in
           <filename>libsvn_fs_base</filename>. Beide Transaktionstypen
@@ -559,7 +559,7 @@
 -->
         <para>Glücklicherweise bleibt den Benutzern der
           Dateisystem-API die Transaktionsunterstützung des
-          Datrenbanksystems fast vollständig verborgen (wie es von
+          Datenbanksystems fast vollständig verborgen (wie es von
           einem ordentlich modularisierten Bibliotheksschema auch
           erwartet werden kann). Nur wenn Sie anfangen, in der
           Implementierung des Dateisystems herumzuwühlen, werden diese
@@ -722,7 +722,7 @@
         Funktionen zur Verfügung, die über die grundlegende Logik
         eines versionierten Dateisystem hinausgehen. Sie umhüllt nicht
         alle Dateisystemfunktionen vollständig &ndash; lediglich
-        bestimmte größere Scritte im allgemeinen Zyklus der
+        bestimmte größere Schritte im allgemeinen Zyklus der
         Dateisystemaktivität. Einige dieser Schritte umfassen die
         Erzeugung und den Abschluss von Subversion-Transaktionen und
         die Änderung von Revision-Propertys. Diese besonderen
@@ -983,8 +983,12 @@ $
 
     <!-- =============================================================== -->
     <sect2 id="svn.developer.layerlib.client">
+<!--
       <title>Client Layer</title>
-      
+-->
+      <title>Client-Schicht</title>
+
+<!--
       <para>On the client side, the Subversion working copy is where
         all the action takes place.  The bulk of functionality
         implemented by the client-side libraries exists for the sole
@@ -993,7 +997,18 @@ $
         editable <quote>reflection</quote> of one or more repository
         locations&mdash;and propagating changes to and from the
         Repository Access layer.</para>
+-->
+      <para>Auf der Client-Seite finden alle Aktionen in der
+        Subversion-Arbeitskopie statt. Der größte Teil der in den
+        Client-Bibliotheken implementierten Funktionen dient dem
+        alleinigen Zweck, die Arbeitskopien zu verwalten &ndash;
+        Verzeichnisse voller Dateien und anderer Unterverzeichnisse,
+        die als eine Art lokaler, editierbarer
+        <quote>Spiegelung</quote> einer oder mehrere Orte im
+        Repository dienen &ndash; und Änderungen an die RA-Schicht
+        weiterzugeben oder von ihr zu empfangen.</para>
 
+<!--
       <para>Subversion's working copy library,
         <filename>libsvn_wc</filename>, is directly responsible for
         managing the data in the working copies.  To accomplish this,
@@ -1009,7 +1024,26 @@ $
         about the <filename>.svn</filename> administrative area, see
         <xref linkend="svn.developer.insidewc"/> later in this
         chapter.</para>
+-->
+      <para>Die Bibliothek für die Arbeitskopie von Subversion,
+        <filename>libsvn_wc</filename>, ist direkt dafür
+        verantwortlich, die Daten in den Arbeitskopien zu verwalten.
+        Hierzu speichert die Bibliothek Verwaltungsinformationen zu
+        jedem Verzeichnis der Arbeitskopie in einem besonderen
+        Unterverzeichnis. Dieses Unterverzeichnis namens
+        <filename>.svn</filename> kommt in jedem Unterverzeichnis der
+        Arbeitskopie vor und beinhaltet zahlreiche weitere Dateien und
+        Verzeichnisse, in denen der Zustand aufgezeichnet wird und die
+        einen privaten Arbeitsbereich für Verwaltungsaufgaben liefern.
+        Für diejenigen, die CVS kennen, ist der Zweck des
+        Unterverzeichnisses <filename>.svn</filename> ähnlich den in
+        CVS-Arbeitskopien zu findenden Verwaltungsverzeichnissen
+        <filename>CVS</filename>. Weiter gehende Informationen zum
+        <filename>.svn</filename>-Verwaltungsbereich finden sie später
+        in diesem Kapitel unter <xref
+        linkend="svn.developer.insidewc"/>.</para>
 
+<!--
       <para>The Subversion client library,
         <filename>libsvn_client</filename>, has the broadest
         responsibility; its job is to mingle the functionality of the
@@ -1024,7 +1058,25 @@ $
         into the working copy library, which then writes a full
         working copy to disk (<filename>.svn</filename> directories
         and all).</para>
+-->
+      <para>Die Subversion-Client-Bibliothek,
+        <filename>libsvn_client</filename>, besitzt die weitestgehende
+        Verantwortlichkeit; ihre Aufgabe ist es, die Funktionen der
+        Arbeitskopie-Bibliothek mit denen der RA-Schicht zu vermischen
+        und eine API auf höchster Ebene für Anwendungen zur Verfügung
+        zu stellen, die allgemeine Versionskontrollaktionen
+        durchführen wollen. Beispielsweise erwartet die Funktion
+        <function>svn_client_checkout()</function> einen URL als
+        Argument. Sie leitet diesen URL an die RA-Schicht weiter und
+        startet eine authentifizierte Sitzung mit einem bestimmten
+        Repository. Dann fragt sie das Repository nach einem
+        bestimmten Baum und schickt diesen Baum an die
+        Arbeitskopie-Bibliothek, die dann die gesamte Arbeitskopie auf
+        die Platte schreibt (samt
+        <filename>.svn</filename>-Verzeichnissen und allem Drum und
+        Dran).</para>
 
+<!--
       <para>The client library is designed to be used by any
         application.  While the Subversion source code includes a
         standard command-line client, it should be very easy to write
@@ -1039,10 +1091,31 @@ $
         <filename>tools/examples/minimal_client.c</filename>) that
         exemplifies how to wield the Subversion API to create a simple
         client program.</para>
+-->
+      <para>Die Client-Bibliothek ist so aufgebaut, dass sie von jeder
+        Anwendung verwendet werden kann. Obwohl der Quelltext von
+        Subversion einen Standard-Kommandozeilen-Client enthält,
+        sollte es sehr einfach sein, eine beliebige Anzahl von
+        graphischen Clients zu schreiben, die auf die
+        Client-Bibliothek aufsetzen. Neue graphische Oberflächen (oder
+        eigentlich jeder neue Client) für Subversion brauchen keine
+        sperrigen Hüllen um den enthaltenen Kommandozeilen-Client zu
+        sein &ndash; sie haben über die API von
+        <filename>libsvn_client</filename> vollen Zugriff auf die
+        Funktionen, Daten und Rückrufmechanismen die der
+        Kommandozeilen-Client benutzt. Tatsächlich enthält der
+        Quelltext von Subversion ein kleines C-Programm (das Sie unter
+        <filename>tools/examples/minimal_client.c</filename> finden)
+        welches beispielhaft zeigt, wie die Subversion API verwendet
+        wird, um ein einfaches Client-Programm zu erzeugen.</para>
 
       <sidebar>
+<!--
         <title>Binding Directly&mdash;A Word About Correctness</title>
+-->
+        <title>Direkte Bindung &ndash; Ein Wort zur Genauigkeit</title>
 
+<!--
         <para>Why should your GUI program bind directly with a
           <filename>libsvn_client</filename> instead of acting as a
           wrapper around a command-line program?  Besides simply being
@@ -1055,7 +1128,22 @@ $
           display all of the information harvested from the API or may
           combine bits of information for compact
           representation.</para>
+-->
+        <para>Warum sollte Ihr graphisches Programm direkt mit
+          <filename>libsvn_client</filename> gebunden werden, statt
+          als Umhüllung eines Kommandozeilenprogramms zu fungieren?
+          Außer dass es einfach effizienter ist, kann es auch genauer
+          sein. Ein Kommandozeilenprogramm (wie das von Subversion
+          mitgelieferte), das mit der Bibliothek gebunden ist, muss
+          gewissermaßen Rückmeldungen und abgefragte Daten aus
+          C-Datentypen in menschenlesbare Ausgaben übersetzen. Diese
+          Art der Übersetzung kann verlustbehaftet sein. Das heißt, es
+          kann sein, dass das Programm nicht unbedingt alle
+          Informationen anzeigt, die es von der API erhält, oder es
+          könnte Teile von Informationen der kompakten Wiedergabe
+          halber kombinieren.</para>
 
+<!--
         <para>If you wrap such a command-line program with yet another
           program, the second program has access only to
           already interpreted (and as we mentioned, likely incomplete)
@@ -1065,7 +1153,19 @@ $
           original data is potentially tainted more and more, much
           like the result of making a copy of a copy (of a copy&hellip;)
           of a favorite audio or video cassette.</para>
- 
+-->
+        <para>Falls Sie ein solches Kommandozeilenprogramm mit noch
+          einem anderen Programm umhüllen, hat das zweite Programm nur
+          Zugriff auf bereits aufbereitete (und, wie wir bemerkten,
+          wahrscheinlich unvollständige) Informationen, die es
+          <emphasis>noch</emphasis> einmal in
+          <emphasis>sein</emphasis> Format umwandeln muss. Mit jeder
+          neuen Umhüllung wird die Integrität der Originaldaten
+          potentiell mehr und mehr verfälscht, ähnlich wie das
+          Ergebnis einer Kopie einer Kopie (einer Kopie&hellip;) einer
+          beliebten Audio- oder Videokassette.</para>
+
+<!--
         <para>But the most compelling argument for binding directly to
           the APIs instead of wrapping other programs is that the
           Subversion project makes compatibility promises regarding
@@ -1079,6 +1179,22 @@ $
           compatibility promises do not exist for Subversion
           command-line program output, which is subject to change from
           release to release.</para>
+-->
+        <para>Das überzeugendste Argument für das direkte Binden im
+          Gegensatz zum Einhüllen anderer Programme ist jedoch, dass
+          das Subversion-Projekt Kompatibilitätsversprechen bezüglich
+          seiner APIs macht. Über Zwischenversionen dieser APIs hinweg
+          (etwa zwischen 1.3 und 1.4) wird sich kein Prototyp einer
+          Funktion ändern. Mit anderen Worten: Sie sind nicht
+          gezwungen, den Quelltext Ihres Programms einfach aus dem
+          Grund zu aktualisieren, weil Sie auf eine neue Version von
+          Subversion umgestiegen sind. Von der Benutzung bestimmter
+          Funktionen mag abgeraten worden sein, jedoch funktionieren
+          sie noch, so dass Sie einen Zeitpuffer erhalten, um
+          schließlich neuere APIs zu integrieren. Diese Art des
+          Kompatibilitätsversprechens gilt nicht für die Ausgaben der
+          Kommandozeilenprogramme von Subversion, die sich von Version
+          zu Version ändern kann.</para>
 
       </sidebar>
 
