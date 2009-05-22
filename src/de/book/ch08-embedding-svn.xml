@@ -1558,8 +1558,12 @@ $
 
     <!-- =============================================================== -->
     <sect2 id="svn.developer.usingapi.apr">
+<!--
       <title>The Apache Portable Runtime Library</title>
+-->
+      <title>Die Bibliothek Apache Portable Runtime</title>
 
+<!--
       <para>Along with Subversion's own datatypes, you will see many
         references to datatypes that begin with
         <literal>apr_</literal>&mdash;symbols from the Apache Portable
@@ -1576,7 +1580,29 @@ $
         client compiles and runs anywhere that the Apache HTTP Server
         does.  Currently, this list includes all flavors of Unix,
         Win32, BeOS, OS/2, and Mac OS X.</para>
+-->
+      <para>Neben den eigenen Datentypen von Subversion werden Sie
+        viele Verweise auf Datentypen entdecken, die mit
+        <literal>apr_</literal> beginnen &ndash; Symbole aus der
+        Bibliothek Apache Portable Runtime (APR). APR ist die
+        Portabilitätsbibliothek von Apache, ursprünglich aus dem
+        Server-Code herausgelöst, als ein Versuch, die
+        betriebssystemspezifischen Teile von den
+        betriebssystemabhängigen Bereichen des Codes zu trennen. Das
+        Ergebnis war eine Bibliothek, die ein generisches API für das
+        Ausführen von Operationen bietet, die sich je nach
+        Betriebssystem mehr oder weniger stark unterscheiden. Obwohl
+        der Apache HTTP-Server offensichtlich die APR-Bibliothek als
+        erster verwendete, erkannten die Subversion-Entwickler sofort
+        die Vorteile, die durch die Benutzung von APR entstehen. Das
+        bedeutet, dass es praktisch keinen betriebssystemspezifischen
+        Code in Subversion gibt. Es bedeutet auch, dass der
+        Subversion-Client sich auf jedem System übersetzen und
+        betreiben lässt, auf dem das auch für den Apache HTTP-Server
+        gilt. Momentan umfasst diese Liste alle Dialekte von Unix,
+        Win32, BeOS, OS/2 und Mac OS X.</para>
 
+<!--
       <para>In addition to providing consistent implementations of
         system calls that differ across operating systems,
         <footnote>
@@ -1605,10 +1631,48 @@ $
         using <function>svn_pool_create()</function>,
         <function>svn_pool_clear()</function>, and
         <function>svn_pool_destroy()</function>.</para>
+-->
+      <para>Neben der Bereitstellung konsistenter Implementierungen
+        von Systemaufrugen, die sich zwischen Betriebssystemen
+        unterscheiden,
+        <footnote>
+          <para>Subversion verwendet so weit wie möglich
+            ANSI-Systemaufrufe und Datentypen.</para>
+        </footnote>
+        bietet APR Subversion unmittelbaren Zugriff auf viele
+        maßgeschneiderte Datentypen, wie etwa dynamische Arrays und
+        Hashtabellen. Subversion macht von diesen Typen regen
+        Gebrauch. Der vielleicht am meisten verbreitete APR-Datentyp,
+        der sich in beinahe jedem Subversion-API-Prototypen
+        wiederfindet, ist <literal>apr_pool_t</literal> &mdash; der
+        APR-Speicherpool. Subversion verwendet Pools intern zum
+        Zuteilen all seines Speichers (außer wenn eine externe
+        Bibliothek eine unterschiedliche Speicherverwaltung für die
+        über ihre API ausgetauschten Daten voraussetzt),
+        <footnote>
+          <para>Neon und Berkeley DB sind Beispiele solcher
+            Bibliotheken.</para>
+        </footnote>
+        und obwohl jemand, der mit den Subversion-APIs programmiert
+        nicht gezwungen ist, dasselbe zu tun,
+        <emphasis>muss</emphasis> er Pools für die API-Funktionen zur
+        Verfügung stellen, die sie benötigen. Das heißt, dass Benutzer
+        der Subversion-API auch gegen die APR linken,
+        <function>apr_initialize()</function> zum Initialisieren des
+        APR-Subsystems aufrufen und Pools zur Verwendung mit
+        Subversion-API-Aufrufen erzeugen sowie verwalten müssen,
+        typischerweise unter Benutzung von
+        <function>svn_pool_create()</function>,
+        <function>svn_pool_clear()</function> und
+        <function>svn_pool_destroy()</function>.</para>
 
       <sidebar>
+<!--
         <title>Programming with Memory Pools</title>
+-->
+        <title>Programmierung mit Speicher-Pools</title>
 
+<!--
         <para>Almost every developer who has used the C programming
           language has at some point sighed at the daunting task of
           managing memory usage.  Allocating enough memory to use,
@@ -1617,7 +1681,17 @@ $
           complex.  And of course, failure to do those things properly
           can result in a program that crashes itself, or worse,
           crashes the computer.</para>
+-->
+        <para>Fast jeder C-Programmierer hat irgendwann mal gestöhnt,
+          wenn es um die abschreckende Aufgabe der Speicherverwaltung ging.
+          Genügend Speicher anzufordern, über den Speicher Buch zu
+          führen, den Speicher nach Benutzung wieder freizugeben
+          &ndash; diese Aufgaben können ziemlich kompliziert sein. Und
+          wenn es nicht richtig gemacht wird, kann es natürlich dazu
+          führen, dass sich das Programm oder, noch schlimmer, der
+          Rechner aufhängt.</para>
 
+<!--
         <para>Higher-level languages, on the other hand, either take
           the job of memory management away from you completely or
           make it something you toy with only when doing extremely
@@ -1626,7 +1700,16 @@ $
           allocating memory for objects when needed, and automatically
           freeing that memory when the object is no longer in
           use.</para>
+-->
+        <para>Andererseits nehmen Ihnen höhere Sprachen die Aufgaben
+          der Speicherverwaltung vollständig ab oder überlassen sie
+          Ihnen nur, falls Sie besonders starke Programmoptimierungen
+          vornehmen wollen. Sprachen wie Java und Python verwenden
+          <firstterm>Garbage Collection</firstterm>, indem sie
+          Speicher bei Bedarf zuweisen und diesen Speicher automatisch
+          wieder freigeben, wenn er nicht mehr benötigt wird.</para>
 
+<!--
         <para>APR provides a middle-ground approach called
           <firstterm>pool-based memory management</firstterm>.  It
           allows the developer to control memory usage at a lower
@@ -1644,6 +1727,24 @@ $
           in a pool whose lifetime (the time between the pool's
           creation and its deletion) matches the object's
           needs.</para>
+-->
+        <para>APR bietet einen Mittelweg namens
+          <firstterm>pool-basierte Speicherverwaltung</firstterm>. Es
+          ermöglicht dem Entwickler, den Speicherbedarf auf einer
+          niedrigeren Ebene zu kontrollieren &ndash; pro
+          Speicherbrocken (oder <quote>Pool</quote>) statt pro
+          zugeteilten Objekt. Statt <function>malloc()</function> und
+          Konsorten zu verwenden, um ausreiched Speicher für ein
+          Objekt anzufordern, fordern Sie APR auf, Speicher aus einem
+          Pool zuzuteilen. Wenn Sie mit der Benutzung der im Pool
+          erzeugten Objekte fertig sind, löschen Sie den gesamten Pool
+          und geben somit den Speicher <emphasis>aller</emphasis>
+          Objekte frei, die Sie daraus erzeugt haben. Anstatt sich
+          also um einzelne freizugebende Objekte kümmern zu müssen,
+          betrachtet Ihr Programm nur die allgemeine Lebenszeit dieser
+          Objekte und erzeugt diese Objekte in einem Pool, dessen
+          Lebenszeit (zwischen seiner Erzeugung und seiner Zerstörung)
+          dem Bedarf der Objekte entspricht.</para>
 
       </sidebar>
     </sect2>
