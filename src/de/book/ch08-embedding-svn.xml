@@ -2049,8 +2049,12 @@ $
 
     <!-- =============================================================== -->
     <sect2 id="svn.developer.usingapi.codesamples">
+<!--
       <title>Code Samples</title> 
+-->
+      <title>Beispielcode</title> 
 
+<!--
       <para><xref linkend="svn.developer.layerlib.repos.ex-1" />
         contains a code segment (written in C) that illustrates some
         of the concepts we've been discussing.  It uses both the
@@ -2064,10 +2068,29 @@ $
         handling&mdash;all Subversion errors must be explicitly
         handled to avoid memory leakage (and in some cases,
         application failure).</para>
+-->
+      <para><xref linkend="svn.developer.layerlib.repos.ex-1" />
+        enthält einen Codeabschnitt (in C), der einige der erörterten
+        Konzepte veranschaulicht. Er verwendet sowohl die Repository-
+        als auch die Dateisystemschnittstelle (was anhand der Präfixe
+        <literal>svn_repos_</literal> bzw.
+        <literal>svn_fs_</literal> der Funktionsnamen erkennbar ist),
+        um eine neue Revision zu erzeugen, in der ein Verzeichnis
+        hinzugefügt wird. Sie können die Verwendung des APR-Pools
+        erkennen, der zur Speicherzuteilung herumgereicht wird. Der
+        Code verdeutlicht auch eine etwas undurchsichtige
+        Angelegenheit bezüglich der Fehlerbehandlung von Subversion
+        &ndash; alle Fehler von Subversion müssen explizit behandelt
+        werden, um Speicherlöcher zu verhindern (und vereinzelt
+        Programmabstürze).</para>
 
       <example id="svn.developer.layerlib.repos.ex-1">
+<!--
         <title>Using the Repository Layer</title>
+-->
+        <title>Verwendung der Repository-Schicht</title>
 
+<!--
         <programlisting>
 /* Convert a Subversion error into a simple boolean error code.
  *
@@ -2171,8 +2194,117 @@ make_new_directory(const char *repos_path,
   INT_ERR(err);
 } 
 </programlisting>
+-->
+        <programlisting>
+/* Umwandlung eines Subversion-Fehlers in einen einfachen Boole'schen
+ * Fehlerwert.
+ *
+ * NOTE:  Subversion-Fehler müssen zurückgesetzt werden (mit
+ *        svn_error_clear()), da sie aus dem globalen Pool zugeteilt
+ *        werden, ansonsten treten Speicherlöcher auf.
+ */
+#define INT_ERR(expr)                           \
+  do {                                          \
+    svn_error_t *__temperr = (expr);            \
+    if (__temperr)                              \
+      {                                         \
+        svn_error_clear(__temperr);             \
+        return 1;                               \
+      }                                         \
+    return 0;                                   \
+  } while (0)
+
+/* Ein neues Verzeichnis im Pfad NEW_DIRECTORY des
+ * Subversion-Repositorys bei REPOS_PATH erzeugen. Sämtliche
+ * Speicherzuteilungen in Pool durchführen. Diese Funktion erzeugt
+ * eine neue Revision, damit NEW_DIRECTORY hinzugefügt werden kann. Im
+ * Erfolgsfall Null, sonst einen Wert ungleich Null zurückgeben.
+ */
+static int
+make_new_directory(const char *repos_path,
+                   const char *new_directory,
+                   apr_pool_t *pool)
+{
+  svn_error_t *err;
+  svn_repos_t *repos;
+  svn_fs_t *fs;
+  svn_revnum_t youngest_rev;
+  svn_fs_txn_t *txn;
+  svn_fs_root_t *txn_root;
+  const char *conflict_str;
+
+  /* Repository bei REPOS_PATH öffnen. 
+   */
+  INT_ERR(svn_repos_open(&amp;repos, repos_path, pool));
+
+  /* Zeiger auf das Dateisystemobjekt in REPOS holen. 
+   */
+  fs = svn_repos_fs(repos);
+
+  /* Anfrage beim Dateisystem nach der aktuell letzten existierenden
+   * Revision.
+   */
+  INT_ERR(svn_fs_youngest_rev(&amp;youngest_rev, fs, pool));
+
+  /* Starten einer neuen Transaktion basierend auf YOUNGEST_REV. Die
+   * Wahrscheinlichkeit einer später wegen Konflikte abgelehnten
+   * Übergabe sinkt, wenn wir stets versuchen, unsere Änderungen auf
+   * der letzten Momentaufnahme des Dateisystembaums zu machen.
+   */
+  INT_ERR(svn_repos_fs_begin_txn_for_commit2(&amp;txn, repos, youngest_rev,
+                                             apr_hash_make(pool), pool));
+
+  /* Nach dem Start der Transaktion wird ein Wurzelobjekt geholt, das
+   * diese Transaktion repräsentiert.
+   */
+  INT_ERR(svn_fs_txn_root(&amp;txn_root, txn, pool));
+  
+  /* Das neue Verzeichnis unter der Transaktionswurzel im Pfad
+   * NEW_DIRECTORY anlegen. 
+   */
+  INT_ERR(svn_fs_make_dir(txn_root, new_directory, pool));
+
+  /* Die Transaktion übergeben, indem eine neue Revision des
+   * Dateisystems erzeugt wird, die unseren hinzugefügten
+   * Verzeichnispfad enthält.
+   */
+  err = svn_repos_fs_commit_txn(&amp;conflict_str, repos, 
+                                &amp;youngest_rev, txn, pool);
+  if (! err)
+    {
+      /* Kein Fehler? Ausgezeichnet! Eine kurze Erfolgsnachricht
+       * ausgeben.
+       */
+      printf("Verzeichnis '%s' ist erfolgreich als neue Revision "
+             "'%ld' hinzugefügt worden.\n", new_directory, youngest_rev);
+    }
+  else if (err-&gt;apr_err == SVN_ERR_FS_CONFLICT)
+    {
+      /* Oh-ha. Die Übergabe schlug wegen eines Konfliktes fehl
+       * (jemand anderes scheint im gleichen Bereich des Dateisystems
+       * Änderungen gemacht zu haben, das wir ändern wollten). Eine
+       * Fehlermeldung ausgeben.
+       */
+      printf("Ein Konflikt trat im Pfad '%s' auf, als versucht wurde, "
+             "das Verzeichnis '%s' dem Repository bei '%s' hinzuzufügen.\n", 
+             conflict_str, new_directory, repos_path);
+    }
+  else
+    {
+      /* Ein anderer Fehler ist aufgetreten. Eine Fehlermeldung
+       * ausgeben.
+       */
+      printf("Beim Versuch, das Verzeichnis '%s' dem Repository bei "
+             "'%s' hinzuzufügen, trat ein Fehler auf.\n", 
+             new_directory, repos_path);
+    }
+
+  INT_ERR(err);
+} 
+</programlisting>
       </example>
 
+<!--
       <para>Note that in <xref
         linkend="svn.developer.layerlib.repos.ex-1" />, the code could
         just as easily have committed the transaction using
@@ -2189,16 +2321,44 @@ make_new_directory(const char *repos_path,
         <function>svn_repos_fs_commit_txn()</function>.  (For more
         information regarding Subversion's repository hooks, see <xref
         linkend="svn.reposadmin.create.hooks" />.)</para>
+-->
+      <para>Beachten Sie, dass der Code in <xref
+        linkend="svn.developer.layerlib.repos.ex-1" /> die Transaktion
+        ebenso einfach mit <function>svn_fs_commit_txn()</function>
+        hätte übergeben können. Allerdings weiß die Dateisystem-API
+        nichts über den Hook-Mechanismus der Repository-Bibliothek.
+        Falls Sie möchten, dass Ihr Subversion-Repository bei jeder
+        Transaktionsübergabe eine Nicht-Subversion-Aufgabe ausführt
+        (z.B. eine E-Mail, die alle Änderungen in dieser Transaktion
+        beschreibt, an Ihre Entwickler-Mailingliste senden), müssen
+        Sie diejenige Version dieser Funktion verwenden, die durch die
+        Bibliothek <filename>libsvn_repos</filename> umschlossen ist
+        und die Auslösung von Hooks beinhaltet &ndash; in diesem Fall
+        <function>svn_repos_fs_commit_txn()</function>. (Weitere
+        Informationen zu Subversions Repository-Hooks in <xref
+        linkend="svn.reposadmin.create.hooks" />.)</para>
 
+<!--
       <para>Now let's switch languages.  <xref
         linkend="svn.developer.usingapi.otherlangs.ex-1" /> is a
         sample program that uses Subversion's SWIG Python bindings to
         recursively crawl the youngest repository revision, and to
         print the various paths reached during the crawl.</para>
+-->
+      <para>Lassen Sie uns nun die Sprachen wechseln. <xref
+        linkend="svn.developer.usingapi.otherlangs.ex-1" /> ist ein
+        Beispielprogramm, das die SWIG-Python-Bindungen von Subversion
+        verwendet, um rekursiv die jüngste Repository-Revision zu
+        traversieren und dabei die zahlreichen Versionspfade
+        auszugeben.</para>
 
       <example id="svn.developer.usingapi.otherlangs.ex-1">
+<!--
         <title>Using the Repository layer with Python</title>
+-->
+        <title>Verwendung der Repository-Schicht mit Python</title>
 
+<!--
         <programlisting>
 #!/usr/bin/python
 
@@ -2264,8 +2424,77 @@ if __name__ == "__main__":
     # Do the real work.
     crawl_youngest(repos_path)
 </programlisting>
+-->
+        <programlisting>
+#!/usr/bin/python
+
+"""Durchwandern eines Repositorys mit Ausgabe der Repository-Pfadnamen."""
+
+import sys
+import os.path
+import svn.fs, svn.core, svn.repos
+
+def crawl_filesystem_dir(root, directory):
+    """Rekursives durchwandern von DIRECTORY unterhalb von ROOT im
+    Dateisystem und eine Liste aller Pfade unterhalb von DIRECTORY
+    zurückgeben."""
+
+    # Ausgabe dieses Pfadnamens.
+    print directory + "/"
+    
+    # Verzeichniseinträge für DIRECTORY holen.
+    entries = svn.fs.svn_fs_dir_entries(root, directory)
+
+    # Einträge abarbeiten.
+    names = entries.keys()
+    for name in names:
+        # Den vollen Pfadnamen des Eintrags berechnen.
+        full_path = directory + '/' + name
+
+        # Falls der Eintrag ein Verzeichnis ist, recursiv bearbeiten.
+        # Die Rekursion gibt eine Liste mit dem Eintrag und all seiner
+        # Kinder zurück, die der aktuellen Pfadliste hinzugefügt wird.
+        if svn.fs.svn_fs_is_dir(root, full_path):
+            crawl_filesystem_dir(root, full_path)
+        else:
+            # Else it's a file, so print its path here.
+            print full_path
+
+def crawl_youngest(repos_path):
+    """Öffnen des Repositorys bei REPOS_PATH, und rekursives
+    Durchwandern seiner jüngsten Revision."""
+    
+    # Öffnen des Repositorys bei REPOS_PATH, und holen einer Referenz
+    # auf sein versioniertes Dateisystem.
+    repos_obj = svn.repos.svn_repos_open(repos_path)
+    fs_obj = svn.repos.svn_repos_fs(repos_obj)
+
+    # Die aktuell jüngste Revision abfragen.
+    youngest_rev = svn.fs.svn_fs_youngest_rev(fs_obj)
+    
+    # Ein Wurzelobjekt öffnen, das die jüngste (HEAD) Revision
+    # repräsentiert.
+    root_obj = svn.fs.svn_fs_revision_root(fs_obj, youngest_rev)
+
+    # Rekursiv durchwandern.
+    crawl_filesystem_dir(root_obj, "")
+    
+if __name__ == "__main__":
+    # Überprüfung auf korrekten Aufruf.
+    if len(sys.argv) != 2:
+        sys.stderr.write("Verwendung: %s REPOS_PATH\n"
+                         % (os.path.basename(sys.argv[0])))
+        sys.exit(1)
+
+    # Den Repository-Pfad kanonisieren.
+    repos_path = svn.core.svn_path_canonicalize(sys.argv[1])
+
+    # Eigentliche Arbeit machen.
+    crawl_youngest(repos_path)
+</programlisting>
       </example>
 
+<!--
       <para>This same program in C would need to deal with APR's
         memory pool system.  But Python handles memory usage
         automatically, and Subversion's Python bindings adhere to that
@@ -2279,7 +2508,24 @@ if __name__ == "__main__":
         layer) takes care of mapping those custom datatypes into the
         native datatypes of the target language.  This provides a more
         intuitive interface for users of that language.</para>
+-->
+      <para>Das gleiche Programm in C hätte sich noch um das
+        APR-Speicherpoolsystem kümmern müssen. Python jedoch verwaltet
+        den Speicher automatisch, und die Python-Bindungen von
+        Subversion berücksichtigen diese Konvention. In C würden Sie
+        mit angepassten Datentypen (etwa denen aus der APR-Bibliothek)
+        arbeiten, um den Hash mit Einträgen und die Liste der Pfade zu
+        repräsentieren, doch Python verfügt über Hashes
+        (<quote>Dictionarys</quote> genannt) und Listen als eingebaute
+        Datentypen und bietet eine reichhaltige Sammlung aus
+        Funktionen, um mit diesen Datentypen umzugehen. Also übernimmt
+        SWIG (mithilfe einiger Anpassungen in der
+        Sprachbindungsschicht von Subversion) die Abbildung dieser
+        speziellen Datentypen auf die spezifischen Datentypen der
+        Zielsprache. Dies bietet Benutzern dieser Sprache eine
+        intuitivere Schnittstelle.</para>
 
+<!--
       <para>The Subversion Python bindings can be used for working
         copy operations, too.  In the previous section of this
         chapter, we mentioned the <filename>libsvn_client</filename>
@@ -2289,10 +2535,26 @@ if __name__ == "__main__":
         example of how that library can be accessed via the SWIG
         Python bindings to re-create a scaled-down version of the
         <command>svn status</command> command.</para>
+-->
+      <para>Auch für Operationen in der Arbeitskopie können die
+        Python-Bindungen von Subversion verwendet werden. Im
+        vorangegangenen Abschnitt dieses Kapitels erwähnten wir die
+        Schnittstelle <filename>libsvn_client</filename> und ihren
+        Zweck zur Vereinfachung der Erstellung eines
+        Subversion-Clients. <xref
+        linkend="svn.developer.usingapi.otherlangs.ex-2" /> ist ein
+        kurzes Beispiel wie auf diese Bibliothek über die
+        SWIG-Python-Bindungen zugegriffen werden kann, um eine
+        abgespeckte Version des Befehls <command>svn status</command>
+        nachzubauen.</para>
 
       <example id="svn.developer.usingapi.otherlangs.ex-2">
+<!--
         <title>A Python status crawler</title>
+-->
+        <title>Status in Python</title>
 
+<!--
         <programlisting>
 #!/usr/bin/env python
 
@@ -2348,8 +2610,96 @@ def usage_and_exit(errorcode):
     stream = errorcode and sys.stderr or sys.stdout
     stream.write("""Usage: %s OPTIONS WC-PATH
 Options:
-  --help, -h    : Show this usage message
-  --verbose, -v : Show all statuses, even uninteresting ones
+  - -help, -h    : Show this usage message
+  - -verbose, -v : Show all statuses, even uninteresting ones
+""" % (os.path.basename(sys.argv[0])))
+    sys.exit(errorcode)
+    
+if __name__ == '__main__':
+    # Parse command-line options.
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hv", ["help", "verbose"])
+    except getopt.GetoptError:
+        usage_and_exit(1)
+    verbose = 0
+    for opt, arg in opts:
+        if opt in ("-h", "- -help"):
+            usage_and_exit(0)
+        if opt in ("-v", "- -verbose"):
+            verbose = 1
+    if len(args) != 1:
+        usage_and_exit(2)
+            
+    # Canonicalize the repository path.
+    wc_path = svn.core.svn_path_canonicalize(args[0])
+
+    # Do the real work.
+    try:
+        do_status(wc_path, verbose)
+    except svn.core.SubversionException, e:
+        sys.stderr.write("Error (%d): %s\n" % (e.apr_err, e.message))
+        sys.exit(1)
+</programlisting>
+-->
+        <programlisting>
+#!/usr/bin/env python
+
+"""Durchwandern eines Arbeitskopieverzeichnisses mit Ausgabe von Statusinformation."""
+
+import sys
+import os.path
+import getopt
+import svn.core, svn.client, svn.wc
+
+def generate_status_code(status):
+    """Übersetzen eines Stauswerts in einen Ein-Zeichen-Statuscode,
+    wobei dieselbe Logik wie beim Subversion-Kommandozeilen-Client
+    verwendet wird."""
+    code_map = { svn.wc.svn_wc_status_none        : ' ',
+                 svn.wc.svn_wc_status_normal      : ' ',
+                 svn.wc.svn_wc_status_added       : 'A',
+                 svn.wc.svn_wc_status_missing     : '!',
+                 svn.wc.svn_wc_status_incomplete  : '!',
+                 svn.wc.svn_wc_status_deleted     : 'D',
+                 svn.wc.svn_wc_status_replaced    : 'R',
+                 svn.wc.svn_wc_status_modified    : 'M',
+                 svn.wc.svn_wc_status_merged      : 'G',
+                 svn.wc.svn_wc_status_conflicted  : 'C',
+                 svn.wc.svn_wc_status_obstructed  : '~',
+                 svn.wc.svn_wc_status_ignored     : 'I',
+                 svn.wc.svn_wc_status_external    : 'X',
+                 svn.wc.svn_wc_status_unversioned : '?',
+               }
+    return code_map.get(status, '?')
+
+def do_status(wc_path, verbose):
+    # Ein "Staffelholz" für den Client-Kontext erzeugen.
+    ctx = svn.client.svn_client_ctx_t()
+
+    def _status_callback(path, status):
+        """Eine Rückruffunktion für svn_client_status."""
+
+        # Ausgeben des Pfades, ohne den Teil, der sich mit der Wurzel
+        # des zu durchlaufenden Baums überlappt
+        text_status = generate_status_code(status.text_status)
+        prop_status = generate_status_code(status.prop_status)
+        print '%s%s  %s' % (text_status, prop_status, path)
+        
+    # Das Durchlaufen starten, _status_callback() als Rückruffunktion
+    # verwenden.
+    revision = svn.core.svn_opt_revision_t()
+    revision.type = svn.core.svn_opt_revision_head
+    svn.client.svn_client_status2(wc_path, revision, _status_callback,
+                                  svn.core.svn_depth_infinity, verbose,
+                                  0, 0, 1, ctx)
+
+def usage_and_exit(errorcode):
+    """Ausgabe des Verwendungshinweises und beenden mit ERRORCODE."""
+    stream = errorcode and sys.stderr or sys.stdout
+    stream.write("""Verwendung: %s OPTIONS WC-PATH
+Options:
+  --help, -h    : Diesen Hinweis anzeigen
+  --verbose, -v : Zeige alle Status, auch uninteressante
 """ % (os.path.basename(sys.argv[0])))
     sys.exit(errorcode)
     
@@ -2368,18 +2718,19 @@ if __name__ == '__main__':
     if len(args) != 1:
         usage_and_exit(2)
             
-    # Canonicalize the repository path.
+    # Repositorypfad kanonisieren.
     wc_path = svn.core.svn_path_canonicalize(args[0])
 
-    # Do the real work.
+    # Eigentliche Arbeit machen.
     try:
         do_status(wc_path, verbose)
     except svn.core.SubversionException, e:
-        sys.stderr.write("Error (%d): %s\n" % (e.apr_err, e.message))
+        sys.stderr.write("Fehler (%d): %s\n" % (e.apr_err, e.message))
         sys.exit(1)
 </programlisting>
       </example>
 
+<!--
       <para>As was the case in <xref
         linkend="svn.developer.usingapi.otherlangs.ex-1" />, this
         program is pool-free and uses, for the most part, normal
@@ -2396,6 +2747,25 @@ if __name__ == '__main__':
         underlying Subversion C library's assertions about such
         things, which translates into rather immediate and
         unceremonious program abortion.</para>
+-->
+     <para>Wie in <xref
+        linkend="svn.developer.usingapi.otherlangs.ex-1" /> verwendet
+        auch dieses Programm keine Pools und benutzt meist normale
+        Python-Datentypen. Der Aufruf von
+        <function>svn_client_ctx_t()</function> ist irreführend, da
+        die öffentliche API von Subversion keine derartige Funktion
+        hat &ndash; das passiert nur da, wo die automatische
+        Spracherzeugung von SWIG eub webig durchscheint (die Funktion
+        ist eine Art Fabrikfunktion für die Python-Version der
+        entsprechenden komplizierten C-Struktur). Beachten Sie auch,
+        dass der an dieses Programm (wie auch beim letzten) übergebene
+        Pfad durch <function>svn_path_canonicalize()</function>
+        gefiltert wird, da ein <emphasis>unterlassen</emphasis> dazu
+        führen kann, dass die Annahmen der darunter liegenden
+        C-Bibliotheken nicht mehtr zutreffen, was wiederum einen
+        ziemlich plötzlichen und ungezwungenen Programmabsturz
+        bedeutet.</para>
+
 
     </sect2>
   </sect1>
