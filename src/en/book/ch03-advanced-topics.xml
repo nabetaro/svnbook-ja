@@ -3050,14 +3050,106 @@ $ svn propget svn:externals calc
 //svn.example.com/skin-maker@21 third-party/skins/toolkit
 </screen>
 
-    <para>The support that exists for externals definitions in
-      Subversion remains less than ideal, though.  An externals
-      definition can point only to directories, not to files.  Also, the
+    <para>Subversion 1.6 brings another improvement to externals
+      definitions by introducing external definitions for files.
+      <firstterm>File externals</firstterm> are configured just
+      like externals for directories and appear as a versioned
+      file in the working copy.</para>
+      
+    <para>For example, let's say you had the file
+    <filename>/trunk/bikeshed/blue.html</filename> in your repository,
+    and you wanted this file, as it appeared in revision 40,
+    to appear in your working copy of <filename>/trunk/www/</filename>
+    as <filename>green.html</filename>.</para>
+
+    <para>The externals definition required to achieve this should
+      look familiar by now:</para>
+    <screen>
+$ svn propget svn:externals www/
+^/trunk/bikeshed/blue.html@40 green.html
+$ svn update
+Fetching external item into 'www'
+E    www/green.html
+Updated external to revision 40.
+
+Update to revision 103.
+$ svn status
+    X   www/green.html
+</screen>
+
+    <para>As you can see in the output above, Subversion denotes file
+      externals with the letter <literal>E</literal> when they are
+      fetched into the working copy, and with the letter
+      <literal>X</literal> when showing the working copy status.</para>
+
+    <warning>
+      <para>While directory externals can place the external
+        directory at any depth, and any missing intermediate
+        directories will be created, file externals must be placed
+        into a working copy that is already checked out.</para>
+    </warning>
+
+    <para>When examining the file external with
+      <command>svn info</command>, you can see the URL and revision
+      the file external is coming from:</para>
+
+    <screen>
+$ svn info www/green.html 
+Path: www/green.html
+Name: green.html
+URL: http://svn.example.com/projects/my-project/trunk/bikeshed/blue.html
+Repository UUID: b2a368dc-7564-11de-bb2b-113435390e17
+Revision: 40
+Node kind: file
+Schedule: normal
+Last Changed Author: harry
+Last Changed Rev: 42
+Last Changed Date: 2009-07-20 20:38:20 +0100 (Mon, 20 Jul 2009)
+Text Last Updated: 2009-07-20 23:22:36 +0100 (Mon, 20 Jul 2009)
+Checksum: 01a58b04617b92492d99662c3837b33b
+</screen>
+
+    <para>Because file externals appear in the working copy as
+      versioned files, they can be modified and even committed
+      if they reference a file at the HEAD revision. The committed
+      changes will then appear in the file external as well as
+      the file referenced by the external. However, in our example,
+      we pinned the file external to an older revision, so attempting
+      to commit the file external fails:</para>
+
+    <screen>
+$ svn status
+M   X   www/green.html
+$ svn commit -m "change the color" www/green.html
+Sending        www/green.html
+svn: Commit failed (details follow):
+svn: File '/trunk/bikeshed/blue.html' is out of date
+</screen>
+
+    <para>Keep this in mind when definining file externals.
+      If you need the external to refer to a certain revision
+      of a file you will not be able to modify the external.
+      If you want to be able to modify the external, you cannot
+      specify a revision other than the <literal>HEAD</literal>
+      revision, which is implied if no revision is specified.</para>
+
+    <para>Concluding our discussion of externals definitions, it has
+      to be said that the support which exists for externals definitions in
+      Subversion remains less than ideal.  Both file and directory
+      externals have shortcomings. For either type of external, the
       local subdirectory part of the definition cannot contain
       <literal>..</literal> parent directory indicators (such as
-      <filename>../../skins/myskin</filename>).  Perhaps most
-      disappointingly, the working copies created via the externals
-      definition support are still disconnected from the primary
+      <filename>../../skins/myskin</filename>).  File externals cannot
+      refer to files from other repositories. A file external's URL
+      must always be in the same repository as the URL that the file
+      external will be inserted into. Also, file externals cannot be
+      moved or deleted. The <literal>svn:externals</literal> property
+      must be modified instead. However, file externals can be copied.
+    </para>
+
+    <para>
+      Perhaps most disappointingly, the working copies created via the
+      externals definition support are still disconnected from the primary
       working copy (on whose versioned directories the
       <literal>svn:externals</literal> property was actually set).
       And Subversion still truly operates only on nondisjoint working
