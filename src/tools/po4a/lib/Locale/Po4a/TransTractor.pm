@@ -11,7 +11,7 @@ use warnings;
 
 use subs qw(makespace);
 use vars qw($VERSION @ISA @EXPORT);
-$VERSION="0.36";
+$VERSION="0.36.4";
 @ISA = qw(DynaLoader);
 @EXPORT = qw(new process translate 
              read write readpo writepo
@@ -292,6 +292,8 @@ sub process {
     }
     $self->{TT}{'addendum_charset'}=$params{'addendum_charset'};
 
+    chdir $params{'srcdir'}
+	if (defined $params{'srcdir'});
     foreach my $file (@{$params{'po_in_name'}}) {
 	print STDERR "readpo($file)... " if $self->debug();
 	$self->readpo($file);
@@ -310,18 +312,24 @@ sub process {
 	$self->addendum($file) || die "An addendum failed\n";
 	print STDERR "done.\n" if $self->debug();
     }
+    chdir $params{'destdir'}
+	if (defined $params{'destdir'});
     if (defined $params{'file_out_name'}) {
 	print STDERR "write(".$params{'file_out_name'}.")... " 
 	    if $self->debug();
 	$self->write($params{'file_out_name'});
 	print STDERR "done.\n" if $self->debug();
     }
+    chdir $params{'srcdir'}
+	if (defined $params{'srcdir'});
     if (defined $params{'po_out_name'}) {
 	print STDERR "writepo(".$params{'po_out_name'}.")... "
 	     if $self->debug();
 	$self->writepo($params{'po_out_name'});
 	print STDERR "done.\n" if $self->debug();
     }
+    chdir $params{'calldir'}
+	if (defined $params{'calldir'});
     return $self;
 }
 
@@ -337,16 +345,24 @@ sub new {
     ## initialize the plugin
     # prevent the plugin from croaking on the options intended for Po.pm
     $self->{options}{'porefs'} = '';
+    $self->{options}{'copyright-holder'} = '';
+    $self->{options}{'msgid-bugs-address'} = '';
+    $self->{options}{'package-name'} = '';
+    $self->{options}{'package-version'} = '';
     # let the plugin parse the options and such
     $self->initialize(%options);
 
     ## Create our private data
     my %po_options;
     $po_options{'porefs'} = $self->{options}{'porefs'};
+    $po_options{'copyright-holder'} = $options{'copyright-holder'};
+    $po_options{'msgid-bugs-address'} = $options{'msgid-bugs-address'};
+    $po_options{'package-name'} = $options{'package-name'};
+    $po_options{'package-version'} = $options{'package-version'};
     
     # private data
     $self->{TT}=(); 
-    $self->{TT}{po_in}=Locale::Po4a::Po->new();
+    $self->{TT}{po_in}=Locale::Po4a::Po->new(\%po_options);
     $self->{TT}{po_out}=Locale::Po4a::Po->new(\%po_options);
     # Warning, this is an array of array:
     #  The document is splited on lines, and for each

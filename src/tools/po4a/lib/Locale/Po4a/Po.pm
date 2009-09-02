@@ -520,6 +520,7 @@ sub write_if_needed {
     if (-e $filename) {
         my ($tmp_filename);
         (undef,$tmp_filename)=File::Temp->tempfile($filename."XXXX",
+                                                   DIR    => "/tmp",
                                                    OPEN   => 0,
                                                    UNLINK => 0);
         $self->write($tmp_filename);
