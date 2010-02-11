@@ -2278,18 +2278,19 @@ $
       pour modifications</quote> des fichiers dans d'autres systèmes de 
       gestion de versions.</para>
 
-    <para>Subversion's locking feature exists ultimately to minimize
-      wasted time and effort.  By allowing a user to programmatically
-      claim the exclusive right to change a file in the repository,
-      that user can be reasonably confident that any energy he invests
-      on unmergeable changes won't be wasted&mdash;his commit of those
-      changes will succeed.  Also, because Subversion communicates to
-      other users that serialization is in effect for a particular
-      versioned object, those users can reasonably expect that the
-      object is about to be changed by someone else.  They, too, can
-      then avoid wasting their time and energy on unmergeable changes
-      that won't be committable due to eventual
-      out-of-dateness.</para>
+    <para>En fin de compte, la fonctionnalité de verrouillage existe afin 
+      de minimiser les pertes de temps et les efforts. En autorisant un 
+      utilisateur à s'arroger logiciellement le droit exclusif de 
+      modifier un fichier dans le dépôt, cet utilisateur peut être 
+      suffisamment confiant dans le fait que son travail ne sera pas 
+      vain &mdash; la propagation de ses changements réussira. Aussi,
+      en signifiant aux autres utilisateurs qu'une sérialisation a lieu
+      pour un objet suivi en versions, ces utilisateurs peut 
+      raisonnablement s'attendre à ce que cet objet soit modifié par 
+      quelqu'un d'autre. Eux aussi peuvent alors éviter de perdre leur
+      temps et leur énergie sur des modifications qui ne pourront pas
+      être fusionnées en raison d'un problème de mise à jour du fichier
+      correspondant.</para>
 
     <para>La fonctionnalité de verrouillage de Subversion comporte en 
       fait plusieurs facettes, qui permettent entre autres de 
@@ -2309,13 +2310,13 @@ $
       <title>Les trois types de <quote>verrous</quote></title>
 
       <para>Dans cette section, et pratiquement partout dans ce livre, 
-        les mots <quote>verrou</quote> et <quote>verrrouillage</quote>
+        les mots <quote>verrou</quote> et <quote>verrouillage</quote>
         décrivent un mécanisme d'exclusion mutuelle entre utilisateurs 
         pour éviter des propagations incompatibles. Malheureusement, il 
         existe deux autres sortes de <quote>verrous</quote> auxquels 
         Subversion, et donc ce livre, sont confrontés.</para>
 
-      <para>Les premiers sont des <firstterm>verrous des copie de 
+      <para>Les premiers sont des <firstterm>verrous des copies de 
         travail</firstterm>, utilisés en interne par Subversion pour 
         éviter des collisions entre de multiples instances du client 
         Subversion travaillant sur la même copie de travail. Ce type de 
@@ -2899,7 +2900,7 @@ $</screen>
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.advanced.externals">
-    <title>Définitions externes</title>
+    <title>Définition de références externes</title>
     
     <para>Parfois il peut être utile de construire une copie de travail 
       issue de différentes extractions. Par exemple, vous pouvez avoir 
@@ -2911,49 +2912,50 @@ $</screen>
       est importante pour tous les utilisateurs de votre dépôt, chacun 
       devra effectuer les mêmes opérations d'extraction que vous.</para>
 
-    <para>Heureusement, Subversion supporte les <firstterm>définitions 
-      externes</firstterm>. Une définition externe est une association 
-      entre un répertoire local et une URL (et idéalement un numéro de 
-      révision particulier) pour un répertoire suivi en versions. Dans 
-      Subversion, vous déclarez les définitions externes dans des 
-      groupes en utilisant la propriété <literal>svn:externals</literal>.
+    <para>Heureusement, Subversion supporte les <firstterm>définitions
+      de références externes</firstterm>. Une définition de références 
+      externes est une association entre un répertoire local et une URL 
+      (et idéalement un numéro de révision particulier) pour un 
+      répertoire suivi en versions. Dans Subversion, vous déclarez les 
+      définitions de références externes dans des groupes en utilisant 
+      la propriété <literal>svn:externals</literal>.
       Vous pouvez créer et modifier cette propriété en utilisant 
       <command>svn propset</command> ou <command>svn propedit</command> 
       (voir <xref linkend="svn.advanced.props.manip" />). Elle peut être 
-      définie sur tous les répertoires suivis en version et sa valeur 
-      est un tableau multi-lignes contenant des sous-répertoires 
-      (relativement au répertoire sur lequel la propriété est définie), 
-      des indicateurs de révision optionnels et des URL absolues et 
-      complètes de dépôts Subversion.</para>
+      définie sur tous les répertoires suivis en versions et sa valeur 
+      décrit à la fois l'URL du dépôt externe et le répertoire côté 
+      client dans lequel sera extrait cette URL.</para>
 
     <para>L'un des attraits de la propriété <literal>svn:externals</literal>
       est qu'une fois qu'elle est définie pour un répertoire suivi en 
       versions, chaque utilisateur qui extraie une copie de travail de 
-      ce répertoire bénéficie des définitions externes. En d'autres 
-      termes, une fois qu'un utilisateur a fait l'effort de définir les 
-      extractions externes liées à la copie de travail, tout le monde 
-      en bénéficie automatiquement&nbsp;: Subversion, lors de 
+      ce répertoire bénéficie des définitions de références externes. En 
+      d'autres termes, une fois qu'un utilisateur a fait l'effort de 
+      définir la structure de la copie de travail imbriquée, tout le 
+      monde en bénéficie automatiquement&nbsp;: Subversion, lors de 
       l'extraction de la copie de travail originale, extraira également 
       les copies de travail externes.</para>
 
     <warning>
-      <para>Les sous-répertoires cibles des définitions externes 
-        <emphasis>ne doivent pas</emphasis> déjà exister sur votre 
-        système ou sur le systèmes des autres utilisateurs&nbsp;: 
+      <para>Les sous-répertoires cibles des définitions de références 
+        externes <emphasis>ne doivent pas</emphasis> déjà exister sur 
+        votre système ou sur le systèmes des autres utilisateurs&nbsp;: 
         Subversion les créera lors de l'extraction des copies de travail 
         externes.</para>
     </warning>
 
-    <para>You also get in the externals definition design all the
-      regular benefits of Subversion properties.  The definitions are
-      versioned.  If you need to change an externals definition, you
-      can do so using the regular property modification subcommands.
-      When you commit a change to the <literal>svn:externals</literal>
-      property, Subversion will synchronize the checked-out items
-      against the changed externals definition when you next run
-      <userinput>svn update</userinput>.  The same thing will happen when
-      others update their working copies and receive your changes to
-      the externals definition.</para>
+    <para>Vous bénéficiez avec les définitions de références externes de 
+      tous les avantages liés aux propriétés Subversion. Les définitions 
+      sont suivies en versions. Si vous avez besoin de changer une 
+      définition de références externes, vous pouvez le faire à l'aide 
+      des sous-commandes classiques sur les propriétés. Quand vous 
+      propagez des modifications relatives à la propriété 
+      <literal>svn:externals</literal>, Subversion synchronisera les 
+      éléments extraits par rapport à la définition de références 
+      externes modifiée dès que vous lancerez 
+      <userinput>svn update</userinput>. Tous ceux qui 
+      mettront à jour leur copie de travail recevront vos modifications 
+      concernant les définitions de références externes.</para>
 
     <tip>
       <para>Comme la valeur de la propriété 
@@ -2963,251 +2965,260 @@ $</screen>
         propset</command>.</para>
     </tip>
 
-    <para>Subversion releases prior to 1.5 honor an externals
-      definition format that is a multiline table of subdirectories
-      (relative to the versioned directory on which the property is
-      set), optional revision flags, and fully qualified, absolute
-      Subversion repository URLs.  An example of this might looks as
-      follows:</para>
+    <para>Les versions de Subversion antérieure à 1.5 utilisent un format
+      de définitions externes qui est un tableau sur plusieurs lignes 
+      composées de sous-répertoires (relativement au répertoire suivi
+      en versions sur lequel est définie la propriété), d'indicateurs de 
+      révision optionnels et l'URL, absolue et complètement qualifiée,
+      du dépôt Subversion. Un exemple pourrait ressembler à 
+      ceci&nbsp;:</para>
 
     <screen>
 $ svn propget svn:externals calc
-third-party/sounds             http://svn.example.com/repos/sounds
-third-party/skins -r148        http://svn.example.com/skinproj
-third-party/skins/toolkit -r21 http://svn.example.com/skin-maker
+tierce-partie/sons                 http://svn.exemple.com/depot/sons
+tierce-partie/themes -r148         http://svn.exemple.com/projet-themes
+tierce-partie/themes/outils -r21   http://svn.exemple.com/outils-themes
 </screen>
 
-    <para>When someone checks out a working copy of the
-      <filename>calc</filename> directory referred to in the previous
-      example, Subversion also continues to check out the items found
-      in its externals definition.</para>
+    <para>Quand quelqu'un extrait une copie de travail du répertoire
+      <filename>calc</filename> décrit dans l'exemple ci-dessus, 
+      Subversion extrait également les éléments trouvés dans les
+      définitions de références externes.</para>
 
     <screen>
-$ svn checkout http://svn.example.com/repos/calc
+$ svn checkout http://svn.exemple.com/depot/calc
 A  calc
 A  calc/Makefile
-A  calc/integer.c
-A  calc/button.c
-Checked out revision 148.
+A  calc/entier.c
+A  calc/bouton.c
+Révision 148 extraite.
 
-Fetching external item into calc/third-party/sounds
-A  calc/third-party/sounds/ding.ogg
-A  calc/third-party/sounds/dong.ogg
-A  calc/third-party/sounds/clang.ogg
+Récupération de la référence externe dans 'calc/tierce-partie/sons'
+A  calc/tierce-partie/sons/ding.ogg
+A  calc/tierce-partie/sons/dong.ogg
+A  calc/tierce-partie/sons/clang.ogg
 &hellip;
-A  calc/third-party/sounds/bang.ogg
-A  calc/third-party/sounds/twang.ogg
-Checked out revision 14.
+A  calc/tierce-partie/sons/bang.ogg
+A  calc/tierce-partie/sons/twang.ogg
+Révision 14 extraite.
 
-Fetching external item into calc/third-party/skins
+Récupération de la référence externe dans 'calc/tierce-partie/themes'
 &hellip;
 </screen>
 
-    <para>As of Subversion 1.5, though, a new format of the
-      <literal>svn:externals</literal> property is supported.
-      Externals definitions are still multiline, but the order and
-      format of the various pieces of information have changed.  The
-      new syntax more closely mimics the order of arguments you might
-      pass to <command>svn checkout</command>: the optional revision
-      flags come first, then the external Subversion repository URL,
-      and finally the relative local subdirectory.  Notice, though,
-      that this time we didn't say <quote>fully qualified, absolute
-      Subversion repository URLs.</quote> That's because the new
-      format supports relative URLs and URLs that carry peg revisions.
-      The previous example of an externals definition might, in
-      Subversion 1.5, look like the following:</para>
+    <para>A partir de la version 1.5 de Subversion, un nouveau format
+      de la propriété <literal>svn:externals</literal> est supporté.
+      Les références externes sont toujours multi-lignes mais l'ordre et
+      le format des différentes informations ont changé. La nouvelle
+      syntaxe ressemble plus à l'ordre des arguments que vous passeriez
+      à la commande <command>svn checkout</command>&nbsp;: l'indicateur
+      optionnel de révision est placé en premier, puis l'URL du dépôt
+      Subversion externe et, enfin, le sous-répertoire local relatif.
+      Notez cependant que cette fois-ci nous n'avons pas indiqué 
+      <quote>URL absolue et complètement qualifiée</quote> pour le dépôt
+      externe. En effet, le nouveau format accepte les URL relatives et
+      les URL avec des piquets de révision. L'exemple précédent sur les 
+      références externes pourrait, dans Subversion 1.5, ressembler à 
+      ceci&nbsp;:</para>
 
     <screen>
 $ svn propget svn:externals calc
-      http://svn.example.com/repos/sounds third-party/sounds
--r148 http://svn.example.com/skinproj third-party/skins
--r21  http://svn.example.com/skin-maker third-party/skins/toolkit
+      http://svn.exemple.com/depot/sons     tierce-partie/sons
+-r148 http://svn.exemple.com/projet-themes  tierce-partie/themes
+-r21  http://svn.exemple.com/outils-themes  tierce-partie/themes/outils
 </screen>
 
-    <para>Or, making use of the peg revision syntax (which we describe
-      in detail in <xref linkend="svn.advanced.pegrevs" />), it might
-      appear as:</para>
+    <para>Ou, en utilisant la syntaxe avec les piquets de révision 
+      (décrite en détail dans <xref linkend="svn.advanced.pegrevs" />), 
+      il pourrait être écrit comme ceci&nbsp;:</para>
 
     <screen>
 $ svn propget svn:externals calc
-http://svn.example.com/repos/sounds third-party/sounds
-http://svn.example.com/skinproj@148 third-party/skins
-http://svn.example.com/skin-maker@21 third-party/skins/toolkit
+http://svn.exemple.com/depot/sons         tierce-partie/sons
+http://svn.exemple.com/projet-themes@148  tierce-partie/themes
+http://svn.exemple.com/outils-themes@21   tierce-partie/themes/outils
 </screen>
 
     <tip>
-      <para>You should seriously consider using explicit revision
-        numbers in all of your externals definitions.  Doing so means
-        that you get to decide when to pull down a different snapshot
-        of external information, and exactly which snapshot to pull.
-        Besides avoiding the surprise of getting changes to
-        third-party repositories that you might not have any control
-        over, using explicit revision numbers also means that as you
-        backdate your working copy to a previous revision, your
-        externals definitions will also revert to the way they looked
-        in that previous revision, which in turn means that the
-        external working copies will be updated to match the way
-        <emphasis>they</emphasis> looked back when your repository was
-        at that previous revision.  For software projects, this could
-        be the difference between a successful and a failed build of
-        an older snapshot of your complex codebase.</para> 
+      <para>Il est particulièrement conseillé d'utiliser des numéros de 
+        révision explicites dans toutes vos références externes. Ainsi, 
+        vous conservez la possibilité de décider quand rapatrier une 
+        nouvelle version de vos informations externes et quelle version 
+        exacte rapatrier. En plus de vous éviter la surprise de recevoir 
+        des changements effectués sur des dépôts tiers dont vous n'avez 
+        pas la maîtrise, l'utilisation de numéros de révisions 
+        explicites signifie aussi que, si vous revenez à une version de 
+        travail antérieure, vos références externes reviendront elles 
+        aussi dans l'état où elles étaient au moment de cette version 
+        antérieure. Cela signifie aussi que les copies de travail 
+        externes seront actualisées pour refléter 
+        <emphasis>leur</emphasis> état au moment de la révision 
+        antérieure. Pour des projets logiciels, cela peut faire la 
+        différence entre une compilation réussie et un échec de 
+        compilation d'une version antérieure d'un code source 
+        complexe.</para> 
     </tip>
 
-    <para>For most repositories, these three ways of formatting the
-      externals definitions have the same ultimate effect.  They all
-      bring the same benefits.  Unfortunately, they all bring the same
-      annoyances, too.  Since the definitions shown use absolute URLs,
-      moving or copying a directory to which they are attached will
-      not affect what gets checked out as an external (though the
-      relative local target subdirectory will, of course, move with the
-      renamed directory).  This can be confusing&mdash;even
-      frustrating&mdash;in certain situations.  For example, say you
-      have a top-level directory named
-      <filename>my-project</filename>, and you've created an externals
-      definition on one of its subdirectories
-      (<filename>my-project/some-dir</filename>) that tracks the
-      latest revision of another of its subdirectories
-      (<filename>my-project/external-dir</filename>).</para>
+    <para> Pour la plupart des dépôts, les trois formats de références
+      externes ont le même effet au final. Ils apportent tous les mêmes
+      avantages. Malheureusement, ils possèdent aussi les mêmes 
+      inconvénients. Puisque les références indiquées utilisent des URL
+      absolues, déplacer ou copier un répertoire auquel elles sont 
+      rattachées n'affectera pas ce qui est extrait en externe (alors 
+      qu'une référence relative sera, bien évidemment, déplacée avec le
+      répertoire). Cela peut vous induire en erreur, voire vous 
+      frustrer, dans certaines situations. Par exemple, imaginons un
+      répertoire racine appelé <filename>mon-projet</filename> pour 
+      lequel nous avons défini des références externes dans un 
+      sous-répertoire (<filename>mon-projet/un-rep</filename>) 
+      vers la dernière révision d'un autre sous-répertoire
+      (<filename>mon-projet/rep-externe</filename>).</para>
 
     <screen>
-$ svn checkout http://svn.example.com/projects .
-A    my-project
-A    my-project/some-dir
-A    my-project/external-dir
+$ svn checkout http://svn.exemple.com/projets .
+A    mon-projet
+A    mon-projet/un-rep
+A    mon-projet/rep-externe
 &hellip;
-Fetching external item into 'my-project/some-dir/subdir'
-Checked out external at revision 11.
+Récupération de la référence externe dans 'mon-projet/un-rep/sous-rep'
+Référence externe actualisée à la révision 11.
 
-Checked out revision 11.
-$ svn propget svn:externals my-project/some-dir
-subdir http://svn.example.com/projects/my-project/external-dir
+Actualisé à la révision 11.
+$ svn propget svn:externals mon-projet/un-rep
+sous-rep http://svn.exemple.com/projets/mon-projet/rep-externe
 
 $
 </screen>
 
-    <para>Now you use <command>svn move</command> to rename the
-      <filename>my-project</filename> directory.  At this point, your
-      externals definition will still refer to a path under the
-      <filename>my-project</filename> directory, even though that
-      directory no longer exists.</para>
+    <para>Maintenant utilisez la commande 
+      <command>svn move</command> pour renommer le répertoire
+      <filename>mon-projet</filename>. &Agrave; ce moment là, vos 
+      définitions de références externes  pointeront toujours vers un
+      chemin sous le répertoire <filename>mon-projet</filename>, même si
+      ce répertoire n'existe plus.</para>
 
     <screen>
-$ svn move -q my-project renamed-project
-$ svn commit -m "Rename my-project to renamed-project."
-Deleting       my-project
-Adding         renamed-project
+$ svn move -q mon-projet nouveau-projet
+$ svn commit -m "Renommé mon-projet en nouveau-projet."
+Suppression    mon-projet
+Ajout          nouveau-projet
 
-Committed revision 12.
+Révision 12 propagée.
 $ svn update
 
-Fetching external item into 'renamed-project/some-dir/subdir'
-svn: Target path does not exist
+Récupération de la référence externe dans 'nouveau-projet/un-rep/sous-rep'
+svn: Le dépôt http://svn.exemple.com/projets/mon-projet/rep-externe n'existe pas 
+
 $
 </screen>
 
-    <para>De plus, les URL absolues utilisées par les définitions 
+    <para>De plus, les URL absolues utilisées par les références 
       externes peuvent causer des problèmes pour les dépôts accessibles 
       via plusieurs types d'URL. Par exemple, si votre serveur 
       Subversion est configuré pour autoriser tout le monde à consulter 
       le dépôt via <literal>http://</literal> ou <literal>https://</literal>, 
       mais que les opérations de propagation doivent être effectuées 
       uniquement via <literal>https://</literal>, vous vous retrouvez 
-      bien embêté. Si vos définitions externes font référence à la 
-      forme <literal>http://</literal>, vous ne pourrez pas effectuer de 
+      bien embêté. Si vos références externes pointent vers une URL de  
+      type <literal>http://</literal>, vous ne pourrez pas effectuer de 
       propagation depuis les copies de travail créées via ces 
-      définitions externes. D'un autre côté, si vous utilisez la forme 
-      <literal>https://</literal>literal> pour les URL, ceux qui voudront 
+      références externes. D'un autre côté, si vous utilisez la forme 
+      <literal>https://</literal> pour les URL, ceux qui voudront 
       effectuer des consultations via <literal>http://</literal>, parce 
       que leur client ne sait pas traiter le <literal>https://</literal>, 
       seront incapables de récupérer les éléments externes. Soyez 
       conscient également que si vous avez besoin de déplacer toute 
-      votre copie de travail (avec <command>svn switch 
-      --relocate</command>), les définitions externes ne seront pas 
-      mises à jour en conséquence.</para>
+      votre copie de travail (avec <command>svn switch</command> et  
+      l'option <option>--relocate</option>), les références externes ne 
+      seront pas mises à jour en conséquence.</para>
 
-   <para>Subversion 1.5 takes a huge step in relieving these
-     frustrations.  As mentioned earlier, the URLs used in the new
-     externals definition format can be relative, and Subversion
-     provides syntax magic for specifying multiple flavors of URL
-     relativity.</para>
+   <para>Subversion 1.5 franchit un grand pas dans la résolution de ces
+     soucis. Comme indiqué précédemment, les URL utilisées dans le 
+     nouveau format des définitions des références externes peuvent être
+     relatives. Par ailleurs, Subversion autorise une syntaxe magique
+     pour spécifier plusieurs types d'URL relatives.</para>
 
     <variablelist>
       <varlistentry>
         <term><literal>../</literal></term> 
-        <listitem><para>Relative to the URL of the directory on which
-          the <literal>svn:externals</literal> property is
-          set</para></listitem>
+        <listitem><para>Relative à l'URL du répertoire sur lequel la 
+          propriété <literal>svn:externals</literal> est 
+          définie.</para></listitem>
       </varlistentry>
       <varlistentry>
         <term><literal>^/</literal></term> 
-        <listitem><para>Relative to the root of the repository in
-          which the <literal>svn:externals</literal> property is
-          versioned</para></listitem>
+        <listitem><para>Relative à la racine du dépôt pour lequel la 
+          propriété <literal>svn:externals</literal> est suivie en 
+          versions.</para></listitem>
       </varlistentry>
       <varlistentry>
         <term><literal>//</literal></term> 
-        <listitem><para>Relative to the scheme of the URL of the
-          directory on which the <literal>svn:externals</literal>
-          property is set</para></listitem>
+        <listitem><para>Relative au type d'URL du répertoire sur lequel 
+          la propriété <literal>svn:externals</literal> est
+          définie.</para></listitem>
       </varlistentry>
       <varlistentry>
         <term><literal>/</literal></term>
-        <listitem><para>Relative to the root URL of the server on
-          which the <literal>svn:externals</literal> property is
-          versioned</para></listitem>
+        <listitem><para>Relative à l'URL du serveur sur lequel la 
+          propriété <literal>svn:externals</literal> est suivie en
+          versions.</para></listitem>
       </varlistentry>
     </variablelist>
 
-    <para>So, looking a fourth time at our previous externals
-      definition example, and making use of the new absolute URL
-      syntax in various ways, we might now see:</para>
+    <para>Donc, considérons pour la quatrième fois la définition de 
+      nos références externes de l'exemple précédent et utilisons la 
+      nouvelle syntaxe de différentes manière. Nous 
+      obtenons&nbsp;:</para>
 
     <screen>
 $ svn propget svn:externals calc
-^/sounds third-party/sounds
-/skinproj@148 third-party/skins
-//svn.example.com/skin-maker@21 third-party/skins/toolkit
+^/sons                             tierce-partie/sons
+/themes@148                        tierce-partie/themes
+//svn.exemple.com/outils-themes@21 tierce-partie/themes/outils
 </screen>
 
-    <para>The support that exists for externals definitions in
-      Subversion remains less than ideal, though.  An externals
-      definition can point only to directories, not to files.  Also, the
-      local subdirectory part of the definition cannot contain
-      <literal>..</literal> parent directory indicators (such as
-      <filename>../../skins/myskin</filename>).  Perhaps most
-      disappointingly, the working copies created via the externals
-      definition support are still disconnected from the primary
-      working copy (on whose versioned directories the
-      <literal>svn:externals</literal> property was actually set).
-      And Subversion still truly operates only on nondisjoint working
-      copies.  So, for example, if you want to commit changes that
-      you've made in one or more of those external working copies, you
-      must run <command>svn commit</command> explicitly on those
-      working copies&mdash;committing on the primary working copy will
-      not recurse into any external ones.</para>
+    <para>Le support pour les références externes dans Subversion reste 
+      imparfait. Une définition de références externes ne peut pointer
+      que vers des répertoires et non vers des fichiers. Par ailleurs,
+      le sous-répertoire local dans la définition ne peut pas contenir
+      d'indicateur de répertoire père (<literal>..</literal>)&nbsp;; 
+      Ainsi, <filename>../../themes/mon-theme</filename> est interdit.
+      Et peut-être encore plus dommage, les copies de travail créées par 
+      la définition de références externes sont toujours déconnectées de 
+      la copie de travail primaire (celle dans laquelle la propriété
+      <literal>svn:externals</literal> est définie sur le répertoire 
+      suivi en versions). Et Subversion ne peut fonctionner pleinement
+      que sur des copies de travail d'un seul tenant. Ainsi, par 
+      exemple, si vous voulez propager des changements que vous avez
+      effectués sur une ou plusieurs de ces copies de travail externes,
+      vous devez lancez <command>svn commit</command> explicitement sur
+      ces copies de travail &mdash; effectuer une propagation sur la 
+      copie de travail primaire ne traitera pas récursivement les copies
+      de travail externes.</para>
 
-    <para>We've already mentioned some of the additional shortcomings
-      of the old <literal>svn:externals</literal> format and how the
-      new Subversion 1.5 format improves upon it.  But be careful when
-      making use of the new format that you don't inadvertently cause
-      problems for other folks accessing your repository who are using
-      older Subversion clients.  While Subversion 1.5 clients will
-      continue to recognize and support the original externals
-      definition format, older clients will <emphasis>not</emphasis>
-      be able to correctly parse the new format.</para>
+    <para>Nous avons déjà mentionné certains défauts de l'ancien
+      format de <literal>svn:externals</literal> et comment la version
+      1.5 de Subversion les corrige. Mais faites attention, en utilisant
+      les nouveaux formats, à ne pas pénaliser accidentellement des 
+      utilisateurs qui accèderaient à votre dépôt avec de vieux clients
+      Subversion. Alors que les clients Subversion 1.5 supportent 
+      toujours le format original des définitions de références 
+      externes, les vieux clients <emphasis>ne seront pas 
+      capables</emphasis> d'analyser le nouveau format.</para>
 
-    <para>Besides the <command>svn checkout</command>, <command>svn
-      update</command>, <command>svn switch</command>, and
-      <command>svn export</command> commands which actually manage the
-      <firstterm>disjoint</firstterm> (or disconnected) subdirectories
-      into which externals are checked out, the <command>svn
-      status</command> command also recognizes externals definitions.
-      It displays a status code of <literal>X</literal> for the
-      disjoint external subdirectories, and then recurses into those
-      subdirectories to display the status of the external items
-      themselves.  You can pass the
-      <option>--ignore-externals</option> option to any of these
-      subcommands to disable externals definition processing.</para>
+    <para>En plus des commandes <command>svn checkout</command>, 
+      <command>svn update</command>, <command>svn switch</command> et
+      <command>svn export</command> qui gèrent effectivement les 
+      sous-répertoires <firstterm>disjoints</firstterm> (ou déconnectés)
+      où sont extraites les références externes, la commande 
+      <command>svn status</command> reconnaît également les définitions
+      de références externes. Elle affiche un code de statut 
+      <literal>X</literal> pour les sous-répertoires externes disjoints
+      et parcourt ces sous-répertoires pour afficher le statut des 
+      éléments externes eux-mêmes. Vous pouvez passer l'option 
+      <option>--ignore-externals</option> à n'importe laquelle de ces
+      commandes pour désactiver le traitement des définitions de 
+      références externes.</para>
 
   </sect1>
 
@@ -3640,9 +3651,20 @@ Index: frabnaggilywort/IDEE
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.changelists.creating">
-      <title>Creating and Modifying Changelists</title>
+      <title>Créer et modifier des listes de modifications</title>
 
-      <para>You can create, modify, and delete changelists using the
+      <para>Vous pouvez créer, modifier et supprimer des listes de 
+        modifications en utilisant la commande <command>svn 
+        changelist</command>. Plus précisément, vous pouvez utiliser 
+        cette commande pour activer ou désactiver l'association d'une 
+        liste de modifications avec un fichier donné de la copie de 
+        travail. La création d'une liste de modifications a lieu la 
+        première fois que vous étiquetez un fichier avec ce nom de 
+        liste&nbsp;; elle n'est supprimée que quand vous effacez 
+        l'étiquette du dernier fichier qui la portait. Examinons un cas 
+        concret pour illustrer ces notions.
+
+        You can create, modify, and delete changelists using the
         <command>svn changelist</command> command.  More accurately,
         you use this command to set or unset the changelist
         association of a particular working copy file.  A changelist
@@ -3651,120 +3673,129 @@ Index: frabnaggilywort/IDEE
         the last file that had it.  Let's examine a usage scenario
         that demonstrates these concepts.</para>
 
-      <para>Harry is fixing some bugs in the calculator application's
-        mathematics logic.  His work leads him to change a couple of
-        files:</para>
+      <para>Harry est en train de corriger des bogues dans le module de 
+        logique mathématique de l'application 'calculatrice'. Son 
+        travail l'amène à modifier deux fichiers&nbsp;:</para>
 
       <screen>
 $ svn status
-M      integer.c
-M      mathops.c
+M      entier.c
+M      ops-math.c
 $
 </screen>
 
-      <para>While testing his bug fix, Harry notices that his changes
-        bring to light a tangentially related bug in the user
-        interface logic found in <filename>button.c</filename>.  Harry
-        decides that he'll go ahead and fix that bug, too, as a
-        separate commit from his math fixes.  Now, in a small working
-        copy with only a handful of files and few logical changes,
-        Harry can probably keep his two logical change groupings
-        mentally organized without any problem.  But today he's going
-        to use Subversion's changelists feature as a special favor to
-        the authors of this book.</para>
+      <para>En testant son correctif, Harry s'aperçoit que ses 
+        modifications lui indiquent qu'un bogue collatéral existe au 
+        sein de la logique de l'interface utilisateur, située dans le 
+        fichier <filename>bouton.c</filename>. Harry décide alors qu'il 
+        va aussi corriger ce bogue, dans une propagation séparée de ses 
+        propres correctifs mathématiques. Dans une copie de travail de 
+        petite taille, ne contenant qu'une poignée de fichiers, et pour 
+        juste quelques modifications logiques, Harry pourrait 
+        probablement gérer mentalement ces deux ensembles logiques de 
+        modifications sans le moindre problème. Mais aujourd'hui il a 
+        décidé qu'il allait utiliser les listes de modifications de 
+        Subversion, pour faire une faveur aux auteurs de ce livre.</para>
 
-      <para>Harry first creates a changelist and associates with it
-        the two files he's already changed.  He does this by using the
-        <command>svn changelist</command> command to assign the same
-        arbitrary changelist name to those files:</para>
+      <para>Harry commence par créer une première liste de 
+        modifications et y associe les deux premiers fichiers qu'il a 
+        déjà modifié. Pour ce faire, il utilise la commande
+        <command>svn changelist</command> afin d'associer le même nom 
+        arbitraire de liste de modifications aux deux 
+        fichiers&nbsp;:</para>
 
       <screen>
-$ svn changelist math-fixes integer.c mathops.c
-Path 'integer.c' is now a member of changelist 'math-fixes'.
-Path 'mathops.c' is now a member of changelist 'math-fixes'.
+$ svn changelist correctifs-maths entier.c ops-math.c
+Le chemin 'entier.c' fait maintenant partie de la liste de changement 'correctifs-maths'.
+Le chemin 'ops-math.c' fait maintenant partie de la liste de changement 'correctifs-maths'.
 $ svn status
 
---- Changelist 'math-fixes':
-M      integer.c
-M      mathops.c
+--- Liste de changements 'correctifs-maths' :
+M      entier.c
+M      ops-math.c
 $
 </screen>
 
-      <para>As you can see, the output of <command>svn
-        status</command> reflects this new grouping.</para>
+      <para>Comme vous pouvez le constater, le résultat de <command>svn
+        status</command> reflète bien ce nouvel ensemble.</para>
 
-      <para>Harry now sets off to fix the secondary UI problem.  Since
-        he knows which file he'll be changing, he assigns that path to
-        a changelist, too.  Unfortunately, Harry carelessly assigns this
-        third file to the same changelist as the previous two files:</para>
+      <para>Harry se lance alors dans la correction du problème 
+        d'interface graphique collatéral. Puisqu'il sait quel fichier il 
+        va modifier, il associe également ce chemin à une liste de 
+        modifications. Mais malencontreusement Harry associe ce 
+        troisième fichier à la même liste de modifications que les deux 
+        premiers&nbsp;:</para>
 
       <screen>
-$ svn changelist math-fixes button.c
-Path 'button.c' is now a member of changelist 'math-fixes'.
+$ svn changelist correctifs-maths bouton.c
+Le chemin 'bouton.c' fait maintenant partie de la liste de changement 'correctifs-maths'.
 $ svn status
 
---- Changelist 'math-fixes':
-       button.c
-M      integer.c
-M      mathops.c
+--- Liste de changements 'correctifs-maths' :
+       bouton.c
+M      entier.c
+M      ops-math.c
 $
 </screen>
 
-      <para>Fortunately, Harry catches his mistake.  At this point, he
-        has two options.  He can remove the changelist association
-        from <filename>button.c</filename>, and then assign a
-        different changelist name:</para>
+      <para>Par chance, Harry prend conscience de son erreur. Deux 
+        options se présentent alors à lui. Il peut supprimer 
+        l'association de <filename>bouton.c</filename>avec la liste de 
+        modifications, puis lui associer un nouveau nom de liste de 
+        modifications&nbsp;:</para>
 
       <screen>
-$ svn changelist --remove button.c
-Path 'button.c' is no longer a member of a changelist.
-$ svn changelist ui-fix button.c
-Path 'button.c' is now a member of changelist 'ui-fix'.
+$ svn changelist --remove bouton.c
+Le chemin 'bouton.c' n'est plus associé à une liste de changements.
+$ svn changelist correctifs-graphiques bouton.c
+Le chemin 'bouton.c' fait maintenant partie de la liste de changement 'correctifs-graphiques'.
 $
 </screen>
 
-      <para>Or, he can skip the removal and just assign a new
-        changelist name.  In this case, Subversion will first warn
-        Harry that <filename>button.c</filename> is being removed from
-        the first changelist:</para>
+      <para>Ou alors il peut sauter l'étape de suppression et juste 
+        associer un nouveau nom de liste de modifications à 
+        <filename>bouton.c</filename>. Dans ce cas, Subversion signale à 
+        Harry que <filename>bouton.c</filename> va être supprimé de la 
+        première liste de modifications&nbsp;:</para>
 
       <screen>
-$ svn changelist ui-fix button.c
-svn: warning: Removing 'button.c' from changelist 'math-fixes'.
-Path 'button.c' is now a member of changelist 'ui-fix'.
+$ svn changelist correctifs-graphiques bouton.c
+svn:  avertissement : Retrait de 'bouton.c' de la liste de changements (changelist) 'correctifs-maths'.
+Le chemin 'bouton.c' fait maintenant partie de la liste de changement 'correctifs-graphiques'.
 $ svn status
 
---- Changelist 'ui-fix':
-       button.c
+--- Liste de changements 'correctifs-graphiques' :
+       bouton.c
 
---- Changelist 'math-fixes':
-M      integer.c
-M      mathops.c
+--- Liste de changements 'correctifs-maths' :
+M      entier.c
+M      ops-maths.c
 $
 </screen>
 
-      <para>Harry now has two distinct changelists present in his
-        working copy, and <command>svn status</command> will group its
-        output according to these changelist determinations.  Notice
-        that even though Harry hasn't yet modified
-        <filename>button.c</filename>, it still shows up in the output
-        of <command>svn status</command> as interesting because it has
-        a changelist assignment.  Changelists can be added to and
-        removed from files at any time, regardless of whether they
-        contain local modifications.</para>
+      <para>Harry dispose donc à présent de deux listes de modifications 
+        distinctes dans sa copie de travail et <command>svn 
+        status</command> présentera ses résultats en les regroupant par 
+        liste de modifications. Notez que bien qu'Harry n'ait pas encore 
+        modifié <filename>bouton.c</filename>, celui-ci est quand même 
+        mentionné par <command>svn status</command> car une liste de 
+        modifications lui est associée. Les listes de modifications 
+        peuvent être associées, ou enlevées, aux fichiers à tout moment, 
+        indépendamment du fait que ces fichiers contiennent des 
+        modifications locales ou pas.</para>
 
-      <para>Harry now fixes the user interface problem in
-        <filename>button.c</filename>.</para>
+      <para>Harry règle maintenant le problème de l'interface graphique 
+        dans <filename>bouton.c</filename>.</para>
 
       <screen>
 $ svn status
 
---- Changelist 'ui-fix':
-M      button.c
+--- Liste de changements 'correctifs-graphiques':
+M      bouton.c
 
---- Changelist 'math-fixes':
-M      integer.c
-M      mathops.c
+--- Liste de changements 'correctifs-maths':
+M      entier.c
+M      ops-math.c
 $
 </screen>
 
@@ -3772,152 +3803,165 @@ $
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.changelists.asfilters">
-      <title>Changelists As Operation Filters</title>
+      <title>Listes de modifications&nbsp;: des filtres pour vos opérations</title>
 
-      <para>The visual grouping that Harry sees in the output of
-        <command>svn status</command> as shown in our previous section
-        is nice, but not entirely useful.  The
-        <command>status</command> command is but one of many
-        operations that he might wish to perform on his working copy.
-        Fortunately, many of Subversion's other operations understand
-        how to operate on changelists via the use of the
-        <option>--changelist</option> option.</para>
+      <para>Le regroupement visuel qu'Harry constate en sortie de
+        <command>svn status</command>, comme indiqué précédemment, est 
+        intéressant d'un point de vue esthétique, mais pas vraiment 
+        utile. La commande <command>status</command> n'est qu'une des 
+        commandes qu'il est susceptible de lancer sur sa copie de 
+        travail. Heureusement, bon nombre des autres opérations de 
+        Subversion sont capables d'agir sur les listes de modifications 
+        grâce à l'option <option>--changelist</option>.</para>
 
-      <para>When provided with a <option>--changelist</option> option,
-        Subversion commands will limit the scope of their operation to
-        only those files to which a particular changelist name is
-        assigned.  If Harry now wants to see the actual changes he's
-        made to the files in his <literal>math-fixes</literal>
-        changelist, he <emphasis>could</emphasis> explicitly list only
-        the files that make up that changelist on the <command>svn
-        diff</command> command line.</para>
+      <para>Quand l'option <option>--changelist</option> est présente, 
+        les commandes Subversion limiteront leur champ d'action aux 
+        fichiers auxquels est associé le nom de liste de modifications 
+        donné. Si Harry veut voir quels changements il a effectué sur 
+        les fichiers de sa liste <literal>correctifs-maths</literal>, il
+        <emphasis>pourrait</emphasis> lister explicitement les fichiers 
+        faisant partie de cette liste de modifications avec la 
+        commande <command>svn diff</command>.</para>
 
       <screen>
-$ svn diff integer.c mathops.c
-Index: integer.c
+$ svn diff entier.c ops-math.c
+Index: entier.c
 ===================================================================
---- integer.c	(revision 1157)
-+++ integer.c	(working copy)
+--- entier.c	(révision 1157)
++++ entier.c	(copie de travail)
 &hellip;
-Index: mathops.c
+Index: ops-math.c
 ===================================================================
---- mathops.c	(revision 1157)
-+++ mathops.c	(working copy)
+--- ops-math.c	(révision 1157)
++++ ops-math.c	(copie de travail)
 &hellip;
 $
 </screen>
 
-      <para>That works okay for a few files, but what if Harry's
-        change touched 20 or 30 files?  That would be an annoyingly
-        long list of explicitly named files.  Now that he's using
-        changelists, though, Harry can avoid explicitly listing the
-        set of files in his changelist from now on, and instead
-        provide just the changelist name:</para>
+      <para>Cette méthode fonctionne correctement pour un petit nombre 
+        de fichiers, mais qu'en est-il si Harry a modifié une vingtaine 
+        ou une trentaine de fichiers&nbsp;? Fournir la liste de tous ces 
+        fichiers serait assez pénible. Mais puisqu'il utilise les listes 
+        de modifications, Harry peut désormais éviter de lister 
+        explicitement tous les fichiers et ne donner à la place que le 
+        nom de la liste de modifications&nbsp;:</para>
 
       <screen>
-$ svn diff --changelist math-fixes
-Index: integer.c
+$ svn diff --changelist correctifs-maths
+
+Index: entier.c
 ===================================================================
---- integer.c	(revision 1157)
-+++ integer.c	(working copy)
+--- entier.c	(révision 1157)
++++ entier.c	(copie de travail)
 &hellip;
-Index: mathops.c
+Index: ops-math.c
 ===================================================================
---- mathops.c	(revision 1157)
-+++ mathops.c	(working copy)
+--- ops-math.c	(révision 1157)
++++ ops-math.c	(copie de travail)
 &hellip;
 $
 </screen>
 
-      <para>And when it's time to commit, Harry can again use the
-        <option>--changelist</option> option to limit the scope of the
-        commit to files in a certain changelist.  He might commit his
-        user interface fix by doing the following:</para>
+      <para>Et au moment de lancer la propagation, Harry peut à nouveau 
+        se servir de l'option <option>--changelist</option> pour limiter 
+        le rayon d'action de la propagation aux fichiers de sa liste de 
+        modifications. Par exemple, il pourra propager ses changements 
+        concernant l'interface graphique en lançant&nbsp;:</para>
 
       <screen>
-$ svn ci -m "Fix a UI bug found while working on math logic." \
-      --changelist ui-fix
-Sending        button.c
-Transmitting file data .
-Committed revision 1158.
+$ svn ci -m "Corrigé un bug de l'interface graphique découvert en travaillant sur la logique mathématique." \
+      --changelist correctifs-graphiques
+Envoi        bouton.c
+Transmission des données .
+Révision 1158 propagée.
 $
 </screen>
 
-      <para>In fact, the <command>svn commit</command> command
-        provides a second changelists-related option:
-        <option>--keep-changelists</option>.  Normally, changelist
-        assignments are removed from files after they are committed.
-        But if <option>--keep-changelists</option> is provided,
-        Subversion will leave the changelist assignment on the
-        committed (and now unmodified) files.  In any case, committing
-        files assigned to one changelist leaves other changelists
-        undisturbed.</para>
+      <para>En fait, la commande <command>svn commit</command> accepte 
+        une deuxième option liée aux listes de modifications&nbsp;: 
+        <option>--keep-changelists</option>. Normalement, l'association 
+        des listes de modifications avec les fichiers est supprimée dès 
+        que ceux-ci ont été propagés. Mais si l'option 
+        <option>--keep-changelists</option> est ajoutée sur la ligne de 
+        commande, les fichiers propagés (qui ne sont donc plus dans 
+        l'état modifié) resteront associés aux listes de modifications 
+        en question. De toute façon, propager des fichiers faisant 
+        partie d'une liste de modification laisse les autres listes de 
+        modifications intactes.</para>
 
       <screen>
 $ svn status
 
---- Changelist 'math-fixes':
-M      integer.c
-M      mathops.c
+--- Liste de changements 'correctifs-maths':
+M      entier.c
+M      ops-math.c
 $
 </screen>
 
       <note>
-        <para>The <option>--changelist</option> option acts only as a
-          filter for Subversion command targets, and will not add
-          targets to an operation.  For example, on a commit operation
-          specified as <userinput>svn commit /path/to/dir</userinput>, the
-          target is the directory <filename>/path/to/dir</filename>
-          and its children (to infinite depth).  If you then add a
-          changelist specifier to that command, only those files in
-          and under <filename>/path/to/dir</filename> that are
-          assigned that changelist name will be considered as targets
-          of the commit&mdash;the commit will not include files
-          located elsewhere (such is in
-          <filename>/path/to/another-dir</filename>), regardless of
-          their changelist assignment, even if they are part of the
-          same working copy as the operation's target(s).</para>
+        <para>L'option <option>--changelist</option> agit comme un 
+          filtre sur les cibles des commandes Subversion et n'ajoutera 
+          jamais de cible à une opération. Par exemple, lors d'une 
+          opération de propagation lancée via <userinput>svn commit 
+          /chemin/vers/rep</userinput>, la cible est le répertoire
+          <filename>/chemin/vers/rep</filename> et ses fils (avec une 
+          profondeur infinie). Si ensuite vous ajoutez une option 
+          spécifiant une liste de modifications à cette commande, seuls 
+          les fichiers se trouvant sous le chemin 
+          <filename>/chemin/vers/rep</filename> et associés à cette 
+          liste de modifications seront pris en compte en tant que 
+          cibles de la propagation&nbsp;; ne seront pas inclus les 
+          fichiers situés ailleurs (tels ceux sous
+          <filename>/chemin/vers/autre-rep</filename>), quelle que soit 
+          la liste de modifications à laquelle ils appartiennent, même 
+          s'il font partie de la même copie de travail que la ou les 
+          cibles de l'opération.</para>
       </note>
 
-      <para>Even the <command>svn changelist</command> command accepts
-        the <option>--changelist</option> option.  This allows you to
-        quickly and easily rename or remove a changelist:</para>
+      <para>Même la commande <command>svn changelist</command> accepte 
+        l'option <option>--changelist</option>. Ceci vous permet de 
+        renommer ou supprimer facilement une liste de 
+        modifications&nbsp;:</para>
 
       <screen>
-$ svn changelist math-bugs --changelist math-fixes --depth infinity .
-svn: warning: Removing 'integer.c' from changelist 'math-fixes'.
-Path 'integer.c' is now a member of changelist 'math-bugs'.
-svn: warning: Removing 'mathops.c' from changelist 'math-fixes'.
-Path 'mathops.c' is now a member of changelist 'math-bugs'.
-$ svn changelist --remove --changelist math-bugs --depth infinity .
-Path 'integer.c' is no longer a member of a changelist.
-Path 'mathops.c' is no longer a member of a changelist.
+$ svn changelist bogues-maths --changelist correctifs-maths --depth infinity .
+svn: avertissement : Retrait de 'entier.c' de la liste de changements (changelist) 'correctifs-maths'.
+Le chemin 'entier.c' fait maintenant partie de la liste de changement 'bogues-maths'.
+svn: avertissement : Retrait de 'ops-math.c' de la liste de changements (changelist) 'correctifs-maths'.
+Le chemin 'ops-math.c' fait maintenant partie de la liste de changement 'bogues-maths'.
+$ svn changelist --remove --changelist bogues-maths --depth infinity .
+Le chemin 'entier.c' n'est plus associé à une liste de changements.
+Le chemin 'ops-math.c' n'est plus associé à une liste de changements.
 $
 </screen>
 
-      <para>Finally, you can specify multiple instances of the
-        <option>--changelist</option> option on a single command
-        line.  Doing so limits the operation you are performing to
-        files found in any of the specified changesets.</para>
+      <para>Enfin, vous pouvez spécifier plusieurs instances de l'option 
+        <option>--changelist</option> dans une même ligne de commande. 
+        Ceci limite le champ d'action de votre opération aux fichiers 
+        faisant partie de toutes les listes de modifications 
+        spécifiées.</para>
 
     </sect2>
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.changelists.limitations">
-      <title>Changelist Limitations</title>
+      <title>Limitations des listes de modifications</title>
 
-      <para>Subversion's changelist feature is a handy tool for
-        grouping working copy files, but it does have a few limitations.
-        Changelists are artifacts of a particular working copy, which
-        means that changelist assignments cannot be propagated to the
-        repository or otherwise shared with other users.  Changelists
-        can be assigned only to files&mdash;Subversion doesn't
-        currently support the use of changelists with directories.
-        Finally, you can have at most one changelist assignment on a
-        given working copy file.  Here is where the blog post category
-        and photo service tag analogies break down&mdash;if you find
-        yourself needing to assign a file to multiple changelists,
-        you're out of luck.</para>
+      <para>La fonctionnalité de listes de modifications de Subversion 
+        est un outil très pratique pour créer des groupes de fichiers au 
+        sein de la copie de travail, mais elle a cependant quelques 
+        limitations. Les listes de modifications sont des objets 
+        contenus à l'intérieur d'une copie de travail, ce qui signifie 
+        que les associations entre fichiers et listes de modifications 
+        ne peuvent pas être propagées vers le dépôt, ni partagées avec 
+        d'autres utilisateurs. Les listes de modifications ne peuvent 
+        être associées qu'à des fichiers, Subversion n'offre pas cette 
+        possibilité pour les répertoires. Enfin, vous ne pouvez avoir 
+        qu'au plus un nom de liste de modifications associé à un fichier 
+        donné. C'est ici que l'analogie avec les articles de blogs et 
+        les services d'étiquetage de photos en ligne part en fumée. S'il 
+        vous faut associer un fichier à plusieurs listes de 
+        modifications, vous êtes coincé.</para>
 
     </sect2>
   </sect1>
@@ -3926,183 +3970,191 @@ $
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.serverconfig.netmodel">
-    <title>Network Model</title>
+    <title>Modèle de communication réseau</title>
 
-    <para>At some point, you're going to need to understand how your
-      Subversion client communicates with its server.  Subversion's
-      networking layer is abstracted, meaning that Subversion clients
-      exhibit the same general behaviors no matter what sort of server
-      they are operating against.  Whether speaking the HTTP protocol
-      (<literal>http://</literal>) with the Apache HTTP Server or
-      speaking the custom Subversion protocol
-      (<literal>svn://</literal>) with <command>svnserve</command>,
-      the basic network model is the same.  In this section, we'll
-      explain the basics of that network model, including how
-      Subversion manages authentication and authorization
-      matters.</para>
+    <para>&Agrave; un moment ou à un autre, vous aurez besoin de 
+      comprendre comment le client Subversion communique avec le 
+      serveur. La couche réseau de Subversion est abstraite, 
+      c'est-à-dire que les clients Subversion ont le même comportement 
+      quel que soit le type de serveur auquel ils ont affaire. Qu'ils 
+      communiquent via le protocole HTTP (<literal>http://</literal>) 
+      avec un serveur HTTP Apache ou via le protocole Subversion 
+      (<literal>svn://</literal>) avec <command>svnserve</command>,
+      le modèle de communication réseau est le même. Dans cette section, 
+      nous expliquerons les fondamentaux de ce modèle de communication 
+      réseau, y compris la façon dont Subversion gère les 
+      authentifications et les autorisations.</para>
 
     <!-- =============================================================== -->
     <sect2 id="svn.serverconfig.netmodel.reqresp">
-      <title>Requests and Responses</title>
+      <title>Requêtes et réponses</title>
 
-      <para>The Subversion client spends most of its time managing
-        working copies.  When it needs information from a remote
-        repository, however, it makes a network request, and the
-        server responds with an appropriate answer.  The details of
-        the network protocol are hidden from the user&mdash;the client
-        attempts to access a URL, and depending on the URL scheme, a
-        particular protocol is used to contact the server (see the sidebar <xref
-        linkend="svn.basic.in-action.wc.sb-1"/>).</para>
+      <para>Le client Subversion passe la plupart de son temps à gérer 
+        des copies de travail. Cependant, quand il a besoin 
+        d'informations disponibles dans un dépôt distant, il envoie une 
+        requête sur le réseau et le serveur lui répond. Les détails du 
+        protocole réseau sont cachés à l'utilisateur&nbsp;: le client 
+        essaie d'accéder à une URL et, suivant le format de cette URL, 
+        utilise un protocole particulier pour contacter le serveur 
+        (voir <xref linkend="svn.basic.in-action.wc.sb-1"/>).</para>
 
-      <tip><para>Run <userinput>svn --version</userinput> to see
-        which URL schemes and protocols the client knows how to
-        use.</para>
+      <tip><para>Tapez <userinput>svn --version</userinput> pour voir 
+        quels types d'URL et de protocoles sont utilisables par votre 
+        client.</para>
       </tip>
 
-      <para>When the server process receives a client request, it
-        often demands that the client identify itself.  It issues
-        an authentication challenge to the client, and the client
-        responds by providing <firstterm>credentials</firstterm> back
-        to the server.  Once authentication is complete, the server
-        responds with the original information that the client asked for.
-        Notice that this system is different from systems such as CVS,
-        where the client preemptively offers credentials (<quote>logs
-        in</quote>) to the server before ever making a request.  In
-        Subversion, the server <quote>pulls</quote> credentials by
-        challenging the client at the appropriate moment, rather than
-        the client <quote>pushing</quote> them.  This makes certain
-        operations more elegant.  For example, if a server is
-        configured to allow anyone in the world to read a repository,
-        the server will never issue an authentication challenge
-        when a client attempts to <command>svn checkout</command>.</para>
+      <para>Quand le serveur reçoit une requête d'un client, il demande 
+        souvent au client de s'identifier. Il envoie un défi 
+        d'authentification vers le client et le client répond en 
+        fournissant les <firstterm>éléments 
+        d'authentification</firstterm> au serveur. Une fois cette 
+        authentification terminée, le serveur répond à la requête 
+        originale du client. Remarquez que ce fonctionnement est 
+        différent de celui de CVS où le client envoie systématiquement 
+        au préalable ses identifiants de connexion (procédure de 
+        <quote>log in</quote>), avant même de formuler la moindre 
+        requête. Dans Subversion, le serveur requiert explicitement 
+        l'authentification du client (par un défi d'authentification) 
+        au moment approprié, au lieu que ce soit le client qui 
+        s'authentifie a priori. Certaines opérations sont donc 
+        effectuées plus élégamment. Par exemple, si un serveur est 
+        configuré pour laisser tout le monde lire un dépôt, alors le 
+        serveur n'enverra jamais de défi d'authentification quand un 
+        client tente un <command>svn checkout</command>.</para>
 
-      <para>If the particular network requests issued by the client
-        result in a new revision being created in the repository
-        (e.g., <command>svn commit</command>), Subversion uses the
-        authenticated username associated with those requests as the
-        author of the revision.  That is, the authenticated user's
-        name is stored as the value of the
-        <literal>svn:author</literal> property on the new revision
-        (see <xref linkend="svn.ref.properties"/>).  If
-        the client was not authenticated (i.e., if the server
-        never issued an authentication challenge), the revision's
-        <literal>svn:author</literal> property is empty.
-      </para>
+      <para>Si une requête d'un client conduit à la création d'une 
+        nouvelle révision du dépôt (par exemple un <command>svn 
+        commit</command>), alors Subversion utilise le nom d'utilisateur 
+        fourni lors de la phase d'authentification comme auteur de la 
+        révision. C'est-à-dire que le nom d'utilisateur est stocké dans 
+        la propriété <literal>svn:author</literal> de la nouvelle 
+        révision (voir <xref linkend="svn.ref.properties"/>). Si le 
+        client n'a pas été authentifié (en d'autres termes, si le 
+        serveur n'a jamais envoyé de défi d'authentification), alors la 
+        propriété <literal>svn:author</literal> de la révision est 
+        vide.</para>
 
     </sect2>
 
     <!-- =============================================================== -->
     <sect2 id="svn.serverconfig.netmodel.credcache">
-      <title>Client Credentials Caching</title>
+      <title>Mise en cache des éléments d'authentification du client</title>
 
-      <para>Many servers are configured to require authentication on
-        every request.  This would be a big annoyance to users if
-        they were forced to type their passwords over and over again.
-        Fortunately, the Subversion client has a remedy for
-        this&mdash;a built-in system for caching authentication
-        credentials on disk.  By default, whenever the command-line
-        client successfully responds to a server's authentication
-        challenge, it saves the credentials in the user's private
-        runtime configuration area
-        (<filename>~/.subversion/auth/</filename> on Unix-like systems
-        or <filename>%APPDATA%/Subversion/auth/</filename> on Windows;
-        see <xref linkend="svn.advanced.confarea" /> for more details
-        about the runtime configuration system).  Successful
-        credentials are cached on disk and keyed on a combination of the
-        server's hostname, port, and authentication realm.</para>
+      <para>Beaucoup de serveurs sont configurés pour demander une 
+        authentification à chaque requête. Ce serait particulièrement 
+        pénible pour les utilisateurs s'ils devaient taper leur mot de 
+        passe à chaque fois. Heureusement, le client Subversion a une 
+        solution&nbsp;: la mise en cache sur le disque des éléments 
+        d'authentification. Par défaut, si le client en ligne de 
+        commande s'authentifie avec succès auprès d'un serveur, le 
+        client sauvegarde les éléments d'authentification dans une zone 
+        privée propre à l'utilisateur
+        (<filename>~/.subversion/auth/</filename> sur les systèmes de 
+        type Unix ou <filename>%APPDATA%/Subversion/auth/</filename> sur 
+        Windows)&nbsp;; voir <xref linkend="svn.advanced.confarea" /> 
+        pour plus de détails). Les éléments d'authentification sont mis 
+        en cache sur le disque, classés suivant une combinaison du nom, 
+        du port et du domaine d'authentification du serveur.</para>
 
-      <para>When the client receives an authentication challenge, it
-        first looks for the appropriate credentials in the user's disk
-        cache.  If seemingly suitable credentials are not present, or
-        if the cached credentials ultimately fail to authenticate,
-        the client will, by default, fall back to prompting the
-        user for the necessary information.</para>
+      <para>Quand le client reçoit un défi d'authentification, il 
+        regarde d'abord s'il dispose des éléments appropriés dans le 
+        cache disque de l'utilisateur. Si ce n'est pas le cas, ou si les 
+        éléments conduisent à un échec lors de la tentative 
+        d'authentification, le client demande alors (c'est son 
+        comportement par défaut) à l'utilisateur les informations 
+        nécessaires.</para>
 
-      <para>The security-conscious reader will suspect immediately
-        that there is reason for concern here.  <quote>Caching
-        passwords on disk?  That's terrible!  You should never do
-        that!</quote></para>
+      <para>Ici, le lecteur soucieux de sécurité va immédiatement 
+        commencer à s'inquiéter&nbsp;: <quote>Mettre en cache des mots 
+        de passe sur le disque&nbsp;? Quelle horreur&nbsp;! 
+        Jamais&nbsp;!</quote></para>
 
-      <para>The Subversion developers recognize the legitimacy of such
-        concerns, and so Subversion works with available mechanisms
-        provided by the operating system and environment to try to
-        minimize the risk of leaking this information.  Here's a
-        breakdown of what this means for users on the most common
-        platforms:</para>
+      <para>Les développeurs de Subversion reconnaissent le bien fondé 
+        du problème et c'est pourquoi Subversion est capable de 
+        fonctionner avec les différents mécanismes offerts par le 
+        système d'exploitation et l'environnement de travail pour 
+        minimiser le risque d'une fuite de ces informations. Voici ce 
+        que cela veut dire sur les plates-formes les plus 
+        courantes&nbsp;:</para>
 
       <itemizedlist>
 
         <listitem>
-          <para>On Windows 2000 and later, the Subversion client uses
-            standard Windows cryptography services to encrypt the
-            password on disk.  Because the encryption key is managed
-            by Windows and is tied to the user's own login
-            credentials, only the user can decrypt the cached
-            password.  (Note that if the user's Windows account password
-            is reset by an administrator, all of the cached passwords
-            become undecipherable.  The Subversion client will behave
-            as though they don't exist, prompting for passwords when
-            required.)</para>
+          <para>Sur Windows 2000 et ses successeurs, le client 
+            Subversion utilise les services cryptographiques standards 
+            de Windows pour chiffrer le mot de passe sur le disque. 
+            Comme la clé de chiffrement est gérée par Windows et qu'elle
+            est associée à l'identifiant de connexion de l'utilisateur, 
+            lui seul peut déchiffrer le mot de passe en cache. Notez que 
+            si le mot de passe de l'utilisateur est ré-initialisé par un 
+            administrateur, tous les mots de passe en cache deviennent 
+            indéchiffrables. Le client Subversion agira comme s'ils 
+            n'existaient pas, en redemandant le mot de passe quand c'est 
+            nécessaire. </para>
         </listitem>
 
         <listitem>
-          <para>Similarly, on Mac OS X, the Subversion client stores
-            all repository passwords in the login keyring (managed by
-            the Keychain service), which is protected by the user's
-            account password.  User preference settings can impose
-            additional policies, such as requiring that the user's account
-            password be entered each time the Subversion password is
-            used.</para>
+          <para>De manière similaire, sur Mac OS X, le client Subversion 
+            stocke tous les mots de passe dans le jeton de connexion 
+            (géré par le service Keychain), qui est protégé par le mot 
+            de passe du compte utilisateur. La configuration des 
+            <quote>préférences utilisateur</quote> peuvent imposer une 
+            politique plus stricte, comme par exemple demander le mot de 
+            passe du compte utilisateur à chaque fois qu'un mot de passe 
+            Subversion est utilisé.</para>
         </listitem>
 
         <listitem>
-          <para>For other Unix-like operating systems, no standard
-            <quote>keychain</quote> services exist.  However,
-            the <filename>auth/</filename> caching area is still
-            permission-protected so that only the user (owner) can
-            read data from it, not the world at large.  The operating
-            system's own file permissions protect the passwords.</para>
+          <para>Pour les systèmes de type Unix, il n'existe pas de 
+            standard de service de type <quote>keychain</quote>. 
+            Cependant, la zone de cache <filename>auth/</filename> est 
+            toujours protégée par les droits système et seul 
+            l'utilisateur (le propriétaire) des données peut les lire. 
+            Les droits sur les fichiers fournis par le système 
+            d'exploitation protègent les mots de passe.</para>
         </listitem>
 
       </itemizedlist>
 
-      <para>Of course, for the truly paranoid, none of these
-        mechanisms meets the test of perfection.  So for those folks
-        willing to sacrifice convenience for the ultimate in security,
-        Subversion provides various ways of disabling its credentials
-        caching system altogether.</para>
+      <para>Bien sûr, si vous êtes complètement paranoïaque, aucun de 
+        ces mécanismes n'est parfait. Ainsi, pour ceux qui sont prêt à 
+        sacrifier le confort d'utilisation au profit de la sécurité 
+        absolue, Subversion fournit de nombreuses façons de désactiver 
+        le système de cache d'authentification.</para>
 
-      <para>To disable caching for a single command, pass the
-        <option>--no-auth-cache</option> option:</para>
+      <para>Pour désactiver le système de cache pour une seule commande, 
+        utilisez l'option <option>--no-auth-cache</option>&nbsp;:</para>
 
       <screen>
 $ svn commit -F log_msg.txt --no-auth-cache
-Authentication realm: &lt;svn://host.example.com:3690&gt; example realm
-Username:  joe
-Password for 'joe':
+Domaine d'authentification : &lt;svn://hote.exemple.com:3690&gt; exemple de domaine
+Nom d'utilisateur :  paul
+Mot de passe pour 'paul' :
 
-Adding         newfile
-Transmitting file data .
-Committed revision 2324.
+Ajout         nouveau_fichier
+Transmission des données .
+Révision 2324 propagée.
 
-# password was not cached, so a second commit still prompts us
+# le mot de passe n'a pas été mis dans le cache, donc la deuxième propagation 
+# nous redemandera le mot de passe
 
-$ svn delete newfile
-$ svn commit -F new_msg.txt
-Authentication realm: &lt;svn://host.example.com:3690&gt; example realm
-Username:  joe
+$ svn delete nouveau_fichier
+$ svn commit -F nouveau_msg.txt
+Domaine d'authentification : &lt;svn://hote.exemple.com:3690&gt; exemple de domaine
+Nom d'utilisateur :  paul
 &hellip;
 </screen>
 
-      <para>Or, if you want to disable credential caching permanently,
-        you can edit the <filename>config</filename> file in your
-        runtime configuration area and set the
-        <option>store-auth-creds</option> option to
-        <literal>no</literal>.  This will prevent the storing of
-        credentials used in any Subversion interactions you perform on
-        the affected computer.  This can be extended to cover all
-        users on the computer, too, by modifying the system-wide
-        runtime configuration area (described in <xref
+      <para>Autrement, si vous voulez désactiver la mise en cache des 
+        éléments d'authentification de manière permanente, vous pouvez 
+        éditer le fichier <filename>config</filename> de votre zone de 
+        configuration en mettant l'option 
+        <option>store-auth-creds</option> à <literal>no</literal>. La 
+        mise en cache des éléments d'authentification sera désactivée 
+        pour toutes les commandes Subversion que vous effectuerez sur 
+        cet ordinateur. Ceci peut être étendu à l'ensemble des 
+        utilisateurs de l'ordinateur en modifiant la configuration 
+        globale de Subversion (voir <xref
         linkend="svn.advanced.confarea.layout" />).</para>
 
       <screen>
@@ -4110,14 +4162,15 @@ Username:  joe
 store-auth-creds = no
 </screen>
 
-      <para>Sometimes users will want to remove specific credentials
-        from the disk cache.  To do this, you need to navigate into
-        the <filename>auth/</filename> area and manually delete the
-        appropriate cache file.  Credentials are cached in individual
-        files;  if you look inside each file, you will see keys and
-        values.  The <literal>svn:realmstring</literal> key describes
-        the particular server realm that the file is associated
-        with:</para>
+      <para>Il arrive que les utilisateurs veuillent effacer certains 
+        mots de passe du cache disque. Pour ce faire, vous devez vous 
+        rendre dans la zone <filename>auth/</filename> et effacer 
+        manuellement le fichier de cache approprié. Les éléments 
+        d'authentification sont mis en cache dans des fichiers 
+        individuels&nbsp;; si vous affichez chaque fichier, vous verrez 
+        des clés et des valeurs. La clé 
+        <literal>svn:realmstring</literal> décrit le domaine du serveur 
+        auquel est associé le fichier&nbsp;:</para>
 
       <screen>
 $ ls ~/.subversion/auth/svn.simple/
@@ -4130,7 +4183,7 @@ $ cat ~/.subversion/auth/svn.simple/5671adf2865e267db74f09ba6f872c28
 K 8
 username
 V 3
-joe
+paul
 K 8
 password
 V 4
@@ -4138,75 +4191,76 @@ blah
 K 15
 svn:realmstring
 V 45
-&lt;https://svn.domain.com:443&gt; Joe's repository
+&lt;https://svn.domaine.com:443&gt; Dépôt de Paul
 END
 </screen>
 
-      <para>Once you have located the proper cache file, just delete
-        it.</para>
+      <para>Une fois le bon fichier trouvé, effacez-le.</para>
 
-      <para>One last word about <command>svn</command>'s
-        authentication behavior, specifically regarding the
-        <option>--username</option> and <option>--password</option>
-        options.  Many client subcommands accept these options, but it
-        is important to understand that using these options does
-        <emphasis>not</emphasis> automatically send credentials to the
-        server.  As discussed earlier, the server <quote>pulls</quote>
-        credentials from the client when it deems necessary; the
-        client cannot <quote>push</quote> them at will.  If a username
-        and/or password are passed as options, they will be
-        presented to the server only if the server requests them.  These
-        options are typically used to authenticate as a different user
-        than Subversion would have chosen by default (such as your
-        system login name) or when trying to avoid interactive
-        prompting (such as when calling <command>svn</command> from a
-        script).</para>
+      <para>Un dernier mot sur la façon dont <command>svn</command> gère 
+        l'authentification, avec un zoom sur les options
+        <option>--username</option> et <option>--password</option>. 
+        Beaucoup de sous-commandes du client acceptent ces options, mais 
+        il est important de comprendre que l'utilisation de ces options 
+        <emphasis>n'envoie pas</emphasis> automatiquement les éléments 
+        d'authentification au serveur. Comme vu précédemment, le serveur 
+        <emphasis>demande</emphasis> explicitement l'authentification au 
+        client quand il estime que c'est nécessaire&nbsp;; le client ne 
+        les envoie pas à sa convenance. Même si un nom d'utilisateur 
+        et/ou un mot de passe sont passés en option, ils ne seront 
+        envoyés au serveur que si celui-ci les demande. Ces options sont 
+        couramment utilisées pour s'authentifier sous un nom 
+        d'utilisateur différent de celui que Subversion aurait choisi 
+        par défaut (comme votre nom de compte système), ou quand on ne 
+        veut pas de commande interactive (par exemple, utilisation de la
+        commande <command>svn</command> dans un script).</para>
 
       <note>
-        <para>A common mistake is to misconfigure a server so
-          that it never issues an authentication challenge.  When
-          users pass <option>--username</option> and
-          <option>--password</option> options to the client, they're
-          surprised to see that they're never used; that is, new
-          revisions still appear to have been committed
-          anonymously!</para>
+        <para>Une erreur classique consiste à mal configurer un serveur 
+          de telle sorte qu'il n'envoie jamais de défi 
+          d'authentification. Quand les utilisateurs passent les options
+          <option>--username</option> et <option>--password</option>, 
+          ils sont surpris de voir qu'elles ne sont jamais utilisées, 
+          c'est-à-dire que les nouvelles révisions semblent toujours 
+          avoir été propagées de façon anonyme&nbsp;!</para>
       </note>
 
-      <para>Here is a final summary that describes how a Subversion
-        client behaves when it receives an authentication
-        challenge.</para>
+      <para>En résumé, voici comment un client Subversion se comporte 
+        quand il reçoit un défi d'authentification&nbsp;:</para>
 
       <orderedlist>
         <listitem>
-          <para>First, the client checks whether the user specified
-            any credentials as command-line options
-            (<option>--username</option> and/or
-            <option>--password</option>).  If so, the client will try
-            to use those credentials to authenticate against the
-            server.</para>
+          <para>D'abord, le client vérifie si l'utilisateur a spécifié 
+            explicitement des éléments d'authentification dans la ligne 
+            de commande (options <option>--username</option> et/ou
+            <option>--password</option>). Si c'est le cas, le client 
+            essaiera ces éléménts pour s'authentifier auprès du 
+            serveur.</para>
         </listitem>
         <listitem>
-          <para>If no command-line credentials were provided, or the
-            provided ones were invalid, the client looks up the server's
-            hostname, port, and realm in the runtime configuration's
-            <filename>auth/</filename> area, to see whether appropriate 
-            credentials are cached there.  If so, it attempts to use
-            those credentials to authenticate.</para>
+          <para>Si les éléments d'authentification ne sont pas passés en
+            ligne de commande, ou si ceux qui on été fournis ne sont pas
+            valides, Le client regarde dans la zone 
+            <filename>auth/</filename>  s'il trouve le nom, le port et 
+            le domaine du serveur pour voir si l'utilisateur a déjà les 
+            éléments d'authentification en cache. Si c'est le cas, il 
+            essaie d'utiliser ces éléments pour s'authentifier.</para>
         </listitem>
         <listitem>
-          <para>Finally, if the previous mechanisms failed to
-            successfully authenticate the user against the server, the
-            client resorts to interactively prompting the user for
-            valid credentials (unless instructed not to do so via the
-            <option>--non-interactive</option> option or its
-            client-specific equivalents).</para>
+          <para>Finalement, si les mécanismes précédents ont abouti à 
+            des échecs d'authentification sur le serveur, le client se 
+            résout à demander les éléments à l'utilisateur (à moins 
+            qu'il ne lui ait été indiqué de ne pas le faire via 
+            l'option <option>--non-interactive</option> ou son 
+            équivalent spécifique au client).</para>
         </listitem>
       </orderedlist>
 
-      <para>If the client successfully authenticates by any of these
-        methods, it will attempt to cache the credentials on disk
-        (unless the user has disabled this behavior, as mentioned
-        earlier).</para>
+      <para>Si le client réussit à s'authentifier par l'une ou l'autre 
+        de ces méthodes, il essaiera de mettre en cache les éléments 
+        d'authentification sur le disque (à moins que cette 
+        fonctionnalité ne soit désactivée, comme indiqué 
+        auparavant).</para>
 
     </sect2>
 
