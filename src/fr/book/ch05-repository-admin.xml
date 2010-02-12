@@ -1,136 +1,139 @@
 <chapter id="svn.reposadmin">
-  <title>Repository Administration</title>
+  <title>Administration d'un dépôt</title>
 
-  <para>The Subversion repository is the central storehouse of all
-    your versioned data.  As such, it becomes an obvious candidate for
-    all the love and attention an administrator can offer.  While the
-    repository is generally a low-maintenance item, it is important to
-    understand how to properly configure and care for it so that
-    potential problems are avoided, and so actual problems are safely
-    resolved.</para>
+  <para>Le dépôt Subversion est le centre de stockage de toutes vos 
+    données suivies en versions. Ainsi, il est de facto l'objet de toute 
+    l'attention et de tous les soins de l'administrateur. Bien que ce 
+    soit un élément ne nécessitant pas énormément de maintenance, il est 
+    important de comprendre comment le configurer et le surveiller 
+    correctement de manière à éviter d'éventuels problèmes et à résoudre 
+    proprement ceux qui se présentent.</para>
 
-  <para>In this chapter, we'll discuss how to create and configure a
-    Subversion repository.  We'll also talk about repository
-    maintenance, providing examples of how and when to use the
-    <command>svnlook</command> and <command>svnadmin</command> tools
-    provided with Subversion.  We'll address some common questions and
-    mistakes and give some suggestions on how to arrange the data in
-    the repository.</para>
+  <para>Dans ce chapitre, nous verrons comment créer et configurer un 
+    dépôt Subversion. Nous aborderons également la maintenance du dépôt, 
+    en donnant des exemples d'utilisation des outils
+    <command>svnlook</command> et <command>svnadmin</command> fournis 
+    avec Subversion. Nous étudierons quelques questions et erreurs 
+    communes et nous donnerons des conseils sur l'organisation des 
+    données dans le dépôt.</para>
 
-  <para>If you plan to access a Subversion repository only in the
-    role of a user whose data is under version control (i.e., via
-    a Subversion client), you can skip this chapter altogether.
-    However, if you are, or wish to become, a Subversion repository
-    administrator,
+  <para>Si vous n'envisagez pas d'utiliser un dépôt Subversion autrement 
+    qu'en simple utilisateur des données (c'est-à-dire en utilisant un 
+    client Subversion), vous pouvez sauter ce chapitre. Cependant, si 
+    vous êtes (ou si vous êtes appelé à être) l'administrateur d'un 
+    dépôt
     <footnote>
-      <para>This may sound really prestigious and lofty, but we're
-        just talking about anyone who is interested in that
-        mysterious realm beyond the working copy where everyone's
-        data hangs out.</para>
-    </footnote>
-    this chapter is for you.</para>
+      <para>Cela peut sembler prestigieux et noble, mais il s'agit juste 
+        en fait d'une personne intéressée par le monde mystérieux qui se 
+        cache derrière la copie de travail que chacun détient.</para>
+    </footnote>, ce chapitre est fait pour vous.</para>
 
 
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.reposadmin.basics">
-    <title>The Subversion Repository, Defined</title>
+    <title>Définition d'un dépôt Subversion</title>
 
-    <para>Before jumping into the broader topic of repository
-      administration, let's further define what a repository is.  How
-      does it look?  How does it feel?  Does it take its tea hot or
-      iced, sweetened, and with lemon?  As an administrator, you'll be
-      expected to understand the composition of a repository both from
-      a literal, OS-level perspective&mdash;how a repository looks and
-      acts with respect to non-Subversion tools&mdash;and from a
-      logical perspective&mdash;dealing with how data is represented
-      <emphasis>inside</emphasis> the repository.</para>
+    <para>Avant d'aborder le vaste sujet de l'administration d'un dépôt, 
+      définissons plus précisément ce qu'est un dépôt. A quoi 
+      ressemble-t-il ? Que ressent-il&nbsp;? Est-ce qu'il préfère son 
+      thé chaud ou glacé, sucré, avec une tranche de citron&nbsp;? En 
+      tant qu'administrateur, vous vous devez de comprendre de quoi est 
+      composé un dépôt, à la fois au niveau du système d'exploitation 
+      (à quoi ressemble le dépôt et comment il réagit vis-à-vis des 
+      outils autres que Subversion) et au niveau logique de 
+      l'organisation des données (comment elles sont représentées
+      <emphasis>à l'intérieur</emphasis> du dépôt.</para>
 
-    <para>Seen through the eyes of a typical file browser application
-      (such as Windows Explorer) or command-line based filesystem
-      navigation tools, the Subversion repository is just another
-      directory full of stuff.  There are some subdirectories with
-      human-readable configuration files in them, some subdirectories
-      with some not-so-human-readable data files, and so on.  As in
-      other areas of the Subversion design, modularity is given high
-      regard, and hierarchical organization is preferred to cluttered
-      chaos.  So a shallow glance into a typical repository from a
-      nuts-and-bolts perspective is sufficient to reveal the basic
-      components of the repository:</para>
+    <para>Du point de vue d'un explorateur de fichiers classique (comme 
+      Windows Explorer) ou d'un outil de navigation du système de 
+      fichiers en ligne de commande, un dépôt Subversion n'est rien 
+      d'autre qu'un répertoire contenant plein de choses. Il y a des 
+      sous-répertoires avec des fichiers de configuration lisibles par 
+      un humain, des sous-répertoires avec des fichiers de données 
+      binaires déjà bien moins lisibles, etc. A l'instar d'autres 
+      parties de Subversion, la modularité est une préoccupation majeure 
+      et l'organisation hiérarchique prévaut sur le bazar. Un coup 
+      d'oeil rapide dans un dépôt typique est suffisant pour obtenir la 
+      liste des composants essentiels d'un dépôt&nbsp;:</para>
             
     <screen>
-$ ls repos
+$ ls depot
 conf/  dav/  db/  format  hooks/  locks/  README.txt
 </screen>
 
-    <para>Here's a quick fly-by overview of what exactly you're seeing
-      in this directory listing.  (Don't get bogged down in the
-      terminology&mdash;detailed coverage of these components exists
-      elsewhere in this and other chapters.)</para>
+    <para>Effectuons un survol rapide de ce que nous voyons dans ce 
+      répertoire (ne vous inquiétez pas si vous ne comprenez pas tous 
+      les termes employés, ils sont expliqués dans ce chapitre ou 
+      ailleurs dans ce livre)&nbsp;:</para>
 
     <variablelist>
       <varlistentry>
         <term>conf</term>
         <listitem>
-          <para>A directory containing configuration files</para>
+          <para>un répertoire contenant des fichiers de 
+            configuration</para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>dav</term>
         <listitem>
-          <para>A directory provided to
-            <filename>mod_dav_svn</filename> for its private
-            housekeeping data</para>
+          <para>un répertoire à disposition de 
+            <filename>mod_dav_svn</filename> pour y stocker ses 
+              informations privées </para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>db</term>
         <listitem>
-          <para>The data store for all of your versioned data</para>
+          <para>le magasin de données pour toutes vos données suivies en 
+            versions</para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>format</term>
         <listitem>
-          <para>A file that contains a single integer that
-            indicates the version number of the repository layout</para>
+          <para>un fichier contenant un unique entier qui indique le 
+            numéro de version de l'organisation du dépôt</para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>hooks</term>
         <listitem>
-          <para>A directory full of hook script templates (and hook
-            scripts themselves, once you've installed some)</para>
+          <para>un répertoire plein de modèles de procédures 
+            automatiques (et les procédures automatiques elles-mêmes, 
+            une fois installées)</para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>locks</term>
         <listitem>
-          <para>A directory for Subversion's repository lock
-            files, used for tracking accessors to the repository</para>
+          <para>un répertoire pour les fichiers de verrous du dépôt 
+            Subversion, utilisé pour garder trace de qui accède au 
+            dépôt </para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>README.txt</term>
         <listitem>
-          <para>A file whose contents merely inform its readers that
-            they are looking at a Subversion repository</para>
+          <para>un fichier qui ne fait qu'informer son lecteur qu'il est 
+            tombé sur un dépôt Subversion</para>
         </listitem>
       </varlistentry>
     </variablelist>
 
-    <para>Of course, when accessed via the Subversion libraries, this
-      otherwise unremarkable collection of files and directories
-      suddenly becomes an implementation of a virtual, versioned
-      filesystem, complete with customizable event triggers.  This
-      filesystem has its own notions of directories and files, very
-      similar to the notions of such things held by real filesystems
-      (such as NTFS, FAT32, ext3, etc.).  But this is a special
-      filesystem&mdash;it hangs these directories and files from
-      revisions, keeping all the changes you've ever made to them
-      safely stored and forever accessible.  This is where the
-      entirety of your versioned data lives.</para>
+    <para>Bien sûr, quand on y accède via les bibliothèques Subversion, 
+      cet ensemble de fichiers et de répertoires se transforme en un 
+      système virtuel de fichiers suivis en versions, complet et 
+      comportant une gestion des événements personnalisable. Ce système 
+      de fichiers possède ses propres notions de répertoires et de 
+      fichiers, très similaires aux notions des systèmes de fichiers 
+      réels (tels que NTFS, FAT32, ext3, etc.). Mais c'est un système de 
+      fichiers spécial&nbsp;: il base ces répertoires et ces fichiers 
+      sur les révisions, gardant une trace des tous les changements 
+      effectués de manière sûre et accessible pour toujours. C'est là 
+      que la totalité de vos données suivies en versions réside.</para>
 
   </sect1>
  
@@ -138,89 +141,88 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.reposadmin.planning">
-    <title>Strategies for Repository Deployment</title>
+    <title>Stratégies de déploiement d'un dépôt</title>
 
-    <para>Due largely to the simplicity of the overall design of the
-      Subversion repository and the technologies on which it relies,
-      creating and configuring a repository are fairly straightforward
-      tasks.  There are a few preliminary decisions you'll want to
-      make, but the actual work involved in any given setup of a
-      Subversion repository is pretty basic, tending toward
-      mindless repetition if you find yourself setting up multiples of
-      these things.</para>
+    <para>En grande partie grâce à la conception épurée du dépôt 
+      Subversion et des technologies sous-jacentes, il est 
+      particulièrement aisé de créer et configurer un dépôt. Il y a 
+      quelques choix préliminaires à faire, mais l'essentiel du travail 
+      de création et de configuration d'un dépôt Subversion est simple 
+      et convivial, facilement reproductible si vous êtes amené à 
+      effectuer des installations multiples.</para>
 
-    <para>Some things you'll want to consider beforehand, though, are:</para>
+    <para>Voici quelques questions à se poser avant toute chose&nbsp;:</para>
 
     <itemizedlist>
       <listitem>
-        <para>What data do you expect to live in your repository (or
-          repositories), and how will that data be organized?</para>
+        <para>Quelles données vont être hébergées dans le dépôt (ou les 
+          dépôts) et quelle en sera l'organisation&nbsp;?</para>
       </listitem>
       <listitem>
-        <para>Where will your repository live, and how will it be
-          accessed?</para>
+        <para>Où sera placé le dépôt et comment les utilisateurs y 
+          accéderont-ils&nbsp;?</para>
       </listitem>
       <listitem>
-        <para>What types of access control and repository event
-          reporting do you need?</para>
+        <para>De quels types de contrôle d'accès et de notifications 
+          d'événements avez-vous besoin&nbsp;?</para>
       </listitem>
       <listitem>
-        <para>Which of the available types of data store do you want
-          to use?</para>
+        <para>Quel type de magasin de données désirez-vous 
+          utiliser&nbsp;?</para>
       </listitem>
     </itemizedlist>
 
-    <para>In this section, we'll try to help you answer those
-      questions.</para>
+    <para>Dans cette section, nous allons essayer de vous aider à 
+      répondre à ces questions.</para>
 
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.projects.chooselayout">
-      <title>Planning Your Repository Organization</title>
+      <title>Prévoir l'organisation de votre dépôt</title>
 
-      <para>While Subversion allows you to move around versioned files
-        and directories without any loss of information, and even
-        provides ways of moving whole sets of versioned history from
-        one repository to another, doing so can greatly disrupt the
-        workflow of those who access the repository often and come to
-        expect things to be at certain locations.  So before creating
-        a new repository, try to peer into the future a bit; plan
-        ahead before placing your data under version control.  By
-        conscientiously <quote>laying out</quote> your repository or
-        repositories and their versioned contents ahead of time, you
-        can prevent many future headaches.</para>
+      <para>Bien que Subversion vous permette de déplacer des fichiers 
+        et des répertoires suivis en versions sans perte d'information, 
+        et qu'il fournisse même des outils pour déplacer des ensembles 
+        complets de données versionnées d'un dépôt à un autre, ces 
+        opérations peuvent perturber le travail des autres 
+        collaborateurs qui accèdent souvent au dépôt et qui s'attendent 
+        à trouver chaque chose à sa place. Ainsi, avant de créer un 
+        nouveau dépôt, essayez de vous projeter un peu dans le 
+        futur&nbsp;; préparez à l'avance le passage de vos données en 
+        suivi de versions. Cette réflexion sur la manière d'organiser 
+        vos données dans le dépôt vous évitera de futurs et nombreux 
+        maux de tête.</para>
 
-      <para>Let's assume that as repository administrator, you will be
-        responsible for supporting the version control system for
-        several projects.  Your first decision is whether to use a
-        single repository for multiple projects, or to give each
-        project its own repository, or some compromise of these
-        two.</para>
+      <para>Supposons qu'en tant qu'administrateur d'un dépôt, vous 
+        serez responsable de l'administration du système de gestion de 
+        versions pour plusieurs projets. La première décision à prendre 
+        est de choisir entre un seul dépôt pour tous les projets et un 
+        dépôt par projet, ou bien un compromis entre ces deux 
+        solutions.</para>
 
-      <para>There are benefits to using a single repository for
-        multiple projects, most obviously the lack of duplicated
-        maintenance.  A single repository means that there is one set
-        of hook programs, one thing to routinely back up, one thing to
-        dump and load if Subversion releases an incompatible new
-        version, and so on.  Also, you can move data between projects
-        easily, without losing any historical versioning
-        information.</para>
+      <para>Un seul dépôt pour tous les projets offre des avantages, ne 
+        serait-ce que pour la maintenance unifiée. Un seul dépôt 
+        signifie qu'il n'y a qu'un seul jeu de procédures automatiques, 
+        une seule sauvegarde à gérer, un seul jeu d'opérations de 
+        déchargement et de chargement à effectuer si la nouvelle version 
+        de Subversion est incompatible avec l'ancienne version, etc. 
+        Vous pouvez également déplacer facilement des données entre les 
+        projets, sans perdre l'historique de ces informations.</para>
 
-      <para>The downside of using a single repository is that
-        different projects may have different requirements in terms of
-        the repository event triggers, such as needing to send commit
-        notification emails to different mailing lists, or having
-        different definitions about what does and does not constitute
-        a legitimate commit.  These aren't insurmountable problems, of
-        course&mdash;it just means that all of your hook scripts have
-        to be sensitive to the layout of your repository rather than
-        assuming that the whole repository is associated with a single
-        group of people.  Also, remember that Subversion uses
-        repository-global revision numbers.  While those numbers don't
-        have any particular magical powers, some folks still don't
-        like the fact that even though no changes have been made to
-        their project lately, the youngest revision number for the
-        repository keeps climbing because other projects are actively
-        adding new revisions.
+      <para>Les inconvénients à utiliser un seul dépôt sont que les 
+        différents projets auront certainement des besoins différents en 
+        termes de gestion des événements, comme la notification par 
+        e-mail des propagations à des listes d'adresses différentes ou 
+        des définitions différentes de ce qui constitue une propagation 
+        légitime. Bien sûr, ce ne sont pas des problèmes insurmontables 
+        &mdash; cela implique juste que vos procédures automatiques 
+        devront tenir compte de l'organisation du dépôt dans lequel 
+        elles sont invoquées plutôt que de considérer que l'ensemble du 
+        dépôt est associé à un seul groupe d'utilisateurs. Rappelez-vous 
+        également que Subversion utilise des numéros de révisions 
+        globaux au dépôt. Bien que ces numéros ne possèdent pas de 
+        pouvoirs magiques particuliers, certaines personnes n'aiment pas 
+        voir le numéro de révision augmenter alors qu'elles n'ont pas 
+        touché à leur propre projet.
         <footnote>
           <para>Whether founded in ignorance or in poorly considered
             concepts about how to derive legitimate software
@@ -231,442 +233,469 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
         </footnote>
       </para>
 
-      <para>A middle-ground approach can be taken, too.  For example,
-        projects can be grouped by how well they relate to each other.
-        You might have a few repositories with a handful of projects
-        in each repository.  That way, projects that are likely to
-        want to share data can do so easily, and as new revisions are
-        added to the repository, at least the developers know that
-        those new revisions are at least remotely related to everyone
-        who uses that repository.</para>
+      <para>On peut aussi adopter une approche intermédiaire. Par 
+        exemple, les projets peuvent être regroupés par thème. Vous 
+        pourriez avoir quelques dépôts, avec une poignée de projets dans 
+        chaque dépôt. Ainsi, les projets susceptibles de partager des 
+        données le font aisément et les développeurs sont tenus au 
+        courant des avancées des projets en relation avec les leurs par 
+        le biais des nouvelles révisions du dépôt.</para>
 
-      <para>After deciding how to organize your projects with respect
-        to repositories, you'll probably want to think about directory
-        hierarchies within the repositories themselves.  Because
-        Subversion uses regular directory copies for branching and
-        tagging (see <xref linkend="svn.branchmerge"/>), the
-        Subversion community recommends that you choose a repository
-        location for each <firstterm>project
-        root</firstterm>&mdash;the <quote>topmost</quote> directory
-        that contains data related to that project&mdash;and then
-        create three subdirectories beneath that root:
-        <filename>trunk</filename>, meaning the directory under which
-        the main project development occurs;
-        <filename>branches</filename>, which is a directory in which
-        to create various named branches of the main development line;
-        and <filename>tags</filename>, which is a collection of tree
-        snapshots that are created, and perhaps destroyed, but never
-        changed.
+      <para>Une fois l'organisation des dépôts définie, il faut se 
+        préoccuper de la hiérarchie des répertoires à l'intérieur des 
+        dépôts eux-mêmes. Comme Subversion utilise de simples copies de 
+        répertoires pour créer les branches et les étiquettes (voir 
+        <xref linkend="svn.branchmerge"/>), la communauté Subversion 
+        recommande de choisir un endroit dans le dépôt pour la 
+        <firstterm>racine</firstterm> de chaque projet (le répertoire 
+        dont la sous-arborescence contient toutes les données relatives 
+        à un projet) et d'y placer trois sous-répertoires :
+        <filename>trunk</filename> (tronc en français), le répertoire 
+        qui héberge les principaux développements du projet&nbsp;;
+        <filename>branches</filename>, le répertoire dans lequel seront 
+        créées les différentes variations de la ligne de développement 
+        principale&nbsp;; et <filename>tags</filename>, (étiquettes en 
+        français), qui contient un ensemble d'instantanés de 
+        l'arborescence (les instantanés sont créés, voire détruits, mais 
+        jamais modifiés)
         <footnote>
-          <para>The <filename>trunk</filename>, <filename>tags</filename>, 
+          <para>Le trio <filename>trunk</filename>, <filename>tags</filename>, 
             and <filename>branches</filename> trio is sometimes referred
             to as <quote>the TTB directories.</quote></para>
-        </footnote>
+        </footnote>.
         </para>
 
-      <para>For example, your repository might look like this:</para>
+      <para>Par exemple, votre dépôt pourrait ressembler à 
+        ceci&nbsp;:</para>
 
       <screen>
-/
-   calc/
-      trunk/
-      tags/
-      branches/
-   calendar/
-      trunk/
-      tags/
-      branches/
-   spreadsheet/
-      trunk/
-      tags/
-      branches/
+  /
+     calculatrice/
+        trunk/
+        tags/
+        branches/
+     calendrier/
+        trunk/
+        tags/
+        branches/
+     tableur/
+        trunk/
+        tags/
+        branches/
    &hellip;
 </screen>
 
-      <para>Note that it doesn't matter where in your repository each
-        project root is.  If you have only one project per repository,
-        the logical place to put each project root is at the root of
-        that project's respective repository.  If you have multiple
-        projects, you might want to arrange them in groups inside the
-        repository, perhaps putting projects with similar goals or
-        shared code in the same subdirectory, or maybe just grouping
-        them alphabetically.  Such an arrangement might look
-        like this:</para>
+      <para>Veuillez noter que l'emplacement du projet dans le dépôt 
+        n'est pas important. Si vous n'avez qu'un seul projet par dépôt, 
+        il est logique de placer la racine du projet à la racine du 
+        dépôt correspondant. Si vous avez plusieurs projets, vous 
+        voudrez peut-être les classer par groupes dans des 
+        sous-répertoires communs du dépôt, en fonction des objectifs ou 
+        du code à partager par exemple, ou tout simplement en les 
+        groupant par ordre alphabétique. Voici un exemple&nbsp;:</para>
 
       <screen>
-/
-   utils/
-      calc/
-         trunk/
-         tags/
-         branches/
-      calendar/
-         trunk/
-         tags/
-         branches/
+  /
+     utilitaires/
+        calculatrice/
+           trunk/
+           tags/
+           branches/
+        calendrier/
+           trunk/
+           tags/
+           branches/
       &hellip;
-   office/
-      spreadsheet/
-         trunk/
-         tags/
-         branches/
+     bureautique/
+        tableur/
+           trunk/
+           tags/
+           branches/
       &hellip;
 </screen>
 
-      <para>Lay out your repository in whatever way you see fit.
-        Subversion does not expect or enforce a particular layout&mdash;in
-        its eyes, a directory is a directory is a directory.
-        Ultimately, you should choose the repository arrangement that
-        meets the needs of the people who work on the projects that
-        live there.</para>
+      <para>Organisez votre dépôt comme vous le sentez. Subversion n'a 
+        aucune exigence en la matière &mdash; pour lui, un répertoire 
+        est un répertoire. L'objectif est d'avoir une organisation qui 
+        réponde aux besoins des collaborateurs des différents 
+        projets.</para>
 
-      <para>In the name of full disclosure, though, we'll mention
-        another very common layout.  In this layout, the
-        <filename>trunk</filename>, <filename>tags</filename>, and
-        <filename>branches</filename> directories live in the root
-        directory of your repository, and your projects are in
-        subdirectories beneath those, like so:</para>
+      <para>Cependant, par souci de transparence, nous signalerons une 
+        autre organisation également très répandue. Dans cette 
+        organisation, les répertoires <filename>trunk</filename>, 
+        <filename>tags</filename>, et <filename>branches</filename> sont 
+        situés à la racine du dépôt et les projets sont placés dans des 
+        sous-répertoires juste en dessous, comme ceci&nbsp;:</para>
 
       <screen>
-/
-   trunk/
-      calc/
-      calendar/
-      spreadsheet/
+ /
+     trunk/
+        calculatrice/
+        calendrier/
+        tableur/
       &hellip;
-   tags/
-      calc/
-      calendar/
-      spreadsheet/
+     tags/
+        calculatrice/
+        calendrier/
+        tableur/
       &hellip;
-   branches/
-      calc/
-      calendar/
-      spreadsheet/
+     branches/
+        calculatrice/
+        calendrier/
+        tableur/
       &hellip;
 </screen>
 
-      <para>There's nothing particularly incorrect about such a
-        layout, but it may or may not seem as intuitive for your
-        users.  Especially in large, multiproject situations with
-        many users, those users may tend to be familiar with only one
-        or two of the projects in the repository.  But the
-        projects-as-branch-siblings approach tends to deemphasize project
-        individuality and focus on the entire set of projects as a
-        single entity.  That's a social issue, though.  We like our
-        originally suggested arrangement for purely practical
-        reasons&mdash;it's easier to ask about (or modify, or migrate
-        elsewhere) the entire history of a single project when there's
-        a single repository path that holds the entire
-        history&mdash;past, present, tagged, and branched&mdash;for
-        that project and that project alone.</para>
+      <para>Il n'y a rien d'incorrect dans une telle organisation, mais 
+        elle peut ne pas être très intuitive pour vos utilisateurs. En 
+        particulier dans des situations complexes avec plusieurs projets 
+        et un grand nombre d'utilisateurs, dont la plupart ne 
+        connaissent qu'un ou deux projets du dépôt. Mais cette approche 
+        <quote>plusieurs projets par branche</quote> a tendance à 
+        favoriser l'ouverture de chaque projet sur les autres et pousse 
+        à envisager l'ensemble des projets comme une seule entité. Cela 
+        reste un problème social. Nous aimons l'organisation suggérée au 
+        début pour des raisons purement pratiques&nbsp;: il est plus 
+        facile de faire des requêtes (ou des modifications, des 
+        migrations) sur l'historique complet d'un projet quand une 
+        sous-arborescence du dépôt contient l'ensemble des données 
+        (passé, présent, étiquettes et branches) de ce projet et elles 
+        seules.</para>
 
     </sect2>
 
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.basics.hosting">
-      <title>Deciding Where and How to Host Your Repository</title>
+      <title>Décider où et comment héberger votre dépôt</title>
 
-      <para>Before creating your Subversion repository, an obvious
-        question you'll need to answer is where the thing is going to
-        live.  This is strongly connected to myriad other
-        questions involving how the repository will be accessed (via a
-        Subversion server or directly), by whom (users behind your
-        corporate firewall or the whole world out on the open
-        Internet), what other services you'll be providing around
-        Subversion (repository browsing interfaces, email-based
-        commit notification, etc.), your data backup strategy, and so
-        on.</para>
+      <para>Avant de créer votre dépôt Subversion, vous devrez vous 
+        demander où il va résider. C'est fortement lié à une myriade 
+        d'autres questions telles que qui sont les utilisateurs 
+        (sont-ils à l'intérieur de votre réseau interne, derrière le 
+        pare-feu de votre entreprise, ou bien s'agit-il de n'importe 
+        qui, n'importe où sur Internet&nbsp;?), comment les utilisateurs 
+        accéderont au dépôt (via un serveur Subversion ou directement), 
+        quels autres services fournirez-vous autour de Subversion (une 
+        interface pour navigateur Web, des notifications par mail des 
+        propagations, etc.), quelle sera votre politique de sauvegarde, 
+        et ainsi de suite. </para>
 
-      <para>We cover server choice and configuration in <xref
-        linkend="svn.serverconfig" />, but the point we'd like to
-        briefly make here is simply that the answers to some of these
-        other questions might have implications that force your hand
-        when deciding where your repository will live.  For example,
-        certain deployment scenarios might require accessing the
-        repository via a remote filesystem from multiple computers, in
-        which case (as you'll read in the next section) your choice of
-        a repository backend data store turns out not to be a choice
-        at all because only one of the available backends will work
-        in this scenario.</para>
+      <para>Le choix et la configuration du serveur seront abordés au 
+        <xref linkend="svn.serverconfig" />, mais nous voulons signaler 
+        dès maintenant que certains choix pour l'une ou l'autre de ces 
+        questions ont des implications sur l'endroit où implémenter 
+        votre serveur. Par exemple, certains scénarios de déploiement 
+        nécessitent l'accès au dépôt via un système de fichiers distant 
+        pour plusieurs ordinateurs et, dans ce cas, le choix du type de 
+        magasin de données n'en est plus un, puisqu'un seul type de 
+        magasin de données convient dans ce scénario.</para>
 
-      <para>Addressing each possible way to deploy
-        Subversion is both impossible and outside the scope of this
-        book.  We simply encourage you to evaluate your options using
-        these pages and other sources as your reference material and to
-        plan ahead.</para>
+      <para>Décrire l'ensemble des possibilités de déploiement de 
+        Subversion est impossible et n'est pas l'objectif de ce livre. 
+        Nous vous encourageons simplement à évaluer vos choix avec ces 
+        quelques pages et d'autres ressources en guise de référence pour 
+        planifier correctement les opérations.</para>
 
     </sect2>
 
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.basics.backends">
-      <title>Choosing a Data Store</title>
+      <title>Choisir un magasin de données</title>
 
-      <para>As of version 1.1, Subversion provides two options for the
-        type of underlying data store&mdash;often referred to as
-        <quote>the backend</quote> or, somewhat confusingly,
-        <quote>the (versioned) filesystem</quote>&mdash;that each
-        repository uses.  One type of data store keeps everything in a
-        Berkeley DB (or BDB) database environment; repositories that
-        use this type are often referred to as being
-        <quote>BDB-backed.</quote>  The other type stores data in
-        ordinary flat files, using a custom format.  Subversion
-        developers have adopted the habit of referring to this latter
-        data storage mechanism as <firstterm>FSFS</firstterm>
+      <para>Depuis la version 1.1, Subversion offre deux types de 
+        stockage interne pour le magasin de données &mdash; souvent 
+        désigné par <quote>backend</quote> en anglais (sans équivalent 
+        en français) ou, ce qui peut être source de confusion, <quote>le 
+        système de fichiers (versionné)</quote> &mdash; utilisé par le 
+        dépôt. Un des types de magasin de données conserve tout dans une 
+        base de données Berkeley DB (ou BDB)&nbsp;; les dépôts qui 
+        utilisent ce type de magasin seront qualifiés de <quote>dépôts 
+        gérés par BDB</quote> ou <quote>dépôts BDB</quote>. L'autre type 
+        de magasin stocke les données dans des fichiers ordinaires, en 
+        utilisant un format particulier. Les développeurs de Subversion 
+        ont pris l'habitude d'appeler ce type de stockage 
+        <firstterm>FSFS</firstterm>
         <footnote>
           <para>Often pronounced <quote>fuzz-fuzz,</quote> if Jack
             Repenning has anything to say about it.  (This book,
             however, assumes that the reader is thinking
             <quote>eff-ess-eff-ess.</quote>)</para>
         </footnote> 
-        &mdash;a versioned filesystem implementation that uses the
-        native OS filesystem directly&mdash;rather than via a database
-        library or some other abstraction layer&mdash;to store data.</para>
+        &mdash; une implémentation d'un système de fichiers suivis 
+        en versions qui utilise le système de fichiers natif du système 
+        d'exploitation directement plutôt que par l'intermédiaire d'une 
+        bibliothèque de gestionnaire de base de données ou toute autre 
+        couche d'abstraction.</para>
 
-      <para><xref linkend="svn.reposadmin.basics.backends.tbl-1" />
-        gives a comparative overview of Berkeley DB and FSFS
-        repositories.</para>
+      <para>Le <xref linkend="svn.reposadmin.basics.backends.tbl-1" />
+        offre une présentation comparée des dépôts utilisant Berkeley DB 
+        et FSFS.</para>
 
       <table id="svn.reposadmin.basics.backends.tbl-1">
-        <title>Repository data store comparison</title>
+        <title>Comparaison des magasins de données de dépôts</title>
         <tgroup cols="4">
           <thead>
             <row>
-              <entry>Category</entry>
-              <entry>Feature</entry>
+              <entry>Catégorie</entry>
+              <entry>Fonctionnalité</entry>
               <entry>Berkeley DB</entry>
               <entry>FSFS</entry>
             </row>
           </thead>
           <tbody>
             <row>
-              <entry morerows="1">Reliability</entry>
-              <entry>Data integrity</entry>
-              <entry>When properly deployed, extremely reliable;
-                Berkeley DB 4.4 brings auto-recovery</entry>
-              <entry>Older versions had some rarely demonstrated, but
-                data-destroying bugs</entry>
+              <entry morerows="1">Fiabilité</entry>
+              <entry>Intégrité des données</entry>
+              <entry>Très fiable quand déployé correctement&nbsp;; 
+                Berkeley DB 4.4 apporte l'auto-restauration</entry>
+              <entry>Les vieilles versions avaient quelques bogues 
+                (rarement démontrés) qui détruisaient des 
+                données</entry>
             </row>
             <row>
-              <entry>Sensitivity to interruptions</entry>
-              <entry>Very; crashes and permission problems can leave the
-                database <quote>wedged,</quote> requiring journaled
-                recovery procedures</entry>
-              <entry>Quite insensitive</entry>
+              <entry>Sensibilité aux interruptions</entry>
+              <entry>Forte&nbsp;; les <quote>plantages</quote> et les 
+                problèmes de droits peuvent laisser la base de données 
+                dans un état instable, nécessitant le recours aux 
+                procédures de restauration issues de la 
+                journalisation</entry>
+              <entry>Quasiment insensible</entry>
             </row>
             <row>
-              <entry morerows="3">Accessibility</entry>
-              <entry>Usable from a read-only mount</entry>
-              <entry>No</entry>
-              <entry>Yes</entry>
+              <entry morerows="3">Accessibilité</entry>
+              <entry>Utilisable depuis un montage en lecture seule</entry>
+              <entry>Non</entry>
+              <entry>Oui</entry>
             </row>
             <row>
-              <entry>Platform-independent storage</entry>
-              <entry>No</entry>
-              <entry>Yes</entry>
+              <entry>Stockage indépendant de la plate-forme</entry>
+              <entry>Non</entry>
+              <entry>Oui</entry>
             </row>
             <row>
-              <entry>Usable over network filesystems</entry>
-              <entry>Generally, no</entry>
-              <entry>Yes</entry>
+              <entry>Utilisable sur des systèmes de fichiers en réseau</entry>
+              <entry>Généralement non</entry>
+              <entry>Oui</entry>
             </row>
             <row>
-              <entry>Group permissions handling</entry>
-              <entry>Sensitive to user umask problems; best if accessed
-                by only one user</entry>
-              <entry>Works around umask problems</entry>
+              <entry>Gestion des droits pour les groupes </entry>
+              <entry>Sensible aux problèmes de umask de 
+                l'utilisateur&nbsp;; c'est mieux si un seul utilisateur 
+                y accède</entry>
+              <entry>Contourne les problèmes de umask</entry>
             </row>
             <row>
-              <entry morerows="2">Scalability</entry>
-              <entry>Repository disk usage</entry>
-              <entry>Larger (especially if logfiles aren't purged)</entry>
-              <entry>Smaller</entry>
+              <entry morerows="2">Extensibilité</entry>
+              <entry>Utilisation des disques sur le dépôt</entry>
+              <entry>Plus grande (surtout si les fichiers de 
+                journalisation ne sont pas purgés) </entry>
+              <entry>Plus faible</entry>
             </row>
             <row>
-              <entry>Number of revision trees</entry>
-              <entry>Database; no problems</entry>
-              <entry>Some older native filesystems don't scale well with
-                thousands of entries in a single directory</entry>
+              <entry>Nombre de révisions</entry>
+              <entry>Base de données, pas de problème</entry>
+              <entry>De vieux systèmes de fichiers fonctionnent moins 
+                bien lorsqu'il y a plusieurs milliers d'entrées dans un 
+                seul répertoire</entry>
             </row>
             <row>
-              <entry>Directories with many files</entry>
-              <entry>Slower</entry>
-              <entry>Faster</entry>
+              <entry> Répertoires avec beaucoup de fichiers</entry>
+              <entry>Plus lent</entry>
+              <entry>Plus rapide</entry>
             </row>
             <row>
-              <entry morerows="1">Performance</entry>
-              <entry>Checking out latest revision</entry>
-              <entry>No meaningful difference</entry>
-              <entry>No meaningful difference</entry>
+              <entry morerows="1">Performances</entry>
+              <entry>Extraire la dernière révision</entry>
+              <entry>Pas de différence significative</entry>
+              <entry>Pas de différence significative</entry>
             </row>
             <row>
-              <entry>Large commits</entry>
-              <entry>Slower overall, but cost is amortized across the
-                lifetime of the commit</entry>
-              <entry>Faster overall, but finalization delay may cause 
-                client timeouts</entry>
+              <entry>Grosses propagations</entry>
+              <entry>Globalement plus lent, mais mais cette lenteur est 
+                répartie sur toute la durée de la propagation</entry>
+              <entry>Globalement plus rapide, mais le délai de 
+                finalisation peut amener le client à considérer que sa 
+                requête a expiré avant qu'il ne reçoive la 
+                réponse</entry>
             </row>
           </tbody>
         </tgroup>      
       </table>
 
-      <para>There are advantages and disadvantages to each of these
-        two backend types.  Neither of them is more
-        <quote>official</quote> than the other, though the newer FSFS
-        is the default data store as of Subversion 1.2.  Both are
-        reliable enough to trust with your versioned data.  But as you
-        can see in <xref
-        linkend="svn.reposadmin.basics.backends.tbl-1" />, the FSFS
-        backend provides quite a bit more flexibility in terms of its
-        supported deployment scenarios.  More flexibility means you
-        have to work a little harder to find ways to deploy it
-        incorrectly.  Those reasons&mdash;plus the fact that not using
-        Berkeley DB means there's one fewer component in the
-        system&mdash;largely explain why today almost everyone uses
-        the FSFS backend when creating new repositories.</para>
+      <para>Chaque type de magasin de données a ses avantages et ses 
+        inconvénients. Aucun n'est plus <quote>officiel</quote> que 
+        l'autre, même si le nouveau FSFS est le magasin par défaut 
+        depuis Subversion 1.2. Les deux sont suffisamment fiables pour 
+        y stocker vos données suivies en versions en toute confiance. 
+        Mais comme l'indique le <xref
+        linkend="svn.reposadmin.basics.backends.tbl-1" />, FSFS est un 
+        peu plus souple à déployer. Plus de souplesse signifie que vous 
+        devrez y mettre un peu plus du vôtre pour faire des erreurs lors 
+        du déploiement. C'est pourquoi, en plus du fait que ne pas 
+        utiliser Berkeley DB permet de compter un composant de moins 
+        dans le système, aujourd'hui presque tout le monde utilise FSFS 
+        lors de la création de nouveaux dépôts.</para>
 
-      <para>Fortunately, most programs that access Subversion
-        repositories are blissfully ignorant of which backend data
-        store is in use.  And you aren't even necessarily stuck with
-        your first choice of a data store&mdash;in the event that you
-        change your mind later, Subversion provides ways of migrating
-        your repository's data into another repository that uses a
-        different backend data store.  We talk more about that later
-        in this chapter.</para>
+      <para>Heureusement, la plupart des programmes qui accèdent aux 
+        dépôts Subversion ignorent royalement quel type de magasin de 
+        données est utilisé. Et vous n'êtes même pas prisonnier de votre 
+        premier choix de magasin&nbsp;: au cas où vous changeriez d'avis 
+        plus tard, Subversion offre différentes façons de migrer les 
+        données de votre dépôt dans un autre dépôt utilisant un magasin 
+        de données différent. Nous en reparlerons plus loin dans ce 
+        chapitre.</para>
 
-      <para>The following subsections provide a more detailed look at
-        the available backend data store types.</para>
+      <para>Les paragraphes suivants abordent plus en détail les 
+        différents types de magasins de données disponibles.</para>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.reposadmin.basics.backends.bdb">
         <title>Berkeley DB</title>
         
-        <para>When the initial design phase of Subversion was in
-          progress, the developers decided to use Berkeley DB for a
-          variety of reasons, including its open source license,
-          transaction support, reliability, performance, API
-          simplicity, thread safety, support for cursors, and so
-          on.</para>
+        <para>Lors de la conception initiale de Subversion, les 
+          développeurs ont décidé d'utiliser le gestionnaire de bases de 
+          données Berkeley DB pour tout un tas de raisons, entre autres 
+          sa licence Open Source, son support des transactions, sa 
+          fiabilité, ses performances, la simplicité de son interface de 
+          programmation (API), le bon support des processus légers 
+          (threads), le support des curseurs, etc.</para>
 
-        <para>Berkeley DB provides real transaction
-          support&mdash;perhaps its most powerful feature.  Multiple
-          processes accessing your Subversion repositories don't have
-          to worry about accidentally clobbering each other's data.
-          The isolation provided by the transaction system is such
-          that for any given operation, the Subversion repository code
-          sees a static view of the database&mdash;not a database that
-          is constantly changing at the hand of some other
-          process&mdash;and can make decisions based on that view.  If
-          the decision made happens to conflict with what another
-          process is doing, the entire operation is rolled back as though
-          it never happened, and Subversion gracefully retries the
-          operation against a new, updated (and yet still static) view
-          of the database.</para>
+        <para>Le gestionnaire de bases de données Berkeley DB apporte un 
+          support réel des transactions (c'est peut-être sa 
+          fonctionnalité la plus puissante). Si de nombreux processus 
+          accèdent en même temps au dépôt, ils n'ont pas à se soucier 
+          d'éventuelles corruptions de données de la part des autres 
+          processus. L'isolement créé par le système de transaction est 
+          tel que pour une opération donnée, Subversion voit une base de 
+          données statique &mdash; pas une base de données en perpétuel 
+          changement en raison des autres processus &mdash; et peut donc 
+          prendre des décisions à partir de cette perspective. Si la 
+          décision entraîne un conflit avec ce que fait un autre 
+          processus, l'opération complète est annulée, tout se passe 
+          comme si elle n'avait jamais eu lieu, et Subversion essaie une 
+          nouvelle fois son opération sur la base de données mise à jour 
+          (qui apparaît toujours statique).</para>
 
-        <para>Another great feature of Berkeley DB is <firstterm>hot
-          backups</firstterm>&mdash;the ability to back up the
-          database environment without taking it
-          <quote>offline.</quote> We'll discuss how to back up your
-          repository later in this chapter (in <xref
-          linkend="svn.reposadmin.maint.backup"/>), but the benefits
-          of being able to make fully functional copies of your
-          repositories without any downtime should be obvious.</para>
+        <para>Une autre fonctionnalité phare du gestionnaire de bases de 
+          données Berkeley DB est la  <firstterm>sauvegarde à 
+          chaud </firstterm> &mdash; la capacité de sauvegarde de 
+          l'environnement de la base de données sans la couper du 
+          réseau. Nous verrons comment réaliser une sauvegarde de votre 
+          dépôt plus tard dans ce chapitre (dans <xref
+          linkend="svn.reposadmin.maint.backup"/>), mais le bénéfice de 
+          pouvoir faire des copies opérationnelles de vos dépôts sans 
+          interruption de service doit vous sauter aux yeux.</para>
 
-        <para>Berkeley DB is also a very reliable database system when
-          properly used.  Subversion uses Berkeley DB's logging
-          facilities, which means that the database first writes to
-          on-disk logfiles a description of any modifications it is
-          about to make, and then makes the modification itself.  This
-          is to ensure that if anything goes wrong, the database
-          system can back up to a previous
-          <firstterm>checkpoint</firstterm>&mdash;a location in the
-          logfiles known not to be corrupt&mdash;and replay
-          transactions until the data is restored to a usable state.
-          See <xref linkend="svn.reposadmin.maint.diskspace"/> later
-          in this chapter for more about Berkeley DB logfiles.</para>
+        <para>Le gestionnaire de bases de données Berkeley DB est aussi 
+          très fiable quand il est utilisé correctement. Subversion 
+          utilise les fonctions de journalisation du gestionnaire de 
+          bases de données Berkeley DB, ce qui veut dire que la base de 
+          données consigne d'abord, dans un fichier de journalisation 
+          situé sur disque, chaque modification qu'elle s'apprête à 
+          effectuer, puis effectue la modification elle-même. Cela 
+          garantit que si quelque chose se passe mal, le gestionnaire de 
+          base de données peut revenir à un <firstterm>point de 
+          contrôle</firstterm> précédent &mdash; un point précis des 
+          fichiers de journalisation dont il sait qu'il n'est pas 
+          corrompu &mdash; et rejouer les transactions jusqu'à ce que 
+          les données soient dans un état opérationnel. Voir <xref 
+          linkend="svn.reposadmin.maint.diskspace"/> plus loin dans ce 
+          chapitre pour plus de détails sur les fichiers de 
+          journalisation Berkeley DB.</para>
 
-        <para>But every rose has its thorn, and so we must note some
-          known limitations of Berkeley DB.  First, Berkeley DB
-          environments are not portable.  You cannot simply copy a
-          Subversion repository that was created on a Unix system onto
-          a Windows system and expect it to work.  While much of the
-          Berkeley DB database format is architecture-independent,
-          other aspects of the environment are not.
-          Second, Subversion uses Berkeley DB in a way that will not
-          operate on Windows 95/98 systems&mdash;if you need to house
-          a BDB-backed repository on a Windows machine, stick with
-          Windows 2000 or later.</para>
+        <para>Mais chaque médaille à son revers et nous devons vous 
+          avertir de quelques limitations du gestionnaire de bases de 
+          données Berkeley DB. Premièrement, les environnements du 
+          gestionnaire de bases de données Berkeley DB ne sont pas 
+          portables. Vous ne pouvez pas simplement copier un dépôt 
+          Subversion qui a été créé sur un système Unix vers un système 
+          Windows et espérer qu'il fonctionnera. Bien que la majeure 
+          partie de la base de données Berkeley DB soit indépendante de 
+          l'architecture, d'autres aspects de l'environnement ne le sont 
+          pas. Deuxièmement, Subversion utilise le gestionnaire de bases 
+          de données Berkeley DB de telle façon que cela ne fonctionne 
+          pas sur un système Windows 95/98&nbsp;: si vous avez besoin 
+          d'héberger un dépôt géré par BDB sur une machine Windows, 
+          adoptez Windows 2000 ou plus.</para>
 
-        <para>While Berkeley DB promises to behave correctly on
-          network shares that meet a particular set of specifications,
+        <para>Alors que le gestionnaire de bases de données Berkeley DB 
+          prétend fonctionner correctement sur un système de fichiers en 
+          réseau pour peu que celui-ci respecte des caractéristiques 
+          particulières
           <footnote>
             <para>Berkeley DB requires that the underlying filesystem
               implement strict POSIX locking semantics, and more
               importantly, the ability to map files directly into
               process memory.</para>
           </footnote>
-          most networked filesystem types and appliances do
-          <emphasis>not</emphasis> actually meet those requirements.
-          And in no case can you allow a BDB-backed repository that
-          resides on a network share to be accessed by multiple
-          clients of that share at once (which quite often is the
-          whole point of having the repository live on a network share
-          in the first place).</para>
+          la plupart des systèmes de fichiers en réseau et des systèmes 
+          dédiés <emphasis>n'atteignent pas</emphasis> ces pré-requis. 
+          Et en aucun cas il ne vous sera possible de partager ce dépôt 
+          sur un système de fichiers en réseau entre plusieurs clients 
+          (alors que c'est quand même l'intérêt principal d'un dépôt 
+          accessible sur un partage réseau).</para>
 
         <warning>
-          <para>If you attempt to use Berkeley DB on a noncompliant
-            remote filesystem, the results are unpredictable&mdash;you
-            may see mysterious errors right away, or it may be months
-            before you discover that your repository database is
-            subtly corrupted.  You should strongly consider using the
-            FSFS data store for repositories that need to live on a
-            network share.</para>
+          <para>Si vous tentez d'utiliser le gestionnaire de bases de 
+            données Berkeley DB sur un système de fichiers en réseau non 
+            compatible, les résultats sont imprévisibles&nbsp;: vous 
+            vous apercevrez peut-être immédiatement de mystérieuses 
+            erreurs, mais il se peut qu'il se passe des mois avant que 
+            vous ne découvriez que votre base de données de dépôt est 
+            corrompue. Songez sérieusement à utiliser un magasin FSFS 
+            pour les dépôts qui doivent être hébergés sur un partage 
+            réseau.</para>
         </warning>
           
-        <para>Finally, because Berkeley DB is a library linked
-          directly into Subversion, it's more sensitive to
-          interruptions than a typical relational database system.
-          Most SQL systems, for example, have a dedicated server
-          process that mediates all access to tables.  If a program
-          accessing the database crashes for some reason, the database
-          daemon notices the lost connection and cleans up any mess
-          left behind.  And because the database daemon is the only
-          process accessing the tables, applications don't need to
-          worry about permission conflicts.  These things are not the
-          case with Berkeley DB, however.  Subversion (and programs
-          using Subversion libraries) access the database tables
-          directly, which means that a program crash can leave the
-          database in a temporarily inconsistent, inaccessible state.
-          When this happens, an administrator needs to ask Berkeley DB
-          to restore to a checkpoint, which is a bit of an annoyance.
-          Other things can cause a repository to <quote>wedge</quote>
-          besides crashed processes, such as programs conflicting over
-          ownership and permissions on the database files.</para>
+        <para>Finalement, parce que la bibliothèque du gestionnaire de 
+          bases de données Berkeley DB est directement incluse dans 
+          Subversion, elle est plus sensible aux interruptions qu'une 
+          base de données relationnelle classique. La plupart des 
+          systèmes SQL, par exemple, disposent d'un processus serveur 
+          dédié qui coordonne tous les accès aux tables. Si un programme 
+          qui accède aux tables plante pour une raison ou une autre, le 
+          processus serveur de la base de données s'en aperçoit et fait 
+          le ménage. Et comme le processus serveur est le seul processus 
+          accédant réellement aux tables, les applications n'ont pas à 
+          se soucier des conflits de droits. Cependant, ce n'est pas le 
+          cas avec le gestionnaire de bases de données Berkeley DB. 
+          Subversion (et les programmes utilisant les bibliothèques de 
+          Subversion) accèdent aux tables directement, ce qui veut dire 
+          que le plantage d'un programme peut laisser la base de données 
+          dans un état temporairement incohérent et inaccessible. Quand 
+          cela arrive, un administrateur doit demander au gestionnaire 
+          de bases de données Berkeley DB de revenir à un point de 
+          contrôle, ce qui est assez ennuyeux. D'autres incidents 
+          peuvent faire <quote>planter</quote> la base de données, comme 
+          des conflits entre programmes pour la possession ou les droits 
+          sur les fichiers de la base de données.</para>
 
         <note>
-          <para>Berkeley DB 4.4 brings (to Subversion 1.4 and later)
-            the ability for Subversion to automatically and
-            transparently recover Berkeley DB environments in need of
-            such recovery.  When a Subversion process attaches to a
-            repository's Berkeley DB environment, it uses some process
-            accounting mechanisms to detect any unclean disconnections
-            by previous processes, performs any necessary recovery,
-            and then continues on as though nothing happened.  This
-            doesn't completely eliminate instances of repository
-            wedging, but it does drastically reduce the amount of
-            human interaction required to recover from them.</para>
+          <para>La version 4.4 du gestionnaire de bases de données 
+            Berkeley DB permet à Subversion (version 1.4 ou plus) de 
+            restaurer un environnement Berkeley DB automatiquement et de 
+            manière transparente en cas de besoin. Quand un processus 
+            Subversion se greffe sur l'environnement d'un dépôt 
+            Berkeley DB, il utilise un mécanisme d'enregistrement pour 
+            détecter tout problème éventuel de déconnexion antérieur, 
+            effectue les restaurations nécessaires puis passe à la suite 
+            comme si de rien n'était. Cela n'élimine pas complètement 
+            les plantages du dépôt, mais les interactions humaines 
+            nécessaires pour revenir à une situation normale sont 
+            considérablement réduites.</para>
         </note>
 
-        <para>So while a Berkeley DB repository is quite fast and
-          scalable, it's best used by a single server process running
-          as one user&mdash;such as Apache's <command>httpd</command>
-          or <command>svnserve</command> (see <xref
-          linkend="svn.serverconfig"/>)&mdash;rather than accessing it
-          as many different users via <literal>file://</literal> or
-          <literal>svn+ssh://</literal> URLs.  If you're accessing a Berkeley
-          DB repository directly as multiple users, be sure to read
-          <xref linkend="svn.serverconfig.multimethod"/> later in this
-          chapter.</para>
+        <para>Ainsi, bien qu'un dépôt Berkeley DB soit rapide et capable 
+          de monter en puissance, il faut privilégier une utilisation 
+          par un seul processus serveur tournant avec une identité 
+          unique (comme le serveur Apache <command>httpd</command>
+          ou <command>svnserve</command> (voir <xref
+          linkend="svn.serverconfig"/>)&mdash; plutôt qu'un accès par de 
+          nombreux utilisateurs via des URL <literal>file://</literal> 
+          ou <literal>svn+ssh://</literal>. Si de multiples utilisateurs 
+          doivent avoir accès à un dépôt Berkeley DB, lisez
+          <xref linkend="svn.serverconfig.multimethod"/> plus loin dans 
+          ce chapitre.</para>
 
       </sect3>
       
@@ -674,66 +703,73 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
       <sect3 id="svn.reposadmin.basics.backends.fsfs">
         <title>FSFS</title>
 
-        <para>In mid-2004, a second type of repository storage
-          system&mdash;one that doesn't use a database at
-          all&mdash;came into being.  An FSFS repository stores the
-          changes associated with a revision in a single file, and so
-          all of a repository's revisions can be found in a single
-          subdirectory full of numbered files.  Transactions are
-          created in separate subdirectories as individual files.
-          When complete, the transaction file is renamed and moved
-          into the revisions directory, thus guaranteeing that commits
-          are atomic.  And because a revision file is permanent and
-          unchanging, the repository also can be backed up while
-          <quote>hot,</quote> just like a BDB-backed
-          repository.</para>
+        <para>Mi 2004, un deuxième type de stockage pour le dépôt, qui 
+          ne fait pas appel à une base de données, a fait son 
+          apparition. Un dépôt FSFS stocke les changements associés à 
+          une révision dans un fichier unique, ce qui fait que 
+          l'ensemble des révisions du dépôt se trouvent dans un seul 
+          sous-répertoire rempli de fichiers numérotés. Les transactions 
+          sont créées, en tant que fichiers individuels, dans des 
+          sous-répertoires séparés. Une fois la transaction terminée, le 
+          fichier de transaction est renommé et placé dans le répertoire 
+          des révisions, ce qui garantit l'atomicité des propagations. 
+          Et puisqu'un fichier de révision est permanent et non 
+          modifiable, le dépôt peut également être sauvegardé
+          <quote>à chaud</quote> comme un dépôt BDB.</para>
 
-        <para>The FSFS revision files describe a revision's
-          directory structure, file contents, and deltas against files
-          in other revision trees.  Unlike a Berkeley DB database,
-          this storage format is portable across different operating
-          systems and isn't sensitive to CPU architecture.  Because
-          no journaling or shared-memory files are being used, the
-          repository can be safely accessed over a network filesystem
-          and examined in a read-only environment.  The lack of
-          database overhead also means the overall repository
-          size is a bit smaller.</para>
+        <para>Les fichiers de révision FSFS décrivent, pour une révision 
+          donnée, la structure des répertoires, le contenu des fichiers 
+          et les deltas entre les fichiers et les autres arborescences 
+          de révisions. Contrairement à une base de données Berkeley DB, 
+          le format de stockage est portable, transférable entre 
+          différents systèmes d'exploitation, et n'est pas sensible à 
+          l'architecture CPU. Comme il n'y a pas de journalisation ou de 
+          fichiers en mémoire partagée, le dépôt est accessible sans 
+          risque via un partage de fichiers sur le réseau ou depuis un 
+          environnement en lecture seule. L'absence des en-têtes liés à 
+          une base de données réduit aussi quelque peu la taille globale 
+          du dépôt.</para>
 
-        <para>FSFS has different performance characteristics, too.
-          When committing a directory with a huge number of files,
-          FSFS is able to more quickly append directory entries.  On
-          the other hand, FSFS writes the latest version of a file as
-          a delta against an earlier version, which means that
-          checking out the latest tree is a bit slower than fetching
-          the full-texts stored in a Berkeley DB HEAD revision.  FSFS
-          also has a longer delay when finalizing a commit, which
-          could in extreme cases cause clients to time out while
-          waiting for a response.</para>
+        <para>FSF diffère également du point de vue des performances. 
+          Quand vous propagez un répertoire comptant un nombre de 
+          fichiers très élevé, FSFS est capable d'ajouter plus 
+          rapidement les éléments du répertoire. D'un autre côté, FSFS 
+          écrit la dernière version d'un fichier sous forme de delta par 
+          rapport à la version précédente, par conséquent une extraction 
+          de l'arborescence la plus récente sera un peu plus lente que 
+          l'obtention des fichiers entiers stockés dans la révision HEAD 
+          d'une base de données Berkeley DB. FSFS est également plus 
+          long lors de la fin de la propagation, ce qui peut amener le 
+          client à considérer, dans des cas extrêmes, que sa requête a 
+          expiré avant qu'il ne reçoive la réponse.</para>
 
-        <para>The most important distinction, however, is FSFS's
-          imperviousness to wedging when something goes wrong.  If a
-          process using a Berkeley DB database runs into a permissions
-          problem or suddenly crashes, the database can be left in an
-          unusable state until an administrator recovers it.  If the
-          same scenarios happen to a process using an FSFS repository,
-          the repository isn't affected at all.  At worst, some
-          transaction data is left behind.</para>
+        <para>La différence la plus importante reste quand même la 
+          résistance aux plantages lorsque quelque chose va mal. Si un 
+          processus qui utilise une base de données Berkeley DB 
+          rencontre un problème de droits ou plante soudainement, la 
+          base de données risque de se retrouver dans un état instable 
+          jusqu'à ce qu'un administrateur la restaure. Si la même chose 
+          arrive à un processus utilisant un dépôt FSFS, le dépôt n'est 
+          en rien affecté. Au pire, quelques données de transaction sont 
+          égarées.</para>
 
-        <para>The only real argument against FSFS is its relative
-          immaturity compared to Berkeley DB.  Unlike Berkeley DB,
-          which has years of history, its own dedicated development
-          team, and, now, Oracle's mighty name attached to it,
+        <para>Le seul véritable argument contre FSFS est sa relative 
+          immaturité face à Berkeley DB. Berkeley DB a une histoire de 
+          plusieurs années, avec une équipe de développement dédiée et, 
+          aujourd'hui, il est adossé à la toute-puissante marque 
+          Oracle 
           <footnote>
             <para>Oracle bought Sleepycat and its flagship software,
               Berkeley DB, on Valentine's Day in 2006.</para>
-          </footnote>
-          FSFS is a newer bit of engineering.  Prior to Subversion
-          1.4, it was still shaking out some pretty serious data
-          integrity bugs, which, while triggered in only very rare
-          cases, nonetheless did occur.  That said, FSFS has quickly
-          become the backend of choice for some of the largest public
-          and private Subversion repositories, and it promises a lower
-          barrier to entry for Subversion across the board.</para>
+          </footnote>. 
+          FSFS est d'une conception plus récente. Avant la version 1.4 
+          de Subversion, apparaissaient de temps en temps quelques 
+          bogues assez sérieux concernant l'intégrité des données qui, 
+          bien que n'arrivant que dans de très rares cas, étaient bien 
+          réels. Ceci dit, FSFS est rapidement devenu le magasin de 
+          données de référence pour quelques-uns des plus vastes dépôts 
+          Subversion, publics et privés, et il promet de rendre 
+          globalement plus facile le passage à Subversion.</para>
 
       </sect3>
     </sect2>
@@ -744,263 +780,282 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.reposadmin.create">
-    <title>Creating and Configuring Your Repository</title>
+    <title>Créer et configurer votre dépôt</title>
 
-    <para>Earlier in this chapter (in <xref linkend="svn.reposadmin.planning" />), we
-      looked at some of the important decisions that should be made
-      before creating and configuring your Subversion repository.
-      Now, we finally get to get our hands dirty!  In this section,
-      we'll see how to actually create a Subversion repository and
-      configure it to perform custom actions when special repository
-      events occur.</para>
+    <para>Dans ce chapitre (dans <xref 
+      linkend="svn.reposadmin.planning" />), nous avons passé en revue 
+      quelques décisions importantes à prendre avant de créer et de 
+      configurer votre dépôt Subversion. Maintenant, nous allons enfin 
+      mettre les mains dans le cambouis&nbsp;! Dans cette section, nous 
+      allons voir comment créer un dépôt Subversion et le configurer 
+      pour qu'il effectue des actions personnalisées lorsque certains 
+      événements ont lieu.</para>
 
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.basics.creating">
-      <title>Creating the Repository</title>
+      <title>Créer un dépôt</title>
    
-      <para>Subversion repository creation is an incredibly simple
-        task.  The <command>svnadmin</command> utility that comes with
-        Subversion provides a subcommand (<command>svnadmin
-        create</command>) for doing just that.</para>
+      <para>La création d'un dépôt Subversion est une tâche 
+        incroyablement simple. L'utilitaire <command>svnadmin</command>, 
+        fourni avec Subversion, propose une sous-commande qui est 
+        justement destinée à cela (<command>svnadmin
+        create</command>) &nbsp;:</para>
           
       <screen>
-$ # Create a repository
-$ svnadmin create /var/svn/repos
+$ # Créer un dépôt
+$ svnadmin create /var/svn/depot
 $
 </screen>
           
-      <para>This creates a new repository in the directory
-        <filename>/var/svn/repos</filename>, and with the default
-        filesystem data store.  Prior to Subversion 1.2, the default
-        was to use Berkeley DB; the default is now FSFS.  You can
-        explicitly choose the filesystem type using the
-        <option>--fs-type</option> argument, which accepts as a
-        parameter either <literal>fsfs</literal> or
-        <literal>bdb</literal>.</para>
+      <para>Cette commande crée un dépôt dans le répertoire 
+        <filename>/var/svn/repos</filename> avec le magasin de données 
+        par défaut. Avant la version 1.2 de Subversion, le choix par 
+        défaut était l'utilisation d'une base de données Berkeley DB&nbsp; 
+        maintenant, c'est FSFS. Vous pouvez choisir explicitement le 
+        type de système de fichiers avec l'option
+        <option>--fs-type</option> qui accepte comme argument soit 
+        <literal>fsfs</literal>, soit <literal>bdb</literal>.</para>
  
       <screen>
-$ # Create an FSFS-backed repository
-$ svnadmin create --fs-type fsfs /var/svn/repos
+$ # Créer un dépôt FSFS
+$ svnadmin create --fs-type fsfs /var/svn/depot
 $
 </screen>
 
       <screen>
-# Create a Berkeley-DB-backed repository
-$ svnadmin create --fs-type bdb /var/svn/repos
+$ # Créer un dépôt Berkeley DB
+$ svnadmin create --fs-type bdb /var/svn/depot
 $
 </screen>
               
-      <para>After running this simple command, you have a Subversion
-        repository.</para>
+      <para>Après l'exécution de cette simple commande, vous disposez 
+        d'un dépôt Subversion.</para>
 
       <tip>
-        <para>The path argument to <command>svnadmin</command> is just
-          a regular filesystem path and not a URL like the
-          <command>svn</command> client program uses when referring to
-          repositories.  Both <command>svnadmin</command> and
-          <command>svnlook</command> are considered server-side
-          utilities&mdash;they are used on the machine where the
-          repository resides to examine or modify aspects of the
-          repository, and are in fact unable to perform tasks across a
-          network.  A common mistake made by Subversion newcomers is
-          trying to pass URLs (even <quote>local</quote>
-          <literal>file://</literal> ones) to these two programs.</para>
+        <para>Le chemin en argument de <command>svnadmin</command> est 
+          juste un chemin classique du système de fichiers, pas une URL 
+          comme celles que le client <command>svn</command> utilise pour 
+          spécifier un dépôt. Les commandes <command>svnadmin</command>
+          et <command>svnlook</command> sont toutes les deux considérées 
+          comme des utilitaires coté serveur&nbsp;: elles sont utilisées 
+          sur la machine qui héberge le dépôt pour examiner ou modifier 
+          certains aspects du dépôt et ne sont pas capables d'effectuer 
+          des actions via le réseau. Une erreur classique des nouveaux 
+          utilisateurs de Subversion est d'essayer de passer une URL 
+          (même <quote>locale</quote> comme <literal>file://</literal>)
+          à ces deux programmes.</para>
       </tip>
 
-      <para>Present in the <filename>db/</filename> subdirectory of
-        your repository is the implementation of the versioned
-        filesystem. Your new repository's versioned filesystem begins
-        life at revision 0, which is defined to consist of nothing but
-        the top-level root (<filename>/</filename>) directory.
-        Initially, revision 0 also has a single revision property,
-        <literal>svn:date</literal>, set to the time at which the
-        repository was created.</para>
+      <para>Dans le sous-répertoire <filename>db/</filename> de votre 
+        dépôt, vous trouverez l'implémentation du système de fichiers 
+        suivi en versions. Le nouveau système de fichiers suivi en 
+        versions de votre dépôt commence sa vie à la révision 0, qui est 
+        définie comme contenant le répertoire racine 
+        (<filename>/</filename>) et lui seul. Initialement, la révision 0 
+        possède une seule propriété de révision, 
+        <literal>svn:date</literal>, dont la valeur est la date de 
+        création du dépôt.</para>
 
-      <para>Now that you have a repository, it's time to customize
-        it.</para>
+      <para>Maintenant que vous disposez d'un dépôt, il est temps de le 
+        personnaliser.</para>
 
       <warning>
-        <para>While some parts of a Subversion repository&mdash;such
-          as the configuration files and hook scripts&mdash;are meant
-          to be examined and modified manually, you shouldn't (and
-          shouldn't need to) tamper with the other parts of the
-          repository <quote>by hand.</quote>  The
-          <command>svnadmin</command> tool should be sufficient for
-          any changes necessary to your repository, or you can look to
-          third-party tools (such as Berkeley DB's tool suite) for
-          tweaking relevant subsections of the repository.  Do
-          <emphasis>not</emphasis> attempt manual manipulation of your
-          version control history by poking and prodding around in
-          your repository's data store files!</para>
+        <para>Alors que certaines parties d'un dépôt Subversion sont 
+          conçues pour être examinées et modifiées <quote>à la 
+          main</quote> (comme les fichiers de configuration et les 
+          procédures automatiques), vous ne devriez pas (et vous ne 
+          devriez pas avoir besoin de) modifier les autres parties 
+          <quote>à la main</quote>. L'outil <command>svnadmin</command> 
+          est censé être suffisant pour toutes les modifications à 
+          apporter à votre dépôt, ou alors vous pouvez regarder du côté 
+          d'outils tiers (comme la suite d'outils Berkeley DB) pour 
+          configurer les parties adéquates du dépôt. Ne tentez 
+          <emphasis>surtout pas</emphasis> de manipuler manuellement 
+          l'historique du suivi de versions à petits coups par-ci par-là 
+          dans les fichiers du magasin de données du dépôt&nbsp;!</para>
       </warning>
 
     </sect2>
 
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.create.hooks">
-      <title>Implementing Repository Hooks</title>
+      <title>Mettre en place des procédures automatiques</title>
 
-      <para>A <firstterm>hook</firstterm> is a program triggered by
-        some repository event, such as the creation of a new revision
-        or the modification of an unversioned property.  Some hooks
-        (the so-called <quote>pre hooks</quote>) run in advance of a
-        repository operation and provide a means by which to both
-        report what is about to happen and prevent it from
-        happening at all.  Other hooks (the <quote>post hooks</quote>)
-        run after the completion of a repository event and are useful
-        for performing tasks that examine&mdash;but don't
-        modify&mdash;the repository.  Each hook is handed enough
-        information to tell what that event is (or was), the specific
-        repository changes proposed (or completed), and the username
-        of the person who triggered the event.</para>
+      <para>Une <firstterm>procédure automatique</firstterm> (hook en 
+        anglais) est un programme activé par certains événements du 
+        dépôt, comme la création d'une nouvelle révision ou la 
+        modification d'une propriété non suivie en versions. Certaines 
+        procédures automatiques (appelées <quote>pre hooks</quote>) sont 
+        déclenchées avant l'opération sur le dépôt et permettent à la 
+        fois de rendre compte de ce qui va se passer et d'empêcher que 
+        cela se passe. D'autres procédures automatiques (appelées 
+        <quote>post hooks</quote>) sont déclenchées après la fin d'un 
+        événement et servent à effectuer des tâches de surveillance 
+        (mais pas de modification) du dépôt. Chaque procédure 
+        automatique reçoit suffisamment d'informations pour déterminer 
+        la nature de l'événement, les modifications proposées (ou 
+        effectuées) du dépôt et le nom d'utilisateur de la personne qui 
+        a déclenché l'événement.</para>
             
-      <para>The <filename>hooks</filename> subdirectory is, by
-        default, filled with templates for various repository
-        hooks:</para>
+      <para>Le sous-répertoire <filename>hooks</filename> contient, par 
+        défaut, des modèles pour diverses procédures 
+        automatiques&nbsp;:</para>
             
       <screen>
-$ ls repos/hooks/
+$ ls depot/hooks/
 post-commit.tmpl          post-unlock.tmpl  pre-revprop-change.tmpl
 post-lock.tmpl            pre-commit.tmpl   pre-unlock.tmpl
 post-revprop-change.tmpl  pre-lock.tmpl     start-commit.tmpl
 $
 </screen>
             
-      <para>There is one template for each hook that the Subversion
-        repository supports; by examining the contents of those
-        template scripts, you can see what triggers each script
-        to run and what data is passed to that script.  Also present
-        in many of these templates are examples of how one might use
-        that script, in conjunction with other Subversion-supplied
-        programs, to perform common useful tasks.  To actually install
-        a working hook, you need only place some executable program or
-        script into the <filename>repos/hooks</filename> directory,
-        which can be executed as the name (such as
-        <command>start-commit</command> or
-        <command>post-commit</command>) of the hook.</para>
+      <para>Il y a un modèle pour chaque type de procédure automatique 
+        que le dépôt Subversion sait prendre en charge&nbsp;; en 
+        examinant le contenu de ces modèles de scripts, vous pourrez 
+        voir ce qui déclenche le script et quelles données sont passées 
+        en paramètres. Vous trouverez également dans beaucoup de ces 
+        scripts des exemples d'utilisation permettant de réaliser des 
+        tâches récurrentes utiles, en conjonction avec d'autres 
+        programmes fournis avec Subversion. Concrètement, pour activer 
+        une procédure automatique, il suffit de placer dans le 
+        répertoire <filename>depot/hooks</filename> un programme ou un 
+        script exécutable, qui sera invoqué via le nom de la procédure 
+        automatique (comme <command>start-commit</command> pour le début 
+        d'une propagation ou <command>post-commit</command> pour la fin 
+        d'une propagation).</para>
 
-      <para>On Unix platforms, this means supplying a script or
-        program (which could be a shell script, a Python program, a
-        compiled C binary, or any number of other things) named
-        exactly like the name of the hook.  Of course, the template
-        files are present for more than just informational
-        purposes&mdash;the easiest way to install a hook on Unix
-        platforms is to simply copy the appropriate template file to a
-        new file that lacks the <filename>.tmpl</filename> extension,
-        customize the hook's contents, and ensure that the script is
-        executable.  Windows, however, uses file extensions to
-        determine whether a program is executable, so you would
-        need to supply a program whose basename is the name of the
-        hook and whose extension is one of the special extensions
-        recognized by Windows for executable programs, such as
-        <filename>.exe</filename> for programs and
-        <filename>.bat</filename> for batch files.</para>
+      <para>Sur les plates-formes Unix, cela veut dire fournir un 
+        programme ou un script (pouvant être un script shell, un 
+        programme Python, l'exécutable binaire d'un programme en C ou 
+        tout un tas d'autres choses) dont le nom est exactement le nom 
+        de la procédure automatique. Bien sûr, les modèles qui sont 
+        fournis ne le sont pas juste à titre d'information. Le moyen le 
+        plus facile pour mettre en place une procédure automatique sur 
+        les plates-formes Unix consiste tout simplement à copier le 
+        fichier du modèle adéquat vers un nouveau fichier qui n'aura 
+        pas l'extension <filename>.tmpl</filename>, d'adapter son 
+        contenu à votre environnement et de vous assurer qu'il est 
+        exécutable. Sous Windows, comme l'extension du fichier détermine 
+        s'il est exécutable ou non, vous devrez fournir un programme 
+        dont la base du nom est le nom de la procédure automatique et 
+        dont l'extension sera une de celles reconnue comme exécutable 
+        par Windows, comme <filename>.exe</filename> pour les programmes 
+        ou <filename>.bat</filename> pour les fichiers batch.</para>
 
       <tip>
-        <para>For security reasons, the Subversion repository executes
-          hook programs with an empty environment&mdash;that is, no
-          environment variables are set at all, not even
-          <literal>$PATH</literal> (or <literal>%PATH%</literal>,
-          under Windows).  Because of this, many administrators
-          are baffled when their hook program runs fine by hand, but
-          doesn't work when run by Subversion.  Be sure to explicitly
-          set any necessary environment variables in your hook program
-          and/or use absolute paths to programs.</para>
+        <para>Pour des raisons de sécurité, le dépôt Subversion exécute 
+          les procédures automatiques avec un environnement vide &mdash; 
+          c'est-à-dire sans aucune variable d'environnement définie, 
+          même pas <literal>$PATH</literal> (ou <literal>%PATH%</literal>
+          sous Windows). C'est ainsi que de nombreux administrateurs 
+          sont perplexes lorsque leurs programmes fonctionnent 
+          correctement à la main mais pas dans Subversion. Assurez-vous 
+          de définir explicitement toutes les variables d'environnement 
+          nécessaires dans votre procédure automatique et/ou d'utiliser 
+          des chemins absolus vers les programmes.</para>
       </tip>
 
-      <para>Subversion executes hooks as the same user who owns the
-        process that is accessing the Subversion repository.  In most
-        cases, the repository is being accessed via a Subversion
-        server, so this user is the same user as whom the server
-        runs on the system.  The hooks themselves will need to be
-        configured with OS-level permissions that allow that user to
-        execute them.  Also, this means that any programs or files
-        (including the Subversion repository) accessed directly
-        or indirectly by the hook will be accessed as the same user.
-        In other words, be alert to potential permission-related
-        problems that could prevent the hook from performing the tasks
-        it is designed to perform.</para>
+      <para>Les procédures automatiques de Subversion sont lancées par 
+        l'utilisateur propriétaire du processus ayant accès au dépôt 
+        Subversion. La plupart du temps, on accède au dépôt via un 
+        serveur Subversion, donc cet utilisateur est le même que celui 
+        qui fait tourner le processus serveur sur le système. Les 
+        procédures automatiques elles-mêmes devront être configurées 
+        pour être exécutables, au niveau de l'OS, par ledit utilisateur. 
+        Cela implique également que tout programme ou fichier (y compris 
+        le dépôt Subversion) utilisé directement ou indirectement par la 
+        procédure automatique le sera par ledit utilisateur. En d'autres 
+        termes, faites bien attention aux problèmes de droits 
+        d'exécution qui pourraient empêcher les scripts d'effectuer 
+        correctement les tâches pour lesquelles ils ont été 
+        conçus.</para>
 
-      <para>There are serveral hooks implemented by the Subversion
-        repository, and you can get details about each of them in
-        <xref linkend="svn.ref.reposhooks" />.  As a repository
-        administrator, you'll need to decide which hooks you wish
-        to implement (by way of providing an appropriately named and
-        permissioned hook program), and how.  When you make this
-        decision, keep in mind
-        the big picture of how your repository is deployed.
-        For example, if you are using server configuration
-        to determine which users are permitted to commit
-        changes to your repository, you don't need to do this
-        sort of access control via the hook system.</para>
+      <para>Il y a plusieurs procédures automatiques implémentées dans 
+        le dépôt Subversion et vous pouvez obtenir des détails sur 
+        chacune d'elles dans <xref linkend="svn.ref.reposhooks" />. En 
+        tant qu'administrateur du dépôt, vous devrez décider quelles 
+        procédures automatiques vous voulez mettre en oeuvre 
+        (c'est-à-dire les nommer correctement et leur donner les droits 
+        appropriés) et de quelle manière. Lorsque vous prendrez cette 
+        décision, gardez à l'esprit l'architecture de votre dépôt. Par 
+        exemple, si vous vous servez de la configuration du serveur pour 
+        déterminer les droits de propagation sur votre dépôt, vous 
+        n'avez pas besoin de mettre en place un contrôle d'accès de ce 
+        style via les procédures automatiques.</para>
 
-      <para>There is no shortage of Subversion hook programs and
-        scripts that are freely available either from the Subversion community
-        itself or elsewhere.  These scripts cover a wide range of
-        utility&mdash;basic access control, policy adherence checking,
-        issue tracker integration, email- or syndication-based commit
-        notification, and beyond.  Or, if you wish to write your own,
-        see <xref linkend="svn.developer" />.</para>
+      <para>Les exemples de procédures automatiques librement 
+        accessibles sont légions, fournis par la communauté Subversion 
+        elle-même ou par d'autres. Ces scripts couvrent une large 
+        variété de besoins tels que le contrôle d'accès basique, le 
+        contrôle de cohérence, l'intégration avec les outils de suivis 
+        de bogues, les notifications de propagation par e-mail ou flux 
+        RSS, etc. Ou, si vous voulez écrire votre propre programme, 
+        penchez-vous sur le <xref linkend="svn.developer" />.</para>
 
       <warning>
-        <para>While hook scripts can do almost
-          anything, there is one dimension in which hook script
-          authors should show restraint:  do <emphasis>not</emphasis>
-          modify a commit transaction using hook scripts.  While it
-          might be tempting to use hook scripts to automatically
-          correct errors, shortcomings, or policy violations present
-          in the files being committed, doing so can cause problems.
-          Subversion keeps client-side caches of certain bits of
-          repository data, and if you change a commit transaction in
-          this way, those caches become indetectably stale.  This
-          inconsistency can lead to surprising and unexpected
-          behavior.  Instead of modifying the transaction, you should
-          simply <emphasis>validate</emphasis> the transaction in the
-          <filename>pre-commit</filename> hook and reject the commit
-          if it does not meet the desired requirements.  As a
-          bonus, your users will learn the value of careful,
-          compliance-minded work habits.</para>
+        <para>Bien que les procédures automatiques soient capables de 
+          faire tout et n'importe quoi, leurs auteurs devraient faire 
+          preuve de modération dans un domaine précis&nbsp;: 
+          <emphasis>ne modifiez pas</emphasis> une transaction de 
+          propagation en utilisant une procédure automatique. Bien que 
+          cela soit tentant de corriger automatiquement certaines 
+          erreurs, raccourcis ou violations de politique constatées dans 
+          les fichiers propagés, cela peut causer des problèmes. 
+          Subversion conserve en cache, côté client, certaines parties 
+          des données du dépôt et si vous modifiez une transaction de 
+          propagation de cette façon, ces caches seront périmés sans que 
+          cela ne puisse être détecté. De telles incohérences peuvent 
+          aboutir à des comportements surprenants et inattendus. Au lieu 
+          de modifier la transaction, contentez-vous de vérifier la 
+          transaction dans la procédure automatique 
+          <filename>pre-commit</filename> et rejetez-la si elle ne 
+          remplit pas les conditions nécessaires. Entre autre avantages, 
+          vos utilisateurs prendront ainsi des habitudes de travail 
+          empreintes de respect des procédures et de qualité.</para>
       </warning>
 
     </sect2>
 
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.create.bdb">
-      <title>Berkeley DB Configuration</title>
+      <title>Configuration de la base de données Berkeley DB</title>
 
-      <para>A Berkeley DB environment is an encapsulation of one or
-        more databases, logfiles, region files, and configuration
-        files.  The Berkeley DB environment has its own set of default
-        configuration values for things such as the number of database
-        locks allowed to be taken out at any given time, the maximum
-        size of the journaling logfiles, and so on.  Subversion's
-        filesystem logic additionally chooses default values for some
-        of the Berkeley DB configuration options.  However, sometimes
-        your particular repository, with its unique collection of data
-        and access patterns, might require a different set of
-        configuration option values.</para>
+      <para>Un environnement Berkeley DB peut encapsuler une ou 
+        plusieurs bases de données, fichiers de journalisation, de 
+        région et de configuration. L'environnement Berkeley DB a un 
+        ensemble propre de valeurs configurées par défaut comme par 
+        exemple le nombre de verrous autorisés à un instant donné, la 
+        taille maximum des fichiers de journalisation, etc. La logique 
+        du système de fichiers Subversion ajoute des valeurs par défaut 
+        pour différentes options de configuration du gestionnaire 
+        Berkeley DB. Cependant, il se peut que votre dépôt nécessite une 
+        configuration différente en raison de l'architecture de vos 
+        données et des méthodes d'accès.</para>
 
-      <para>The producers of Berkeley DB understand that different
-        applications and database environments have different
-        requirements, so they have provided a mechanism for overriding
-        at runtime many of the configuration values for the Berkeley
-        DB environment.  BDB checks for the presence of a file named
-        <filename>DB_CONFIG</filename> in the environment directory
-        (namely, the repository's <filename>db</filename>
-        subdirectory), and parses the options found in that file.
-        Subversion itself creates this file when it creates the rest
-        of the repository.  The file initially contains some default
-        options, as well as pointers to the Berkeley DB online
-        documentation so that you can read about what those options do.  Of
-        course, you are free to add any of the supported Berkeley DB
-        options to your <filename>DB_CONFIG</filename> file.  Just be
-        aware that while Subversion never attempts to read or
-        interpret the contents of the file and makes no direct use of
-        the option settings in it, you'll want to avoid any
-        configuration changes that may cause Berkeley DB to behave in
-        a fashion that is at odds with what Subversion might expect.
-        Also, changes made to <filename>DB_CONFIG</filename> won't
-        take effect until you recover the database environment (using
+      <para>Les concepteurs du gestionnaire de bases de données Berkeley 
+        DB comprennent que les besoins varient entre les différentes 
+        applications et environnements de bases de données, c'est 
+        pourquoi ils fournissent des mécanismes pour modifier, à 
+        l'exécution, une grande partie des valeurs des options de 
+        configuration. BDB vérifie la présence d'un fichier nommé
+        <filename>DB_CONFIG</filename> dans le répertoire 
+        d'environnement (à savoir le sous-répertoire <filename>db</filename>
+        du dépôt) et en extrait les valeurs des options. Subversion crée 
+        ce fichier lorsqu'il crée le reste du dépôt. Le fichier contient 
+        initialement des options par défaut ainsi que des pointeurs vers 
+        la documentation en ligne de Berkeley DB afin de vous renseigner 
+        sur l'utilisation de ces options. Bien sûr, vous êtes libre 
+        d'ajouter n'importe quelle option prise en compte par Berkeley 
+        DB dans votre fichier <filename>DB_CONFIG</filename>. Soyez 
+        juste attentif au fait que, bien que Subversion n'essaie jamais 
+        de lire ou interpréter le contenu de ce fichier et qu'il n'en 
+        utilise pas directement la configuration, les changements 
+        induits dans le comportement de Berkeley DB ne doivent pas aller 
+        à l'encontre du comportement attendu par Subversion. Par 
+        ailleurs, les changements effectués dans 
+        <filename>DB_CONFIG</filename> ne seront pris en considération 
+        qu'après avoir effectué une restauration de l'environnement de 
+        la base de données avec la commande 
         <command>svnadmin recover</command>).</para>
 
     </sect2>
@@ -1011,61 +1066,63 @@ $
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.reposadmin.maint">
-    <title>Repository Maintenance</title>
+    <title>Maintenance du dépôt</title>
 
-    <para>Maintaining a Subversion repository can be daunting, mostly
-      due to the complexities inherent in systems that have a database
-      backend.  Doing the task well is all about knowing the
-      tools&mdash;what they are, when to use them, and how.  This
-      section will introduce you to the repository administration
-      tools provided by Subversion and discuss how to wield them to
-      accomplish tasks such as repository data migration, upgrades,
-      backups, and cleanups.</para>
+    <para>Assurer la maintenance d'un dépôt Subversion peut être 
+      intimidant, certainement parce que les systèmes qui comprennent 
+      une base de données sont complexes. Réussir nécessite 
+      principalement de connaître les outils &mdash; ceux dont on 
+      dispose, quand les utiliser et comment. Cette section vous 
+      présentera les outils fournis par Subversion pour assurer 
+      l'administration du dépôt et décrira leur maniement pour réaliser 
+      des opérations telles que migrations de données, mises à jour, 
+      sauvegardes et nettoyages.</para>
 
     <!-- =============================================================== -->
     <sect2 id="svn.reposadmin.maint.tk">
-      <title>An Administrator's Toolkit</title>
+      <title>Boîte à outils de l'administrateur</title>
 
-      <para>Subversion provides a handful of utilities useful for
-        creating, inspecting, modifying, and repairing your repository.
-        Let's look more closely at each of those tools.  Afterward,
-        we'll briefly examine some of the utilities included in the
-        Berkeley DB distribution that provide functionality specific
-        to your repository's database backend not otherwise provided
-        by Subversion's own tools.</para>
+      <para>Subversion fournit une poignée d'utilitaires pour créer, 
+        inspecter, modifier et réparer votre dépôt. Regardons de plus 
+        près chacun de ces outils. Ensuite, nous aborderons rapidement 
+        quelques utilitaires inclus dans le gestionnaire de bases de 
+        données Berkeley DB qui fournissent des fonctionnalités 
+        spécifiques au magasin de données de votre dépôt qui ne sont pas 
+        assurées par les propres outils de Subversion.</para>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.reposadmin.maint.tk.svnadmin">
         <title>svnadmin</title>
 
-        <para>The <command>svnadmin</command> program is the
-          repository administrator's best friend.  Besides providing
-          the ability to create Subversion repositories, this program
-          allows you to perform several maintenance operations on
-          those repositories.  The syntax of
-          <command>svnadmin</command> is similar to that of other
-          Subversion command-line programs:</para>
+        <para>Le programme <command>svnadmin</command> est le meilleur 
+          ami de l'administrateur de dépôts. En plus de fournir la 
+          possibilité de créer des dépôts Subversion, ce programme vous 
+          permet d'effectuer de nombreuses opérations de maintenance sur 
+          ces dépôts. La syntaxe de <command>svnadmin</command> est 
+          similaire à celle des autres programmes en ligne de commande 
+          de Subversion&nbsp;:</para>
 
         <screen>
 $ svnadmin help
-general usage: svnadmin SUBCOMMAND REPOS_PATH  [ARGS &amp; OPTIONS ...]
-Type 'svnadmin help &lt;subcommand&gt;' for help on a specific subcommand.
-Type 'svnadmin --version' to see the program version and FS modules.
+usage général : svnadmin SOUS_COMMANDE DÉPÔT [ARGS &amp; OPTIONS ...]
+Entrer 'svnadmin help &lt;sous-commande&gt;' pour une aide spécifique.
+Entrer 'svnadmin --version' pour avoir la version et les modules de stockages.
 
-Available subcommands:
+Sous-commandes disponibles :
    crashtest
    create
    deltify
 &hellip;
 </screen>
 
-        <para>Previously in this chapter (in <xref
-          linkend="svn.reposadmin.basics.creating"/>), we were
-          introduced to the <command>svnadmin create</command>
-          subcommand.  Most of the other <command>svnadmin</command>
-          subcommands we will cover later in this chapter.  And you
-          can consult <xref linkend="svn.ref.svnadmin" /> for a full
-          rundown of subcommands and what each of them offers.</para>
+        <para>Plus tôt dans ce chapitre (dans <xref
+          linkend="svn.reposadmin.basics.creating"/>), nous vous avons 
+          présenté la sous-commande <command>svnadmin create</command>.
+          La plupart des autres sous-commandes <command>svnadmin</command>
+          seront couvertes plus loin dans ce chapitre. Vous pouvez 
+          également consulter<xref linkend="svn.ref.svnadmin" /> pour 
+          une liste complète des sous-commandes et des fonctionnalités 
+          qu'elles apportent.</para>
 
       </sect3>
 
@@ -1073,58 +1130,60 @@ Available subcommands:
       <sect3 id="svn.reposadmin.maint.tk.svnlook">
         <title>svnlook</title>
             
-        <para><command>svnlook</command> is a tool provided by
-          Subversion for examining the various revisions and
-          <firstterm>transactions</firstterm> (which are revisions
-          in the making) in a repository.  No part of this program
-          attempts to change the repository.  <command>svnlook</command>
-          is typically used by the repository hooks for reporting the
-          changes that are about to be committed (in the case of the
-          <command>pre-commit</command> hook) or that were just
-          committed (in the case of the <command>post-commit</command>
-          hook) to the repository.  A repository administrator may use
-          this tool for diagnostic purposes.</para>
+        <para><command>svnlook</command> est un outil de Subversion pour 
+          examiner les différentes révisions et 
+          <firstterm>transactions</firstterm> (qui sont des révisions en 
+          cours de création) dans un dépôt. Aucune modification n'est 
+          faite au dépôt par cet outil. <command>svnlook</command>
+          est généralement utilisé par les procédures automatiques du 
+          dépôt pour signaler les changements qui vont être propagés 
+          (dans le cas de la procédure automatique
+          <command>pre-commit</command>) ou qui viennent d'être propagés 
+          (dans le cas de la procédure automatique 
+          <command>post-commit</command>). Un administrateur peut être 
+          amené à utiliser cet outil à des fins de diagnostic.</para>
             
-        <para><command>svnlook</command> has a straightforward
-          syntax:</para>
+        <para>La syntaxe de <command>svnlook</command> est 
+          particulièrement simple : </para>
             
         <screen>
-$ svnlook help
-general usage: svnlook SUBCOMMAND REPOS_PATH [ARGS &amp; OPTIONS ...]
-Note: any subcommand which takes the '--revision' and '--transaction'
-      options will, if invoked without one of those options, act on
-      the repository's youngest revision.
-Type 'svnlook help &lt;subcommand&gt;' for help on a specific subcommand.
-Type 'svnlook --version' to see the program version and FS modules.
+$svnlook help
+usage général : svnlook SOUS_COMMANDE CHEMIN_DÉPÔT [ARGS &amp; OPTIONS...]
+Note : Quand --revision ou --transaction ne sont pas précisées, les sous-
+       commandes qui en ont besoin utilisent la révision la plus récente.
+Entrer 'svnlook help &lt;sous-commande&gt;' pour une aide spécifique.
+Entrer 'svnlook --version' pour avoir la version et les modules de stockage.
 &hellip;
 </screen>
 
-        <para>Most of <command>svnlook</command>'s
-          subcommands can operate on either a revision or a
-          transaction tree, printing information about the tree
-          itself, or how it differs from the previous revision of the
-          repository.  You use the <option>--revision</option>
-          (<option>-r</option>) and <option>--transaction</option>
-          (<option>-t</option>) options to specify which revision or
-          transaction, respectively, to examine.  In the absence of
-          both the <option>--revision</option> (<option>-r</option>)
-          and <option>--transaction</option> (<option>-t</option>)
-          options, <command>svnlook</command> will examine the
-          youngest (or <literal>HEAD</literal>) revision in the
-          repository.  So the following two commands do exactly the
-          same thing when 19 is the youngest revision in the
-          repository located at
-          <filename>/var/svn/repos</filename>:</para>
+        <para>La plupart des sous-commandes <command>svnlook</command>
+          peuvent être appliquées soit à une révision soit à une 
+          arborescence de transaction, affichant les informations à 
+          propos de l'arborescence elle-même ou les différences par 
+          rapport à la révision précédente du dépôt. Pour spécifier 
+          quelle révision ou transaction examiner, utilisez 
+          respectivement les options <option>--revision</option>
+          (<option>-r</option>) et <option>--transaction</option>
+          (<option>-t</option>). En l'absence des options 
+          <option>--revision</option> (<option>-r</option>)
+          ou <option>--transaction</option> (<option>-t</option>), 
+          <command>svnlook</command> examinera la révision la plus 
+          récente (la révision  <literal>HEAD</literal>) du dépôt. 
+          Ainsi, les deux commandes suivantes font exactement la même 
+          chose si la révision la plus récente du dépôt situé à 
+          l'emplacement <filename>/var/svn/repos</filename> porte le 
+          numéro 19 &nbsp;:</para>
 
         <screen>
 $ svnlook info /var/svn/repos
 $ svnlook info /var/svn/repos -r 19
 </screen>
 
-        <para>One exception to these rules about subcommands is
-          the <command>svnlook youngest</command> subcommand, which
-          takes no options and simply prints out the repository's
-          youngest revision number:</para>
+        <para>Signalons une exception à ces règles concernant les 
+          sous-commandes&nbsp;: la sous-commande 
+          <command>svnlook youngest</command> ne prend aucune option et 
+          affiche simplement le numéro de la révision la plus récente du 
+          dépôt&nbsp;:</para>
 
         <screen>
 $ svnlook youngest /var/svn/repos
@@ -1133,70 +1192,75 @@ $
 </screen>
 
         <note>
-          <para>Keep in mind that the only transactions you can browse
-            are uncommitted ones.  Most repositories will have no such
-            transactions because transactions are usually either
-            committed (in which case, you should access them as
-            revision with the <option>--revision</option>
-            (<option>-r</option>) option) or aborted and
-            removed.</para>
+          <para>Gardez à l'esprit que les seules transactions que vous 
+            pouvez examiner sont celles qui n'ont pas été propagées. La 
+            plupart des dépôts ne comportent pas de transactions de ce 
+            type parce que les transactions sont habituellement soit 
+            propagées (auquel cas vous devriez y avoir accès sous la 
+            forme de révisions via l'option <option>--revision</option>
+            (<option>-r</option>)), soit annulées et supprimées.</para>
         </note>
             
-        <para>Output from <command>svnlook</command> is designed to be
-          both human- and machine-parsable.  Take, as an example, the
-          output of the <command>svnlook info</command> subcommand:</para>
+        <para>La sortie de <command>svnlook</command> est conçue pour 
+          être à la fois lisible par un humain et traitable par une 
+          machine. Prenons, par exemple, la sortie de la sous-commande 
+          <command>svnlook info</command>&nbsp;:</para>
 
         <screen>
 $ svnlook info /var/svn/repos
 sally
-2002-11-04 09:29:13 -0600 (Mon, 04 Nov 2002)
+2002-11-04 09:29:13 -0600 (lun. 04 nov. 2002)
 27
-Added the usual
-Greek tree.
+J'ai ajouté le traditionnel
+Arbre grec.
 $
 </screen>
 
-        <para>The output of <command>svnlook info</command> consists
-          of the following, in the order given:</para>
+        <para>La sortie de <command>svnlook info</command>est constituée 
+          des éléments suivants, par ordre d'apparition&nbsp;:</para>
 
         <orderedlist>
           <listitem>
-            <para>The author, followed by a newline</para>
+            <para>l'auteur, suivi d'un passage à la ligne</para>
           </listitem>
           <listitem>
-            <para>The date, followed by a newline</para>
+            <para>la date, suivie d'un passage à la ligne</para>
           </listitem>
           <listitem>
-            <para>The number of characters in the log message,
-              followed by a newline</para>
+            <para>le nombre de caractères du message de propagation, 
+              suivi d'un passage à la ligne</para>
           </listitem>
           <listitem>
-            <para>The log message itself, followed by a newline</para>
+            <para>le message de propagation lui-même, suivi d'un passage 
+              à la ligne </para>
           </listitem>
         </orderedlist>
 
-        <para>This output is human-readable, meaning items such as the
-          datestamp are displayed using a textual representation
-          instead of something more obscure (such as the number of
-          nanoseconds since the Tastee Freez guy drove by).  But the
-          output is also machine-parsable&mdash;because the log
-          message can contain multiple lines and be unbounded in
-          length, <command>svnlook</command> provides the length of
-          that message before the message itself.  This allows scripts
-          and other wrappers around this command to make intelligent
-          decisions about the log message, such as how much memory to
-          allocate for the message, or at least how many bytes to skip
-          in the event that this output is not the last bit of data in
-          the stream.</para>
+        <para>Cette sortie est lisible par un humain, ce qui veut dire 
+          que les éléments tels que la date sont représentés par du 
+          texte simple au lieu d'un obscur code (comme le nombre de 
+          nanosecondes depuis le passage aux nouveaux francs). Mais 
+          cette sortie est aussi analysable par une machine &mdash; 
+          parce que le message de propagation peut comporter plusieurs 
+          lignes et n'est pas limité en taille, 
+          <command>svnlook</command> affiche la longueur du message 
+          avant le message lui-même. Cela permet aux scripts et autres 
+          utilitaires utilisant faisant appel à cette commande de 
+          prendre des décisions opportunes à propos du message de 
+          propagation, comme savoir combien de mémoire allouer pour le 
+          message ou au moins savoir combien d'octets sauter dans le cas 
+          où les données affichées par <command>svnlook</command> ne 
+          sont pas les dernières données du flux.</para>
 
-        <para><command>svnlook</command> can perform a variety of
-          other queries:  displaying subsets of bits of information
-          we've mentioned previously, recursively listing versioned
-          directory trees, reporting which paths were modified in a
-          given revision or transaction, showing textual and property
-          differences made to files and directories, and so on.  See
-          <xref linkend="svn.ref.svnlook" /> for a full reference of
-          <command>svnlook</command>'s features.</para>
+        <para><command>svnlook</command> peut répondre à un tas d'autres 
+          requêtes&nbsp;: afficher des sous-ensembles des informations 
+          précédemment citées, lister récursivement les arborescences 
+          versionnées des répertoires, lister les chemins modifiés lors 
+          de telle révision ou transaction, afficher les différences de 
+          contenu et de propriétés pour les fichiers et répertoires, 
+          etc. Reportez-vous à <xref linkend="svn.ref.svnlook" /> pour 
+          la liste complète des fonctionnalités offertes par 
+          <command>svnlook</command>.</para>
 
       </sect3>
 
@@ -1204,36 +1268,36 @@ $
       <sect3 id="svn.reposadmin.maint.tk.svndumpfilter">
         <title>svndumpfilter</title>
 
-        <para>While it won't be the most commonly used tool at the
-          administrator's disposal, <command>svndumpfilter</command>
-          provides a very particular brand of useful
-          functionality&mdash;the ability to quickly and easily modify
-          streams of Subversion repository history data by acting as a
-          path-based filter.</para>
+        <para>Bien que ce ne soit pas l'outil le plus utilisé mis à 
+          disposition de l'administrateur, <command>svndumpfilter</command>
+          fournit des fonctionnalités particulièrement singulières et 
+          utiles &mdash; la possibilité de modifier rapidement et 
+          facilement des flux de l'historique du dépôt Subversion en 
+          agissant en tant que filtre sur les chemins.</para>
 
-        <para>The syntax of <command>svndumpfilter</command> is as
-          follows:</para>
+        <para>La syntaxe de <command>svndumpfilter</command> est la 
+        suivante&nbsp;:</para>
 
         <screen>
 $ svndumpfilter help
-general usage: svndumpfilter SUBCOMMAND [ARGS &amp; OPTIONS ...]
-Type "svndumpfilter help &lt;subcommand&gt;" for help on a specific subcommand.
-Type 'svndumpfilter --version' to see the program version.
-  
-Available subcommands:
+usage général : svndumpfilter SOUS_COMMANDE [ARGS &amp; OPTIONS ...]
+Entrer 'svndumpfilter help &lt;sous-commande&gt;' pour l'aide spécifique.
+Entrer 'svndumpfilter --version' pour avoir le numéro de version du programme.
+
+Sous-commandes disponibles :
    exclude
    include
    help (?, h)
 </screen>
 
-        <para>There are only two interesting subcommands:
-          <command>svndumpfilter exclude</command> and
-          <command>svndumpfilter include</command>.  They allow you to
-          make the choice between implicit or explicit inclusion of
-          paths in the stream.  You can learn more about these
-          subcommands and <command>svndumpfilter</command>'s unique
-          purpose later in this chapter, in <xref
-          linkend="svn.reposadmin.maint.filtering" />.</para>
+        <para>Il n'y a que deux sous-commandes intéressantes&nbsp;: 
+          <command>svndumpfilter exclude</command> et
+          <command>svndumpfilter include</command>. Elles vous 
+          permettent de choisir entre l'inclusion implicite ou explicite 
+          des chemins dans le flux. Vous pouvez en apprendre plus sur 
+          ces sous-commandes et sur l'utilité si particulière de 
+          <command>svndumpfilter</command> plus loin dans ce chapitre, 
+          dans  <xref linkend="svn.reposadmin.maint.filtering" />.</para>
 
       </sect3>
 
@@ -1241,20 +1305,20 @@ Available subcommands:
       <sect3 id="svn.reposadmin.maint.tk.svnsync">
         <title>svnsync</title>
 
-        <para>The <command>svnsync</command> program, which is new to
-          the 1.4 release of Subversion, provides all the
-          functionality required for maintaining a read-only mirror of
-          a Subversion repository.  The program really has one
-          job&mdash;to transfer one repository's versioned history
-          into another repository.  And while there are few ways to do
-          that, its primary strength is that it can operate
-          remotely&mdash;the <quote>source</quote> and
-          <quote>sink</quote>
+        <para>Le programme <command>svnsync</command>, apparu dans la 
+          version 1.4 de Subversion, fournit toutes les fonctionnalités 
+          requises pour faire fonctionner un miroir en lecture seule 
+          d'un dépôt Subversion. Le programme n'a qu'une et une seule 
+          fonction&nbsp;: transférer l'historique d'un dépôt vers un 
+          autre dépôt. Et, bien qu'il y ait différentes manières de 
+          faire, sa force réside dans sa capacité de travailler à 
+          distance&nbsp;: les dépôts <quote>source</quote> et
+          <quote>destination</quote>
           <footnote>
             <para>Or is that, the <quote>sync</quote>?</para>
           </footnote>
-          repositories may be on different computers from each other
-          and from <command>svnsync</command> itself.</para>
+          peuvent être sur deux ordinateurs différents et 
+          <command>svnsync</command> sur un troisième.</para>
 
         <para>As you might expect, <command>svnsync</command> has a
           syntax that looks very much like every other program we've
