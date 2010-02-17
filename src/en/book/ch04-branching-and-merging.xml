@@ -680,6 +680,12 @@ A    README
         build, test, and <command>svn commit</command> the local
         modifications to your branch.</para>
 
+      </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.branchemerge.basicmerging.reintegrate">
+      <title>Reintegrating a Branch</title>
+
       <para>What happens when you finally finish your work, though?
         Your new feature is done, and you're ready to merge your
         branch changes back to the trunk (so your team can enjoy the
@@ -1711,6 +1717,87 @@ $ svn commit -m "Block r3328 from being merged to the branch."
         for this in future versions.</para>
 
     </sect2>
+
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <sect2 id="svn.branchmerge.advanced.reintegratetwice">
+      <title>Keeping a reintegrated branch alive</title>
+
+      <para>There is an alternative to destroying and re-creating a
+        branch after reintegration. To understand why it works you need
+        to understand why the branch is initially unfit for further use
+        after it has been reintegrated.</para>
+
+      <para>Let's assume you created your branch in revision
+        <emphasis>A</emphasis>. While working on your branch, you created
+        one or more revisions which made changes to the branch.
+        Before reintegrating your branch into trunk, you made a final
+        merge from trunk to your branch, and committed the result of
+        this merge as revision <emphasis>B</emphasis>.</para>
+
+      <para>When reintegrating your branch into the trunk, you create
+        a new revision <emphasis>X</emphasis> which changes the trunk.
+        The changes made to trunk in this revision <emphasis>X</emphasis>
+        are semantically equivalent to the changes you made to your branch
+        between revisions <emphasis>A</emphasis> and <emphasis>B</emphasis>.
+        </para>
+
+      <para>If you now try to merge outstanding changes from trunk to your
+        branch, Subversion will consider changes made in revision
+        <emphasis>X</emphasis> as eligible for being merged into the
+        branch. However, since your branch already contains all the
+        changes made in revision <emphasis>X</emphasis>, merging these
+        changes can result in spurious conflicts! These conflicts are
+        often tree conflicts, especially if renames were made on the
+        branch or the trunk while the branch was in development.</para>
+
+      <para>So what can be done about this? We need to make sure that
+        Subversion does not try to merge revision <emphasis>X</emphasis>
+        into the branch. This can be done using the
+        <option>--record-only</option> merge option, which was introduced
+        in <xref linkend="svn.branchmerge.advanced.blockchanges"/>.</para>
+
+      <para>To carry out the record-only merge, get a working copy of
+        the branch which was just reintegrated in revision
+        <emphasis>X</emphasis>, and merge just revision <emphasis>X</emphasis>
+        from trunk into your branch, making sure to use the
+        <option>--record-only</option> option.</para>
+
+      <para>This merge uses the cherry-picking merge syntax, which was
+        introduced in <xref linkend="svn.branchmerge.cherrypicking"/>.
+        Continuing with the running example from
+        <xref linkend="svn.branchemerge.basicmerging.reintegrate"/>,
+        where revision <emphasis>X</emphasis> was revision 391:</para>
+
+      <screen>
+$ cd my-calc-branch
+$ svn update
+Updated to revision 393.
+$ svn merge --record-only -c 391 ^/trunk
+--- Recording mergeinfo for merge of r391 into '.':
+ U   .
+$ svn commit -m "Block revision 391 from being merged into my-calc-branch."
+Sending        .
+
+Committed revision 394.
+</screen>
+
+      <para>(Versions of Subversion prior to 1.7 do not produce any output
+        during the record-only merge.)</para>
+
+      <para>Now your branch is ready to soak up changes from the trunk
+        again. After another sync of your branch to the trunk, you can
+        even reintegrate the branch a second time.
+        If necessary, you can do another record-only merge to keep the
+        branch alive. Rinse and repeat.</para>
+        
+      <para>It should now also be apparent why deleting the branch and
+        re-creating it has the same effect as doing the above record-only
+        merge. Because <emphasis>X</emphasis> is part of the natural history
+        of the newly created branch, Subversion will never attempt to merge
+        revision <emphasis>X</emphasis> into the branch, avoiding spurious
+        conflicts.</para>
+
+      </sect2>
 
     <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
     <sect2 id="svn.branchmerge.advanced.logblame">
