@@ -1,12 +1,12 @@
 <appendix id="svn.webdav">
-  <title>WebDAV et le suivi de versions automatique</title>
+  <title>WebDAV et la gestion de versions automatique</title>
 
   <para>WebDAV est une extension de HTTP qui devient de plus en plus 
     courante comme standard pour le partage de fichiers. De nos jours, 
     les systèmes d'exploitation sont de plus en plus 
-    <quote>connectés</quote> et beaucoup maintenant supportent 
-    nativement le montage de <quote>partages</quote> proposés par les 
-    serveurs WebDAV.</para>
+    <quote>connectés</quote> et beaucoup supportent maintenant 
+    nativement le montage de <quote>partages</quote> mis à disposition
+    par des serveurs WebDAV.</para>
 
   <para>Si vous utilisez Apache comme serveur réseau pour Subversion, on 
     peut dire que d'une certaine manière vous faites aussi tourner un 
@@ -22,9 +22,10 @@
   <sect1 id="svn.webdav.basic">
     <title>À propos de WebDAV</title>
 
-    <para><firstterm>DAV</firstterm> signifie <quote>Distributed 
-      Authoring and Versioning</quote>, que l'on pourrait traduire par 
-      <quote>Écriture distribuée et suivi de versions</quote>. La 
+    <para><firstterm>DAV</firstterm> signifie
+      <foreignphrase>Distributed Authoring and
+      Versioning</foreignphrase>, que l'on pourrait traduire par 
+      <quote>Écriture distribuée et gestion de versions</quote>. La 
       RFC&nbsp;2518 définit un ensemble de concepts et d'extensions sur 
       la base du protocole HTTP&nbsp;1.1 afin de faire du Web un 
       périphérique de lecture/écriture plus universel. L'idée est qu'un 
@@ -36,19 +37,20 @@
       SMB).</para>
 
     <para>Là où le bât blesse, c'est que, malgré l'acronyme, les 
-      spécifications de la RFC ne décrivent en fait aucun moyen de suivi 
-      de versions. Les clients et serveurs WebDAV de base considèrent 
+      spécifications de la RFC ne décrivent en fait aucun façon
+      d'assurer la gestion de versions.
+      Les clients et serveurs WebDAV de base considèrent 
       que chaque fichier ou répertoire n'existe qu'en une seule version, 
       qui peut être ré-écrite autant de fois que l'on veut.</para>
 
-    <para>Comme la RFC 2518 a ignoré les concepts de suivi de versions, 
+    <para>Comme la RFC 2518 a ignoré les concepts de gestion de versions, 
       un autre groupe de travail a hérité de la responsabilité d'écrire 
       la RFC 3253 quelques années plus tard. La nouvelle RFC ajoute le 
-      concept de suivi de versions à WebDAV, en rendant sa signification 
+      concept de gestion de versions à WebDAV, en rendant sa signification 
       au <quote>V</quote> de <quote>DAV</quote>, d'où le terme 
       <quote>DeltaV</quote>. Les clients et serveurs WebDAV/DeltaV sont 
-      souvent appelés <quote>DeltaV</quote> tout court, puisque le 
-      DeltaV implique obligatoirement la prise en compte du 
+      souvent appelés <quote>DeltaV</quote> tout court, puisque 
+      DeltaV implique obligatoirement la prise en compte de 
       WebDAV.</para>
 
     <para>Le standard WebDAV initial a connu un grand succès. Tous les 
@@ -56,22 +58,23 @@
       (nous les verrons en détail plus tard) et de nombreux logiciels 
       sont également capables de communiquer via ce protocole&nbsp;: 
       Microsoft Office, Dreamweaver, Photoshop pour n'en citer que 
-      quelques uns. Côté serveur, le serveur HTTP Apache dispose des 
-      services WebDAV depuis 1998 et est considéré de facto comme la 
-      référence en logiciels libres. Il existe plusieurs autres serveurs 
+      quelques uns. Côté serveur, le serveur HTTP Apache dispose de 
+      services WebDAV depuis 1998 et est considéré <foreignphrase>de
+      facto</foreignphrase> comme la référence en matière de logiciel
+      libre. Il existe plusieurs autres serveurs 
       WebDAV commerciaux, dont le propre serveur de Microsoft, 
       IIS.</para>
 
     <para>Malheureusement, DeltaV n'a pas connu autant de succès. Il est 
       très difficile de trouver des clients ou des serveurs DeltaV. Les 
       rares qui existent sont des serveurs commerciaux plus ou moins 
-      inconnus et il est donc très difficile de tester 
-      l'interopérabilité. Il n'est pas évident de trouver pourquoi 
+      inconnus&nbsp;; l'interopérabilité est donc très difficile
+      à tester. Il n'est pas évident de trouver pourquoi 
       DeltaV n'a pas percé. Certains mettent en cause des spécifications 
       trop complexes. D'autres arguent du fait que, contrairement à 
-      WebDAV qui est une technologie de masse (même les utilisateurs les 
-      moins férus d'informatique sont contents de partager des fichiers 
-      en réseau), ses fonctionnalités de suivi de versions intéressent 
+      WebDAV, qui est une technologie de masse (même les utilisateurs les 
+      moins férus d'informatique aiment à partager des fichiers 
+      en réseau), ses fonctionnalités de gestion de versions intéressent 
       peu ou ne sont pas nécessaires à la majorité des gens. Enfin, 
       certains sont persuadés que DeltaV n'intéresse pas grand monde 
       parce qu'il n'existe aucun serveur libre qui l'implémente 
@@ -84,11 +87,11 @@
       L'idée était que le module serveur de Subversion 
       (<command>mod_dav_svn</command>) évoluerait pour devenir 
       l'implémentation libre de référence de DeltaV. Malheureusement, 
-      DeltaV possède un modèle de suivi de versions très particulier, 
+      DeltaV possède un modèle de gestion de versions très particulier, 
       qui n'est pas vraiment compatible avec le modèle de Subversion. 
       Certains concepts pouvaient être adaptés, mais d'autres non.</para>
 
-    <para>Et alors, quelles en sont les conséquences&nbsp;?</para>
+    <para>Quelles conséquences en tirer&nbsp;?</para>
 
     <para>Premièrement, le client Subversion n'est pas un client DeltaV 
       complet. Il a besoin d'informations de la part du serveur que 
@@ -121,34 +124,34 @@
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <sect1 id="svn.webdav.autoversioning">
-    <title>Suivi de versions automatique</title>
+    <title>Gestion de versions automatique</title>
 
     <para>Bien que le client Subversion ne soit pas un client DeltaV 
       complet et que le serveur Subversion n'implémente pas toutes les 
       fonctionnalités d'un serveur DeltaV, il faut se féliciter de 
-      l'existence d'une petite lueur d'intéropérabilité WebDAV&nbsp;: le
-      <firstterm>suivi de versions automatique</firstterm>.</para>
+      l'existence d'une petite lueur d'intéropérabilité WebDAV&nbsp;: la
+      <firstterm>gestion de versions automatique</firstterm>.</para>
 
-    <para>Le suivi de versions automatique est une fonctionnalité 
+    <para>La gestion de versions automatique est une fonctionnalité 
       optionnelle définie dans le standard DeltaV. Un serveur DeltaV 
       classique n'autorisera pas un client WebDAV non compatible à 
       effectuer des opérations <literal>PUT</literal> sur un fichier 
       suivi en versions. Pour modifier un tel fichier, le serveur exige 
-      un enchaînement précis de requêtes de suivi de versions&nbsp;: 
+      un enchaînement précis de requêtes de gestion de versions&nbsp;: 
       quelque chose comme
       <literal>MKACTIVITY</literal>, <literal>CHECKOUT</literal>,
       <literal>PUT</literal>, <literal>CHECKIN</literal> 
       (c'est-à-dire&nbsp;: créer une activité, extraire le fichier 
-      versionné, renvoyer le fichier modifié et assortir cette 
+      suivi en versions, renvoyer le fichier modifié et assortir cette 
       modification d'un commentaire). Mais si le serveur DeltaV supporte 
-      la fonctionnalité de suivi de versions automatique, les requêtes 
+      la fonctionnalité de gestion de versions automatique, les requêtes 
       en écriture des clients WebDAV ordinaires sont acceptées. Le 
       serveur agit <emphasis>comme si</emphasis> le client avait envoyé 
       l'enchaînement de requêtes approprié, en faisant une propagation 
-      <quote>sous le manteau</quote>. En d'autres termes, le suivi de 
+      <quote>sous le manteau</quote>. En d'autres termes, la gestion de 
       versions automatique permet à un serveur DeltaV de communiquer 
-      avec des clients WebDAV ordinaires qui ne gèrent pas le suivi de 
-      versions.</para>
+      avec des clients WebDAV ordinaires qui ne disposent pas de
+      fonctionnalités de gestion de versions.</para>
 
     <para>Comme beaucoup de systèmes d'exploitation ont des clients 
       WebDAV intégrés, cette fonctionnalité est particulièrement 
@@ -159,7 +162,7 @@
       Subversion qui apparaît comme un lecteur réseau classique. Ils 
       utilisent le partage réseau comme ils l'ont toujours fait&nbsp;: 
       ils ouvrent les fichiers, les modifient et les sauvegardent. 
-      Pendant ce temps, le serveur assure automatiquement le suivi de 
+      Pendant ce temps, le serveur assure automatiquement la gestion de 
       versions. L'administrateur (ou tout autre utilisateur sachant le 
       faire) peut toujours utiliser un client Subversion pour effectuer 
       des requêtes sur l'historique des fichiers ou récupérer une 
@@ -167,11 +170,11 @@
 
     <para>Ce scénario n'est pas de la science-fiction&nbsp;: c'est du 
       concret, qui fonctionne depuis la version 1.2 de Subversion. Pour 
-      activer le suivi de versions automatique dans
+      activer la gestion de versions automatique dans
       <command>mod_dav_svn</command>, utilisez la directive 
       <literal>SVNAutoversioning</literal> dans le bloc
       <literal>Location</literal> du fichier 
-      <filename>httpd.conf</filename> comme dans l'exemple 
+      <filename>httpd.conf</filename>, comme dans l'exemple 
       suivant&nbsp;:</para>
 
     <screen>
@@ -182,9 +185,9 @@
 &lt;/Location&gt;
 </screen>
 
-    <para>Quand le suivi de versions automatique de Subversion est 
-      actif, les requêtes en écriture de clients WebDAV sont 
-      transformées automatiquement en propagations. Un message de 
+    <para>Quand la gestion de versions automatique de Subversion est 
+      active, les requêtes en écriture des clients WebDAV sont 
+      automatiquement transformées en propagations. Un message de 
       propagation générique est créé et associé automatiquement à chaque 
       révision.</para>
 
@@ -205,17 +208,17 @@
     <para>Si vous avez une procédure automatique qui envoie un e-mail 
       après chaque propagation (<literal>post-commit</literal>), il est 
       conseillé de désactiver cet envoi soit complètement soit au moins 
-      pour certaines parties du dépôt, selon que vous pensez que ces 
-      e-mails apportent toujours de la plus-value ou pas. De plus, une 
+      pour certaines parties du dépôt, selon que ces e-mails vous
+      semblent apporter une plus-value ou pas. De plus, une 
       procédure automatique post-commit bien pensée peut distinguer une 
-      propagation générée par le suivi de versions automatique d'une 
+      propagation générée par la gestion de versions automatique d'une 
       propagation classique. L'astuce consiste à examiner la propriété 
       de révision dénommée <literal>svn:autoversioned</literal>. Si elle 
       est présente, la propagation est issue d'un client WebDAV 
       quelconque.</para>
 
-    <para>Une autre caractéristique utile et complémentaire du suivi de 
-      versions automatique de Subversion est fournie par le module 
+    <para>Une autre caractéristique utile et complémentaire de la gestion
+      de versions automatique de Subversion est fournie par le module 
       <literal>mod_mime</literal> d'Apache. Si un client WebDAV ajoute 
       un nouveau fichier au dépôt, l'utilisateur n'a pas l'occasion de 
       lui adjoindre la propriété <literal>svn:mime-type</literal>. Dans 
@@ -243,11 +246,11 @@
 
     <para>Cette directive autorise <literal>mod_mime</literal> à déduire 
       automatiquement le type MIME des nouveaux fichiers qui entrent 
-      dans le dépôt du suivi de versions automatique. Ce module regarde 
-      l'extension du nom de fichier et éventuellement le contenu de 
-      celui-ci&nbsp;; si certains motifs sont repérés, la propriété
-       <literal>svn:mime-type</literal> est automatiquement 
-       renseignée.</para>
+      dans le dépôt de la gestion de versions automatique. Ce module
+      examine l'extension du nom de fichier et éventuellement le contenu
+      de celui-ci&nbsp;; si certains motifs sont repérés, la propriété
+      <literal>svn:mime-type</literal> est automatiquement 
+      renseignée.</para>
 
   </sect1>
 
@@ -259,8 +262,8 @@
 
     <para>Les clients WebDAV peuvent être classés en trois 
       catégories&nbsp;: applications autonomes, greffons pour 
-      explorateurs de fichiers et implémentations de système de 
-      fichiers. Ces catégories définissent grossièrement les types de 
+      explorateurs de fichiers et implémentations de systèmes de 
+      fichiers. Ces catégories définissent grosso modo les types de 
       fonctionnalités WebDAV offertes aux utilisateurs. Le 
       <xref linkend="svn.webdav.clients.tbl-1"/> contient notre 
       répartition en catégories et fournit une brève description des 
@@ -432,8 +435,8 @@
           également sous Mac OS X, ils ne semblent pas directement 
           supporter WebDAV sur cette plate-forme. En fait, sous Mac 
           OS&nbsp;X, la boîte de dialogue
-          <guimenu>Fichier&rarr;Ouvrir</guimenu> ne permet pas l'entrée 
-          d'un chemin ou d'une URL. Il est probable que le support de 
+          <guimenu>Fichier&rarr;Ouvrir</guimenu> ne permet d'entrer 
+          ni un chemin ni une URL. Il est probable que le support de 
           WebDAV ait été délibérément laissé de côté sur les versions 
           Macintosh de ces programmes, puisque le système de fichiers de 
           bas niveau d'OS&nbsp;X est déjà lui-même hautement compatible 
@@ -446,7 +449,7 @@
         <title>cadaver, DAV Explorer</title>
 
         <para><command>cadaver</command> (cadavre en français) est un 
-          programme Unix en ligne de commande rudimentaire pour 
+          programme Unix rudimentaire en ligne de commande pour 
           parcourir et modifier des partages WebDAV. Comme le client 
           Subversion, il utilise la bibliothèque HTTP neon &mdash; ce 
           qui n'est pas surprenant puisque <literal>neon</literal> et 
@@ -502,7 +505,7 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
           particulièrement utile non plus puisqu'ils n'autorisent pas 
           les requêtes <literal>MKACTIVITY</literal>. Mais cela n'est 
           pas pertinent de toute manière&nbsp;; nous considérons que 
-          tous ces clients se connectent à des dépôts avec suivi de 
+          tous ces clients se connectent à des dépôts avec gestion de 
           versions automatique.</para>
 
       </sect3>
@@ -510,7 +513,7 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
 
     <!-- =============================================================== -->
     <sect2 id="svn.webdav.clients.file-explorer-extensions">
-      <title>greffons WebDAV pour explorateur de fichiers</title>
+      <title>Greffons WebDAV pour explorateur de fichiers</title>
 
       <para>Certains explorateurs de fichiers avec interface graphique 
         bien connus disposent de greffons pour WebDAV qui permettent à 
@@ -551,7 +554,7 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
 
         <para>Avec la sortie de Windows&nbsp;XP, Microsoft a commencé à 
           livrer une nouvelle version de <quote>Dossiers&nbsp;Web</quote>, 
-          connu sous le nom de mini-redirecteur WebDAV. Cette nouvelle 
+          connue sous le nom de mini-redirecteur WebDAV. Cette nouvelle 
           implémentation est un client permettant au niveau du système 
           de fichiers de monter les partages WebDAV en tant que lecteurs 
           réseau. Malheureusement, cette implémentation est 
@@ -588,7 +591,7 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
           Web</quote>. Ceci devrait résoudre vos problèmes. Si ce n'est 
           pas le cas, il semble que la version originale pré-XP des 
           <quote>Dossiers&nbsp;Web</quote> soit toujours fournie avec le 
-          système. Vous pouvez la déterrer en allant sur 
+          système. Vous pouvez y accéder en allant sur 
           <quote>Favoris&nbsp;Réseau</quote> et en ajoutant un nouveau 
           <quote>Favori&nbsp;réseau</quote>. Quand le système vous 
           demande d'entrer une URL, saisissez l'URL du dépôt 
@@ -618,10 +621,9 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
           <quote>Dossiers&nbsp;Web</quote> de Vista semblent ne 
           fonctionner qu'avec les répertoires racines des dépôts.</para>
 
-        <para>En général, et bien que ces astuces puissent fonctionner 
-          pour vous, vous aurez peut-être un meilleur service en 
-          utilisant un client WebDAV tiers tel que WebDrive ou 
-          NetDrive.</para>
+        <para>En général, et bien que ces astuces puissent vous 
+          être utiles, vous serez peut-être mieux servi avec
+          un client WebDAV tiers tel que WebDrive ou NetDrive.</para>
 
       </sect3>
 
@@ -630,12 +632,12 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
         <title>Nautilus, Konqueror</title>
 
         <para>Nautilus est l'explorateur/navigateur de fichiers officiel 
-          du bureau GNOME  (<ulink url="http://www.gnome.org"/>) et 
+          du bureau GNOME (<ulink url="http://www.gnome.org"/>) et 
           Konqueror est l'explorateur/navigateur de fichiers officiel du 
           bureau KDE (<ulink url="http://www.kde.org"/>). Ces deux 
           applications disposent d'un client WebDAV intégré dans 
           l'explorateur de fichiers et elles peuvent se connecter sans 
-          problème à un dépôt utilisant le suivi de versions 
+          problème à un dépôt utilisant la gestion de versions 
           automatique.</para>
 
         <para>Dans Nautilus (GNOME), choisissez l'élément de menu 
@@ -667,7 +669,7 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
         alors implanté en tant que module bas-niveau, généralement au 
         sein du noyau du système d'exploitation. Cela signifie qu'un 
         partage DAV est monté comme tout autre système de fichiers en 
-        réseau, de la même manière qu'un partages NFS est monté sous 
+        réseau, de la même manière qu'un partage NFS est monté sous 
         Unix ou qu'un lecteur réseau est affecté à un partage SMB sous 
         Windows. Au final, ce type de client fournit l'accès WebDAV en 
         lecture/écriture de manière transparente à tous les programmes. 
@@ -696,14 +698,14 @@ Progress: [=============================&gt;] 100.0% of 1461 bytes succeeded.
 
         <para>Le système d'exploitation OS&nbsp;X d'Apple possède un 
           client WebDAV intégré sous forme de système de fichiers. 
-          Depuis le Finder, choisissez l'élément de menu
-          <guimenuitem>Go&rarr;Connect to Server</guimenuitem>. Entrez 
-          l'URL WebDAV et elle apparaît en tant que disque sur le 
+          Depuis Finder (l'explorateur de fichiers), choisissez l'élément
+          de menu <guimenuitem>Go&rarr;Connect to Server</guimenuitem>.
+          Entrez l'URL WebDAV et elle apparaît en tant que disque sur le 
           bureau, comme tout autre volume monté. Vous pouvez également 
-          monter un partage WebDAV depuis le terminal Darwin en 
+          monter un partage WebDAV avec la commande 
+          <command>mount</command> depuis le terminal Darwin, en 
           utilisant le type de système de fichiers
-          <literal>webdav</literal> avec la commande 
-          <command>mount</command>&nbsp;:</para>
+          <literal>webdav</literal>&nbsp;:</para>
 
         <screen>
 $ mount -t webdav http://svn.exemple.com/depot/projet /mon/point/de/montage
@@ -736,11 +738,11 @@ BrowserMatch "^WebDAVFS/1.[012]" redirect-carefully
         <title>davfs2 (Linux)</title>
 
         <para>davfs2 est un module de système de fichiers du noyau 
-          Linux. Le projet est hébergé à l'adresse  <ulink
-          url="http://dav.sourceforge.net/"/>. Une fois davfs2 installé, 
-          vous pouvez monter un partage réseau WebDAV en utilisant la 
-          commande <command>mount</command> habituelle de 
-          Linux&nbsp;:</para>
+          Linux. Le projet est hébergé à l'adresse <ulink
+          url="http://savannah.nongnu.org/projects/davfs2"/>. Une fois
+          davfs2 installé, vous pouvez monter un partage réseau WebDAV
+          en utilisant la commande <command>mount</command>
+          habituelle de Linux&nbsp;:</para>
 
         <screen>
 $ mount.davfs http://hote/depot /mnt/dav
