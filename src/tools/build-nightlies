@@ -5,7 +5,7 @@ import sys
 import os
 import shutil
 import time
-import popen2
+import subprocess
 import traceback
 
 SKIP_LOCALES = ()
@@ -28,19 +28,22 @@ def format_duration(seconds):
 
 def sendmail(subject, body):
     try:
-        outerrfp, infp = popen2.popen4(
-                ['/usr/sbin/sendmail', '-f', MAIL_SENDER, MAIL_DESTINATION])
+        p = subprocess.Popen(
+                ['/usr/sbin/sendmail', '-f', MAIL_SENDER, MAIL_DESTINATION],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-        infp.write("Subject: %s\n" % subject)
-        infp.write("To: %s\n" % MAIL_DESTINATION)
-        infp.write("From: %s <%s>\n" % (MAIL_SENDER_NAME, MAIL_SENDER))
-        infp.write("\n")
-        infp.write(body)
-        infp.close()
-        output = outerrfp.read()
-        if len(output):
+        p.stdin.write("Subject: %s\n" % subject)
+        p.stdin.write("To: %s\n" % MAIL_DESTINATION)
+        p.stdin.write("From: %s <%s>\n" % (MAIL_SENDER_NAME, MAIL_SENDER))
+        p.stdin.write("\n")
+        p.stdin.write(body)
+        p.stdin.close()
+        output = p.stdout.read()
+        status = p.wait()
+        if len(output) or status:
             sys.stderr.write("MTA output when sending email (%s):\n" % subject)
-            sys.stderr.write(outerrfp.read())
+            sys.stderr.write(output)
+            sys.stderr.write("Exit status %d" % status)
     except IOError:
         etype, value, tb = sys.exc_info()
         sys.stderr.write("Failed sending email (%s):\n" % subject)
@@ -118,17 +121,17 @@ for locale in locales:
                 shutil.rmtree(temp_dir)
         os.chdir(locale_dir)
         try:
-            cmd = " ".join(make_cmd)
             if DRYRUN:
-                print "Run: %s" % (cmd)
+                print "Run: %s" % (make_cmd)
             else:
-                child = popen2.Popen4(cmd)
+                p = subprocess.Popen(make_cmd, stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT)
                 logfp = open(build_log, 'w', 1)
                 while 1:
-                    data = child.fromchild.readline()
+                    data = p.stdout.readline()
                     if not data: break
                     logfp.write(data)
-                exitcode = child.wait()
+                exitcode = p.wait()
                 if exitcode:
                     raise RuntimeError("make exited with error %d" % exitcode)
         finally:
