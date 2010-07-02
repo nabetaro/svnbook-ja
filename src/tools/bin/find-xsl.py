@@ -10,7 +10,9 @@ candidate_xsldirs = (
     '/usr/share/sgml/docbook/xsl-stylesheets',
     # Cygwin
     '/usr/share/docbook-xsl',
-    # Debian
+    # Debian squeeze and later
+    '/usr/share/xml/docbook/stylesheet/docbook-xsl',
+    # Debian lenny and earlier
     '/usr/share/xml/docbook/stylesheet/nwalsh',
     # SUSE
     '/usr/share/xml/docbook/stylesheet/nwalsh/current',
