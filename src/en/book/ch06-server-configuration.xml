@@ -2916,11 +2916,11 @@ svnsync copy-revprops http://slave3.example.com/svn-proxy-sync ${REV} &gt; /dev/
       load the <command>mod_authz_svn</command> module and then add
       the <literal>AuthzSVNAccessFile</literal> directive (within
       the <filename>httpd.conf</filename> file) pointing to your own
-      rules file.  (For a full explanation, see
+      access rules file.  (For a full explanation, see
       <xref linkend="svn.serverconfig.httpd.authz.perdir"/>.)  If
       you're using <command>svnserve</command>, you need to make
       the <literal>authz-db</literal> variable
-      (within <filename>svnserve.conf</filename>) point to your
+      (within <filename>svnserve.conf</filename>) point to your access
       rules file.</para>
 
     <sidebar>
@@ -2985,7 +2985,7 @@ svnsync copy-revprops http://slave3.example.com/svn-proxy-sync ${REV} &gt; /dev/
 
     </sidebar>
 
-    <para>Once your server knows where to find your rules file, it's
+    <para>Once your server knows where to find your access file, it's
       time to define the rules.</para>
 
     <para>The syntax of the file is the same familiar one used
@@ -3143,10 +3143,15 @@ paint-developers = frank, sally, jane
 everyone = @calc-developers, @paint-developers
 </screen>
 
-    <para>Subversion 1.5 brings another useful feature to the access
-      file syntax:  username aliases.  Some authentication systems
-      expect and carry relatively short usernames of the sorts we've
-      been describing here&mdash;<literal>harry</literal>,
+    <para>Subversion 1.5 brought several useful features to the access
+      file syntax&mdash;username aliases, authentication class tokens,
+      and a new rule exclusion mechanism&mdash;all of which further
+      simplify the maintenance of the access file.  We'll describe
+      first the username aliases feature.</para>
+
+    <para>Some authentication systems expect and carry relatively
+      short usernames of the sorts we've been describing
+      here&mdash;<literal>harry</literal>,
       <literal>sally</literal>, <literal>joe</literal>, and so on.  But
       other authentication systems&mdash;such as those which use LDAP
       stores or SSL client certificates&mdash;may carry much more
@@ -3185,6 +3190,55 @@ everyone = @calc-developers, @paint-developers
       update only the aliases table when these username changes occur,
       instead of doing global-search-and-replace operations on the
       whole access file.</para>
+
+    <para>Subversion also supports some <quote>magic</quote> tokens
+      for helping you to make rule assignments based on the user's
+      authentication class.  One such token is
+      the <literal>$authenticated</literal> token.  Use this token
+      where you would otherwise specify a username, alias, or group
+      name in your authorization rules to declare the permissions
+      granted to any user who has authenticated with any username at
+      all.  Similarly employed is the <literal>$anonymous</literal>
+      token, except that it matches everyone who has
+      <emphasis>not</emphasis> authenticated with a username.</para>
+
+    <screen>
+[calendar:/projects/calendar]
+$anonymous = r
+$authenticated = rw
+</screen>
+
+    <para>Finally, another handy bit of access file syntax magic is
+      the use of the tilde (<literal>~</literal>) character as an
+      exclusion marker.  In your authorization rules, prefixing a
+      username, alias, group name, or authentication class token with
+      a tilde character will cause Subversion to apply the rule to
+      users who do <emphasis>not</emphasis> match the rule.  Though
+      somewhat unnecessarily obfuscated, the following block is
+      equivalent to the one in the previous example:</para>
+
+    <screen>
+[calendar:/projects/calendar]
+~$authenticated = r
+~$anonymous = rw
+</screen>
+
+    <para>A less obvious example might be as follows:</para>
+
+    <screen>
+[groups]
+calc-developers = &amp;harry, &amp;sally, &amp;joe
+calc-owners = &amp;hewlett, &amp;packard
+calc = @calc-developers, @calc-owners
+
+# Any calc participant has read-write access...
+[calc:/projects/calc]
+@calc = rw
+
+# ...but only allow the owners to make and modify release tags.
+[calc:/projects/calc/tags]
+~@calc-owners = r
+</screen>
 
     <!-- TODO(sussman): Once serf becomes officially support, this
          sidebar will need to be revisited. -->
