@@ -2338,50 +2338,96 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           or file, <command>mod_dav_svn</command> will respond with a
           directory listing or with file contents.</para>
 
-        <para>Since the URLs do not contain any information about
-          which version of the resource you wish to
-          see, <command>mod_dav_svn</command> will always answer with
-          the youngest version.  This functionality has the wonderful
-          side effect that you can pass around Subversion URLs to your
-          peers as references to documents, and those URLs will always
-          point at the latest manifestation of that document.  Of
-          course, you can even use the URLs as hyperlinks from other
-          web sites, too.</para>
+        <sect4 id="svn.serverconfig.httpd.extra.browsing.syntax">
+          <title>URL syntax</title>
 
-        <sidebar>
-          <title>Can I View Older Revisions?</title>
+          <para>If the URLs do not contain any information about which
+            version of the resource you wish to
+            see, <command>mod_dav_svn</command> will answer with the
+            youngest version.  This functionality has the wonderful
+            side effect that you can pass around Subversion URLs to
+            your peers as references to documents, and those URLs will
+            always point at the latest manifestation of that document.
+            Of course, you can even use the URLs as hyperlinks from
+            other web sites, too.</para>
 
-          <para>With an ordinary web browser?  In one word: nope.  At
-            least, not with <command>mod_dav_svn</command> as your
-            only tool.</para>
+          <para>As of Subversion 1.6, <command>mod_dav_svn</command>
+            supports a public URI syntax for examining older revisions
+            of both files and directories.  The syntax uses the query
+            string portion of the URL to specify either or both of a
+            peg revision and operative revision, which Subversion will
+            then use to determine which version of the file or
+            directory to display to your web browser.  Add the query
+            string name/value pair
+            <literal>p=<replaceable>PEGREV</replaceable></literal>,
+            where <replaceable>PEGREV</replaceable> is a revision
+            number, to specify the peg revision you wish to apply to the
+            request.  Use
+            <literal>r=<replaceable>REV</replaceable></literal>,
+            where <replaceable>REV</replaceable> is a revision number, to
+            specify an operative revision.</para>
 
-          <para>Your web browser speaks ordinary HTTP only.  That
-            means it knows only how to GET public URLs, which
-            represent the latest versions of files and directories.
-            According to the WebDAV/DeltaV specification, each server
-            defines a private URL syntax for older versions of
-            resources, and that syntax is opaque to clients.  To find
-            an older version of a file, a client must follow a
-            specific procedure to <quote>discover</quote> the proper
-            URL; the procedure involves issuing a series of WebDAV
-            PROPFIND requests and understanding DeltaV concepts.  This
-            is something your web browser simply can't do.</para>
+          <para>For example, if you wish to see the latest version of a
+            <filename>README.txt</filename> file located in your
+            project's <filename>/trunk</filename>, point your web
+            browser to that file's repository URL, which might look
+            something like the following:</para>
 
-          <para>So, to answer the question, one obvious way to see
-            older revisions of files and directories is by passing the
-            <option>--revision</option> (<option>-r</option>) argument
-            to the <command>svn list</command> and <command>svn
-            cat</command> commands.  To browse old revisions with your
-            web browser, however, you can use third-party software.  A
-            good example of this is ViewVC (<ulink
-            url="http://viewvc.tigris.org/"/>).  ViewVC was originally
-            written to display CVS repositories through the Web,
-            <footnote>
-              <para>Back then, it was called ViewCVS.</para>
-            </footnote>
-            and the latest releases are able to understand Subversion
-            repositories as well.</para>
-        </sidebar>
+          <programlisting>
+http://host.example.com/repos/project/trunk/README.txt
+</programlisting>
+
+          <para>If you now wish to see some older version of that
+            file, add an operative revision to the URL's query
+            string:</para>
+
+          <programlisting>
+http://host.example.com/repos/project/trunk/README.txt?r=1234
+</programlisting>
+       
+          <para>What if the thing you're trying to view no longer exists
+            in the youngest revision of the repository?  That's where a
+            peg revision is handy:</para>
+
+          <programlisting>
+http://host.example.com/repos/project/trunk/deleted-thing.txt?p=321
+</programlisting>
+
+          <para>And of course, you can combine peg revision and
+            operative revision specifiers to fine-tune the exact item
+            you wish to view:</para>
+
+          <programlisting>
+http://host.example.com/repos/project/trunk/renamed-thing.txt?p=123&amp;r=21
+</programlisting>
+
+          <para>The previous URL would display revision 21 of the
+            object which, in revision 123, was located
+            at <filename>/trunk/renamed-thing.txt</filename> in the
+            repository.  See <xref linkend="svn.advanced.pegrevs" /> for a
+            detailed explanation of these <quote>peg revision</quote>
+            and <quote>operative revision</quote> concepts.  They can
+            be a bit tricky to wrap your head around.</para>
+          
+          <para>As a reminder, this feature
+            of <command>mod_dav_svn</command> offers only a limited
+            repository browsing experience.  You can see directory
+            listings and file contents, but no revision properties
+            (such as commit log messages) or file/directory
+            properties.  For folks who require more extensive browsing
+            of repositories and their history, there are several
+            third-party software packages which offer this.  Some
+            examples include ViewVC
+            (<ulink url="http://viewvc.tigris.org/"/>) and Trac
+            (<ulink url="http://trac.edgewall.org/"/>).  These
+            third-party tools don't harm or hinder
+            <command>mod_dav_svn</command>'s
+            built-in <quote>browseability</quote>, and generally offer
+            a much wider set of features, including the display of the
+            aforementioned property sets, display of content
+            differences between file revisions, and so on.</para>
+          
+        </sect4>
 
         <sect4 id="svn.serverconfig.httpd.extra.browsing.mimetype">
           <title>Proper MIME type</title>
