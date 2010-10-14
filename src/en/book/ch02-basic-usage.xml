@@ -1,15 +1,15 @@
 <chapter id="svn.tour">
   <title>Basic Usage</title>
 
-  <para>Now we will go into the details of using Subversion.  By the
-    time you reach the end of this chapter, you will be able to
-    perform all the tasks you need to use Subversion in a normal day's
-    work.  You'll start with getting your files into Subversion,
-    followed by an initial checkout of your code.  We'll then walk you
-    through making changes and examining those changes.  You'll also
-    see how to bring changes made by others into your working copy,
-    examine them, and work through any conflicts that might
-    arise.</para>
+  <para>Theory is useful, but its application is just plain fun.
+    Let's move now into the details of using Subversion.  By the time
+    you reach the end of this chapter, you will be able to perform all
+    the tasks you need to use Subversion in a normal day's work.
+    You'll start with getting your files into Subversion, followed by
+    an initial checkout of your code.  We'll then walk you through
+    making changes and examining those changes.  You'll also see how
+    to bring changes made by others into your working copy, examine
+    them, and work through any conflicts that might arise.</para>
 
   <para>Note that this chapter is not meant to be an exhaustive list
     of all of Subversion's commands&mdash;rather, it's a conversational
@@ -108,7 +108,7 @@ Valid options:
 
     <!-- =============================================================== -->
     <sect2 id="svn.tour.importing.import">
-      <title>svn import</title>
+      <title>Importing Files and Directories</title>
 
       <para>
         <indexterm>
@@ -126,8 +126,8 @@ Valid options:
         begin tracking in your Subversion repository.  For example:</para>
 
       <screen>
-$ svnadmin create /var/svn/newrepos
-$ svn import mytree file:///var/svn/newrepos/some/project \
+$ svnadmin create /var/svn/repo
+$ svn import /path/to/mytree file:///var/svn/repo/some/project \
              -m "Initial import"
 Adding         mytree/foo.c
 Adding         mytree/bar.c
@@ -135,23 +135,30 @@ Adding         mytree/subdir
 Adding         mytree/subdir/quux.h
 
 Committed revision 1.
+$
 </screen>
 
-      <para>The previous example copied the contents of directory
-        <filename>mytree</filename> under the directory
-        <filename>some/project</filename> in the repository:</para>
+      <para>The previous example copied the contents of the local
+        directory <filename>mytree</filename> into the directory
+        <filename>some/project</filename> in the repository.  Note
+        that you didn't have to create that new directory
+        first&mdash;<command>svn import</command> does that for you.
+        Immediately after the commit, you can see your data in the
+        repository:</para>
 
       <screen>
-$ svn list file:///var/svn/newrepos/some/project
+$ svn list file:///var/svn/repo/some/project
 bar.c
 foo.c
 subdir/
+$
 </screen>
 
-      <para>Note that after the import is finished, the original tree
-        is <emphasis>not</emphasis> converted into a working copy.  To
-        start working, you still need to <command>svn
-        checkout</command> a fresh working copy of the tree.</para>
+      <para>Note that after the import is finished, the original local
+        directory is <emphasis>not</emphasis> converted into a working
+        copy.  To begin working on that data in a versioned fashion,
+        you still need to <command>svn checkout</command> a fresh
+        working copy of that tree.</para>
 
     </sect2>
 
@@ -159,27 +166,79 @@ subdir/
     <sect2 id="svn.tour.importing.layout">
       <title>Recommended Repository Layout</title>
 
-      <para>While Subversion's flexibility allows you to lay out your
-      repository in any way that you choose, we recommend that you
-      create a <filename>trunk</filename> directory to hold the
-      <quote>main line</quote> of development, a
-      <filename>branches</filename> directory to contain branch
-      copies, and a <filename>tags</filename> directory to contain tag
-      copies.  For example:</para>
+      <para>
+        <indexterm>
+          <primary>trunk</primary>
+        </indexterm>
+        <indexterm>
+          <primary>tags</primary>
+        </indexterm>
+        <indexterm>
+          <primary>branches</primary>
+        </indexterm>
+        <indexterm>
+          <primary>project root</primary>
+        </indexterm>
+
+        Subversion provides the ultimate flexibility in terms of
+        how you arrange your data.  Because it simply versions
+        directories and files, and because it ascribes no particular
+        meaning to any of those objects, you may arrange the data in
+        your repository in any way that you choose.  Unfortunately,
+        this flexibility also means that it's easy to find
+        yourself <quote>lost without a roadmap</quote> as you attempt
+        to navigate different Subversion repositories which may carry
+        completely different and unpredictable arrangements of the
+        data within them.</para>
+
+      <para>To counteract this confusion, we recommend that you follow
+        a repository layout convention (established long ago, in the
+        nascency of the Subversion project itself) in which a handful
+        of strategically named Subversion repository directories
+        convey valuable meaning about the data they hold.  Most
+        projects have a recognizable <quote>main line</quote>,
+        or <firstterm>trunk</firstterm>, of development;
+        some <firstterm>branches</firstterm>, which are divergent
+        copies of development lines; and
+        some <firstterm>tags</firstterm>, which are named, stable
+        snapshots of a particular line of development.  So we first
+        recommend that each project have a
+        recognizable <firstterm>project root</firstterm> in the
+        repository, a directory under which all of the versioned
+        information for that project&mdash;and only that
+        project&mdash;lives.  Secondly, we suggest that each project
+        root contain a <filename>trunk</filename> subdirectory for the
+        main development line, a
+        <filename>branches</filename> subdirectory in which specific
+        branches (or collections of branches) will be created, and
+        a <filename>tags</filename> subdirectory in which specific
+        tags (or collections of tags) will be created.  Of course, if
+        a repository houses only a single repository, the root of the
+        repository can serve as the project root, too.</para>
+
+      <para>Here are some examples:</para>
 
       <screen>
-$ svn list file:///var/svn/repos
+$ svn list file:///var/svn/single-project-repo
 /trunk
 /branches
 /tags
+$ svn list file:///var/svn/multi-project-repo
+/project-A
+/project-B
+$ svn list file:///var/svn/multi-project-repo/project-A
+/trunk
+/branches
+/tags
+$
 </screen>
 
-      <para>You'll learn more about tags and branches in <xref
-      linkend="svn.branchmerge"/>.  For details and how to set up
-      multiple projects, see <xref
-      linkend="svn.branchmerge.maint.layout"/> and <xref
-      linkend="svn.reposadmin.projects.chooselayout"/> to read more
-      about project roots.</para>
+      <para>We talk much more about tags and branches in
+        <xref linkend="svn.branchmerge"/>.  For details and some
+        advice on how to set up repositories when you have multiple
+        projects, see <xref linkend="svn.branchmerge.maint.layout"/>.
+        Finally, we discuss project roots more in
+        <xref linkend="svn.reposadmin.projects.chooselayout"/>.</para>
 
     </sect2>
 
