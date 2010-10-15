@@ -3969,9 +3969,9 @@ $
         particular protocol is used to contact the server (see <xref
         linkend="svn.advanced.reposurls"/>).</para>
 
-      <tip><para>Run <userinput>svn --version</userinput> to see
-        which URL schemes and protocols the client knows how to
-        use.</para>
+      <tip>
+        <para>Run <userinput>svn --version</userinput> to see which
+          URL schemes and protocols the client knows how to use.</para>
       </tip>
 
       <para>When the server process receives a client request, it
@@ -4007,141 +4007,190 @@ $
     </sect2>
 
     <!-- =============================================================== -->
-    <sect2 id="svn.serverconfig.netmodel.credcache">
-      <title>Client Credentials Caching</title>
+    <sect2 id="svn.serverconfig.netmodel.creds">
+      <title>Client Credentials</title>
 
-      <para>Many servers are configured to require authentication on
-        every request.  This would be a big annoyance to users if
-        they were forced to type their passwords over and over again.
-        Fortunately, the Subversion client has a remedy for
-        this&mdash;a built-in system for caching authentication
-        credentials on disk.  By default, whenever the command-line
-        client successfully responds to a server's authentication
-        challenge, credentials are cached on disk and keyed on a
-        combination of the server's hostname, port, and authentication
-        realm.</para>
-
-      <para>When the client receives an authentication challenge, it
-        first looks for the appropriate credentials in the user's disk
-        cache.  If seemingly suitable credentials are not present, or
-        if the cached credentials ultimately fail to authenticate,
-        the client will, by default, fall back to prompting the
-        user for the necessary information.</para>
+      <para>Many Subversion servers are configured to required
+        authentication.  Sometimes anonymous read operations are
+        allowed, while write operations must be authenticated.  In
+        other cases, reads and writes alike require authentication.
+        Subversion's different server options understand different
+        authentication protocols, but from the user's point of view,
+        authentication typically boils down to usernames and
+        passwords.  Subversion clients offer several different ways to
+        retrieve and store a user's authentication credentials, from
+        interactive prompting for usernames and passwords to encrypted
+        and non-encrypted on-disk data caches.</para>
 
       <para>The security-conscious reader will suspect immediately
         that there is reason for concern here.  <quote>Caching
         passwords on disk?  That's terrible!  You should never do
-        that!</quote></para>
+        that!</quote>  Don't worry&mdash;it's not as bad as it sounds.
+        The following sections discuss the various types of credential
+        caches that Subversion uses, when it uses them, and how to
+        disable that functionality in whole or in part.</para>
 
-      <para>The Subversion developers recognize the legitimacy of such
-        concerns, and so Subversion works with available mechanisms
-        provided by the operating system and environment to try to
-        minimize the risk of leaking this information.  Here's a
-        breakdown of what this means for users on the most common
-        platforms:</para>
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.serverconfig.netmodel.credcache">
+        <title>Caching credentials</title>
 
-      <itemizedlist>
+        <para>Subversion offers a remedy for the annoyance caused when
+          users are forced to type their usernames and passwords over
+          and over again.  By default, whenever the command-line
+          client successfully responds to a server's authentication
+          challenge, credentials are cached on disk and keyed on a
+          combination of the server's hostname, port, and
+          authentication realm.  This cache will then be automatically
+          consulted in the future, avoiding the need for the user to
+          re-type his or her authentication credentials.  If seemingly
+          suitable credentials are not present in the cache, or if the
+          cached credentials ultimately fail to authenticate, the
+          client will, by default, fall back to prompting the user for
+          the necessary information.</para>
 
-        <listitem>
-          <para>On Windows, the Subversion client stores passwords
-            in the <filename>%APPDATA%/Subversion/auth/</filename>
-            directory.  On Windows 2000 and later, the standard Windows
-            cryptography services are used to encrypt the password
-            on disk.  Because the encryption key is managed
-            by Windows and is tied to the user's own login
-            credentials, only the user can decrypt the cached
-            password.  (Note that if the user's Windows account password
-            is reset by an administrator, all of the cached passwords
-            become undecipherable.  The Subversion client will behave
-            as though they don't exist, prompting for passwords when
-            required.)</para>
-        </listitem>
+        <para>The Subversion developers recognize that on-disk caches
+          of authentication credentials can be a security risk.  To
+          offset this, Subversion works with available mechanisms
+          provided by the operating system and environment to try to
+          minimize the risk of leaking this information.</para>
 
-        <listitem>
-          <para>Similarly, on Mac OS X, the Subversion client stores
-            all repository passwords in the login keyring (managed by
-            the Keychain service), which is protected by the user's
-            account password.  User preference settings can impose
-            additional policies, such as requiring that the user's account
-            password be entered each time the Subversion password is
-            used.</para>
-        </listitem>
+        <itemizedlist>
 
-        <listitem>
-          <para>For other Unix-like operating systems, no standard
-            <quote>keychain</quote> services exist.  However, the
-            Subversion client knows how to store password securely
-            using the <quote>GNOME Keyring</quote> and
-            <quote>KDE Wallet</quote> services.
-            Also, before storing unencrypted passwords in the
-            <filename>~/.subversion/auth/</filename> caching area,
-            the Subversion client will ask the user for permission
-            to do so.  Note that the <filename>auth/</filename>
-            caching area is still permission-protected so that only
-            the user (owner) can read data from it, not the world at
-            large.  The operating system's own file permissions protect
-            the passwords from other non-administrative users on the
-            same system, provided they have no direct physical access
-            to the storage media of the home directory, or backups
-            thereof.</para>
-        </listitem>
+          <listitem>
+            <para>On Windows, the Subversion client stores passwords
+              in the <filename>%APPDATA%/Subversion/auth/</filename>
+              directory.  On Windows 2000 and later, the standard
+              Windows cryptography services are used to encrypt the
+              password on disk.  Because the encryption key is managed
+              by Windows and is tied to the user's own login
+              credentials, only the user can decrypt the cached
+              password.  (Note that if the user's Windows account
+              password is reset by an administrator, all of the cached
+              passwords become undecipherable.  The Subversion client
+              will behave as though they don't exist, prompting for
+              passwords when required.)</para>
+          </listitem>
 
-      </itemizedlist>
+          <listitem>
+            <para>Similarly, on Mac OS X, the Subversion client stores
+              all repository passwords in the login keyring (managed
+              by the Keychain service), which is protected by the
+              user's account password.  User preference settings can
+              impose additional policies, such as requiring that the
+              user's account password be entered each time the
+              Subversion password is used.</para>
+          </listitem>
 
-      <para>Of course, for the truly paranoid, none of these
-        mechanisms meets the test of perfection.  So for those folks
-        willing to sacrifice convenience for the ultimate in security,
-        Subversion provides various ways of disabling its credentials
-        caching system altogether.</para>
+          <listitem>
+            <para>For other Unix-like operating systems, no single
+              standard <quote>keychain</quote> service exists.
+              However, the Subversion client knows how to store
+              password securely using the <quote>GNOME Keyring</quote>
+              and <quote>KDE Wallet</quote> services.  Also, before
+              storing unencrypted passwords in the
+              <filename>~/.subversion/auth/</filename> caching area,
+              the Subversion client will ask the user for permission
+              to do so.  Note that the <filename>auth/</filename>
+              caching area is still permission-protected so that only
+              the user (owner) can read data from it, not the world at
+              large.  The operating system's own file permissions protect
+              the passwords from other non-administrative users on the
+              same system, provided they have no direct physical access
+              to the storage media of the home directory, or backups
+              thereof.</para>
+          </listitem>
 
-      <para>To disable caching for a single command, pass the
-        <option>--no-auth-cache</option> option:</para>
+        </itemizedlist>
 
-      <screen>
-$ svn commit -F log_msg.txt --no-auth-cache
-Authentication realm: &lt;svn://host.example.com:3690&gt; example realm
-Username:  joe
-Password for 'joe':
+        <para>Of course, for the truly paranoid, none of these
+          mechanisms meets the test of perfection.  So for those folks
+          willing to sacrifice convenience for the ultimate in security,
+          Subversion provides various ways of disabling its credentials
+          caching system altogether.</para>
 
-Adding         newfile
-Transmitting file data .
-Committed revision 2324.
+      </sect3>
 
-# password was not cached, so a second commit still prompts us
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.initial.disabling-password-caching">
+        <title>Disabling password caching</title>
 
-$ svn delete newfile
-$ svn commit -F new_msg.txt
-Authentication realm: &lt;svn://host.example.com:3690&gt; example realm
-Username:  joe
-&hellip;
+        <para>When you perform a Subversion operation that requires
+          you to authenticate, by default Subversion tries to cache
+          your authentication credentials on disk in encrypted form.
+          On some systems, Subversion may be unable to encrypt your
+          authentication data.  In those situations, Subversion will
+          ask whether you want to cache your credentials to disk in
+          plaintext:</para>
+  
+        <screen>
+$ svn checkout https://host.example.com:443/svn/private-repo
+-----------------------------------------------------------------------
+ATTENTION!  Your password for authentication realm:
+
+   &lt;https://host.example.com:443&gt; Subversion Repository
+
+can only be stored to disk unencrypted!  You are advised to configure
+your system so that Subversion can store passwords encrypted, if
+possible.  See the documentation for details.
+
+You can avoid future appearances of this warning by setting the value
+of the 'store-plaintext-passwords' option to either 'yes' or 'no' in
+'/tmp/servers'.
+-----------------------------------------------------------------------
+Store password unencrypted (yes/no)? 
 </screen>
 
-      <para>Or, if you want to disable credential caching permanently,
-        you can edit the <filename>config</filename> file in your
-        runtime configuration area and set the
-        <literal>store-auth-creds</literal> option to
-        <literal>no</literal>.  This will prevent the storing of
-        credentials used in any Subversion interactions you perform on
-        the affected computer.  This can be extended to cover all
-        users on the computer, too, by modifying the system-wide
-        runtime configuration area (described in <xref
-        linkend="svn.advanced.confarea.layout" />).</para>
+        <para>If you want the convenience of not having to continually
+          reenter your password for future operations, you can
+          answer <literal>yes</literal> to this prompt.  If you're
+          concerned about caching your Subversion passwords in
+          plaintext and do not want to be asked about it again and
+          again, you can disable caching of plaintext passwords either
+          permanently, or on a server-per-server basis.</para>
 
-      <screen>
-[auth]
-store-auth-creds = no
-</screen>
+        <warning>
+          <para>When considering how to use Subversion's password
+            caching system, you'll want to consult any governing
+            policies that are in place for your client
+            computer&mdash;many companies have strict rules about the
+            ways that their employees' authentication credentials
+            should be stored.</para>
+        </warning>
 
-      <para>Sometimes users will want to remove specific credentials
-        from the disk cache.  To do this, you need to navigate into
-        the <filename>auth/</filename> area and manually delete the
-        appropriate cache file.  Credentials are cached in individual
-        files;  if you look inside each file, you will see keys and
-        values.  The <literal>svn:realmstring</literal> key describes
-        the particular server realm that the file is associated
-        with:</para>
+        <para>To permanently disable caching of passwords in
+          plaintext, add the line <literal>store-plaintext-passwords =
+          no</literal> to the <literal>[global]</literal> section in
+          the <filename>servers</filename> configuration file on the
+          local machine.  To disable plaintext password caching for a
+          particular server, use the same setting in the appropriate
+          group section in the <filename>servers</filename>
+          configuration file.  (See
+          <xref linkend="svn.advanced.confarea.opts"/> in
+          <xref linkend="svn.customization"/> for details.)</para>
 
-      <screen>
+        <para>To disable password caching entirely for any single
+          Subversion command-line operation, pass
+          the <option>--no-auth-cache</option> option to that command
+          line.  To permanently disable caching entirely, add the
+          line <literal>store-passwords = no</literal> to your local
+          machine's Subversion configuration file.</para>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.initial.authn-cache-purge">
+        <title>Removing cached credentials</title>
+     
+        <para>Sometimes users will want to remove specific credentials
+          from the disk cache.  To do this, you need to navigate into
+          the <filename>auth/</filename> area and manually delete the
+          appropriate cache file.  Credentials are cached in individual
+          files;  if you look inside each file, you will see keys and
+          values.  The <literal>svn:realmstring</literal> key describes
+          the particular server realm that the file is associated
+          with:</para>
+
+        <screen>
 $ ls ~/.subversion/auth/svn.simple/
 5671adf2865e267db74f09ba6f872c28
 3893ed123b39500bca8a0b382839198e
@@ -4164,74 +4213,103 @@ V 45
 END
 </screen>
 
-      <para>Once you have located the proper cache file, just delete
-        it.</para>
+        <para>Once you have located the proper cache file, just delete
+          it.</para>
 
-      <para>One last word about <command>svn</command>'s
-        authentication behavior, specifically regarding the
-        <option>--username</option> and <option>--password</option>
-        options.  Many client subcommands accept these options, but it
-        is important to understand that using these options does
-        <emphasis>not</emphasis> automatically send credentials to the
-        server.  As discussed earlier, the server <quote>pulls</quote>
-        credentials from the client when it deems necessary; the
-        client cannot <quote>push</quote> them at will.  If a username
-        and/or password are passed as options, they will be
-        presented to the server only if the server requests them.  These
-        options are typically used to authenticate as a different user
-        than Subversion would have chosen by default (such as your
-        system login name) or when trying to avoid interactive
-        prompting (such as when calling <command>svn</command> from a
-        script).</para>
+      </sect3>
 
-      <note>
-        <para>A common mistake is to misconfigure a server so
-          that it never issues an authentication challenge.  When
-          users pass <option>--username</option> and
-          <option>--password</option> options to the client, they're
-          surprised to see that they're never used; that is, new
-          revisions still appear to have been committed
-          anonymously!</para>
-      </note>
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.initial.different-user">
+        <title>Command-line authentication</title>
 
-      <para>Here is a final summary that describes how a Subversion
-        client behaves when it receives an authentication
-        challenge.</para>
+        <para>All Subversion command-line operations accept
+          the <option>--username</option>
+          and <option>--password</option> options, which allow you to
+          specify your username and password, respectively, so that
+          Subversion isn't forced to prompt you for that information.
+          This is especially handy if you need to invoke Subversion
+          from a script and cannot rely on Subversion being able to
+          locate valid cached credentials for you.  These options are
+          also helpful when Subversion has already cached
+          authentication credentials for you, but you know they aren't
+          the ones you want it to use.  Perhaps several system users
+          share a login to the system, but each have distinct
+          Subversion identities.  You can omit
+          the <option>--password</option> option from this pair if
+          you wish Subversion to use only the provided username, but
+          still prompt you for that username's password.</para>
 
-      <orderedlist>
-        <listitem>
-          <para>First, the client checks whether the user specified
-            any credentials as command-line options
-            (<option>--username</option> and/or
-            <option>--password</option>).  If so, the client will try
-            to use those credentials to authenticate against the
-            server.</para>
-        </listitem>
-        <listitem>
-          <para>If no command-line credentials were provided, or the
-            provided ones were invalid, the client looks up the server's
-            hostname, port, and realm in the runtime configuration's
-            <filename>auth/</filename> area, to see whether appropriate 
-            credentials are cached there.  If so, it attempts to use
-            those credentials to authenticate.</para>
-        </listitem>
-        <listitem>
-          <para>Finally, if the previous mechanisms failed to
-            successfully authenticate the user against the server, the
-            client resorts to interactively prompting the user for
-            valid credentials (unless instructed not to do so via the
-            <option>--non-interactive</option> option or its
-            client-specific equivalents).</para>
-        </listitem>
-      </orderedlist>
+      </sect3>
 
-      <para>If the client successfully authenticates by any of these
-        methods, it will attempt to cache the credentials on disk
-        (unless the user has disabled this behavior, as mentioned
-        earlier).</para>
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.tour.initial.authn-wrapup">
+        <title>Authentication wrap-up</title>
 
+        <para>One last word about <command>svn</command>'s
+          authentication behavior, specifically regarding the
+          <option>--username</option> and <option>--password</option>
+          options.  Many client subcommands accept these options, but it
+          is important to understand that using these options does
+          <emphasis>not</emphasis> automatically send credentials to the
+          server.  As discussed earlier, the server <quote>pulls</quote>
+          credentials from the client when it deems necessary; the
+          client cannot <quote>push</quote> them at will.  If a username
+          and/or password are passed as options, they will be
+          presented to the server only if the server requests them.  These
+          options are typically used to authenticate as a different user
+          than Subversion would have chosen by default (such as your
+          system login name) or when trying to avoid interactive
+          prompting (such as when calling <command>svn</command> from a
+          script).</para>
+
+        <note>
+          <para>A common mistake is to misconfigure a server so
+            that it never issues an authentication challenge.  When
+            users pass <option>--username</option> and
+            <option>--password</option> options to the client, they're
+            surprised to see that they're never used; that is, new
+            revisions still appear to have been committed
+            anonymously!</para>
+        </note>
+
+        <para>Here is a final summary that describes how a Subversion
+          client behaves when it receives an authentication
+          challenge.</para>
+
+        <orderedlist>
+          <listitem>
+            <para>First, the client checks whether the user specified
+              any credentials as command-line options
+              (<option>--username</option> and/or
+              <option>--password</option>).  If so, the client will try
+              to use those credentials to authenticate against the
+              server.</para>
+          </listitem>
+          <listitem>
+            <para>If no command-line credentials were provided, or the
+              provided ones were invalid, the client looks up the server's
+              hostname, port, and realm in the runtime configuration's
+              <filename>auth/</filename> area, to see whether appropriate 
+              credentials are cached there.  If so, it attempts to use
+              those credentials to authenticate.</para>
+          </listitem>
+          <listitem>
+            <para>Finally, if the previous mechanisms failed to
+              successfully authenticate the user against the server, the
+              client resorts to interactively prompting the user for
+              valid credentials (unless instructed not to do so via the
+              <option>--non-interactive</option> option or its
+              client-specific equivalents).</para>
+          </listitem>
+        </orderedlist>
+
+        <para>If the client successfully authenticates by any of these
+          methods, it will attempt to cache the credentials on disk
+          (unless the user has disabled this behavior, as mentioned
+          earlier).</para>
+
+      </sect3>
     </sect2>
-
   </sect1>
 
   <!-- ================================================================= -->
