@@ -5168,21 +5168,42 @@ $
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.locking.break-steal">
+<!--
       <title>Breaking and Stealing Locks</title>
+-->
+      <title>Freigabeerzwingung und Stehlen von Sperren</title>
 
+<!--
       <para>A repository lock isn't sacred&mdash;in Subversion's
         default configuration state, locks can be released not only by
         the person who created them, but by anyone.  When somebody
         other than the original lock creator destroys a lock, we refer
         to this as <firstterm>breaking the lock</firstterm>.</para>
+-->
+      <para>Eine Sperre im Projektarchiv ist nicht heilig &ndash; in
+        der Standardkonfiguration von Subversion können Sperren nicht
+        nur durch die Personen freigegeben werden, die sie angelegt
+        haben, sondern durch jeden. Falls jemand anderes als der
+        ursprüngliche Erzeuger der Sperre diese zerstört, nennen wir
+        das <firstterm>die Freigabe der Sperre
+          erzwingen</firstterm>.</para>
 
+<!--
       <para>From the administrator's chair, it's simple to break
         locks.  The <command>svnlook</command>
         and <command>svnadmin</command> programs have the ability to
         display and remove locks directly from the repository.  (For
         more information about these tools, see
         <xref linkend="svn.reposadmin.maint.tk"/>.)</para>
+-->
+      <para>Vom Platz eines Administrators aus ist es einfach, eine
+        Freigabe zu erzwingen. Die Programme <command>svnlook</command>
+        und <command>svnadmin</command> können Sperren direkt aus dem
+        Projektarchiv anzeigen sowie entfernen. (Weitere Informationen
+        zu diesen Werkzeugen unter <xref
+          linkend="svn.reposadmin.maint.tk"/>.)</para>
 
+<!--
       <screen>
 $ svnadmin lslocks /var/svn/repos
 Path: /project2/images/banana.jpg
@@ -5205,12 +5226,43 @@ $ svnadmin rmlocks /var/svn/repos /project/raisin.jpg
 Removed lock on '/project/raisin.jpg'.
 $
 </screen>
+-->
+      <screen>
+$ svnadmin lslocks /var/svn/repos
+Pfad: /project2/images/banana.jpg
+UUID Marke: opaquelocktoken:c32b4d88-e8fb-2310-abb3-153ff1236923
+Eigentümer: frank
+Erstellt: 2006-06-15 13:29:18 -0500 (Thu, 15 Jun 2006)
+Läuft ab: 
+Kommentar (1 Zeile):
+Still improving the yellow color.
 
+Pfad: /project/raisin.jpg
+UUID Marke: opaquelocktoken:fc2b4dee-98f9-0310-abf3-653ff3226e6b
+Eigentümer: harry
+Erstellt: 2006-02-16 13:29:18 -0500 (Thu, 16 Feb 2006)
+Läuft ab: 
+Kommentar (1 Zeile):
+Need to make a quick tweak to this image.
+
+$ svnadmin rmlocks /var/svn/repos /project/raisin.jpg
+Sperre für »/project/raisin.jpg« entfernt.
+$
+</screen>
+
+<!--
       <para>The more interesting option is to allow users to break
         each other's locks over the network.  To do this, Sally simply
-        needs to pass the <option>--force</option> to the <command>svn
+        needs to pass the <option>- -force</option> to the <command>svn
         unlock</command> command:</para>
+-->
+      <para>Die interessantere Option ist, es den Benutzern zu
+        erlauben, gegenseitig über das Netz die Freigabe zu erzwingen.
+        Um das zu machen, muss Sally dem Befehl <command>svn
+          unlock</command> einfach ein <option>--force</option>
+        mitgeben:</para>
 
+<!--
       <screen>
 $ svn status -u
 M              23   bar.c
@@ -5223,11 +5275,29 @@ $ svn info raisin.jpg | grep URL
 URL: http://svn.example.com/repos/project/raisin.jpg
 $ svn unlock http://svn.example.com/repos/project/raisin.jpg
 svn: Unlock request failed: 403 Forbidden (http://svn.example.com)
-$ svn unlock --force http://svn.example.com/repos/project/raisin.jpg
+$ svn unlock - -force http://svn.example.com/repos/project/raisin.jpg
 'raisin.jpg' unlocked.
 $
 </screen>
+-->
+      <screen>
+$ svn status -u
+M              23   bar.c
+M    O         32   raisin.jpg
+       *       72   foo.h
+Status bezogen auf Revision:     105
+$ svn unlock raisin.jpg
+svn: »raisin.jpg« ist in dieser Arbeitskopie nicht gesperrt.
+$ svn info raisin.jpg | grep URL
+URL: http://svn.example.com/repos/project/raisin.jpg
+$ svn unlock http://svn.example.com/repos/project/raisin.jpg
+svn: Sperrfreigabe gescheitert: 403 Forbidden (http://svn.example.com)
+$ svn unlock --force http://svn.example.com/repos/project/raisin.jpg
+»raisin.jpg« freigegeben.
+$
+</screen>
 
+<!--
       <para>Now, Sally's initial attempt to unlock failed because she
         ran <command>svn unlock</command> directly on her working copy
         of the file, and no lock token was present.  To remove the
@@ -5235,30 +5305,67 @@ $
         to <command>svn unlock</command>.  Her first attempt to unlock
         the URL fails, because she can't authenticate as the lock
         owner (nor does she have the lock token).  But when she
-        passes <option>--force</option>, the authentication and
+        passes <option>- -force</option>, the authentication and
         authorization requirements are ignored, and the remote lock is
         broken.</para>
-        
+-->
+      <para>Sallys erster Versuch, die Sperre aufzuheben, schlug
+        fehl, da sie <command>svn unlock</command> direkt in ihrer
+        Arbeitskopie ausführte und keine Sperrmarke vorhanden war. Um
+        die Sperre direkt aus dem Projektarchiv zu entfernen, muss sie
+        <command>svn unlock</command> einen URL übergeben. Ihr erster
+        Versuch, den URL zu entsperren, schlägt fehl, da sie sich
+        nicht als der Sperreigner authentifizieren kann (sie hat ja
+        auch nicht die Sperrmarke). Wenn sie jedoch
+        <option>--force</option> übergibt, werden die
+        Authentifizierungs- und Autorisierungsanforderungen ignoriert
+        und die entfernte Freigabe wird erzwungen.</para>
+
+<!--
       <para>Simply breaking a lock may not be enough.  In
         the running example, Sally may not only want to break Harry's
         long-forgotten lock, but relock the file for her own use.
         She can accomplish this by using <command>svn unlock</command>
-        with <option>--force</option> and then <command>svn lock</command>
+        with <option>- -force</option> and then <command>svn lock</command>
         back-to-back, but there's a small chance that somebody else
         might lock the file between the two commands.  The simpler thing
         to do is to <firstterm>steal</firstterm> the lock, which involves
         breaking and relocking the file all in one atomic step.  To
-        do this, Sally passes the <option>--force</option> option
+        do this, Sally passes the <option>- -force</option> option
         to <command>svn lock</command>:</para>
+-->
+      <para>Es kann sein, dass das einfache Erzwingen einer Freigabe
+        nicht ausreicht. Im aktuellen Beispiel könnte Sally nicht nur
+        beabsichtigt haben, Harrys längst vergessene Sperre zu
+        beseitigen, sondern die Datei für sich zu sperren. Sie kann
+        das erreichen, indem sie <command>svn unlock</command> mit 
+        <option>--force</option> aufruft und direkt anschließend
+        <command>svn lock</command>; hier besteht jedoch eine geringe
+        Wahrscheinlichkeit, dass jemand anderes die Datei zwischen den
+        beiden Befehlen sperren könnte. Einfacher ist es, die Sperre
+        zu <firstterm>stehlen</firstterm>, was bedeutet, die Datei in
+        einem atomaren Schritt freizugeben und wieder zu sperren. Um
+        das zu tun, übergibt Sally die Option <option>--force</option>
+        an <command>svn lock</command>:</para>
 
+<!--
       <screen>
 $ svn lock raisin.jpg
 svn: Lock request failed: 423 Locked (http://svn.example.com)
-$ svn lock --force raisin.jpg
+$ svn lock - -force raisin.jpg
 'raisin.jpg' locked by user 'sally'.
 $
 </screen>
+-->
+      <screen>
+$ svn lock raisin.jpg
+svn: Sperranforderung gescheitert: 423 Locked (http://svn.example.com)
+$ svn lock --force raisin.jpg
+»raisin.jpg« gesperrt durch »sally«.
+$
+</screen>
 
+<!--
       <para>In any case, whether the lock is broken or stolen, Harry
         may be in for a surprise.  Harry's working copy still contains
         the original lock token, but that lock no longer exists.  The
@@ -5268,6 +5375,18 @@ $
         different lock).  Either way, Harry can see this by asking
         <command>svn status</command> to contact the
         repository:</para>
+-->
+      <para>Auf jeden Fall wird Harry eine Überraschung erleben, egal,
+        ob die Freigabe erzwungen oder die Sperre gestohlen wurde. Die
+        Arbeitskopie von Harry beinhaltet immer noch die ursprüngliche
+        Sperrmarke, die dazugehörige Sperre gibt es jedoch nicht mehr.
+        Die Sperrmarke wird als <firstterm>erloschen</firstterm>
+        bezeichnet. Die durch die Sperrmarke repräsentierte Sperre
+        wurde entweder durch eine Freigabeerzwingung zerstört (sie
+        befindet sich nicht mehr im Projektarchiv) oder gestohlen
+        (durch eine andere Sperre ersetzt). Egal wie, Harry kann es
+        sehen, wenn er <command>svn status</command> auffordert,
+        Kontakt zum Projektarchiv aufzunehmen:</para>
 
       <screen>
 $ svn status
@@ -5280,17 +5399,31 @@ $ svn status
 $
 </screen>
 
+<!--
       <para>If the repository lock was broken, then <userinput>svn
-        status --show-updates</userinput> displays a
+        status - -show-updates</userinput> displays a
         <literal>B</literal> (Broken) symbol next to the file.  If a
         new lock exists in place of the old one, then a
         <literal>T</literal> (sTolen) symbol is shown.  Finally,
         <command>svn update</command> notices any defunct lock tokens
         and removes them from the working copy.</para>
+-->
+      <para>Falls die Freigabe erzwungen wurde, zeigt <userinput>svn
+          status --show-updates</userinput> ein
+        <literal>B</literal>-Symbol (Broken) neben der Datei an. Falls
+        es eine neue Sperre an Stelle der alten gibt, wird ein
+        <literal>T</literal>-Symbol (gesTohlen) angezeigt. Zu guter
+        Letzt entdeckt <command>svn update</command> irgendwelche
+        erloschenen Sperrmarken und entfernt sie aus der
+        Arbeitskopie.</para>
 
       <sidebar>
+<!--
         <title>Locking Policies</title>
-        
+-->
+        <title>Richtlinien für Sperren</title>
+
+<!--
         <para>Different systems have different notions of how strict a
           lock should be.  Some folks argue that locks must be
           strictly enforced at all costs, releasable only by the
@@ -5301,7 +5434,21 @@ $
           users are constantly breaking each other's locks, it
           represents a cultural failure within the team and the
           problem falls outside the scope of software enforcement.</para>
+-->
+        <para>Verschidene Systeme haben unterschiedliche Auffassungen,
+          was die Strenge von Sperren angeht. Manche Leute sind der
+          Ansicht, dass Sperren in jedem Fall streng durchgesetzt
+          werden müssen und nur vom unsprünglichen Erzeuger oder einem
+          Administrator freigegeben werden sollen. Sie meinen, dass
+          sich Chaos verbreitet und der eigentliche Zweck von Sperren
+          vereitelt wird, falls jeder eine Freigabe erzwingen kann.
+          Die andere Seite ist der Meinung, dass Sperren in erster
+          Linie ein Kommunikationswerkzeug sind. Wenn Benutzer sich
+          gegenseitig die Sperren entziehen, repräsentiert das einen
+          kulturellen Fehler im Team, so dass das Problem nicht durch
+          Software gelöst werden kann.</para>
 
+<!--
         <para>Subversion defaults to the <quote>softer</quote>
           approach, but still allows administrators to create stricter
           enforcement policies through the use of hook scripts.  In
@@ -5316,6 +5463,23 @@ $
           and can be used to send email after locking actions.  To
           learn more about repository hooks, see <xref
           linkend="svn.reposadmin.create.hooks" />.</para>
+-->
+        <para>Subversion geht standardmäßig den
+          <quote>weicheren</quote> Weg, erlaubt es jedoch
+          Administratoren, mittels Hook-Skripten strengere Richtlinien
+          durchzusetzen. Besonders die <filename>pre-lock</filename>-
+          und <filename>pre-unlock</filename>-Aktionen gestatten
+          Administratoren, zu entscheiden, wann das Erzeugen und
+          Freigeben von Sperren erlaubt sein sollen. Abhängig davon,
+          ob eine Sperre bereits besteht, können diese beiden Aktionen
+          entscheiden, ob ein bestimmter Benutzer eine Freigabe
+          erzwingen oder eine Sperre stehlen darf. Die
+          <filename>post-lock</filename> und
+          <filename>post-unlock</filename> Aktionen sind ebenfalls
+          verfügbar und können verwendet werden, um nach Sperraktionen
+          E-Mails zu versenden. Um mehr über Projektarchiv-Aktionen zu
+          erfahren, siehe <xref linkend="svn.reposadmin.create.hooks"
+            />.</para>
 
       </sidebar>
 
