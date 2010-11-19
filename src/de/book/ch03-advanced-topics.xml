@@ -5487,25 +5487,53 @@ $
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.locking.lock-communication">
+<!--
       <title>Lock Communication</title>
+-->
+      <title>Kommunikation über Sperren</title>
 
+<!--
       <para>We've seen how <command>svn lock</command>
         and <command>svn unlock</command> can be used to create,
         release, break, and steal locks.  This satisfies the goal of
         serializing commit access to a file.  But what about the
         larger problem of preventing wasted time?</para>
+-->
+      <para>Wir haben uns angesehen, wie <command>svn lock</command>
+        und <command>svn unlock</command> verwendet werden können, um
+        Sperren anzulegen, freizugeben und deren Freigabe zu
+        erzwingen. Dies erfüllt den Zweck, den Zugriff zum Übergeben
+        von Änderungen an einer Datei zu serialisieren. Aber wie sieht
+        es mit dem größeren Problem aus, Zewitverschwendung zu
+        vermeiden?</para>
+<!--
 
       <para>For example, suppose Harry locks an image file and then
         begins editing it.  Meanwhile, miles away, Sally wants to do
         the same thing.  She doesn't think to run <userinput>svn status
-        --show-updates</userinput>, so she has no idea that Harry has
+        - -show-updates</userinput>, so she has no idea that Harry has
         already locked the file.  She spends hours editing the file,
         and when she tries to commit her change, she discovers that
         either the file is locked or that she's out of date.
         Regardless, her changes aren't mergeable with Harry's.  One of
         these two people has to throw away his or her work, and a lot of
         time has been wasted.</para>
-      
+-->
+
+      <para>Nehmen wir beispielsweise an, dass Harry eine Bilddatei
+        sperrt und mit deren Bearbeitung beginnt. Mittlerweile, weit
+        entfernt, möchte Sally das Gleiche machen. Sie denkt nicht
+        daran, <userinput>svn status --show-updates</userinput>
+        aufzurufen, so dass sie nicht mitbekommt, dass Harry die Datei
+        bereits gesperrt hat. Sie verbringt Stunden mit der
+        Bearbeitung der Datei, und beim Versuch, ihre Änderungen zu
+        übergeben, stellt sie fest, dass die Datei entweder gesperrt
+        oder nicht mehr aktuell ist. Wie auch immer &ndash; ihre
+        Änderungen lassen sich nicht mit denen Harrys zusammenführen.
+        Eine Person von beiden muss ihre Arbeit wegwerfen, und eine
+        Menge Zeit ist verschwendet worden.</para>
+<!--
+
       <para>Subversion's solution to this problem is to provide a
         mechanism to remind users that a file ought to be locked
         <emphasis>before</emphasis> the editing begins.  The mechanism
@@ -5518,7 +5546,38 @@ $
         <command>svn lock</command>), the file becomes read/write.
         When the lock is released, the file becomes read-only
         again.</para>
+-->
+<!--
 
+      <para>Subversion's solution to this problem is to provide a
+        mechanism to remind users that a file ought to be locked
+        <emphasis>before</emphasis> the editing begins.  The mechanism
+        is a special property:  <literal>svn:needs-lock</literal>.  If
+        that property is attached to a file (regardless of its value,
+        which is irrelevant), Subversion will try to use
+        filesystem-level permissions to make the file read-only&mdash;unless,
+        of course, the user has explicitly locked the file.
+        When a lock token is present (as a result of using
+        <command>svn lock</command>), the file becomes read/write.
+        When the lock is released, the file becomes read-only
+        again.</para>
+-->
+
+      <para>Die Lösung von Subversion für dieses Problem besteht in
+        einem Mechanismus, der Benutzer daran erinnert, dass eine
+        Datei <emphasis>vor</emphasis> dem Ändern gesperrt werden
+        sollte. Es handelt sich um eine besondere Eigenschaft:
+        <literal>svn:needs-lock</literal>. Wenn diese Eigenschaft
+        einer Datei zugeordnet ist (egal mit welchem Wert), versucht
+        Subversion mit Dateisystem-Zugriffsrechten, die Datei nur
+        lesbar zu machen &ndash; natürlich nur dann, wenn der Benutzer
+        die Datei nicht ausdrücklich gesperrt hat. Wenn eine
+        Sperrmarke vorhanden ist (als ein Ergebnis eines Aufrufs von
+        <command>svn lock</command>), wird die Datei schreib- und
+        lesbar. Wird die Sperre freigegeben, wird die Datei wieder nur
+        lesbar.</para>
+
+<!--
       <para>The theory, then, is that if the image file has this
         property attached, Sally would immediately notice
         something is strange when she opens the file for editing:
@@ -5527,12 +5586,22 @@ $
         prevent her from saving changes to the file.  This
         reminds her to lock the file before editing, whereby she
         discovers the preexisting lock:</para>
+-->
+      <para>Die Theorie ist die, dass Sally sofort merkt, dass irgend
+        etwas nicht stimmt, wenn sie die mit dieser Eigenschaft
+        versehene Bilddatei zum Ändern öffnet: Viele Anwendungen
+        benachrichtigen Benutzer sofort, wenn eine nur lesbare Datei
+        zum Ändern geöffnet werden soll, und fast alle verhindern es,
+        dass Änderungen an der Datei gespeichert werden. Das erinnert
+        sie daran, die Datei vor dem Ändern zu sperren, wobei sie die
+        bereits bestehende Sperre entdeckt:</para>
 
+<!--
       <screen>
 $ /usr/local/bin/gimp raisin.jpg
 gimp: error: file is read-only!
 $ ls -l raisin.jpg
--r--r--r--   1 sally   sally   215589 Jun  8 19:23 raisin.jpg
+-r- -r- -r- -   1 sally   sally   215589 Jun  8 19:23 raisin.jpg
 $ svn lock raisin.jpg
 svn: Lock request failed: 423 Locked (http://svn.example.com)
 $ svn info http://svn.example.com/repos/project/raisin.jpg | grep Lock
@@ -5543,7 +5612,24 @@ Lock Comment (1 line):
 Making some tweaks.  Locking for the next two hours.
 $
 </screen>
+-->
+      <screen>
+$ /usr/local/bin/gimp raisin.jpg
+gimp: error: file is read-only!
+$ ls -l raisin.jpg
+-r--r--r--   1 sally   sally   215589 Jun  8 19:23 raisin.jpg
+$ svn lock raisin.jpg
+svn: "Sperranforderung gescheitert: 423 Locked (http://svn.example.com)
+$ svn info http://svn.example.com/repos/project/raisin.jpg | grep Lock
+Sperrmarke: opaquelocktoken:fc2b4dee-98f9-0310-abf3-653ff3226e6b
+Sperreigner: harry
+Sperre erzeugt: 2006-06-08 07:29:18 -0500 (Thu, 08 June 2006)
+Sperrkommentar (1 Zeile):
+Making some tweaks.  Locking for the next two hours.
+$
+</screen>
 
+<!--
       <tip>
         <para>Users and administrators alike are encouraged to attach
           the <literal>svn:needs-lock</literal> property to any file
@@ -5551,14 +5637,33 @@ $
           technique for encouraging good locking habits and preventing
           wasted effort.</para>
       </tip>
+-->
+      <tip>
+        <para>Es sei Benutzern und Administratoren gleichermaßen
+          empfohlen, die Eigenschaft <literal>svn:needs-lock</literal>
+          an allen Dateien anzubringen, die nicht kontextabhängig
+          zusammengeführt werden können. Dies ist die wichtigste
+          Technik, um ein gutes Sperrverhalten zu bestärken und
+          vergeudeten Aufwand zu vermeiden.</para>
+      </tip>
 
+<!--
       <para>Note that this property is a communication tool that
         works independently from the locking system.  In other words,
         any file can be locked, whether or not this property is
         present.  And conversely, the presence of this property
         doesn't make the repository require a lock when
         committing.</para>
+-->
+      <para>Beachten Sie, dass diese Eigenschaft ein
+        Kommunikationswerkzeug darstellt, welches unahängig vom
+        Sperrsystem funktioniert. Mit anderen Worten: Jede Datei kann
+        gesperrt werden, egal, ob diese Eigenschaft vorhanden ist oder
+        nicht. Und andersherum bedeutet das Vorhandensein dieser
+        Eigenschaft nicht, dass das Projektarchiv bei der Übergabe
+        eine Sperre erforderlich macht.</para>
 
+<!--
       <para>Unfortunately, the system isn't flawless.  It's possible
         that even when a file has the property, the read-only reminder
         won't always work.  Sometimes applications misbehave and
@@ -5569,6 +5674,21 @@ $
         communication.
         <footnote>
           <para>Except, perhaps, a classic Vulcan mind-meld.</para>
+        </footnote>
+      </para>
+-->
+      <para>Leider ist dieses System nicht unfehlbar. Es ist möglich,
+        dass die Nur-Lesbar-Erinnerung nicht immer funktioniert, auch
+        wenn eine Datei diese Eigenschaft besitzt. Manchmal benehmen
+        sich Anwendungen daneben und <quote>kapern</quote> die nur
+        lesbare Datei, indem sie dem Benutzer trotzdem stillschweigend
+        das Ändern und Sichern gestatten. In dieser Situation kann
+        Subversion nicht viel machen &ndash; letztendlich gibt es
+        einfach keinen Ersatz für gute zwischenmenschliche
+        Kommunikation.
+        <footnote>
+          <para>Vielleicht mit Ausnahme einer klassischen vulkanischen
+            Gedankenvereinigung.</para>
         </footnote>
       </para>
 
