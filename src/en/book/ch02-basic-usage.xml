@@ -11,7 +11,7 @@
     to bring changes made by others into your working copy, examine
     them, and work through any conflicts that might arise.</para>
 
-  <para>Note that this chapter is not meant to be an exhaustive list
+  <para>This chapter will not provide exhaustive coverage
     of all of Subversion's commands&mdash;rather, it's a conversational
     introduction to the most common Subversion tasks that you'll
     encounter.  This chapter assumes that you've read and understood
@@ -178,7 +178,7 @@ Global options:
 
       <screen>
 $ svn import /path/to/mytree \
-             http://host.example.com/svn/repo/some/project \
+             http://svn.example.com/svn/repo/some/project \
              -m "Initial import"
 Adding         mytree/foo.c
 Adding         mytree/bar.c
@@ -198,7 +198,7 @@ $
         repository:</para>
 
       <screen>
-$ svn list http://host.example.com/svn/repo/some/project
+$ svn list http://svn.example.com/svn/repo/some/project
 bar.c
 foo.c
 subdir/
@@ -362,7 +362,7 @@ $
       repository:</para>
 
     <screen>
-$ svn checkout http://host.example.com/svn/repo/trunk
+$ svn checkout http://svn.example.com/svn/repo/trunk
 A    trunk/README
 A    trunk/INSTALL
 A    trunk/src/main.c
@@ -378,7 +378,7 @@ $
       URL as the checkout URL:</para>
 
     <screen>
-$ svn checkout http://host.example.com/svn/repo/trunk/src
+$ svn checkout http://svn.example.com/svn/repo/trunk/src
 A    src/main.c
 A    src/header.h
 A    src/lib/helpers.c
@@ -413,6 +413,9 @@ $
       anything.</para>
 
     <sidebar>
+
+      <!-- ### This will change in 1.7 -->
+
       <title>What's with the .svn Directory?</title>
 
       <para>Every directory in a working copy contains an
@@ -444,7 +447,7 @@ $
       copy it creates.For example:</para>
 
     <screen>
-$ svn checkout http://host.example.com/svn/repo/trunk my-working-copy
+$ svn checkout http://svn.example.com/svn/repo/trunk my-working-copy
 A    my-working-copy/README
 A    my-working-copy/INSTALL
 A    my-working-copy/src/main.c
@@ -2354,9 +2357,8 @@ $ svn list -v http://svn.collab.net/repos/svn
       <title>Fetching Older Repository Snapshots</title>
 
       <para>In addition to all of the previous commands, you can use
-        <command>svn update</command> and <command>svn
-        checkout</command> with the <option>--revision</option>
-        (<option>-r</option>) option to take an entire working
+        the <option>--revision</option> (<option>-r</option>) option
+        with <command>svn update</command> to take an entire working
         copy <quote>back in time</quote>:
         <footnote>
           <para>See?  We told you that Subversion was a time machine.</para>
@@ -2364,10 +2366,10 @@ $ svn list -v http://svn.collab.net/repos/svn
         </para>
 
       <screen>
-$ svn checkout -r 1729 # Checks out a new working copy at r1729
+# Make the current directory look like it did in r1729.
+$ svn update -r 1729
 &hellip;
-$ svn update -r 1729 # Updates an existing working copy to r1729
-&hellip;
+$
 </screen>
 
       <tip>
@@ -2380,23 +2382,48 @@ $ svn update -r 1729 # Updates an existing working copy to r1729
           description of how to <quote>undo</quote> a commit.</para>
       </tip>
 
-      <para>Lastly, if you're building a release and wish to bundle up
-        your files from Subversion but don't want those
-        pesky <filename>.svn</filename> directories in the way,
-        you can use <command>svn export</command> to create a local
-        copy of all or part of your repository
-        sans <filename>.svn</filename> directories.  As
-        with <command>svn update</command> and
-        <command>svn checkout</command>, you can also pass the
-        <option>--revision</option> (<option>-r</option>) option
-        to <command>svn export</command>:</para>
+      <para>If you'd prefer to create a whole new working copy from an
+        older snapshot, you can do so by modifying the typical
+        <command>svn checkout</command> command.  As with <command>svn
+        update</command>, you can provide
+        the <option>--revision</option> (<option>-r</option>) option.
+        But for reasons that we cover in
+        <xref linkend="svn.advanced.pegrevs" />, you might instead want
+        to specify the target revision as part of Subversion's
+        expanded URL syntax.</para>
 
       <screen>
-$ svn export http://svn.example.com/svn/repos1 # Exports latest revision
+# Checkout the trunk from r1729.
+$ svn checkout http://svn.example.com/svn/repo/trunk@1729 trunk-1729
 &hellip;
-$ svn export http://svn.example.com/svn/repos1 -r 1729
-# Exports revision r1729
+# Checkout the current trunk as it looked in r1729.
+$ svn checkout http://svn.example.com/svn/repo/trunk -r 1729 trunk-1729
 &hellip;
+$
+</screen>
+
+      <!-- ### TODO: This changes a bit in 1.7 -->
+
+      <para>Lastly, if you're building a release and wish to bundle up
+        your files from Subversion but don't want those
+        pesky <filename>.svn</filename> directories in the way, you
+        can use <command>svn export</command> to create a local copy
+        of all or part of your repository
+        sans <filename>.svn</filename> directories.  The basic syntax
+        of this subcommand is identical to that of the <command>svn
+        checkout</command>:</para>
+
+      <screen>
+# Export the trunk from the latest revision.
+$ svn export http://svn.example.com/svn/repo/trunk trunk-export
+&hellip;
+# Export the trunk from r1729.
+$ svn export http://svn.example.com/svn/repo/trunk@1729 trunk-1729
+&hellip;
+# Export the current trunk as it looked in r1729. 
+$ svn export http://svn.example.com/svn/repo/trunk -r 1729 trunk-1729
+&hellip;
+$
 </screen>
 
     </sect2>
