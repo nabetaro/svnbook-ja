@@ -7835,8 +7835,12 @@ $
 
     <!-- =============================================================== -->
     <sect2 id="svn.serverconfig.netmodel.credcache">
+<!--
       <title>Client Credentials Caching</title>
+-->
+      <title>Zwischenspeicherung der Client-Zugangsdaten</title>
 
+<!--
       <para>Many servers are configured to require authentication on
         every request.  This would be a big annoyance to users if
         they were forced to type their passwords over and over again.
@@ -7852,28 +7856,70 @@ $
         about the runtime configuration system).  Successful
         credentials are cached on disk and keyed on a combination of the
         server's hostname, port, and authentication realm.</para>
+-->
+      <para>Viele Server sind so konfiguriert, dass sie vor jeder
+        Anfrage eine Authentifizierung benötigen. Für Benutzer wäre es
+        sehr lästig, wenn sie jedes Mal das Passwort eingeben müssten.
+        Glücklicherweise hat der Subversion-Client hierfür eine Abhilfe:
+        ein eingebautes System zum Zwischenspeichern der Zugangsdaten
+        auf Platte. Standardmäßig legt der Kommandozeilen-Client die
+        Zugangsdaten immer im privaten Laufzeitkonfigurationsbereich
+        des Benutzers ab (<filename>~/.subversion/auth/</filename> auf
+        Unix-ähnlichen Systemen oder
+        <filename>%APPDATA%/Subversion/auth/</filename> unter Windows;
+        siehe <xref linkend="svn.advanced.confarea" /> für Details zum
+        Laufzeitkonfigurationssystem), wenn er erfolgreich auf die
+        Authentifizierungsanfrage des Servers antwortet. Die gültigen
+        Zugangsdaten werden auf Platte zwischengespeichert und mit
+        einer Kombination aus dem Rechnernamen des Servers, dem Port
+        und dem Anmeldebereich referenziert.</para>
 
+<!--
       <para>When the client receives an authentication challenge, it
         first looks for the appropriate credentials in the user's disk
         cache.  If seemingly suitable credentials are not present, or
         if the cached credentials ultimately fail to authenticate,
         the client will, by default, fall back to prompting the
         user for the necessary information.</para>
+-->
+      <para>Wenn der Client eine Authentifizierungsaufforderung
+        empfängt, schaut er zunächst nach den passenden Zugangsdaten
+        im Cache des Benutzers auf Platte. Falls passend erscheinende
+        Zugangsdaten nicht verfügbar sind oder die
+        zwischengespeicherten Zugangsdaten letzlich nicht für eine
+        Authentifizierung ausreichen sollten, wird der Client
+        standardmäßig den Benutzer zur Eingabe der notwendigen
+        Informationen auffordern.</para>
 
+<!--
       <para>The security-conscious reader will suspect immediately
         that there is reason for concern here.  <quote>Caching
         passwords on disk?  That's terrible!  You should never do
         that!</quote></para>
+-->
+      <para>Der sicherheitsbewussten Leser wird an dieser Stelle
+        sofort einen Grund für Besorgnis erkennen.  <quote>Passwörter
+        auf der Platte speichern? Das ist schrecklich! So etwas
+        sollte man nie machen!</quote></para>
 
+<!--
       <para>The Subversion developers recognize the legitimacy of such
         concerns, and so Subversion works with available mechanisms
         provided by the operating system and environment to try to
         minimize the risk of leaking this information.  Here's a
         breakdown of what this means for users on the most common
         platforms:</para>
+-->
+      <para>Die Entwickler von Subversion erkennen die Zulässigkeit
+        dieser Besorgnis, und so arbeitet Subversion mit den durch das
+        Betriebssystem und die Umgebung bereitgestellten Mechanismen,
+        um das Risiko der Kompromittierung dieser Daten zu minimieren.
+        Hier ist eine Aufschlüsselung, was das für die Benutzer der
+        verbreitetsten Betriebssysteme bedeutet:</para>
 
       <itemizedlist>
 
+<!--
         <listitem>
           <para>On Windows 2000 and later, the Subversion client uses
             standard Windows cryptography services to encrypt the
@@ -7886,7 +7932,22 @@ $
             as though they don't exist, prompting for passwords when
             required.)</para>
         </listitem>
+-->
+        <listitem>
+          <para>Unter Windows 2000 und dessen Nachfolger verwendet der
+            Subversion-Client die Standard-Kryptographiedienste von
+            Windows, um das Passwort auf Platte zu verschlüsseln.  Da
+            der Schlüssel durch Windows verwaltet wird und mit den
+            benutzereigenen Zugangsdaten verknüpft ist, kann nur der
+            Benutzer selbst das zwischengespeicherte Passwort
+            entschlüsseln. (Beachten Sie, dass beim Zurücksetzen des
+            Windows-Benutzerkonto-Passworts durch einen Administrator
+            alle zwischengespeicherten Passwörter nicht mehr zu
+            entschlüsseln sind. Der Subversion-Client verhält sich
+            dann so, als wären sie nicht vorhanden und fragt die
+            Passwörter gegebenenfalls ab.)</para> </listitem>
 
+<!--
         <listitem>
           <para>Similarly, on Mac OS X, the Subversion client stores
             all repository passwords in the login keyring (managed by
@@ -7896,7 +7957,19 @@ $
             password be entered each time the Subversion password is
             used.</para>
         </listitem>
+-->
+        <listitem>
+          <para>Unter Mac OS X speichert der Subversion-Client auf
+            ähnliche Weise alle Passwörter des Projektarchivs im
+            Login-Keyring (durch den Keychain-Dienst verwaltet), der
+            durch das Passwort des Benutzerkontos geschützt ist.
+            Benutzerseitige Einstellungen können zusätzliche
+            Richtlinien in Kraft setzen, etwa, dass das
+            Benutzerkontopasswort jedesmal eingegeben werden muss,
+            wenn das Passwort von Subversion verwendet wird.</para>
+        </listitem>
 
+<!--
         <listitem>
           <para>For other Unix-like operating systems, no standard
             <quote>keychain</quote> services exist.  However,
@@ -7905,20 +7978,44 @@ $
             read data from it, not the world at large.  The operating
             system's own file permissions protect the passwords.</para>
         </listitem>
+-->
+        <listitem>
+          <para>Für andere Unix-ähnliche Betriebssysteme existieren
+            keine standardisierten
+            <quote>Schlüsselring</quote>-Dienste. Jedoch ist der
+            <filename>auth/</filename>-Bereich zur Zwischenspeicherung
+            immerhin über Zugangsrechte geschützt, so dass nur der
+            Benutzer (Eigentümer) die dortigen Daten lesen kann und
+            nicht die gesamte Welt. Die betriebssystemeigenen
+            Dateizugriffsrechte schützen die Passwörter.</para>
+        </listitem>
 
       </itemizedlist>
 
+<!--
       <para>Of course, for the truly paranoid, none of these
         mechanisms meets the test of perfection.  So for those folks
         willing to sacrifice convenience for the ultimate in security,
         Subversion provides various ways of disabling its credentials
         caching system altogether.</para>
+-->
+      <para>Natürlich sind keine dieser Mechanismen perfekt für den
+        echt Paranoiden. Für die Leute, die Bequemlichkeit für die
+        größte Sicherheit opfern möchten, bietet Subversion
+        verschiedene Möglichkeiten, das System der Zwischenspeicherung
+        ganz abzuschalten.</para>
 
+<!--
       <para>To disable caching for a single command, pass the
-        <option>--no-auth-cache</option> option:</para>
+        <option>- -no-auth-cache</option> option:</para>
+-->
+      <para>Übergeben Sie die Option <option>--no-auth-cache</option>,
+        um die Zwischenspeicherung für einen einzelnen Befehl
+        abzuschalten:</para>
 
+<!--
       <screen>
-$ svn commit -F log_msg.txt --no-auth-cache
+$ svn commit -F log_msg.txt - -no-auth-cache
 Authentication realm: &lt;svn://host.example.com:3690&gt; example realm
 Username:  joe
 Password for 'joe':
@@ -7935,7 +8032,27 @@ Authentication realm: &lt;svn://host.example.com:3690&gt; example realm
 Username:  joe
 &hellip;
 </screen>
+-->
+      <screen>
+$ svn commit -F log_msg.txt --no-auth-cache
+Anmeldebereich: &lt;svn://host.example.com:3690&gt; example realm
+Benutzername:  joe
+Passwort für »joe«:
 
+Hinzufügen     newfile
+Übertrage Daten .
+Revision 2324 übertragen.
+
+# Das Passwort war nicht Zwischengespeichert, also werden wir beim zweiten Mal gefragt
+
+$ svn delete newfile
+$ svn commit -F new_msg.txt
+Anmeldebereich: &lt;svn://host.example.com:3690&gt; example realm
+Benutzername:  joe
+&hellip;
+</screen>
+
+<!--
       <para>Or, if you want to disable credential caching permanently,
         you can edit the <filename>config</filename> file in your
         runtime configuration area and set the
@@ -7946,12 +8063,25 @@ Username:  joe
         users on the computer, too, by modifying the system-wide
         runtime configuration area (described in <xref
         linkend="svn.advanced.confarea.layout" />).</para>
+-->
+      <para>Wenn Sie aber die Zwischenspeicherung der Zugangsdaten
+        dauerhaft unterbinden wollen, können Sie die Datei
+        <filename>config</filename> in Ihrem
+        Laufzeitkonfigurationsbereich bearbeiten und die Option 
+        <option>store-auth-creds</option> auf <literal>no</literal>
+        setzten. Das verhindert die Speicherung der Zugangsdaten für
+        alle Ihre Interaktionen mit Subversion auf dem betroffenen
+        Rechner. Das kann auch auf alle Benutzer ausgeweitet werden,
+        indem der systemweite Konfigurationsbereich (beschrieben in
+        <xref linkend="svn.advanced.confarea.layout" />) bearbeitet
+        wird.</para>
 
       <screen>
 [auth]
 store-auth-creds = no
 </screen>
 
+<!--
       <para>Sometimes users will want to remove specific credentials
         from the disk cache.  To do this, you need to navigate into
         the <filename>auth/</filename> area and manually delete the
@@ -7960,6 +8090,16 @@ store-auth-creds = no
         values.  The <literal>svn:realmstring</literal> key describes
         the particular server realm that the file is associated
         with:</para>
+-->
+      <para>Manchmal möchten Benutzer bestimmte Zugangsdaten aus dem
+        Zwischenspeicher entfernen. Hierzu müssen Sie in den
+        <filename>auth/</filename>-Bereich gehen und die entsprechende
+        Zwischenspeicherdatei manuell löschen. Die Zugangsdaten werden
+        in individuellen Dateien zwischengespeichert; falls Sie in
+        jede Datei hineinsehen, werden Sie Schlüssel und Werte
+        entdecken. Der Schlüssel <literal>svn:realmstring</literal>
+        beschreibt den bestimmten Anmeldebereich, zu dem die Datei
+        gehört:</para>
 
       <screen>
 $ ls ~/.subversion/auth/svn.simple/
@@ -7984,12 +8124,17 @@ V 45
 END
 </screen>
 
+<!--
       <para>Once you have located the proper cache file, just delete
         it.</para>
+-->
+      <para>Sobald Sie die passende Datei gefunden haben, können Sie
+        sie einfach löschen.</para>
 
+<!--
       <para>One last word about <command>svn</command>'s
         authentication behavior, specifically regarding the
-        <option>--username</option> and <option>--password</option>
+        <option>- -username</option> and <option>- -password</option>
         options.  Many client subcommands accept these options, but it
         is important to understand that using these options does
         <emphasis>not</emphasis> automatically send credentials to the
@@ -8003,52 +8148,121 @@ END
         system login name) or when trying to avoid interactive
         prompting (such as when calling <command>svn</command> from a
         script).</para>
+-->
+      <para>Ein letztes Wort zum Authentifizierungsverhalten von
+        <command>svn</command>, im Besonderen bezüglich der Optionen
+        <option>--username</option> und <option>--password</option>.
+        Viele Unterbefehle des Clients akzeptieren diese Optionen,
+        jedoch ist es wichtig, zu verstehen, dass durch die Verwendung
+        dieser Optionen <emphasis>nicht</emphasis> automatisch
+        Zugangsdaten an den Server gesendet werden. Wie bereits
+        erörtert wurde, werden die Zugangsdaten vom Server
+        <quote>eingezogen</quote>, falls er es für notwendig hält; der
+        Client kann sie nicht nach belieben <quote>abliefern</quote>.
+        Wurde ein Benutzername und/oder ein Passwort als Optionen
+        mitgegeben, werden sie dem Server nur auf Verlangen vorgelegt.
+        Üblicherweise werden diese Optionen verwendet, um sich als ein
+        anderer Benutzer zu authentifizieren als derjenige, den
+        Subversion standardmäßig gewählt hätte (etwa Ihr Anmeldename),
+        oder falls Sie die interaktive Abfrage vermeiden möchten (etwa
+        beim Aufruf von <command>svn</command> aus einem
+        Skript).</para>
 
+<!--
       <note>
         <para>A common mistake is to misconfigure a server so
           that it never issues an authentication challenge.  When
-          users pass <option>--username</option> and
-          <option>--password</option> options to the client, they're
+          users pass <option>- -username</option> and
+          <option>- -password</option> options to the client, they're
           surprised to see that they're never used; that is, new
           revisions still appear to have been committed
           anonymously!</para>
       </note>
+-->
+      <note>
+        <para>Ein verbreiteter Fehler ist die Fehlkonfigurierung eines
+          Servers, so dass er nie eine Aufforderung zur
+          Authentifizierung ausgibt. Falls Benutzer dann die Optionen
+          <option>--username</option> und <option>--password</option>
+          an den Client übergeben, wundern sie sich, dass sie nie
+          verwendet werden, d.h., es sieht so aus, dass neue
+          Revisionen anonym übergeben worden sind!</para>
+      </note>
 
+<!--
       <para>Here is a final summary that describes how a Subversion
         client behaves when it receives an authentication
         challenge.</para>
+-->
+      <para>An dieser Stelle sei abschließend zusammengefasst, wie
+        sich ein Subversion-Client bei Erhalt einer Aufforderung zur
+        Authentifizierung verhält.</para>
 
       <orderedlist>
         <listitem>
+<!--
           <para>First, the client checks whether the user specified
             any credentials as command-line options
-            (<option>--username</option> and/or
-            <option>--password</option>).  If so, the client will try
+            (<option>- -username</option> and/or
+            <option>- -password</option>).  If so, the client will try
             to use those credentials to authenticate against the
             server.</para>
+-->
+          <para>Zunächst prüft der Client, ob der Benutzer
+            irgendwelche Zugangsdaten als Kommandozeilenoptionen
+            (<option>--username</option> und/oder
+            <option>--password</option>) angegeben hat. Falls ja,
+            versucht der Client, diese Zugangsdaten zur
+            Authentifizierung gegenüber dem Server zu
+            verwenden.</para>
         </listitem>
         <listitem>
+<!--
           <para>If no command-line credentials were provided, or the
             provided ones were invalid, the client looks up the server's
             hostname, port, and realm in the runtime configuration's
             <filename>auth/</filename> area, to see whether appropriate 
             credentials are cached there.  If so, it attempts to use
             those credentials to authenticate.</para>
+-->
+          <para>Falls keine Zugangsdaten als Kommandozeilenoptionen
+            angegeben worden sind oder die übergebenen ungültig waren,
+            verwendet der Client den Rechnernamen des Servers, den
+            Port und den Anmeldebereich, um damit im
+            Laufzeitkonfigurationsbereich <filename>auth/</filename>
+            nach passenden zwischengespeicherten Zugangsdaten zu
+            suchen. Falls solche vorhanden sind, probiert er, sich
+            hiermit zu authentifizieren.</para>
         </listitem>
         <listitem>
+<!--
           <para>Finally, if the previous mechanisms failed to
             successfully authenticate the user against the server, the
             client resorts to interactively prompting the user for
             valid credentials (unless instructed not to do so via the
-            <option>--non-interactive</option> option or its
+            <option>- -non-interactive</option> option or its
             client-specific equivalents).</para>
+-->
+          <para>Falls letztendlich alle vorherigen Mechanismen keine
+            erfolgreiche Authentifizietrung des Benutzers gegen den
+            Server bewirken, greift der Client auf eine interaktive
+            Abfrage der Zugangsdaten zurück (sofern ihm das nicht
+            durch die Option <option>--non-interactive</option> oder
+            client-spezifischer Äquivalente untersagt wurde).</para>
         </listitem>
       </orderedlist>
 
+<!--
       <para>If the client successfully authenticates by any of these
         methods, it will attempt to cache the credentials on disk
         (unless the user has disabled this behavior, as mentioned
         earlier).</para>
+-->
+      <para>Falls sich der Client durch irgendeine dieser Methoden
+        erfolgreich authentifiziert, versucht er, die Zugangsdaten auf
+        der Platte zwischenzuspeichern (sofern der Benutzer dieses
+        Verhalten nicht, wie oben beschrieben, unterbunden
+        hat).</para>
 
     </sect2>
 
