@@ -3097,13 +3097,33 @@ $ svn propget svn:externals calc
 ^/sounds third-party/sounds
 /skinproj@148 third-party/skins
 //svn.example.com/skin-maker@21 third-party/skins/toolkit
+$
 </screen>
 
-    <para>Subversion 1.6 brings another improvement to externals
-      definitions by introducing external definitions for files.
-      <firstterm>File externals</firstterm> are configured just
-      like externals for directories and appear as a versioned
-      file in the working copy.</para>
+    <para>Subversion 1.6 brings two more improvements to externals
+      definitions.  First, it adds a quoting and escape mechanism to
+      the syntax so that the path of the external working copy may
+      contain whitespace.  This was previously problematic, of course,
+      because whitespace is used to delimit the fields in an externals
+      definition.  Now you need only wrap such a path specification in
+      double-quote (<literal>"<!-- " --></literal>) characters or
+      escape the problematic characters in the path with a backslash
+      (<literal>\</literal>) character.  Of course, if you have spaces
+      in the <emphasis>URL</emphasis> portion of the external
+      definition, you should use the standard URI-encoding mechanism
+      to represent those.</para>
+
+    <screen>
+$ svn propget svn:externals paint
+http://svn.thirdparty.com/repos/My%20Project "My Project"
+http://svn.thirdparty.com/repos/%22Quotes%20Too%22 \"Quotes\ Too\"
+$
+</screen>
+
+    <para>Subversion 1.6 also introduces support for external
+      definitions for files.  <firstterm>File externals</firstterm>
+      are configured just like externals for directories and appear as
+      a versioned file in the working copy.</para>
       
     <para>For example, let's say you had the file
       <filename>/trunk/bikeshed/blue.html</filename> in your repository,
@@ -3113,6 +3133,7 @@ $ svn propget svn:externals calc
 
     <para>The externals definition required to achieve this should
       look familiar by now:</para>
+
     <screen>
 $ svn propget svn:externals www/
 ^/trunk/bikeshed/blue.html@40 green.html
@@ -3124,6 +3145,7 @@ Updated external to revision 40.
 Update to revision 103.
 $ svn status
     X   www/green.html
+$
 </screen>
 
     <para>As you can see in the previous output, Subversion denotes file
@@ -3156,6 +3178,7 @@ Last Changed Rev: 40
 Last Changed Date: 2009-07-20 20:38:20 +0100 (Mon, 20 Jul 2009)
 Text Last Updated: 2009-07-20 23:22:36 +0100 (Mon, 20 Jul 2009)
 Checksum: 01a58b04617b92492d99662c3837b33b
+$
 </screen>
 
     <para>Because file externals appear in the working copy as
@@ -3173,6 +3196,7 @@ $ svn commit -m "change the color" www/green.html
 Sending        www/green.html
 svn: Commit failed (details follow):
 svn: File '/trunk/bikeshed/blue.html' is out of date
+$
 </screen>
 
     <para>Keep this in mind when defining file externals.
