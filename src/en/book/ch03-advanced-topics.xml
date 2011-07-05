@@ -2560,16 +2560,106 @@ $
       Think of it like an opt-in system for working copy
       citizens.</para>
 
-    <para>Subversion 1.5's implementation of shallow checkouts is
-      good but does not support a couple of interesting behaviors.
-      First, you cannot de-telescope a working copy item.  Running
-      <userinput>svn update --set-depth empty</userinput> in an
-      infinite-depth working copy will not have the effect of
-      discarding everything but the topmost directory&mdash;it will
-      simply error out.  Second, there is no depth value to indicate
-      that you wish an item to be explicitly excluded.  You have to do
-      implicit exclusion of an item by including everything
-      else.</para>
+    <para>The original (Subversion 1.5) implementation of shallow
+      checkouts was good, but didn't support de-telescoping of working
+      copy items.  Subversion 1.6 remedies this problem.  For example,
+      running <userinput>svn update --set-depth empty</userinput> in
+      an infinite-depth working copy will discard everything but the
+      topmost directory.<footnote><para>Safely, of course.  As in
+      other situations, Subversion will leave on disk any files you've
+      modified or which aren't versioned.</para></footnote>  Subversion
+      1.6 also introduces another supported value for
+      the <option>--set-depth</option>
+      option: <literal>exclude</literal>.  Using <option>--set-depth
+      exclude</option> with <command>svn update</command> will cause
+      the update target to be removed from the working copy
+      entirely&mdash;a directory target won't even be left
+      present-but-empty.  This is especially handy when there are more
+      things that you'd like to keep in a working copy than things
+      you'd like to <emphasis>not</emphasis> keep.</para>
+
+    <para>Consider a directory with hundreds of subdirectories, one of
+      which you would like to omit from your working copy.  Using
+      an <quote>additive</quote> approach to sparse directories, you
+      might check out the directory with an empty depth, then
+      explicitly telescope (using <userinput>svn update --set-depth
+      infinity</userinput>) each and every subdirectory of the
+      directory except the one you don't care about it.</para>
+
+    <informalexample>
+    <screen>
+$ svn checkout http://svn.example.com/repos/many-dirs --depth empty
+&hellip;
+$ svn update --set-depth infinity many-dirs/wanted-dir-1
+&hellip;
+$ svn update --set-depth infinity many-dirs/wanted-dir-2
+&hellip;
+$ svn update --set-depth infinity many-dirs/wanted-dir-3
+&hellip;
+### and so on, and so on, ...
+</screen>
+    </informalexample>
+
+    <para>This could be quite tedious, especially since you don't even
+      have stubs of these directories in your working copy to deal
+      with.  Such a working copy would also have another
+      characteristic that you might not expect or desire: if someone
+      else creates any new subdirectories in this top-level directory,
+      you won't receive those when you update your working
+      copy.</para>
+
+    <para>With Subversion 1.6, you could take a different approach.
+      First, you'd check out the directory in full.  Then you would
+      run <userinput>svn update --set-depth exclude</userinput> on the
+      one subdirectory you don't care about.</para>
+
+    <informalexample>
+    <screen>
+$ svn checkout http://svn.example.com/repos/many-dirs
+&hellip;
+$ svn update --set-depth exclude many-dirs/unwanted-dir
+D         many-dirs/unwanted-dir
+$
+</screen>
+    </informalexample>
+
+    <para>This approach leaves your working copy with the same stuff
+      as in the first approach, but any new subdirectories which
+      appear in the top-level directory would also show up when you
+      update your working copy.  The downside of this approach is that
+      you have to actually check out that whole subdirectory that you
+      don't even want just so you can tell Subversion that you don't
+      want it.  This might not even be possible if that subdirectory
+      is too large to fit on your disk (which might, after all, be the
+      very reason you don't want it in your working copy).</para>
+
+    <para>In such a situation, you might consider a compromise
+      approach.  First, check out the top-level directory
+      with <option>--depth immediates</option>.  Then, exclude the
+      directory you don't want using <userinput>svn update --set-depth
+      exclude</userinput>.  Finally, telescope all the items that
+      remain to infinite depth, which should be fairly easy to do
+      because they are all addressable in your shell.</para>
+
+    <informalexample>
+    <screen>
+$ svn checkout http://svn.example.com/repos/many-dirs --depth immediates
+&hellip;
+$ svn update --set-depth exclude many-dirs/unwanted-dir
+D         many-dirs/unwanted-dir
+$ svn update --set-depth infinity many-dirs/*
+&hellip;
+$
+</screen>
+    </informalexample>
+
+    <para>Once again, your working copy will have the same stuff as in
+      the previous two scenarios.  But now, any time a new file or
+      subdirectory is committed to the top-level directory, you'll
+      receive it&mdash;at an empty depth&mdash;when you update your
+      working copy.  You can now decide what to do with such newly
+      appearing working copy items: expand them into infinite depth,
+      or exclude them altogether.</para>
 
   </sect1>
 
