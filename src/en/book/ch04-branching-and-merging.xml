@@ -2160,11 +2160,40 @@ U   .
         client reports itself as having <literal>mergeinfo</literal>
         capabilities, the hook script can allow the commit to start.
         If the client doesn't report that capability, have the hook
-        deny the commit.  We'll learn more about hook scripts in the
-        next chapter; see
-        <xref linkend="svn.reposadmin.create.hooks"/> and
-        <xref linkend="svn.ref.reposhooks.start-commit"/> for
-        details.</para>
+        deny the commit.
+        <xref linkend="svn.branchmerge.advanced.hook-ex1" /> gives an
+        example of such a hook script:</para>
+
+      <example id="svn.branchmerge.advanced.hook-ex1">
+        <title>Merge-tracking gatekeeper start-commit hook script</title>
+
+        <programlisting>
+#!/usr/bin/env python
+import sys
+
+# The start-commit hook is invoked before a Subversion txn is created
+# in the process of doing a commit.  Subversion runs this hook
+# by invoking a program (script, executable, binary, etc.) named
+# 'start-commit' (for which this file is a template)
+# with the following ordered arguments:
+#
+#   [1] REPOS-PATH   (the path to this repository)
+#   [2] USER         (the authenticated user attempting to commit)
+#   [3] CAPABILITIES (a colon-separated list of capabilities reported
+#                     by the client; see note below)
+
+capabilities = sys.argv[3].split(':')
+if "mergeinfo" not in capabilities:
+  sys.stderr.write("Commits from merge-tracking-unaware clients are "
+                   "not permitted.  Please upgrade to Subversion 1.5 "
+                   "or newer.\n")
+  sys.exit(1)
+sys.exit(0)
+</programlisting>
+      </example>
+
+      <para>For more information about hook scripts, see
+        <xref linkend="svn.reposadmin.create.hooks"/>.</para>
 
     </sect2>
 
