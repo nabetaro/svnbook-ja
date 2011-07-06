@@ -3,6 +3,7 @@
   <!-- Here live locale-specific customizations to the HTML base stylesheet -->
 
   <xsl:param name="draft.mode">yes</xsl:param>
+  <xsl:param name="draft.watermark.image">images/draft.png</xsl:param>
 
   <xsl:template name="user.footer.navigation">
     <div id="svn-footer">
