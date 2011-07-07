@@ -1609,45 +1609,68 @@ $ svn merge -r 100:200 http://svn.example.com/repos/trunk
         </varlistentry>
       </variablelist>
 
+      <!-- TODO: We might need to introduce a glossary of merge
+                 tracking terms into this chapter.  Here we use
+                 "mergeinfo" to help defined "natural history", but
+                 we've not really defined "mergeinfo" either.  -->
+
       <sidebar>
         <title>Natural History and Implicit Mergeinfo</title>
 
         <para>When a path has the <literal>svn:mergeinfo</literal>
-          property set on it we speak of it as
-          having <quote>explicit</quote> mergeinfo.  Yes, this implies
-          a path can have <quote>implicit</quote> mergeinfo!  Implicit
-          mergeinfo, sometimes called <quote>natural history</quote>,
-          is simply a path's own history (see
-          <xref linkend="svn.tour.history" />) interpreted as
-          mergeinfo.  While implicit mergeinfo is largely an
-          implementation detail, it can be a useful abstraction for
+          property set on it we say it has <quote>explicit</quote>
+          mergeinfo.  Yes, this implies a path can
+          have <quote>implicit</quote> mergeinfo, too!  Implicit
+          mergeinfo, or <firstterm>natural history</firsterm>, is
+          simply a path's own history (see
+          <xref linkend="svn.tour.history" />) interpreted as merge
+          tracking information.  While implicit mergeinfo is largely
+          an implementation detail, it can be a useful abstraction for
           understanding merge tracking behavior.</para>
 
-        <para>Let's say you created <literal>^/trunk</literal> in
-          revision 100 and then copied <literal>^/trunk@200</literal>
-          to <literal>^/branches/feature-branch-1</literal> in
-          revision 201.  The implicit mergeinfo
-          of <literal>^/branches/feature-branch-1</literal> is
-          then:</para>
+        <para>Let's say you created <filename>^/trunk</filename> in
+          revision 100 and then later, in revision 201,
+          created <filename>^/branches/feature-branch</filename> as
+          a copy of <filename>^/trunk@200</filename>.  The natural
+          history of <filename>^/branches/feature-branch</filename>
+          contains all the repository paths and revision ranges
+          through which the history of the new branch has ever
+          passed:</para>
 
         <informalexample>
           <literallayout>
 /trunk:100-200
-/branches/feature-branch-1:201
+/branches/feature-branch:201
+</literallayout>
+        </informalexample>
+
+        <para>With each new revision added to the repository, the
+          natural history&mdash;and thus, implicit mergeinfo&mdash;of
+          the branch continues to expand to include those revisions
+          until the day the branch is deleted.  Here's what the
+          implicit mergeinfo of our branch would look like when
+          the <literal>HEAD</literal> revision of the repository had
+          grown to 234:</para>
+
+        <informalexample>
+          <literallayout>
+/trunk:100-200
+/branches/feature-branch:201-234
 </literallayout>
         </informalexample>
 
         <para>Implicit mergeinfo does not actually show up in the
           <literal>svn:mergeinfo</literal> property, but Subversion
-          acts like it does.  That is why if you checked out
-          <literal>^/branches/feature-branch-1@201</literal> and then
-          ran <userinput>svn merge ^/trunk -c 58</userinput> in the
-          resulting working copy, nothing would happen.  Subversion sees
-          that revision 58 of
-          <literal>^/trunk</literal> is already present in the
-          target's natural history so it doesn't repeat the merge
-          (avoiding repeat merges being a primary goal of merge
-          tracking).</para>
+          acts as if it does.  This is why if you check out
+          <filename>^/branches/feature-branch</filename> and then
+          run <userinput>svn merge ^/trunk -c 58</userinput> in the
+          resulting working copy, nothing happens.  Subversion knows
+          that the changes committed to <filename>^/trunk</filename>
+          in revision 58 are already present in the target's natural
+          history, so there's no need to try to merge them again.
+          After all, avoiding repeated merges of
+          changes <emphasis>is</emphasis> the primary goal of
+          Subversion's merge tracking feature!</para>
 
       </sidebar>
 
