@@ -1609,6 +1609,38 @@ $ svn merge -r 100:200 http://svn.example.com/repos/trunk
         </varlistentry>
       </variablelist>
 
+    <sidebar>
+      <title>Natural History and Implicit Mergeinfo</title>
+
+      <para>When a path has the <literal>svn:mergeinfo</literal>
+        property set on it we speak of it as having 'explicit' mergeinfo.
+        Yes, this implies a path can have 'implicit' mergeinfo!  Implicit
+        mergeinfo, sometimes called 'natural history', is simply a path's
+        own history (see <xref linkend="svn.tour.history"/>) interpreted
+        as mergeinfo.  While implicit mergeinfo is largely an
+        implementation detail, it can be a useful abstraction for
+        understanding merge tracking behavior.</para>
+        <para>Let's say you created <literal>^/trunk</literal> in revision
+        100 and then copied <literal>^/trunk@200</literal> to
+        <literal>^/branches/feature-branch-1</literal> in revision 201.
+        The implicit mergeinfo of <literal>^/branches/feature-branch-1
+        </literal> is then:</para>
+          <screen>
+/trunk:100-200
+/branches/feature-branch-1:201</screen>
+        <para>Implicit mergeinfo does not actually show up in the
+        <literal>svn:mergeinfo</literal> property, but Subversion acts
+        like it does.  That is why if you checked out
+        <literal>^/branches/feature-branch-1@201</literal> and tried
+        the following merge nothing would happen:</para>
+          <screen>
+svn merge ^/trunk feature-branch-working-copy -c 58</screen>
+        <para>Subversion sees that revision 58 of
+        <literal>^/trunk</literal> is already present in the target's
+        natural history so it doesn't repeat the merge (avoiding repeat
+        merges being a primary goal of merge tracking).</para>
+    </sidebar>
+
     </sect2>
 
     <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
