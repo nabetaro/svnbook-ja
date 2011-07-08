@@ -10047,6 +10047,18 @@ exported
             <para>Commit transaction name</para>
           </listitem>
         </orderedlist>
+
+        <para>Additionally, Subversion passes any lock tokens provided
+          by the committing client to the hook script via standard
+          input.  When present, these are formatted as a single line
+          containing the string <literal>LOCK-TOKENS:</literal>,
+          followed by additional lines&mdash;one per lock
+          token&mdash;which contain the lock token information.  Each
+          lock token information line consists of the URI-escaped
+          repository filesystem path associated with the lock,
+          followed by the pipe (<literal>|</literal>) separator
+          character, and finally the lock token string.</para>
+
       </refsect1>
       
       <refsect1>
@@ -10286,8 +10298,24 @@ exported
 
         <para>If the <literal>pre-lock</literal> hook program returns
           a nonzero exit value, the lock action is aborted and
-          anything printed to <filename>stderr</filename> is marshalled back to the
-          client.</para>
+          anything printed to <filename>stderr</filename> is
+          marshalled back to the client.</para>
+
+        <para>The hook program may optionally dictate the lock token
+          which will be assigned to the lock by printing the desired
+          lock token to standard output.  Because of this,
+          implementations of this hook should carefully avoid
+          unexpected output sent to standard output.</para>
+
+        <warning>
+          <para>If the <literal>pre-lock</literal> script takes
+            advantage of lock token dictation feature, the
+            responsibility of generating a <emphasis>unique</emphasis>
+            lock token falls to the script itself.  Failure to
+            generate unique lock tokens may result in
+            undefined&mdash;and very likely,
+            undesired&mdash;behavior.</para>
+        </warning>
 
       </refsect1>
 
@@ -10307,6 +10335,14 @@ exported
           <listitem>
             <para>Authenticated username of the person attempting the 
               lock</para>
+          </listitem>
+          <listitem>
+            <para>Comment provided when the lock was created</para>
+          </listitem>
+          <listitem>
+            <para><literal>1</literal> if the user is attempting to
+              steal an existing lock; <literal>0</literal>
+              otherwise</para>
           </listitem>
         </orderedlist>
       </refsect1>
@@ -10425,6 +10461,14 @@ exported
           <listitem>
             <para>Authenticated username of the person attempting the 
               unlock</para>
+          </listitem>
+          <listitem>
+            <para>Lock token associated with the lock which is to be
+              removed</para>
+          </listitem>
+          <listitem>
+            <para><literal>1</literal> if the user is attempting to
+              break the lock; <literal>0</literal> otherwise</para>
           </listitem>
         </orderedlist>
       </refsect1>
