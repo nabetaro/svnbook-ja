@@ -1163,15 +1163,6 @@ svn: Can't convert string from 'UTF-8' to native encoding:
       that program can understand those options.  And that's where
       things get unintuitive for most users.</para>
 
-    <para>The key to using external two- and three-way differencing tools
-      (other than GNU diff and diff3, of course) with Subversion is to
-      use wrapper scripts, which convert the input from Subversion into
-      something that your differencing tool can understand, and then
-      to convert the output of your tool back into a format that
-      Subversion expects&mdash;the format that the GNU tools would
-      have used.  The following sections cover the specifics of those
-      expectations.</para>
-
     <note>
       <para>The decision on when to fire off a contextual two- or three-way
         diff as part of a larger Subversion operation is made entirely
@@ -1188,24 +1179,46 @@ svn: Can't convert string from 'UTF-8' to native encoding:
         linkend="svn.advanced.props.special.mime-type"/></para>
     </note>
 
-    <para>Subversion 1.5 introduces interactive resolution of
-      conflicts (described in <xref linkend="svn.tour.cycle.resolve"
-      />), and one of the options provided to users is the ability to
-      launch a third-party merge tool.  If this action is taken,
-      Subversion will consult the <literal>merge-tool-cmd</literal>
-      runtime configuration option to find the name of an external
-      merge tool and, upon finding one, will launch that tool with the
-      appropriate input files.  This differs from the configurable
-      three-way differencing tool in a couple of ways.  First, the
-      differencing tool is always used to handle three-way
-      differences, whereas the merge tool is employed only when
-      three-way difference application has detected a conflict.
-      Second, the interface is much cleaner&mdash;your configured
-      merge tool need only accept as command-line parameters four path
-      specifications:  the base file, the <quote>theirs</quote> file
-      (which contains upstream changes), the <quote>mine</quote> file
-      (which contains local modifications), and the path of the file
-      where the final resolved contents should be stored.</para>
+    <para>Much later, Subversion 1.5 introduced interactive resolution
+      of conflicts (described in
+      <xref linkend="svn.tour.cycle.resolve" />).  One of the options
+      that this feature provides to users is the ability to
+      interactively launch a third-party merge tool.  If this action
+      is taken, Subversion will check to see if the user has specified
+      such a tool for use in this way.  Subversion will first check
+      the <literal>SVN_MERGE</literal> environment variable for the
+      name of an external merge tool.  If that variable is not set, it
+      will look for the same information in the value of
+      the <literal>merge-tool-cmd</literal> runtime configuration
+      option.  Upon finding a configured external merge tool, it will
+      invoke that tool.</para>
+
+    <note>
+      <para>While the general purposes of the three-way differencing
+        and merge tools are roughly the same (finding a way to make
+        separate-but-overlapping file changes live in harmony),
+        Subversion exercises each of these options at different times
+        and for different reasons.  The internal three-way
+        differencing engine and its optional external replacement are
+        used when interaction with the user
+        is <emphasis>not</emphasis> expected.  In fact, significant
+        delay introduced by such a tool can actually result in the
+        failure of some time-sensitive Subversion operations.  It's
+        the external merge tool that is intended to be invoked
+        interactively.</para>
+    </note>
+
+    <para>Now, while the interface between Subversion and an external
+      merge tool is significantly less convoluted than that between
+      Subversion and the diff and diff3 tools, the likelihood of
+      finding such a tool whose calling conventions exactly match what
+      Subversion expects is still quite low.  The key to using
+      external differencing and merge tools with Subversion is to use
+      wrapper scripts, which convert the input from Subversion into
+      something that your specific differencing tool can understand,
+      and then convert the output of your tool back into a format that
+      Subversion expects.  The following sections cover the specifics
+      of those expectations.</para>
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.externaldifftools.diff">
@@ -1213,22 +1226,22 @@ svn: Can't convert string from 'UTF-8' to native encoding:
 
       <para>Subversion calls external diff programs with parameters
         suitable for the GNU diff utility, and expects only that the
-        external program will return with a successful error code.
-        For most alternative diff programs, only the sixth and seventh
-        arguments&mdash;the paths of the files that represent the left
-        and right sides of the diff, respectively&mdash;are of
-        interest.  Note that Subversion runs the diff program once per
-        modified file covered by the Subversion operation, so if your
-        program runs in an asynchronous fashion (or
-        is <quote>backgrounded</quote>), you might have several
-        instances of it all running simultaneously.  Finally,
-        Subversion expects that your program return an error code of 1
-        if your program detected differences, or 0 if it did
-        not&mdash;any other error code is considered a fatal
-        error.<footnote><para>The GNU diff manual page puts it this
-        way: <quote>An exit status of 0 means no differences were
-        found, 1 means some differences were found, and 2 means
-        trouble.</quote></para></footnote></para>
+        external program will return with a successful error code per
+        the GNU diff definition thereof.  For most alternative diff
+        programs, only the sixth and seventh arguments&mdash;the paths
+        of the files that represent the left and right sides of the
+        diff, respectively&mdash;are of interest.  Note that
+        Subversion runs the diff program once per modified file
+        covered by the Subversion operation, so if your program runs
+        in an asynchronous fashion (or is <quote>backgrounded</quote>),
+        you might have several instances of it all running
+        simultaneously.  Finally, Subversion expects that your program
+        return an error code of 1 if your program detected
+        differences, or 0 if it did not&mdash;any other error code is
+        considered a fatal error.<footnote><para>The GNU diff manual
+        page puts it this way: <quote>An exit status of 0 means no
+        differences were found, 1 means some differences were found,
+        and 2 means trouble.</quote></para></footnote></para>
 
       <para><xref linkend="svn.advanced.externaldifftools.diff.ex-1"/>
         and <xref linkend="svn.advanced.externaldifftools.diff.ex-2"/>
@@ -1287,28 +1300,32 @@ REM Any other errorcode will be treated as fatal.
     <sect2 id="svn.advanced.externaldifftools.diff3">
       <title>External diff3</title>
 
-      <para>Subversion calls external merge programs with parameters
-        suitable for the GNU diff3 utility, expecting that the
-        external program will return with a successful error code and that
-        the full file contents that result from the completed merge
-        operation are printed on the standard output stream (so that
-        Subversion can redirect them into the appropriate version-controlled
-        file).  For most alternative merge programs, only
-        the ninth, tenth, and eleventh arguments, the paths of the
-        files which represent the <quote>mine,</quote>
-        <quote>older,</quote> and <quote>yours</quote> inputs,
-        respectively, are of interest.  Note that because Subversion
-        depends on the output of your merge program, your wrapper
-        script must not exit before that output has been delivered to
-        Subversion.  When it finally does exit, it should return an
-        error code of 0 if the merge was successful, or 1 if unresolved
-        conflicts remain in the output&mdash;any other error code is
-        considered a fatal error.</para>
+      <para>Subversion invokes three-way differencing programs to
+        perform non-interactive merges.  When configured to use an
+        external three-way differencing program, it executes that
+        program with parameters suitable for the GNU diff3 utility,
+        expecting that the external program will return with a
+        successful error code and that the full file contents that
+        result from the completed merge operation are printed on the
+        standard output stream (so that Subversion can redirect them
+        into the appropriate version-controlled file).  For most
+        alternative merge programs, only the ninth, tenth, and
+        eleventh arguments, the paths of the files which represent
+        the <quote>mine</quote>, <quote>older</quote>,
+        and <quote>yours</quote> inputs, respectively, are of
+        interest.  Note that because Subversion depends on the output
+        of your merge program, your wrapper script must not exit
+        before that output has been delivered to Subversion.  When it
+        finally does exit, it should return an error code of 0 if the
+        merge was successful, or 1 if unresolved conflicts remain in
+        the output&mdash;any other error code is considered a fatal
+        error.</para>
 
       <para><xref linkend="svn.advanced.externaldifftools.diff3.ex-1"/> 
         and <xref linkend="svn.advanced.externaldifftools.diff3.ex-2"/> are
-        templates for external merge tool wrappers in the Python
-        and Windows batch scripting languages, respectively.</para>
+        templates for external three-way differencing tool wrappers in
+        the Python and Windows batch scripting languages,
+        respectively.</para>
 
       <example id="svn.advanced.externaldifftools.diff3.ex-1">
         <title>diff3wrap.py</title>
@@ -1317,16 +1334,16 @@ REM Any other errorcode will be treated as fatal.
 import sys
 import os
 
-# Configure your favorite diff program here.
-DIFF3 = "/usr/local/bin/my-merge-tool"
+# Configure your favorite three-way diff program here.
+DIFF3 = "/usr/local/bin/my-diff3-tool"
 
 # Subversion provides the paths we need as the last three parameters.
 MINE  = sys.argv[-3]
 OLDER = sys.argv[-2]
 YOURS = sys.argv[-1]
 
-# Call the merge command (change the following line to make sense for
-# your merge program).
+# Call the three-way diff command (change the following line to make
+# sense for your three-way diff program).
 cmd = [DIFF3, '--older', OLDER, '--mine', MINE, '--yours', YOURS]
 os.execv(cmd[0], cmd)
 
@@ -1342,8 +1359,8 @@ os.execv(cmd[0], cmd)
         <programlisting>
 @ECHO OFF
 
-REM Configure your favorite diff3/merge program here.
-SET DIFF3="C:\Program Files\Funky Stuff\My Merge Tool.exe"
+REM Configure your favorite three-way diff program here.
+SET DIFF3="C:\Program Files\Funky Stuff\My Diff3 Tool.exe"
 
 REM Subversion provides the paths we need as the last three parameters.
 REM These are parameters 9, 10, and 11.  But we have access to only
@@ -1355,14 +1372,90 @@ SET MINE=%7
 SET OLDER=%8
 SET YOURS=%9
 
-REM Call the merge command (change the following line to make sense for
-REM your merge program).
+REM Call the three-way diff command (change the following line to make
+REM sense for your three-way diff program).
 %DIFF3% --older %OLDER% --mine %MINE% --yours %YOURS%
 
 REM After performing the merge, this script needs to print the contents
 REM of the merged file to stdout.  Do that in whatever way you see fit.
 REM Return an errorcode of 0 on successful merge, 1 if unresolved conflicts
 REM remain in the result.  Any other errorcode will be treated as fatal.
+</programlisting>
+      </example>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.advanced.externaldifftools.merge">
+      <title>External merge</title>
+
+      <para>Subversion optionally invokes an external merge tool as
+        part of its support for interactive conflict resolution.  It
+        provides as arguments to the merge tool the following: the
+        path of the unmodified base file, the path of
+        the <quote>theirs</quote> file (which contains upstream
+        changes), the path of the <quote>mine</quote> file (which
+        contains local modifications), the path of the file into which
+        the final resolved contents should be stored by the merge
+        tool, and the working copy path of the conflicted file
+        (relative to the original target of the merge operation).  The
+        merge tool is expected to return an error code of 0 to
+        indicate success, or 1 to indicate failure.</para>
+
+      <para><xref linkend="svn.advanced.externaldifftools.merge.ex-1"/> 
+        and <xref linkend="svn.advanced.externaldifftools.merge.ex-2"/> are
+        templates for external merge tool wrappers in the Python
+        and Windows batch scripting languages, respectively.</para>
+
+      <example id="svn.advanced.externaldifftools.merge.ex-1">
+        <title>mergewrap.py</title>
+        <programlisting>
+#!/usr/bin/env python
+import sys
+import os
+
+# Configure your favorite merge program here.
+MERGE = "/usr/local/bin/my-merge-tool"
+
+# Get the paths provided by Subversion.
+BASE   = sys.argv[1]
+MINE   = sys.argv[2]
+THEIRS = sys.argv[3]
+MERGED = sys.argv[4]
+WCPATH = sys.argv[5]
+
+# Call the merge command (change the following line to make sense for
+# your merge program).
+cmd = [DIFF3, '--base', BASE, '--mine', MINE, '--theirs', THEIRS,
+              '--outfile', MERGED]
+os.execv(cmd[0], cmd)
+
+# Return an errorcode of 0 if the conflict was resolved; 1 otherwise.
+# Any other errorcode will be treated as fatal.
+</programlisting>
+      </example>
+
+      <example id="svn.advanced.externaldifftools.merge.ex-2">
+        <title>mergewrap.bat</title>
+        <programlisting>
+@ECHO OFF
+
+REM Configure your favorite merge program here.
+SET DIFF3="C:\Program Files\Funky Stuff\My Merge Tool.exe"
+
+REM Get the paths provided by Subversion.
+SET BASE=%1
+SET MINE=%2
+SET THEIRS=%3
+SET MERGED=%4
+SET WCPATH=%5
+
+REM Call the merge command (change the following line to make sense for
+REM your merge program).
+%DIFF3% --base %BASE% --mine %MINE% --theirs %THEIRS% --outfile %MERGED%
+
+REM Return an errorcode of 0 if the conflict was resolved; 1 otherwise.
+REM Any other errorcode will be treated as fatal.
 </programlisting>
       </example>
 
