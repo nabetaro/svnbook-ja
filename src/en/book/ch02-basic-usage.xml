@@ -1267,7 +1267,8 @@ U  INSTALL
 G  README
 Conflict discovered in 'bar.c'.
 Select: (p) postpone, (df) diff-full, (e) edit,
-        (h) help for more options:
+        (mc) mine-conflict, (tc) theirs-conflict,
+        (s) show all options: 
 </screen>
       </informalexample>
 
@@ -1295,19 +1296,33 @@ Select: (p) postpone, (df) diff-full, (e) edit,
         interactively choose an action to take toward resolving the
         conflict.  The most commonly used options are displayed, but
         you can see all of the options by
-        typing <replaceable>h</replaceable>:</para>
+        typing <replaceable>s</replaceable>:</para>
 
       <informalexample>
         <screen>
 &hellip;
-  (p)  postpone    - mark the conflict to be resolved later
-  (df) diff-full   - show all changes made to merged file
-  (e)  edit        - change merged file in an editor
-  (r)  resolved    - accept merged version of file
-  (mf) mine-full   - accept my version of entire file (ignore their changes)
-  (tf) theirs-full - accept their version of entire file (lose my changes)
-  (l)  launch      - launch external tool to resolve conflict
-  (h)  help        - show this list
+Select: (p) postpone, (df) diff-full, (e) edit,
+        (mc) mine-conflict, (tc) theirs-conflict,
+        (s) show all options: s
+
+  (e)  edit             - change merged file in an editor
+  (df) diff-full        - show all changes made to merged file
+  (r)  resolved         - accept merged version of file
+
+  (dc) display-conflict - show all conflicts (ignoring merged version)
+  (mc) mine-conflict    - accept my version for all conflicts (same)
+  (tc) theirs-conflict  - accept their version for all conflicts (same)
+
+  (mf) mine-full        - accept my version of entire file (even non-conflicts)
+  (tf) theirs-full      - accept their version of entire file (same)
+
+  (p)  postpone         - mark the conflict to be resolved later
+  (l)  launch           - launch external tool to resolve conflict
+  (s)  show all         - show this list
+
+Select: (p) postpone, (df) diff-full, (e) edit,
+        (mc) mine-conflict, (tc) theirs-conflict,
+        (s) show all options:
 </screen>
       </informalexample>
 
@@ -1316,10 +1331,11 @@ Select: (p) postpone, (df) diff-full, (e) edit,
 
       <variablelist>
         <varlistentry>
-          <term><computeroutput>(p)  postpone</computeroutput></term>
+          <term><computeroutput>(e)  edit</computeroutput></term>
           <listitem>
-            <para>Leave the file in a conflicted state for you to
-              resolve after your update is complete.</para>
+            <para>Open the file in conflict with your favorite editor,
+              as set in the environment variable
+              <literal>EDITOR</literal>.</para>
           </listitem>
         </varlistentry>
 
@@ -1328,15 +1344,6 @@ Select: (p) postpone, (df) diff-full, (e) edit,
           <listitem>
             <para>Display the differences between the base revision
               and the conflicted file itself in unified diff format.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><computeroutput>(e)  edit</computeroutput></term>
-          <listitem>
-            <para>Open the file in conflict with your favorite editor,
-              as set in the environment variable
-              <literal>EDITOR</literal>.</para>
           </listitem>
         </varlistentry>
 
@@ -1352,19 +1359,56 @@ Select: (p) postpone, (df) diff-full, (e) edit,
         </varlistentry>
 
         <varlistentry>
+          <term><computeroutput>(dc) display-conflict</computeroutput></term>
+          <listitem>
+            <para>Display all conflicting regions of the file,
+              ignoring changes which were successfully merged.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><computeroutput>(mc) mine-conflict</computeroutput></term>
+          <listitem>
+            <para>Discard any newly received changes from the server
+              which conflict with your local changes to the file under
+              review.  However, accept and merge all non-conflicting
+              changes received from the server for that file.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><computeroutput>(tc) theirs-conflict</computeroutput></term>
+          <listitem>
+            <para>Discard any local changes which conflict with
+              incoming changes from the server for the file under
+              review.  However, preserve all non-conflicting local
+              changes to that file.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
           <term><computeroutput>(mf) mine-full</computeroutput></term>
           <listitem>
-            <para>Discard the newly received changes from the server
-              and use only your local changes for the file under review.</para>
+            <para>Discard all newly received changes from the server
+              for the file under review, but preserve all your local
+              changes for that file.</para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
           <term><computeroutput>(tf) theirs-full</computeroutput></term>
           <listitem>
-            <para>Discard your local changes to the file under review
-              and use only the newly received changes from the
-              server.</para>
+            <para>Discard all your local changes to the file under
+              review and use only the newly received changes from the
+              server for that file.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><computeroutput>(p)  postpone</computeroutput></term>
+          <listitem>
+            <para>Leave the file in a conflicted state for you to
+              resolve after your update is complete.</para>
           </listitem>
         </varlistentry>
 
@@ -1378,7 +1422,7 @@ Select: (p) postpone, (df) diff-full, (e) edit,
         </varlistentry>
 
         <varlistentry>
-          <term><computeroutput>(h)  help</computeroutput></term>
+          <term><computeroutput>(s)  show all</computeroutput></term>
           <listitem>
             <para>Show the list of all possible commands you can use
               in interactive conflict resolution.</para>
@@ -1401,15 +1445,20 @@ Select: (p) postpone, (df) diff-full, (e) edit,
         </indexterm>
 
         <para>Before deciding how to attack a conflict interactively,
-          odds are that you'd like to see exactly what is in conflict,
-          and the <firstterm>diff-full</firstterm> command
-          (<userinput>df</userinput>) is what you'll use for this:</para>
+          odds are that you'd like to see exactly what is in conflict.
+          Two of the commands available at the interactively conflict
+          resolution prompt can assist you here.  The first is
+          the <quote>diff-full</quote> command
+          (<userinput>df</userinput>), which displays all the local
+          modifications to the file in question plus any conflict
+          regions:</para>
 
         <informalexample>
           <screen>
 &hellip;
 Select: (p) postpone, (df) diff-full, (e) edit,
-        (h)elp for more options : df
+        (mc) mine-conflict, (tc) theirs-conflict,
+        (s) show all options: df
 --- .svn/text-base/sandwich.txt.svn-base      Tue Dec 11 21:33:57 2007
 +++ .svn/tmp/tempfile.32.tmp     Tue Dec 11 21:34:33 2007
 @@ -1 +1,5 @@
@@ -1428,8 +1477,22 @@ Select: (p) postpone, (df) diff-full, (e) edit,
           revision), the next content line is your change, and the
           last content line is the change that was just received from
           the server (<emphasis>usually</emphasis> the
-          <literal>HEAD</literal> revision).  With this information in
-          hand, you're ready to move on to the next action.</para>
+          <literal>HEAD</literal> revision).</para>
+
+        <para>The second command is similar to the first, but
+          the <quote>display-conflict</quote>
+          (<userinput>dc</userinput>) command shows only the conflict
+          regions, not all the changes made to the file.
+          Additionally, this command uses a slightly different display
+          format for the conflict regions which allows you to more
+          easily compare the file's contents in those regions as they
+          would appear in each of three states: original and unedited;
+          with your local changes applied and the server's conflicting
+          changes ignored; and with only the server's incoming changes
+          applied and your local, conflicting changes reverted.</para>
+
+        <para>After reviewing the information provided by these
+          commands, you're ready to move on to the next action.</para>
 
       </sect3>
 
@@ -1444,10 +1507,10 @@ Select: (p) postpone, (df) diff-full, (e) edit,
           <tertiary>interactive</tertiary>
         </indexterm>
 
-        <para>There are four different ways to resolve conflicts
+        <para>There are several different ways to resolve conflicts
           interactively&mdash;two of which allow you to selectively
-          merge and edit changes, and two of which allow you to simply
-          pick a version of the file and move along.</para>
+          merge and edit changes, the rest of which allow you to
+          simply pick a version of the file and move along.</para>
 
         <para>If you wish to choose some combination of your local
           changes, you can use the <quote>edit</quote> command
@@ -1471,13 +1534,26 @@ Select: (p) postpone, (df) diff-full, (e) edit,
           <xref linkend="svn.advanced.externaldifftools.merge"
           />).</para>
 
-        <para>Of course, if you decide that you don't need to merge
-          any changes, but just want to accept one version of the file
-          or the other, you can either choose your changes (a.k.a.
+        <para>If you decide that you don't need to merge any changes,
+          but just want to accept one version of the file or the
+          other, you can either choose your changes (a.k.a.
           <quote>mine</quote>) by using the <quote>mine-full</quote>
           command (<userinput>mf</userinput>) or choose theirs by using the
           <quote>theirs-full</quote> command
           (<userinput>tf</userinput>).</para>
+
+        <para>Finally, there is also a pair of compromise options
+          available.  The <quote>mine-conflict</quote>
+          (<userinput>mc</userinput>)
+          and <quote>theirs-conflict</quote>
+          (<userinput>tc</userinput>) commands instruct Subversion to
+          select your local changes or the server's incoming changes,
+          respectively, as the <quote>winner</quote> for all conflicts
+          in the file.  But, unlike the <quote>mine-full</quote>
+          and <quote>theirs-full</quote> commands, these commands
+          preserve both your local changes and changes received from
+          the server in regions of the file where no conflict was
+          detected.</para>
 
       </sect3>
 
@@ -1603,7 +1679,8 @@ Select: (p) postpone, (df) diff-full, (e) edit,
 $ svn update
 Conflict discovered in 'sandwich.txt'.
 Select: (p) postpone, (df) diff-full, (e) edit,
-        (h)elp for more options : p
+        (mc) mine-conflict, (tc) theirs-conflict,
+        (s) show all options: p
 C  sandwich.txt
 Updated to revision 2.
 $ ls -1
@@ -1818,7 +1895,8 @@ $ svn commit -m "Go ahead and use my sandwich, discarding Sally's edits."
 $ svn update
 Conflict discovered in 'sandwich.txt'.
 Select: (p) postpone, (df) diff-full, (e) edit,
-        (h) help for more options: p
+        (mc) mine-conflict, (tc) theirs-conflict,
+        (s) show all options: p
 C    sandwich.txt
 Updated to revision 2.
 $ ls sandwich.*
