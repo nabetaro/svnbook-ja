@@ -86,7 +86,7 @@
         <tbody>
           <row>
             <entry>Authentication options</entry>
-            <entry>HTTP(S) basic auth, X.509 certificates, LDAP, NTLM, or
+            <entry>HTTP Basic or Digest auth, X.509 certificates, LDAP, NTLM, or
               any other mechanism available to Apache httpd</entry>
             <entry>CRAM-MD5 by default;  LDAP, NTLM, or any other mechanism
               available to SASL</entry>
@@ -114,7 +114,7 @@
 
           <row>
             <entry>Encryption</entry>
-            <entry>Available via optional SSL</entry>
+            <entry>Available via optional SSL (https)</entry>
             <entry>Available via optional SASL features</entry>
             <entry>Inherent in SSH connection</entry>
           </row>
@@ -1794,26 +1794,35 @@ ServerName svn.example.com
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.serverconfig.httpd.authn.basic">
-        <title>Setting up HTTP authentication</title>
+        <title>Basic authentication</title>
 
         <para>The easiest way to authenticate a client is via the
           HTTP Basic authentication mechanism, which simply uses a
-          username and password to verify that a user is who she says
-          she is.  Apache provides an <command>htpasswd</command>
-          utility for managing the list of acceptable usernames and
-          passwords.  Let's grant commit access to
-          Sally and Harry.  First, we need to add them to the password
-          file:</para>
+          username and password to verify a user's identity.  Apache
+          provides the <command>htpasswd</command> utility
+          (<ulink url="http://httpd.apache.org/docs/current/programs/htpasswd.html"/>)
+          for managing files containing usernames and passwords.</para>
+        
+        <warning>
+          <para>Basic authentication is <emphasis>extremely</emphasis>
+            insecure, because it sends passwords over the network
+            in very nearly plain text.  See
+            <xref linkend="svn.serverconfig.httpd.authn.digest"/> for
+            details on using the much safer Digest mechanism.</para>
+        </warning>
 
+        <para>First, create a password file and grant access to
+          users Harry and Sally:</para>
+          
         <informalexample>
           <screen>
 $ ### First time: use -c to create the file
 $ ### Use -m to use MD5 encryption of the password, which is more secure
-$ htpasswd -cm /etc/svn-auth-file harry
+$ htpasswd -c -m /etc/svn-auth.htpasswd harry
 New password: *****
 Re-type new password: *****
 Adding password for user harry
-$ htpasswd -m /etc/svn-auth-file sally
+$ htpasswd -m /etc/svn-auth.htpasswd sally
 New password: *******
 Re-type new password: *******
 Adding password for user sally
@@ -1821,115 +1830,133 @@ $
 </screen>
         </informalexample>
 
-        <para>Next, you need to add some more
-          <filename>httpd.conf</filename> directives inside your
-          <literal>Location</literal> block to tell Apache what to do
-          with your new password file.  The
-          <literal>AuthType</literal> directive specifies the type of
-          authentication system to use.  In this case, we want to
-          specify the <literal>Basic</literal> authentication system.
-          <literal>AuthName</literal> is an arbitrary name that you
-          give for the authentication domain.  Most browsers will
-          display this name in the pop-up dialog box when the browser
-          is querying the user for her name and password.  Finally,
-          use the <literal>AuthUserFile</literal> directive to specify
-          the location of the password file you created using
-          <command>htpasswd</command>.</para>
-
-        <para>After adding these three directives, your
-          <literal>&lt;Location&gt;</literal> block should look
-          something like this:</para>
+        <para>Next, add some more directives inside the
+          <literal>&lt;Location&gt;</literal> block to tell Apache how
+          to use the password file:</para>
 
         <informalexample>
           <programlisting>
 &lt;Location /svn&gt;
   DAV svn
   SVNParentPath /var/svn
-  AuthType Basic
+
   AuthName "Subversion repository"
-  AuthUserFile /etc/svn-auth-file
+  AuthType Basic
+  AuthUserFile /etc/svn-auth.htpasswd
 &lt;/Location&gt;
 </programlisting>
         </informalexample>
 
-        <para>This <literal>&lt;Location&gt;</literal> block is not
-          yet complete, and it will not do anything useful.  It's
-          merely telling Apache that whenever authorization is
-          required, Apache should harvest a username and password from
-          the Subversion client.  What's missing here, however, are
-          directives that tell Apache <emphasis>which</emphasis> sorts
-          of client requests require authorization.  Wherever
-          authorization is required, Apache will demand authentication
-          as well.  The simplest thing to do is protect all requests.
-          Adding <literal>Require valid-user</literal> tells Apache
-          that all requests require an authenticated user:</para>
+        <para>These directives work as follows:</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><literal>AuthName</literal> is an arbitrary name
+              that you choose for the authentication domain.  Most
+              browsers display this name in the dialog box when
+              prompting for username and password.</para>
+          </listitem>
+          <listitem>
+            <para><literal>AuthType</literal> specifies the type of
+              authentication to use.</para>
+          </listitem>
+          <listitem>
+            <para><literal>AuthUserFile</literal> specifies the
+              location of the password file to use.</para>
+          </listitem>
+        </itemizedlist>
+        
+        <para>However, this <literal>&lt;Location&gt;</literal> block
+          doesn't yet do anything useful.  It merely tells Apache that
+          <emphasis>if</emphasis> authorization were required, it
+          should challenge the Subversion client for a username and
+          password.  (When authorization is required, Apache requires
+          authentication as well.)  What's missing here, however, are
+          directives that tell Apache <emphasis>which sorts</emphasis>
+          of client requests require authorization; currently, none do.
+          The simplest thing is to specify that <emphasis>all</emphasis>
+          requests require authorization by adding
+          <literal>Require valid-user</literal> to the block:</para>
 
         <informalexample>
           <programlisting>
 &lt;Location /svn&gt;
   DAV svn
   SVNParentPath /var/svn
-  AuthType Basic
+
   AuthName "Subversion repository"
-  AuthUserFile /etc/svn-auth-file
+  AuthType Basic
+  AuthUserFile /etc/svn-auth.htpasswd
+
   Require valid-user
 &lt;/Location&gt;
 </programlisting>
         </informalexample>
 
-        <para>Be sure to read the next section (<xref
-          linkend="svn.serverconfig.httpd.authz"/>) for more detail on the
-          <literal>Require</literal> directive and other ways to set
-          authorization policies.</para>
+        <para>Refer to <xref linkend="svn.serverconfig.httpd.authz"/>
+          for more detail on the <literal>Require</literal> directive
+          and other ways to set authorization policies.</para>
 
-        <para>One word of warning: HTTP Basic Auth passwords pass in
-          very nearly plain text over the network, and thus are
-          extremely insecure.</para>
+      </sect3>
 
-        <para>Another option is to not use Basic authentication, but to
-          use Digest authentication instead.  Digest authentication
-          allows the server to verify the client's
-          identity <emphasis>without</emphasis> passing the plain-text
-          password over the network.  Assuming that the client and
-          server both know the user's password, they can verify that
-          the password is the same by using it to apply a hashing
-          function to a one-time bit of information.  The server sends
-          a small random-ish string to the client; the client uses the
-          user's password to hash the string; the server then looks to
-          see whether the hashed value is what it expected.</para>
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.serverconfig.httpd.authn.digest">
+        <title>Digest authentication</title>
+        
+        <para>Digest authentication is an improvement on Basic
+          authentication which allows the server to verify a client's
+          identity without sending the password over the network
+          unprotected.  Both client and server create a non-reversible
+          MD5 hash of the username, password, requested URI, and a
+          <firstterm>nonce</firstterm> (number used once) provided by
+          the server and changed each time authentication is required.
+          The client sends its hash to the server, and the server then
+          verifies that the hashes match.</para>
 
-        <para>Configuring Apache for Digest authentication is also
-          fairly easy, and only a small variation on our prior
-          example.  Be sure to consult Apache's documentation for full
-          details.</para>
+        <para>Configuring Apache to use Digest authentication is
+          straightforward, with only small variations on our prior
+          example:</para>
 
         <informalexample>
           <programlisting>
 &lt;Location /svn&gt;
   DAV svn
   SVNParentPath /var/svn
+
+  AuthName "Subversion repository"
   AuthType Digest
-  AuthName "Subversion repository"
-  AuthDigestDomain /svn/
-  AuthUserFile /etc/svn-auth-file
+  AuthUserFile /etc/svn-auth.htdigest
+
   Require valid-user
 &lt;/Location&gt;
 </programlisting>
         </informalexample>
 
-        <para>If you're looking for maximum security, public key
-          cryptography is the best solution.  It may be best to use
-          some sort of SSL encryption, so that clients authenticate
-          via <literal>https://</literal> instead
-          of <literal>http://</literal>; at a bare minimum, you can
-          configure Apache to use a self-signed server
-          certificate.<footnote><para>While self-signed server
-          certificates are still vulnerable to
-          a <quote>man-in-the-middle</quote> attack, such an attack is
-          much more difficult for a casual observer to pull off,
-          compared to sniffing unprotected passwords.</para></footnote>
-          Consult Apache's documentation (and OpenSSL documentation)
-          about how to do that.</para>
+        <para>Notice that <literal>AuthType</literal> is now set to
+          <literal>Digest</literal>, and we specify a different path
+          for <literal>AuthUserFile</literal>.  Digest authentication
+          uses a different file format than Basic authentication;
+          it is created using Apache's <command>htdigest</command>
+          utility (<ulink url="http://httpd.apache.org/docs/current/programs/htdigest.html"/>)
+          rather than <command>htpasswd</command>.
+          Digest authentication also has the additional concept of a
+          <quote>realm</quote>, which must match the value of the
+          <literal>AuthName</literal> directive:</para>
+
+        <informalexample>
+          <screen>
+$ ### First time: use -c to create the file
+$ htdigest -c /etc/svn-auth.htdigest "Subversion repository" harry
+Adding password for harry in realm Subversion repository.
+New password: *****
+Re-type new password: *****
+$ htdigest /etc/svn-auth.htdigest "Subversion repository" sally
+Adding user sally in realm Subversion repository
+New password: *******
+Re-type new password: *******
+$
+</screen>
+        </informalexample>
 
       </sect3>
 
@@ -1955,13 +1982,11 @@ $
           read/write access to a repository.</para>
 
         <para>You can restrict access on all repository operations by
-          adding the <literal>Require valid-user</literal> directive
-          to your <literal>&lt;Location&gt;</literal> block.  Using
-          our previous example, this would mean that only clients that
-          claimed to be either <literal>harry</literal> or
-          <literal>sally</literal> and that provided the correct
-          password for their respective username would be allowed to
-          do anything with the Subversion repository:</para>
+          adding <literal>Require valid-user</literal> directly inside
+          the <literal>&lt;Location&gt;</literal> block.  The example
+          from <xref linkend="svn.serverconfig.httpd.authn.digest"/>
+          allows only clients that successfully authenticate to do
+          anything with the Subversion repository:</para>
 
         <informalexample>
           <programlisting>
@@ -1969,12 +1994,11 @@ $
   DAV svn
   SVNParentPath /var/svn
 
-  # how to authenticate a user
-  AuthType Basic
   AuthName "Subversion repository"
-  AuthUserFile /path/to/users/file
+  AuthType Digest
+  AuthUserFile /etc/svn-auth.htdigest
 
-  # only authenticated users may access the repository
+  # Only authenticated users may access the repository
   Require valid-user
 &lt;/Location&gt;
 </programlisting>
@@ -1984,11 +2008,10 @@ $
           example, Subversion's own source code repository at
           <ulink url="http://svn.collab.net/repos/svn"/> allows anyone
           in the world to perform read-only repository tasks (such as
-          checking out working copies and browsing the repository with
-          a web browser), but restricts all write operations to
-          authenticated users.  To do this type of selective
-          restriction, you can use the <literal>Limit</literal> and
-          <literal>LimitExcept</literal> configuration directives.
+          checking out working copies and browsing the repository),
+          but restricts write operations to authenticated users.  The
+          <literal>Limit</literal> and <literal>LimitExcept</literal>
+          directives allow for this type of selective restriction.
           Like the <literal>Location</literal> directive, these blocks
           have starting and ending tags, and you would nest them
           inside your <literal>&lt;Location&gt;</literal>
@@ -1997,14 +2020,12 @@ $
         <para>The parameters present on the <literal>Limit</literal>
           and <literal>LimitExcept</literal> directives are HTTP
           request types that are affected by that block.  For example,
-          if you wanted to disallow all access to your repository
-          except the currently supported read-only operations, you
-          would use the <literal>LimitExcept</literal> directive,
-          passing the <literal>GET</literal>,
-          <literal>PROPFIND</literal>, <literal>OPTIONS</literal>, and
-          <literal>REPORT</literal> request type parameters.  Then the
-          previously mentioned <literal>Require valid-user</literal>
-          directive would be placed inside the
+          to allow anonymous read-only operations, you would use the
+          <literal>LimitExcept</literal> directive (passing the
+          <literal>GET</literal>, <literal>PROPFIND</literal>,
+          <literal>OPTIONS</literal>, and <literal>REPORT</literal>
+          request type parameters) and place the previously mentioned
+          <literal>Require valid-user</literal> directive inside the
           <literal>&lt;LimitExcept&gt;</literal> block instead of just
           inside the <literal>&lt;Location&gt;</literal> block.</para>
 
@@ -2014,10 +2035,9 @@ $
   DAV svn
   SVNParentPath /var/svn
 
-  # how to authenticate a user
-  AuthType Basic
   AuthName "Subversion repository"
-  AuthUserFile /path/to/users/file
+  AuthType Digest
+  AuthUserFile /etc/svn-auth.htdigest
 
   # For any operations other than these, require an authenticated user.
   &lt;LimitExcept GET PROPFIND OPTIONS REPORT&gt;
@@ -2041,9 +2061,8 @@ $
         <title>Per-directory access control</title>
 
         <para>It's possible to set up finer-grained permissions using
-          a second Apache httpd module,
-          <command>mod_authz_svn</command>.  This module grabs the
-          various opaque URLs passing from client to server, asks
+          <command>mod_authz_svn</command>.  This Apache module grabs
+          the various opaque URLs passing from client to server, asks
           <command>mod_dav_svn</command> to decode them, and then
           possibly vetoes requests based on access policies defined in
           a configuration file.</para>
@@ -2066,7 +2085,7 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
         </informalexample>
 
         <para>To activate this module, you need to configure your
-          <literal>Location</literal> block to use the
+          <literal>&lt;Location&gt;</literal> block to use the
           <literal>AuthzSVNAccessFile</literal> directive, which
           specifies a file containing the permissions policy for paths
           within your repositories.  (In a moment, we'll discuss the
@@ -2079,11 +2098,11 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
           documentation for much more detail on Apache authentication
           and authorization options.)</para>
 
-        <para>The simplest block is to allow open access to everyone.
-          In this scenario, Apache never sends authentication
-          challenges, so all users are treated as
-          <quote>anonymous.</quote> (See
-          <xref linkend="svn.serverconfig.httpd.authz.perdir.ex-1"/>.)</para>
+        <para>The most open approach is to allow access to everyone.
+          This means Apache never sends authentication challenges, and
+          all users are treated as <quote>anonymous</quote>.  (See
+          <xref linkend="svn.serverconfig.httpd.authz.perdir.ex-1"
+          />.)</para>
 
         <example id="svn.serverconfig.httpd.authz.perdir.ex-1">
           <title>A sample configuration for anonymous access</title>
@@ -2092,18 +2111,18 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
   DAV svn
   SVNParentPath /var/svn
 
-  # our access control policy
   AuthzSVNAccessFile /path/to/access/file
+
+  # Any user may access the repository anonymously
 &lt;/Location&gt;
 </programlisting>
         </example>
 
         <para>On the opposite end of the paranoia scale, you can
-          configure your block to demand authentication from everyone.
-          All clients must supply credentials to identify themselves.
-          Your block unconditionally requires authentication via the
-          <literal>Require valid-user</literal> directive, and it
-          defines a means to authenticate.  (See
+          configure Apache to authenticate all clients.
+          This block unconditionally requires authentication via the
+          <literal>Require valid-user</literal> directive, and defines
+          a means to authenticate valid users.  (See
           <xref linkend="svn.serverconfig.httpd.authz.perdir.ex-2"/>.)</para>
 
         <example id="svn.serverconfig.httpd.authz.perdir.ex-2">
@@ -2113,16 +2132,14 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
   DAV svn
   SVNParentPath /var/svn
 
-  # our access control policy
   AuthzSVNAccessFile /path/to/access/file
 
-  # only authenticated users may access the repository
-  Require valid-user
-
-  # how to authenticate a user
-  AuthType Basic
   AuthName "Subversion repository"
-  AuthUserFile /path/to/users/file
+  AuthType Digest
+  AuthUserFile /etc/svn-auth.htdigest
+
+  # Only authenticated users may access the repository
+  Require valid-user
 &lt;/Location&gt;
 </programlisting>
         </example>
@@ -2130,15 +2147,15 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
         <para>A third very popular pattern is to allow a combination
           of authenticated and anonymous access.  For example, many
           administrators want to allow anonymous users to read certain
-          repository directories, but want only authenticated users to
-          read (or write) more sensitive areas.  In this setup, all
+          repository directories, but restrict access to more
+          sensitive areas to authenticated users.  In this setup, all
           users start out accessing the repository anonymously.  If
           your access control policy demands a real username at any
           point, Apache will demand authentication from the client.
           To do this, use both the <literal>Satisfy Any</literal>
-          and <literal>Require valid-user</literal> directives
-          together.  (See
-          <xref linkend="svn.serverconfig.httpd.authz.perdir.ex-3"/>.)</para>
+          and <literal>Require valid-user</literal> directives.  (See
+          <xref linkend="svn.serverconfig.httpd.authz.perdir.ex-3"
+          />.)</para>
 
         <example id="svn.serverconfig.httpd.authz.perdir.ex-3">
           <title>A sample configuration for mixed
@@ -2148,28 +2165,24 @@ LoadModule authz_svn_module   modules/mod_authz_svn.so
   DAV svn
   SVNParentPath /var/svn
 
-  # our access control policy
   AuthzSVNAccessFile /path/to/access/file
 
-  # try anonymous access first, resort to real
-  # authentication if necessary.
+  AuthName "Subversion repository"
+  AuthType Digest
+  AuthUserFile /etc/svn-auth.htdigest
+
+  # Try anonymous access first, authenticate only if necessary
   Satisfy Any
   Require valid-user
-
-  # how to authenticate a user
-  AuthType Basic
-  AuthName "Subversion repository"
-  AuthUserFile /path/to/users/file
 &lt;/Location&gt;
 </programlisting>
         </example>
 
-        <para>Once you've settled on one of these three
-          basic <filename>httpd.conf</filename> templates, you need to
-          create your file containing access rules for particular
-          paths within the repository.  We describe this later in
-          this chapter, in
-          <xref linkend="svn.serverconfig.pathbasedauthz"/>.</para>
+        <para>The next step is to create the authorization file
+          containing access rules for particular paths within the
+          repository.  We describe this later in this chapter, in this
+          chapter, in <xref linkend="svn.serverconfig.pathbasedauthz"
+          />.</para>
 
       </sect3>
 
