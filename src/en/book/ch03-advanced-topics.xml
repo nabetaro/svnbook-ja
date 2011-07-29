@@ -19,7 +19,7 @@
     directory changes to and from a central repository.</para>
 
   <para>This chapter highlights some of Subversion's features that,
-    while important, aren't part of the typical user's daily routine.
+    while important, may not be part of the typical user's daily routine.
     It assumes that you are familiar with Subversion's basic file and
     directory versioning capabilities.  If you aren't, you'll want to
     first read <xref linkend="svn.basic" /> and <xref
@@ -84,43 +84,18 @@
         revision numbers by Subversion:</para>
 
       <variablelist>
-
-        <indexterm>
-          <primary>HEAD</primary>
-        </indexterm>
-        <indexterm>
-          <primary>revisions</primary>
-          <secondary>keywords</secondary>
-          <tertiary>HEAD</tertiary>
-        </indexterm>
-        <indexterm>
-          <primary>BASE</primary>
-        </indexterm>
-        <indexterm>
-          <primary>revisions</primary>
-          <secondary>keywords</secondary>
-          <tertiary>BASE</tertiary>
-        </indexterm>
-        <indexterm>
-          <primary>COMMITTED</primary>
-        </indexterm>
-        <indexterm>
-          <primary>revisions</primary>
-          <secondary>keywords</secondary>
-          <tertiary>COMMITTED</tertiary>
-        </indexterm>
-        <indexterm>
-          <primary>PREV</primary>
-        </indexterm>
-        <indexterm>
-          <primary>revisions</primary>
-          <secondary>keywords</secondary>
-          <tertiary>PREV</tertiary>
-        </indexterm>
         
         <varlistentry>
           <term><literal>HEAD</literal></term>
           <listitem>
+            <indexterm>
+              <primary>HEAD</primary>
+            </indexterm>
+            <indexterm>
+              <primary>revisions</primary>
+              <secondary>keywords</secondary>
+              <tertiary>HEAD</tertiary>
+            </indexterm>
             <para>The latest (or <quote>youngest</quote>) revision in
               the repository.</para>
           </listitem>
@@ -129,6 +104,14 @@
         <varlistentry>
           <term><literal>BASE</literal></term>
           <listitem>
+            <indexterm>
+              <primary>BASE</primary>
+            </indexterm>
+            <indexterm>
+              <primary>revisions</primary>
+              <secondary>keywords</secondary>
+              <tertiary>BASE</tertiary>
+            </indexterm>
             <para>The revision number of an item in a working copy.
               If the item has been locally modified, this refers to
               the way the item appears without those local
@@ -139,6 +122,14 @@
         <varlistentry>
           <term><literal>COMMITTED</literal></term>
           <listitem>
+            <indexterm>
+              <primary>COMMITTED</primary>
+            </indexterm>
+            <indexterm>
+              <primary>revisions</primary>
+              <secondary>keywords</secondary>
+              <tertiary>COMMITTED</tertiary>
+            </indexterm>
             <para>The most recent revision prior to, or equal to,
               <literal>BASE</literal>, in which an item changed.</para>
           </listitem>
@@ -147,6 +138,14 @@
         <varlistentry>
           <term><literal>PREV</literal></term>
           <listitem>
+            <indexterm>
+              <primary>PREV</primary>
+            </indexterm>
+            <indexterm>
+              <primary>revisions</primary>
+              <secondary>keywords</secondary>
+              <tertiary>PREV</tertiary>
+            </indexterm>
             <para>The revision immediately <emphasis>before</emphasis>
               the last revision in which an item changed.
               Technically, this boils down to
@@ -814,7 +813,20 @@ Index: frabnaggilywort/IDEA
         remember that revision 1935 was a fully tested revision.  But
         if there's, say, a <literal>test-results</literal> property on
         that revision with the value <literal>all passing</literal>,
-        that's meaningful information to have.</para>
+        that's meaningful information to have.  And Subversion allow
+        you to easily do this via the <option>--with-revprop</option>
+        option of the <command>svn commit</command> command:</para>
+
+      <informalexample>
+        <screen>
+$ svn commit -m "Fix up the last remaining known regression bug." \
+      --with-revprop "test-results=all passing"
+Sending        lib/crit_bits.c
+Transmitting file data .
+Committed revision 912.
+$
+</screen>
+      </informalexample>
 
       <sidebar>
         <title>Searchability (or, Why <emphasis>Not</emphasis>
@@ -829,16 +841,42 @@ Index: frabnaggilywort/IDEA
 
         <para>Trying to locate a custom revision property generally
           involves performing a linear walk across all the revisions
-          of the repository, asking of each revision, <quote>Do you have the
-          property I'm looking for?</quote>  Trying to find a custom
-          versioned property is painful, too, and often involves a
-          recursive <command>svn propget</command> across an entire
-          working copy.  In your situation, that might not be as bad
-          as a linear walk across all revisions.  But it certainly
-          leaves much to be desired in terms of both performance and
-          likelihood of success, especially if the scope of your
-          search would require a working copy from the root of your
-          repository.</para>
+          of the repository, asking of each revision, <quote>Do you
+          have the property I'm looking for?</quote>  Use
+          the <option>--with-all-revprops</option> option with
+          the <command>svn log</command> command's XML output mode to
+          facilitate this search.  Notice the presence of the custom
+          revision property <literal>testresults</literal> in the
+          following output:</para>
+
+        <informalexample>
+          <screen>
+$ svn log --with-all-revprops --xml lib/crit_bits.c
+&lt;?xml version="1.0"?&gt;
+&lt;log&gt;
+&lt;logentry
+   revision="912"&gt;
+&lt;author&gt;harry&lt;/author&gt;
+&lt;date&gt;2011-07-29T14:47:41.169894Z&lt;/date&gt;
+&lt;msg&gt;Fix up the last remaining known regression bug.&lt;/msg&gt;
+&lt;revprops&gt;
+&lt;property
+   name="testresults"&gt;all passing&lt;/property&gt;
+&lt;/revprops&gt;
+&lt;/logentry&gt;
+&hellip;
+$
+</screen>
+        </informalexample>
+
+        <para>Trying to find a custom versioned property is painful,
+          too, and often involves a recursive <command>svn
+          propget</command> across an entire working copy.  In your
+          situation, that might not be as bad as a linear walk across
+          all revisions.  But it certainly leaves much to be desired
+          in terms of both performance and likelihood of success,
+          especially if the scope of your search would require a
+          working copy from the root of your repository.</para>
 
         <para>For this reason, you might choose&mdash;especially in
           the revision property use case&mdash;to simply add your
