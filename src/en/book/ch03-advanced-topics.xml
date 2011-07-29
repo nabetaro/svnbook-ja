@@ -391,19 +391,19 @@ $ svn log -r {2006-11-20}:{2006-11-29}
       street.  Our motorist&mdash;and our Subversion&mdash;need a
       little more detail to do the right thing.</para>
 
-    <para>In version 1.1, Subversion introduced a way for you to tell
-      it exactly which Main Street you meant.  It's called the
-      <firstterm>peg revision</firstterm>, and it is provided to
-      Subversion for the sole purpose of identifying a unique line of
-      history.  Because at most, one versioned object may occupy a path
+    <para>Fortunately, Subversion allow you to tell it exactly which
+      Main Street you meant.  The mechanism used is called a
+      <firstterm>peg revision</firstterm>, and you provide these to
+      Subversion for the sole purpose of identifying unique lines of
+      history.  Because at most one versioned object may occupy a path
       at any given time&mdash;or, more precisely, in any one
       revision&mdash;the combination of a path and a peg revision is
-      all that is needed to refer to a specific line of history.  Peg
-      revisions are specified to the Subversion command-line client
-      using <firstterm>at syntax</firstterm>, so called because the
-      syntax involves appending an <quote>at sign</quote>
-      (<literal>@</literal>) and the peg revision to the end of the
-      path with which the revision is associated.</para>
+      all that is needed to unambiguously identify to a specific line
+      of history.  Peg revisions are specified to the Subversion
+      command-line client using <firstterm>at syntax</firstterm>, so
+      called because the syntax involves appending an <quote>at
+      sign</quote> (<literal>@</literal>) and the peg revision to the
+      end of the path with which the revision is associated.</para>
 
     <para>But what of the <option>--revision</option>
       (<option>-r</option>) of which we've spoken so much in this
@@ -1000,9 +1000,9 @@ $
         command will list the names of properties that exist on a
         path.  Once you know the names of the properties on the node,
         you can request their values individually using <command>svn
-        propget</command>.  This command will, given a property name and a path (or set of
-        paths), print the value of the property to
-        the standard output stream.</para>
+        propget</command>.  This command will, given a property name
+        and a path (or set of paths), print the value of the property
+        to the standard output stream.</para>
 
       <informalexample>
         <screen>
@@ -1209,6 +1209,8 @@ Select: (p) postpone, (df) diff-full, (e) edit,
         (s) show all options: p
  C calc/button.c
 Updated to revision 143.
+Summary of conflicts:
+  Property conflicts: 1
 $ 
 </screen>
         </informalexample>
@@ -1327,6 +1329,22 @@ $
         toolbox.  See <xref
         linkend="svn.advanced.confarea.opts.config"/> for more about
         configuring that support.</para>
+
+      <note>
+        <para>Subversion administrators commonly ask if it is possible
+          to configure, on the server side, a set of property
+          definitions which all connecting clients will automatically
+          consider when operating on working copies checked out from
+          that server.  Unfortunately, Subversion doesn't offer this
+          feature.  Administrators can use hook scripts to validate
+          that the properties added to and modified on files and
+          directories match the administrator's preferred policies,
+          rejecting commits which are non-compliant in this fashion.
+          (See <xref linkend="svn.reposadmin.create.hooks" /> for more
+          about hook scripts.)  But there's no way to automatically
+          dictate those preferences to Subversion clients
+          beforehand.</para>
+      </note>
 
     </sect2>     
   </sect1>
@@ -1468,12 +1486,11 @@ $
           property.</para>
       </warning>
 
-      <para>Beginning in Subversion 1.5, users can configure a new
-        <literal>mime-types-file</literal> runtime configuration
-        parameter, which identifies the location of a MIME types
-        mapping file.  Subversion will consult this mapping file to
-        determine the MIME type of newly added and imported
-        files.</para>
+      <para>Users can configure the <literal>mime-types-file</literal>
+        runtime configuration parameter, which identifies the location
+        of a MIME types mapping file.  Subversion will consult this
+        mapping file to determine the MIME type of newly added and
+        imported files.</para>
 
       <para>Also, if the <literal>svn:mime-type</literal> property is
         set, then the Subversion Apache module will use its value to
@@ -2221,22 +2238,19 @@ Cumulus clouds are appearing more frequently as summer approaches.
 
     </sidebar>
 
-    <para>Subversion 1.2 introduced a new variant of the keyword
-      syntax, which brought additional, useful&mdash;though perhaps
-      atypical&mdash;functionality.  You can now tell Subversion
-      to maintain a fixed length (in terms of the number of bytes
-      consumed) for the substituted keyword.  By using a
-      double colon (<literal>::</literal>) after the keyword name,
-      followed by a number of space characters, you define that
-      fixed width.  When Subversion goes to substitute your
-      keyword for the keyword and its value, it will essentially
-      replace only those space characters, leaving the overall
-      width of the keyword field unchanged.  If the substituted
-      value is shorter than the defined field width, there will be
-      extra padding characters (spaces) at the end of the
-      substituted field; if it is too long, it is truncated with a
-      special hash (<literal>#</literal>) character just before
-      the final dollar sign terminator.</para>
+    <para>You can also instruct Subversion to maintain a fixed length
+      (in terms of the number of bytes consumed) for the substituted
+      keyword.  By using a double colon (<literal>::</literal>) after
+      the keyword name, followed by a number of space characters, you
+      define that fixed width.  When Subversion goes to substitute
+      your keyword for the keyword and its value, it will essentially
+      replace only those space characters, leaving the overall width
+      of the keyword field unchanged.  If the substituted value is
+      shorter than the defined field width, there will be extra
+      padding characters (spaces) at the end of the substituted field;
+      if it is too long, it is truncated with a special hash
+      (<literal>#</literal>) character just before the final dollar
+      sign terminator.</para>
 
     <para>For example, say you have a document in which you have
       some section of tabular data reflecting the document's
@@ -2633,7 +2647,7 @@ $
       directory except the one you don't care about it.</para>
 
     <informalexample>
-    <screen>
+      <screen>
 $ svn checkout http://svn.example.com/repos/many-dirs --depth empty
 &hellip;
 $ svn update --set-depth infinity many-dirs/wanted-dir-1
@@ -2660,7 +2674,7 @@ $ svn update --set-depth infinity many-dirs/wanted-dir-3
       one subdirectory you don't care about.</para>
 
     <informalexample>
-    <screen>
+      <screen>
 $ svn checkout http://svn.example.com/repos/many-dirs
 &hellip;
 $ svn update --set-depth exclude many-dirs/unwanted-dir
@@ -2720,11 +2734,12 @@ $
       how well those algorithms perform when trying to resolve
       conflicts caused by multiple users modifying the same file
       concurrently.  Subversion itself provides only one such
-      algorithm:  a three-way differencing algorithm that is smart
+      algorithm: a three-way differencing algorithm that is smart
       enough to handle data at a granularity of a single line of text.
       Subversion also allows you to supplement its content merge
       processing with external differencing utilities (as described in
-      <xref linkend="svn.advanced.externaldifftools.diff3" />), some
+      <xref linkend="svn.advanced.externaldifftools.diff3" /> and
+      <xref linkend="svn.advanced.externaldifftools.merge" />), some
       of which may do an even better job, perhaps providing
       granularity of a word or a single character of text.  But common
       among those algorithms is that they generally work only on text
@@ -2734,7 +2749,7 @@ $
       you begin to run into problems with the copy-modify-merge
       model.</para>
 
-   <para>Let's look at a real-life example of where this model runs
+    <para>Let's look at a real-life example of where this model runs
       aground.  Harry and Sally are both graphic designers working on
       the same project, a bit of marketing collateral for an
       automobile mechanic.  Central to the design of a particular
@@ -2965,11 +2980,12 @@ $
           an <emphasis>authorization</emphasis> token.  The token
           isn't a protected secret.  In fact, a lock's unique token is
           discoverable by anyone who runs <userinput>svn info
-          <replaceable>URL</replaceable></userinput>.  A lock token is special only when it lives
-          inside a working copy.  It's proof that the lock was created
-          in that particular working copy, and not somewhere else by
-          some other client.  Merely authenticating as the lock owner
-          isn't enough to prevent accidents.</para>
+          <replaceable>URL</replaceable></userinput>.  A lock token is
+          special only when it lives inside a working copy.  It's
+          proof that the lock was created in that particular working
+          copy, and not somewhere else by some other client.  Merely
+          authenticating as the lock owner isn't enough to prevent
+          accidents.</para>
 
         <para>For example, suppose you lock a file using a computer at
           your office, but leave work for the day before you finish
@@ -2980,8 +2996,8 @@ $
           token prevents one piece of Subversion-related software from
           undermining the work of another.  (In our example, if you
           really need to change the file from an alternative working
-          copy, you would need to <firstterm>break</firstterm> the lock and relock the
-          file.)</para>
+          copy, you would need to <firstterm>break</firstterm> the
+          lock and relock the file.)</para>
 
       </sidebar>
 
@@ -3476,19 +3492,19 @@ third-party/skins/toolkit -r21 http://svn.example.com/skin-maker
     <informalexample>
       <screen>
 $ svn checkout http://svn.example.com/repos/calc
-A  calc
-A  calc/Makefile
-A  calc/integer.c
-A  calc/button.c
+A    calc
+A    calc/Makefile
+A    calc/integer.c
+A    calc/button.c
 Checked out revision 148.
 
 Fetching external item into calc/third-party/sounds
-A  calc/third-party/sounds/ding.ogg
-A  calc/third-party/sounds/dong.ogg
-A  calc/third-party/sounds/clang.ogg
+A    calc/third-party/sounds/ding.ogg
+A    calc/third-party/sounds/dong.ogg
+A    calc/third-party/sounds/clang.ogg
 &hellip;
-A  calc/third-party/sounds/bang.ogg
-A  calc/third-party/sounds/twang.ogg
+A    calc/third-party/sounds/bang.ogg
+A    calc/third-party/sounds/twang.ogg
 Checked out revision 14.
 
 Fetching external item into calc/third-party/skins
@@ -3728,6 +3744,10 @@ $
       fetched into the working copy, and with the letter
       <literal>X</literal> when showing the working copy status.</para>
 
+    <!-- ### TODO: Is Subversion using 'E' in the update output to
+         ### mean "external"?  Or is this 'E' an "exists" notification,
+         ### the side-effect of the file externals implementation? -->
+
     <warning>
       <para>While directory externals can place the external
         directory at any depth, and any missing intermediate
@@ -3811,22 +3831,22 @@ $
 
     <para>We've already mentioned some of the additional shortcomings
       of the old <literal>svn:externals</literal> format and how the
-      new Subversion 1.5 format improves upon it.  But be careful when
-      making use of the new format that you don't inadvertently
-      introduce new problems.  For example, while Subversion 1.5
-      clients will continue to recognize and support the original
-      externals definition format, older clients
-      will <emphasis>not</emphasis> be able to correctly parse the new
-      format.  If you change all your externals definitions to the
-      newer format, you effectively force everyone who uses those
-      externals to upgrade their Subversion clients to a version that
-      can parse them.  Also, be careful to avoid naively relocating
+      newer Subversion 1.5 format improves upon it.  But be careful
+      when making use of the new format that you don't inadvertently
+      introduce new problems.  For example, while the latest clients
+      will continue to recognize and support the original externals
+      definition format, pre-1.5 clients will <emphasis>not</emphasis>
+      be able to correctly parse the new format.  If you change all
+      your externals definitions to the newer format, you effectively
+      force everyone who uses those externals to upgrade their
+      Subversion clients to a version that can parse them.  Also, be
+      careful to avoid naively relocating
       the <literal>-r<replaceable>NNN</replaceable></literal> portion
-      of the definition&mdash;the older format uses that revision as
-      a peg revision, but the newer format uses it as an operative
+      of the definition&mdash;the older format uses that revision as a
+      peg revision, but the newer format uses it as an operative
       revision (with a peg revision of <literal>HEAD</literal> unless
-      otherwise specified; see <xref linkend="svn.advanced.pegrevs"
-      /> for a full explanation of the distinction here).</para>
+      otherwise specified; see <xref linkend="svn.advanced.pegrevs" />
+      for a full explanation of the distinction here).</para>
 
     <warning>
       <para>External working copies are still completely
@@ -3896,10 +3916,10 @@ $
       degree, the details of the changes being made heavily influence
       the methodology used to distinguish them.</para>
 
-    <para>Subversion 1.5 brings a new
-      <firstterm>changelists</firstterm> feature that adds yet
-      another method to the mix.  Changelists are basically arbitrary
-      labels (currently at most one per file) applied to working copy files for the express purpose of
+    <para>Subversion provides a <firstterm>changelists</firstterm>
+      feature that adds yet another method to the mix.  Changelists
+      are basically arbitrary labels (currently at most one per file)
+      applied to working copy files for the express purpose of
       associating multiple files together.  Users of many of Google's
       software offerings are familiar with this concept already.  For
       example, <ulink url="http://mail.google.com/">Gmail</ulink>
