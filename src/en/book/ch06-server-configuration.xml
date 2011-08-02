@@ -466,6 +466,8 @@
             tunnel.</para></listitem>
         <listitem><para>Run <command>svnserve</command> as a Microsoft
             Windows service.</para></listitem>
+        <listitem><para>Run <command>svnserve</command> as a launchd
+            job.</para></listitem>
       </itemizedlist>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
@@ -586,7 +588,7 @@ svn stream tcp nowait svnowner /usr/bin/svnserve svnserve -i
       <sect3 id="svn.serverconfig.svnserve.invoking.tunnel">
         <title>svnserve over a tunnel</title>
 
-        <para>A third way to invoke <command>svnserve</command> is in
+        <para>Another way to invoke <command>svnserve</command> is in
           tunnel mode, using the <option>-t</option> option.  This
           mode assumes that a remote-service program such as
           <command>rsh</command> or <command>ssh</command> has
@@ -615,7 +617,7 @@ svn stream tcp nowait svnowner /usr/bin/svnserve svnserve -i
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.serverconfig.svnserve.invoking.winservice">
-        <title>svnserve as Windows service</title>
+        <title>svnserve as a Windows service</title>
 
         <para>If your Windows system is a descendant of Windows NT
           (2000, 2003, XP, or Vista), you can
@@ -711,6 +713,125 @@ C:\&gt; net start svn
 
       </sect3>
 
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.serverconfig.svnserve.invoking.launchd">
+        <title>svnserve as a launchd job</title>
+
+        <para>Mac OS X (10.4 and higher) uses <command>launchd</command>
+          to manage processes (including daemons) both system-wide and
+          per-user.  A <command>launchd</command> job is specified by
+          parameters in an XML property list file, and
+          the <command>launchctl</command> command is used to manage
+          the lifecycle of those jobs.</para>
+
+        <para>When configured to run as a <command>launchd</command>
+          job, <command>svnserve</command> is automatically launched
+          on demand whenever incoming Subversion
+          <literal>svn://</literal> network traffic needs to be
+          handled.  This is far more convenient than a configuration
+          which requires you to manually invoke
+          <command>svnserve</command> as a long-running
+          background process.</para>
+
+        <para>To configure <command>svnserve</command> as
+          a <command>launchd</command> job, first create a job
+          definition file.  See
+          <xref linkend="svn.serverconfig.svnserve.invoking.launchd.ex-1"/>
+          for a sample of such a file.</para>
+
+        <example id="svn.serverconfig.svnserve.invoking.launchd.ex-1">
+          <title>A sample svnserve launchd job definition</title>
+          <programlisting>
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+    &lt;dict&gt;
+        &lt;key&gt;Label&lt;/key&gt;
+        &lt;string&gt;org.tigris.subversion.svnserve&lt;/string&gt;
+        &lt;key&gt;ServiceDescription&lt;/key&gt;
+        &lt;string&gt;Host Subversion repositories using svn:// schema&lt;/string&gt;
+        &lt;key&gt;ProgramArguments&lt;/key&gt;
+        &lt;array&gt;
+            &lt;string&gt;/usr/bin/svnserve&lt;/string&gt;
+            &lt;string&gt;--inetd&lt;/string&gt;
+            &lt;string&gt;--root=/var/svn&lt;/string&gt;
+        &lt;/array&gt;
+        &lt;key&gt;UserName&lt;/key&gt;
+        &lt;string&gt;svn&lt;/string&gt;
+        &lt;key&gt;GroupName&lt;/key&gt;
+        &lt;string&gt;svn&lt;/string&gt;
+        &lt;key&gt;inetdCompatibility&lt;/key&gt;
+        &lt;dict&gt;
+            &lt;key&gt;Wait&lt;/key&gt;
+            &lt;false/&gt;
+        &lt;/dict&gt;
+        &lt;key&gt;Sockets&lt;/key&gt;
+        &lt;dict&gt;
+            &lt;key&gt;Listeners&lt;/key&gt;
+            &lt;array&gt;
+                &lt;dict&gt;
+                    &lt;key&gt;SockServiceName&lt;/key&gt;
+                    &lt;string&gt;svn&lt;/string&gt;
+                    &lt;key&gt;Bonjour&lt;/key&gt;
+                    &lt;true/&gt;
+                &lt;/dict&gt;
+            &lt;/array&gt;
+        &lt;/dict&gt;
+    &lt;/dict&gt;
+&lt;/plist&gt;
+</programlisting>
+        </example>
+
+        <para>In the examples which follow, we'll assume that
+          our <command>launchd</command> job definition file has been
+          created at
+          <filename>/Library/LaunchDaemons/org.tigris.subversion.svnserve.plist</filename>.</para>
+
+        <para>Once your job definition file is created, you can
+          activate the job using the <command>launchctl load</command>
+          command:</para>
+
+        <informalexample>
+          <screen>
+$ sudo launchctl load \
+       -w /Library/LaunchDaemons/org.tigris.subversion.svnserve.plist
+</screen>
+        </informalexample>
+
+        <note>
+          <para>Because we want <command>svnserve</command> to be a
+            system-wide daemon process, we need to
+            use <command>sudo</command> to manage this job as an
+            administrator.  Note also that the
+            <literal>UserName</literal>
+            and <literal>GroupName</literal> keys in the definition
+            file are optional&mdash;if omitted, the job will run as
+            the user who loaded the job.</para>
+        </note>
+
+        <para>Deactivating the job is just as using&mdash;use
+          the <command>launchctl unload</command> command:</para>
+
+        <informalexample>
+          <screen>
+$ sudo launchctl unload \
+       -w /Library/LaunchDaemons/org.tigris.subversion.svnserve.plist
+</screen>
+        </informalexample>
+
+        <para><command>launchctl</command> also provides a way for you
+          to query the status of jobs:</para>
+
+        <!-- ### FIXME:  What is the output of this command when the
+             ###         grep matches? -->
+        <informalexample>
+          <screen>
+$ sudo launchctl list | grep org.tigris.subversion.svnserve
+</screen>
+        </informalexample>
+
+      </sect3>
     </sect2>
 
     <!-- =============================================================== -->
