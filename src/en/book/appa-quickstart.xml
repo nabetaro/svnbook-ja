@@ -29,17 +29,18 @@
       provides all the interfaces that Subversion needs to function on
       different operating systems: disk access, network access, memory
       management, and so on.  While Subversion is able to use Apache
-      as one of its network server programs, its dependence on APR
-      <emphasis>does not</emphasis> mean that Apache is a required
+      HTTP Server (or, <command>httpd</command>) as one of its network
+      server programs, its dependence on APR <emphasis>does
+      not</emphasis> mean that <command>httpd</command> is a required
       component.  APR is a standalone library usable by any
-      application.  It does mean, however, that like Apache,
-      Subversion clients and servers run on any operating system that
-      the Apache <command>httpd</command> server runs on: Windows,
-      Linux, all flavors of BSD, Mac OS X, NetWare, and others.</para>
+      application.  It does mean, however, that Subversion clients and
+      servers run on any operating system
+      that <command>httpd</command> runs on: Windows, Linux, all
+      flavors of BSD, Mac OS X, NetWare, and others.</para>
 
     <para>The easiest way to get Subversion is to download a binary
       package built for your operating system.  Subversion's web site
-      (<ulink url="http://subversion.tigris.org"/>) often has these
+      (<ulink url="http://subversion.apache.org"/>) often has these
       packages available for download, posted by volunteers.  The site
       usually contains graphical installer packages for users of
       Microsoft operating systems.  If you run a Unix-like operating
@@ -73,18 +74,17 @@
       software, you can also get the Subversion source code from the
       Subversion repository in which it lives.  Obviously, you'll need
       to already have a Subversion client on hand to do this.  But
-      once you do, you can check out a working copy of the Subversion
-      source repository from
-      <ulink url="http://svn.collab.net/repos/svn/trunk/"
+      once you do, you can check out a working copy from
+      <ulink url="http://svn.apache.org/repos/asf/subversion"
       /><footnote><para>Note that the URL checked out in the example
-      ends not with <literal>svn</literal>, but with a subdirectory
-      thereof called <literal>trunk</literal>.  See our discussion of
-      Subversion's branching and tagging model for the reasoning
-      behind this.</para></footnote>:</para>
+      ends not with <literal>subversion</literal>, but with a
+      subdirectory thereof called <literal>trunk</literal>.  See our
+      discussion of Subversion's branching and tagging model for the
+      reasoning behind this.</para></footnote>:</para>
 
     <informalexample>
       <screen>
-$ svn checkout http://svn.collab.net/repos/svn/trunk subversion
+$ svn checkout http://svn.apache.org/repos/asf/subversion/trunk subversion
 A    subversion/HACKING
 A    subversion/INSTALL
 A    subversion/README
@@ -141,19 +141,22 @@ A    subversion/build.conf
 
     <informalexample>
       <screen>
-$ svnadmin create /var/svn/repos
-$ ls /var/svn/repos
+$ cd /var/svn
+$ svnadmin create repos
+$ ls repos
 conf/  dav/  db/  format  hooks/  locks/  README.txt
+$
 </screen>
     </informalexample>
 
-    <para>This command creates a new directory,
-      <filename>/var/svn/repos</filename>, which contains a Subversion
-      repository.  This new directory contains (among other things) a
+    <para>This command creates a Subversion repository in the directory
+      <filename>/var/svn/repos</filename>, creating
+      the <filename>repos</filename> directory itself if it doesn't
+      already exist.  This directory contains (among other things) a
       collection of database files.  You won't see your versioned
       files if you peek inside.  For more information about repository
-      creation and maintenance, see <xref
-      linkend="svn.reposadmin"/>.</para>
+      creation and maintenance, see
+      <xref linkend="svn.reposadmin"/>.</para>
 
     <para>Subversion has no concept of a <quote>project.</quote> The
       repository is just a virtual versioned filesystem, a large tree
@@ -183,15 +186,17 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
       <filename>tags</filename> directories should be empty:</para>
 
     <informalexample>
-      <screen>
-/tmp/myproject/branches/
-/tmp/myproject/tags/
-/tmp/myproject/trunk/
-                     foo.c
-                     bar.c
-                     Makefile
-                     &hellip;
-</screen>
+      <literallayout>
+/tmp/
+   myproject/
+      branches/
+      tags/
+      trunk/
+         foo.c
+         bar.c
+         Makefile
+         &hellip;
+</literallayout>
     </informalexample>
 
     <para>The <filename>branches</filename>, <filename>tags</filename>,
@@ -205,7 +210,8 @@ conf/  dav/  db/  format  hooks/  locks/  README.txt
 
     <informalexample>
       <screen>
-$ svn import /tmp/myproject file:///var/svn/repos/myproject -m "initial import"
+$ svn import /tmp/myproject file:///var/svn/repos/myproject \
+      -m "initial import"
 Adding         /tmp/myproject/branches
 Adding         /tmp/myproject/tags
 Adding         /tmp/myproject/trunk
@@ -237,11 +243,12 @@ $
     <informalexample>
       <screen>
 $ svn checkout file:///var/svn/repos/myproject/trunk myproject
-A  myproject/foo.c
-A  myproject/bar.c
-A  myproject/Makefile
+A    myproject/foo.c
+A    myproject/bar.c
+A    myproject/Makefile
 &hellip;
 Checked out revision 1.
+$
 </screen>
     </informalexample>
 
