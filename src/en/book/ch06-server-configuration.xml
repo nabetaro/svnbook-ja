@@ -3,10 +3,10 @@
 
   <para>A Subversion repository can be accessed simultaneously by
     clients running on the same machine on which the repository
-    resides using the <literal>file://</literal> method.  But the
-    typical Subversion setup involves a single server machine being
-    accessed from clients on computers all over the office&mdash;or,
-    perhaps, all over the world.</para>
+    resides using URLs carrying the <literal>file://</literal> scheme.
+    But the typical Subversion setup involves a single server machine
+    being accessed from clients on computers all over the
+    office&mdash;or, perhaps, all over the world.</para>
 
   <para>This chapter describes how to get your Subversion repository
     exposed outside its host machine for use by remote clients.  We
@@ -24,13 +24,13 @@
 
     <title>Overview</title>
 
-    <para>Subversion was designed with an abstract network layer.
+    <para>Subversion was designed with an abstract repository access layer.
       This means that a repository can be programmatically accessed by
       any sort of server process, and the client <quote>repository
       access</quote> API allows programmers to write plug-ins that
       speak relevant network protocols.  In theory, Subversion can use
       an infinite number of network implementations.  In practice,
-      there are only two servers at the time of this writing.</para>
+      there are only two Subversion servers in widespread use today.</para>
 
     <para>Apache is an extremely popular web server; using the
       <command>mod_dav_svn</command> module, Apache can access a
@@ -53,10 +53,10 @@
       easy to set up and is often the best option for small teams just
       starting out with Subversion.</para>
 
-    <para>A third option is to use <command>svnserve</command>
-      tunneled over an SSH connection.  Even though this scenario
-      still uses <command>svnserve</command>, it differs quite a bit
-      in features from a traditional <command>svnserve</command>
+    <para>The network protocol which <command>svnserve</command>
+      speaks may also be tunneled over an SSH connection.  This
+      deployment option for <command>svnserve</command> differs quite
+      a bit in features from a traditional <command>svnserve</command>
       deployment.  SSH is used to encrypt all communication.  SSH is
       also used exclusively to authenticate, so real system accounts
       are required on the server host (unlike
@@ -86,22 +86,20 @@
         <tbody>
           <row>
             <entry>Authentication options</entry>
-            <entry>HTTP Basic or Digest auth, X.509 certificates, LDAP, NTLM, or
-              any other mechanism available to Apache httpd</entry>
+            <entry>HTTP Basic or Digest auth, X.509 certificates, LDAP,
+              NTLM, or any other mechanism available to Apache httpd</entry>
             <entry>CRAM-MD5 by default;  LDAP, NTLM, or any other mechanism
               available to SASL</entry>
             <entry>SSH</entry>
           </row>
-
           <row>
             <entry>User account options</entry>
             <entry>Private <quote>users</quote> file, or other mechanisms
             available to Apache httpd (LDAP, SQL, etc.)</entry>
-            <entry>Private <quote>users</quote> file, or other mechanisms available
-              to SASL (LDAP, SQL, etc.)</entry>
+            <entry>Private <quote>users</quote> file, or other
+              mechanisms available to SASL (LDAP, SQL, etc.)</entry>
             <entry>System accounts</entry>
           </row>
-
           <row>
             <entry>Authorization options</entry>
             <entry>Read/write access can be granted over the whole
@@ -111,30 +109,26 @@
             <entry>Read/write access only grantable over the whole
               repository</entry>
           </row>
-
           <row>
             <entry>Encryption</entry>
             <entry>Available via optional SSL (https)</entry>
             <entry>Available via optional SASL features</entry>
             <entry>Inherent in SSH connection</entry>
           </row>
-
           <row>
             <entry>Logging</entry>
-            <entry>Full Apache logs of each HTTP request, with
-            optional <quote>high-level</quote> logging of general
-            client operations</entry>
-            <entry>Basic logging</entry>
-            <entry>Basic logging</entry>
+            <entry>High-level operational logging of Subversion
+              operations plus detailed logging at the
+              per-HTTP-request level</entry>
+            <entry>High-level operational logging only</entry>
+            <entry>High-level operational logging only</entry>
           </row>
-
           <row>
             <entry>Interoperability</entry>
             <entry>Accessible by other WebDAV clients</entry>
             <entry>Talks only to svn clients</entry>
             <entry>Talks only to svn clients</entry>
           </row>
-
           <row>
             <entry>Web viewing</entry>
             <entry>Limited built-in support, or via third-party tools
@@ -142,29 +136,25 @@
             <entry>Only via third-party tools such as ViewVC</entry>
             <entry>Only via third-party tools such as ViewVC</entry>
           </row>
-
           <row>
             <entry>Master-slave server replication</entry>
-            <entry>Transparent write-proxying available from slave to master</entry>
+            <entry>Transparent write-proxying available from slave to
+              master</entry>
             <entry>Can only create read-only slave servers</entry>
             <entry>Can only create read-only slave servers</entry>
           </row>
-
-
           <row>
             <entry>Speed</entry>
             <entry>Somewhat slower</entry>
             <entry>Somewhat faster</entry>
             <entry>Somewhat faster</entry>
           </row>
-
           <row>
             <entry>Initial setup</entry>
             <entry>Somewhat complex</entry>
             <entry>Extremely simple</entry>
             <entry>Moderately simple</entry>
           </row>
-
         </tbody>
       </tgroup>
     </table>
@@ -196,44 +186,45 @@
           <term>Why you might want to use it:</term>
           <listitem>
             <itemizedlist>
-
-            <listitem><para>Quick and easy to set
-                up.</para></listitem>
-
-            <listitem><para>Network protocol is stateful and
-                noticeably faster than WebDAV.</para></listitem>
-
-            <listitem><para>No need to create system accounts on
-                server.</para></listitem>
-
-            <listitem><para>Password is not passed over the
-                network.</para></listitem>
-
+              <listitem>
+                <para>Quick and easy to set up.</para>
+              </listitem>
+              <listitem>
+                <para>Network protocol is stateful and noticeably
+                  faster than WebDAV.</para>
+              </listitem>
+              <listitem>
+                <para>No need to create system accounts on
+                  server.</para>
+              </listitem>
+              <listitem>
+                <para>Password is not passed over the network.</para>
+              </listitem>
             </itemizedlist>
           </listitem>
         </varlistentry>
-
         <varlistentry>
           <term>Why you might want to avoid it:</term>
           <listitem>
             <itemizedlist>
-
-            <listitem><para>By default, only one authentication method
-                is available, the network protocol is not encrypted,
-                and the server stores clear text passwords.  (All these
-                things can be changed by configuring SASL, but it's a
-                bit more work to do.)</para></listitem>
-
-            <listitem><para>No advanced logging facilities.</para></listitem>
-
-            <listitem><para>No built-in web browsing.  (You'd have to
-                install a separate web server and repository browsing software to
-                add this.)</para></listitem>
-
+              <listitem>
+                <para>By default, only one authentication method is
+                  available, the network protocol is not encrypted,
+                  and the server stores clear text passwords.  (All
+                  these things can be changed by configuring SASL, but
+                  it's a bit more work to do.)</para>
+              </listitem>
+              <listitem>
+                <para>No advanced logging facilities.</para>
+              </listitem>
+              <listitem>
+                <para>No built-in web browsing.  (You'd have to
+                  install a separate web server and repository
+                  browsing software to add this.)</para>
+              </listitem>
             </itemizedlist>
           </listitem>
         </varlistentry>
-
       </variablelist>
 
     </sect2>
@@ -247,36 +238,39 @@
           <term>Why you might want to use it:</term>
           <listitem>
             <itemizedlist>
-
-            <listitem><para>The network protocol is stateful and
-                noticeably faster than WebDAV.</para></listitem>
-
-            <listitem><para>You can take advantage of existing SSH
-                accounts and user infrastructure.</para></listitem>
-
-            <listitem><para>All network traffic is
-                encrypted.</para></listitem>
-
+              <listitem>
+                <para>The network protocol is stateful and noticeably
+                  faster than WebDAV.</para>
+              </listitem>
+              <listitem>
+                <para>You can take advantage of existing SSH accounts
+                  and user infrastructure.</para>
+              </listitem>
+              <listitem>
+                <para>All network traffic is encrypted.</para>
+              </listitem>
             </itemizedlist>
           </listitem>
         </varlistentry>
-
         <varlistentry>
           <term>Why you might want to avoid it:</term>
           <listitem>
             <itemizedlist>
-
-            <listitem><para>Only one choice of authentication
-                method is available.</para></listitem>
-
-            <listitem><para>No advanced logging facilities.</para></listitem>
-
-            <listitem><para>It requires users to be in the same system group, or
-                use a shared SSH key.</para></listitem>
-
-            <listitem><para>If used improperly, it can lead to file permission
-                problems.</para></listitem>
-
+              <listitem>
+                <para>Only one choice of authentication method is
+                  available.</para>
+              </listitem>
+              <listitem>
+                <para>No advanced logging facilities.</para>
+              </listitem>
+              <listitem>
+                <para>It requires users to be in the same system
+                  group, or use a shared SSH key.</para>
+              </listitem>
+              <listitem>
+                <para>If used improperly, it can lead to file
+                  permission problems.</para>
+              </listitem>
             </itemizedlist>
           </listitem>
         </varlistentry>
@@ -294,46 +288,49 @@
           <term>Why you might want to use it:</term>
           <listitem>
             <itemizedlist>
-
-              <listitem><para>It allows Subversion to use any of the
+              <listitem>
+                <para>It allows Subversion to use any of the
                   numerous authentication systems already integrated
-                  with Apache.</para></listitem>
-
-              <listitem><para>There is no need to create system accounts on
-                  the server.</para></listitem>
-
-              <listitem><para>Full Apache logging is available.</para></listitem>
-
-              <listitem><para>Network traffic can be encrypted via
-                  SSL.</para></listitem>
-
-              <listitem><para>HTTP(S) can usually go through corporate
-                  firewalls.</para></listitem>
-
-              <listitem><para>Built-in repository browsing is
-                  available via web browser.</para></listitem>
-
-              <listitem><para>The repository can be mounted as a network
-                  drive for transparent version control (see
-                  <xref
-                  linkend="svn.webdav.autoversioning"/>).</para></listitem>
-
+                  with Apache.</para>
+              </listitem>
+              <listitem>
+                <para>There is no need to create system accounts on
+                  the server.</para>
+              </listitem>
+              <listitem>
+                <para>Full Apache logging is available.</para>
+              </listitem>
+              <listitem>
+                <para>Network traffic can be encrypted via SSL.</para>
+              </listitem>
+              <listitem>
+                <para>HTTP(S) can usually go through corporate
+                firewalls.</para>
+              </listitem>
+              <listitem>
+                <para>Built-in repository browsing is available via
+                  web browser.</para>
+              </listitem>
+              <listitem>
+                <para>The repository can be mounted as a network
+                  drive for transparent version control (see <xref
+                  linkend="svn.webdav.autoversioning"/>).</para>
+              </listitem>
             </itemizedlist>
           </listitem>
         </varlistentry>
-
         <varlistentry>
           <term>Why you might want to avoid it:</term>
           <listitem>
             <itemizedlist>
-
-            <listitem><para>Noticeably slower than
-                <command>svnserve</command>, because HTTP is a
-                stateless protocol and requires more network
-                turnarounds.</para></listitem>
-
-            <listitem><para>Initial setup can be complex.</para></listitem>
-
+              <listitem>
+                <para>Noticeably slower than <command>svnserve</command>,
+                  because HTTP is a stateless protocol and requires
+                  more network turnarounds.</para>
+              </listitem>
+              <listitem>
+                <para>Initial setup can be complex.</para>
+              </listitem>
             </itemizedlist>
           </listitem>
         </varlistentry>
@@ -358,17 +355,16 @@
 
       <itemizedlist>
         <listitem>
-          <para>If you're trying to set up the simplest possible
-            server for your group, a
-            vanilla <command>svnserve</command> installation is the
-            easiest, fastest route.  Note, however, that your
-            repository data will be transmitted in the clear over the
-            network.  If your deployment is entirely within your
-            company's LAN or VPN, this isn't an issue.  If the
-            repository is exposed to the wide-open Internet, you
-            might want to make sure that either the repository's
-            contents aren't sensitive (e.g., it contains only
-            open source code), or that you go the extra mile in
+          <para>If you're trying to set up the simplest possible server
+            for your group, a vanilla <command>svnserve</command>
+            installation is the easiest, fastest route.  Note,
+            however, that your repository data will be transmitted in
+            the clear over the network.  If your deployment is
+            entirely within your company's LAN or VPN, this isn't an
+            issue.  If the repository is exposed to the wide-open
+            Internet, you might want to make sure that either the
+            repository's contents aren't sensitive (e.g., it contains
+            only open source code), or that you go the extra mile in
             configuring SASL to encrypt network communications.</para>
         </listitem>
 
@@ -380,16 +376,16 @@
         </listitem>
 
         <listitem>
-           <para>If you've decided to use either Apache or stock
-             <command>svnserve</command>, create a single
-             <command>svn</command> user on your system and run the
-             server process as that user.  Be sure to make the
-             repository directory wholly owned by the
-             <command>svn</command> user as well.  From a security
-             point of view, this keeps the repository data nicely
-             siloed and protected by operating system filesystem
-             permissions, changeable by only the Subversion server
-             process itself.</para> </listitem>
+          <para>If you've decided to use either Apache or stock
+            <command>svnserve</command>, create a single
+            <command>svn</command> user on your system and run the
+            server process as that user.  Be sure to make the
+            repository directory wholly owned by the
+            <command>svn</command> user as well.  From a security
+            point of view, this keeps the repository data nicely
+            siloed and protected by operating system filesystem
+            permissions, changeable by only the Subversion server
+            process itself.</para> </listitem>
 
         <listitem>
           <para>If you have an existing infrastructure that is heavily based
@@ -751,7 +747,7 @@ C:\&gt; net start svn
         &lt;key&gt;Label&lt;/key&gt;
         &lt;string&gt;org.apache.subversion.svnserve&lt;/string&gt;
         &lt;key&gt;ServiceDescription&lt;/key&gt;
-        &lt;string&gt;Host Subversion repositories using svn:// schema&lt;/string&gt;
+        &lt;string&gt;Host Subversion repositories using svn:// scheme&lt;/string&gt;
         &lt;key&gt;ProgramArguments&lt;/key&gt;
         &lt;array&gt;
             &lt;string&gt;/usr/bin/svnserve&lt;/string&gt;
