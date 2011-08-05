@@ -35,8 +35,8 @@
       a two-tiered hierarchy of option names and their values.
       Usually, this boils down to a special directory that contains
       <firstterm>configuration files</firstterm> (the first tier),
-      which are just text files in standard INI format (with
-      <quote>sections</quote> providing the second tier).  You can
+      which are just text files in standard INI format where
+      <quote>sections</quote> provide the second tier.  You can
       easily edit these files using your favorite text editor (such as
       Emacs or vi), and they contain directives read by the client to
       determine which of several optional behaviors the user
@@ -192,52 +192,64 @@ REGEDIT4
 [HKEY_LOCAL_MACHINE\Software\Tigris.org\Subversion\Servers\groups]
 
 [HKEY_LOCAL_MACHINE\Software\Tigris.org\Subversion\Servers\global]
+"#http-auth-types"="basic;digest;negotiate"
+"#http-compression"="yes"
+"#http-library"=""
+"#http-proxy-exceptions"=""
 "#http-proxy-host"=""
+"#http-proxy-password"=""
 "#http-proxy-port"=""
 "#http-proxy-username"=""
-"#http-proxy-password"=""
-"#http-proxy-exceptions"=""
 "#http-timeout"="0"
-"#http-compression"="yes"
 "#neon-debug-mask"=""
 "#ssl-authority-files"=""
-"#ssl-trust-default-ca"=""
 "#ssl-client-cert-file"=""
 "#ssl-client-cert-password"=""
+"#ssl-pkcs11-provider"=""
+"#ssl-trust-default-ca"=""
+"#store-auth-creds"="yes"
+"#store-passwords"="yes"
+"#store-plaintext-passwords"="ask"
+"#store-ssl-client-cert-pp"="yes"
+"#store-ssl-client-cert-pp-plaintext"="ask"
+"#username"=""
 
 [HKEY_CURRENT_USER\Software\Tigris.org\Subversion\Config\auth]
-"#store-passwords"="yes"
-"#store-auth-creds"="yes"
+"#password-stores"="windows-cryptoapi"
 
 [HKEY_CURRENT_USER\Software\Tigris.org\Subversion\Config\helpers]
-"#editor-cmd"="notepad"
 "#diff-cmd"=""
 "#diff3-cmd"=""
 "#diff3-has-program-arg"=""
+"#editor-cmd"="notepad"
+"#merge-tool-cmd"=""
 
 [HKEY_CURRENT_USER\Software\Tigris.org\Subversion\Config\tunnels]
 
 [HKEY_CURRENT_USER\Software\Tigris.org\Subversion\Config\miscellany]
-"#global-ignores"="*.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store"
+"#enable-auto-props"="no"
+"#global-ignores"="*.o *.lo *.la *.al .libs *.so *.so.[0-9]* *.a *.pyc *.pyo *.rej *~ #*# .#* .*.swp .DS_Store"
+"#interactive-conflicts"="yes"
 "#log-encoding"=""
-"#use-commit-times"=""
-"#no-unlock"=""
-"#enable-auto-props"=""
+"#mime-types-file"=""
+"#no-unlock"="no"
+"#preserved-conflict-file-exts"="doc ppt xls od?"
+"#use-commit-times"="no"
 
 [HKEY_CURRENT_USER\Software\Tigris.org\Subversion\Config\auto-props]
 </programlisting>
       </example>
 
-      <para>The previous example shows the contents of a
-        <filename>.reg</filename> file, which contains some of the most
-        commonly used configuration options and their default values.
-        Note the presence of both system-wide (for network
-        proxy-related options) and per-user settings (editor programs
-        and password storage, among others).  Also note that all the
-        options are effectively commented out.  You need only to
-        remove the hash (<literal>#</literal>) character from the
-        beginning of the option names and set the values as you
-        desire.</para>
+      <para><xref linkend="svn.advanced.confarea.windows-registry.ex-1"/>
+        shows the contents of a <filename>.reg</filename> file, which
+        contains some of the most commonly used configuration options
+        and their default values.  Note the presence of both
+        system-wide (for network proxy-related options) and per-user
+        settings (editor programs and password storage, among others).
+        Also note that all the options are effectively commented out.
+        You need only to remove the hash (<literal>#</literal>)
+        character from the beginning of the option names and set the
+        values as you desire.</para>
 
     </sect2>
 
@@ -300,59 +312,24 @@ collabnet = svn.collab.net
 
         <variablelist>
           <varlistentry>
-            <term><literal>http-proxy-exceptions</literal></term>
+            <term><literal>http-auth-types</literal></term>
             <listitem>
-              <para>This specifies a comma-separated list of patterns
-                for repository hostnames that should be accessed
-                directly, without using the proxy machine.  The
-                pattern syntax is the same as is used in the Unix
-                shell for filenames.  A repository hostname matching
-                any of these patterns will not be proxied.</para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term><literal>http-proxy-host</literal></term>
-            <listitem>
-              <para>This specifies the hostname of the proxy computer
-                through which your HTTP-based Subversion requests must
-                pass.  It defaults to an empty value, which means that
-                Subversion will not attempt to route HTTP requests
-                through a proxy computer, and will instead attempt to
-                contact the destination machine directly.</para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term><literal>http-proxy-port</literal></term>
-            <listitem>
-              <para>This specifies the port number on the proxy host
-                to use.  It defaults to an empty value.</para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term><literal>http-proxy-username</literal></term>
-            <listitem>
-              <para>This specifies the username to supply to the proxy
-                machine.  It defaults to an empty value.</para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term><literal>http-proxy-password</literal></term>
-            <listitem>
-              <para>This specifies the password to supply to the proxy
-                machine.  It defaults to an empty value.</para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term><literal>http-timeout</literal></term>
-            <listitem>
-              <para>This specifies the amount of time, in seconds, to
-                wait for a server response.  If you experience
-                problems with a slow network connection causing
-                Subversion operations to time out, you should increase
-                the value of this option.  The default value is
-                <literal>0</literal>, which instructs the underlying
-                HTTP library, Neon, to use its default timeout
-                setting.</para>
+              <para>This is a semicolon-delimited list of HTTP
+                authentication types which the client will deem
+                acceptable.  Valid types
+                are <literal>basic</literal>, <literal>digest</literal>,
+                and <literal>negotiate</literal>, with the default
+                behavior being acceptance of any these authentication
+                types.  A client which insists on not transmitting
+                authentication credentials in cleartext might, for
+                example, be configured such that the value of this
+                option is
+                <literal>digest;negotiate</literal>&mdash;omitting
+                <literal>basic</literal> from the list.  (Note that
+                this setting is only honored by Subversion's
+                Neon-based HTTP provider module.)</para>
+              <!-- ### TODO: Subversion 1.7 exposed this to Serf, too,
+                   and with an additional 'ntlm' auth type. -->
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -392,14 +369,59 @@ collabnet = svn.collab.net
             </listitem>
           </varlistentry>
           <varlistentry>
-            <term><literal>http-auth-types</literal></term>
+            <term><literal>http-proxy-exceptions</literal></term>
             <listitem>
-              <para>This option is a semicolon-delimited list of
-                authentication types supported by the Neon-based
-                WebDAV repository access modules.  Valid members of
-                this list are <literal>basic</literal>,
-                <literal>digest</literal>, and
-                <literal>negotiate</literal>.</para>
+              <para>This specifies a comma-separated list of patterns
+                for repository hostnames that should be accessed
+                directly, without using the proxy machine.  The
+                pattern syntax is the same as is used in the Unix
+                shell for filenames.  A repository hostname matching
+                any of these patterns will not be proxied.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><literal>http-proxy-host</literal></term>
+            <listitem>
+              <para>This specifies the hostname of the proxy computer
+                through which your HTTP-based Subversion requests must
+                pass.  It defaults to an empty value, which means that
+                Subversion will not attempt to route HTTP requests
+                through a proxy computer, and will instead attempt to
+                contact the destination machine directly.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><literal>http-proxy-password</literal></term>
+            <listitem>
+              <para>This specifies the password to supply to the proxy
+                machine.  It defaults to an empty value.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><literal>http-proxy-port</literal></term>
+            <listitem>
+              <para>This specifies the port number on the proxy host
+                to use.  It defaults to an empty value.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><literal>http-proxy-username</literal></term>
+            <listitem>
+              <para>This specifies the username to supply to the proxy
+                machine.  It defaults to an empty value.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><literal>http-timeout</literal></term>
+            <listitem>
+              <para>This specifies the amount of time, in seconds, to
+                wait for a server response.  If you experience
+                problems with a slow network connection causing
+                Subversion operations to time out, you should increase
+                the value of this option.  The default value is
+                <literal>0</literal>, which instructs the underlying
+                HTTP library, Neon, to use its default timeout
+                setting.</para>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -421,14 +443,6 @@ collabnet = svn.collab.net
                 (or CAs) that
                 are accepted by the Subversion client when accessing the
                 repository over HTTPS.</para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term><literal>ssl-trust-default-ca</literal></term>
-            <listitem>
-              <para>Set this variable to <literal>yes</literal> if you
-                want Subversion to automatically trust the set of
-                default CAs that ship with OpenSSL.</para>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -457,6 +471,35 @@ collabnet = svn.collab.net
             </listitem>
           </varlistentry>
           <varlistentry>
+            <term><literal>ssl-pkcs11-provider</literal></term>
+            <listitem>
+              <para>The value of this option is the name of the
+                PKCS#11 provider from which an SSL client certificate
+                will be drawn (if the server asks for one).  This
+                setting is only honored by Subversion's Neon-based
+                HTTP provider module.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><literal>ssl-trust-default-ca</literal></term>
+            <listitem>
+              <para>Set this variable to <literal>yes</literal> if you
+                want Subversion to automatically trust the set of
+                default CAs that ship with OpenSSL.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><literal>store-auth-creds</literal></term>
+            <listitem>
+              <para>This setting is the same as
+                <literal>store-passwords</literal>, except that it
+                enables or disables on-disk caching of
+                <emphasis>all</emphasis> authentication information:
+                usernames, passwords, server certificates, and any
+                other types of cacheable credentials.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
             <term><literal>store-passwords</literal></term>
             <listitem>
               <para>This instructs Subversion to cache, or not to
@@ -469,22 +512,11 @@ collabnet = svn.collab.net
                 the <option>--no-auth-cache</option> command-line
                 parameter (for those subcommands that support it).
                 For more information regarding that, see
-                <xref linkend="svn.serverconfig.netmodel.credcache"/>.    Note that regardless of how this option is
-                configured, Subversion will not store passwords in
-                plaintext unless
-                the <literal>store-plaintext-passwords</literal>
-                option is also set to <literal>yes</literal>.  </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term><literal>store-auth-creds</literal></term>
-            <listitem>
-              <para>This setting is the same as
-                <literal>store-passwords</literal>, except that it
-                enables or disables on-disk caching of
-                <emphasis>all</emphasis> authentication information:
-                usernames, passwords, server certificates, and any
-                other types of cacheable credentials.</para>
+                <xref linkend="svn.serverconfig.netmodel.credcache"/>.
+                Note that regardless of how this option is configured,
+                Subversion will not store passwords in plaintext
+                unless the <literal>store-plaintext-passwords</literal>
+                option is also set to <literal>yes</literal>.</para>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -503,6 +535,34 @@ collabnet = svn.collab.net
                 <emphasis>new</emphasis> password is about to be added to
                 the <filename>~/.subversion/auth/</filename> caching area.
               </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><literal>store-ssl-client-cert-pp</literal></term>
+            <listitem>
+              <para>This option controls whether Subversion will cache
+                SSL client certificate passphrases provided by the
+                user.  Its value defaults to <literal>yes</literal>.
+                Set this to <literal>no</literal> to disable this
+                passphrase caching.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><literal>store-ssl-client-cert-pp-plaintext</literal></term>
+            <listitem>
+              <para>This option controls whether Subversion, when
+                attempting to cache an SSL client certificate
+                passphrase, will be allowed to do so using its on-disk
+                plaintext storage mechanism.  The default value of
+                this option is <literal>ask</literal>, which causes
+                the Subversion client to ask you each time a
+                <emphasis>new</emphasis> client certificate passphrase
+                is about to be added to
+                the <filename>~/.subversion/auth/</filename> caching
+                area.  Set this option's value
+                to <literal>yes</literal> or <literal>no</literal> to
+                indicate your preference and avoid related
+                prompts.</para>
             </listitem>
           </varlistentry>
         </variablelist>
@@ -571,17 +631,6 @@ collabnet = svn.collab.net
 
         <variablelist>
           <varlistentry>
-            <term><literal>editor-cmd</literal></term>
-            <listitem>
-              <para>This specifies the program Subversion will use to
-                query the user for certain types of textual metadata
-                or when interactively resolving conflicts.  See
-                <xref linkend="svn.advanced.externaleditors"/> for
-                more details on using external text editors with
-                Subversion.</para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
             <term><literal>diff-cmd</literal></term>
             <listitem>
               <para>This specifies the absolute path of a differencing
@@ -620,6 +669,17 @@ collabnet = svn.collab.net
             </listitem>
           </varlistentry>
           <varlistentry>
+            <term><literal>editor-cmd</literal></term>
+            <listitem>
+              <para>This specifies the program Subversion will use to
+                query the user for certain types of textual metadata
+                or when interactively resolving conflicts.  See
+                <xref linkend="svn.advanced.externaleditors"/> for
+                more details on using external text editors with
+                Subversion.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
             <term><literal>merge-tool-cmd</literal></term>
             <listitem>
               <para>This specifies the program that Subversion will
@@ -645,6 +705,17 @@ collabnet = svn.collab.net
 
         <variablelist>
           <varlistentry>
+            <term><literal>enable-auto-props</literal></term>
+            <listitem>
+              <para>This instructs Subversion to automatically set
+                properties on newly added or imported files.  The
+                default value is <literal>no</literal>, so set this to
+                <literal>yes</literal> to enable this feature.
+                The <literal>[auto-props]</literal> section of this file
+                specifies which properties are to be set on which files.</para>
+            </listitem>            
+          </varlistentry>
+          <varlistentry>
             <term><literal>global-ignores</literal></term>
             <listitem>
               <para>When running the <command>svn status</command>
@@ -660,8 +731,8 @@ collabnet = svn.collab.net
                 files and directories that Subversion should not
                 display unless they are versioned.  The default value
                 is <literal>*.o *.lo *.la *.al .libs *.so *.so.[0-9]*
-                *.a *.pyc *.pyo *.rej *~ #*# .#* .*.swp .DS_Store
-                </literal>.</para>
+                *.a *.pyc *.pyo *.rej *~ #*# .#* .*.swp
+                .DS_Store</literal>.</para>
 
               <para>As well as <command>svn status</command>, the
                 <command>svn add</command> and <command>svn import</command>
@@ -676,19 +747,20 @@ collabnet = svn.collab.net
                 <xref linkend="svn.advanced.props.special.ignore" />.</para>
             </listitem>
           </varlistentry>
-          
           <varlistentry>
-            <term><literal>enable-auto-props</literal></term>
+            <term><literal>interactive-conflicts</literal></term>
             <listitem>
-              <para>This instructs Subversion to automatically set
-                properties on newly added or imported files.  The
-                default value is <literal>no</literal>, so set this to
-                <literal>yes</literal> to enable this feature.
-                The <literal>[auto-props]</literal> section of this file
-                specifies which properties are to be set on which files.</para>
-            </listitem>            
+              <para>This is a Boolean option that specifies whether
+                Subversion should try to resolve conflicts
+                interactively.  If its value is <literal>yes</literal>
+                (which is the default value), Subversion will prompt
+                the user for how to handle conflicts in the manner
+                demonstrated in <xref linkend="svn.tour.cycle.resolve"
+                />.  Otherwise, it will simply flag the conflict and
+                continue its operation, postponing resolution to a later
+                time.</para>
+            </listitem>         
           </varlistentry>
-
           <varlistentry>
             <term><literal>log-encoding</literal></term>
             <listitem>         
@@ -703,33 +775,6 @@ collabnet = svn.collab.net
                 in any other encoding.</para>
             </listitem>
           </varlistentry>
-
-          <varlistentry>
-            <term><literal>use-commit-times</literal></term>
-            <listitem>         
-              <para>Normally your working copy files have timestamps
-                that reflect the last time they were touched by any
-                process, whether your own editor or some
-                <command>svn</command> subcommand.  This is generally
-                convenient for people developing software, because
-                build systems often look at timestamps as a way of
-                deciding which files need to be recompiled.</para>
-
-              <para>In other situations, however, it's sometimes nice
-                for the working copy files to have timestamps that
-                reflect the last time they were changed in the
-                repository.  The <command>svn export</command> command
-                always places these <quote>last-commit
-                timestamps</quote> on trees that it produces.  By
-                setting this config variable to
-                <literal>yes</literal>, the <command>svn
-                checkout</command>, <command>svn update</command>,
-                <command>svn switch</command>, and <command>svn
-                revert</command> commands will also set last-commit
-                timestamps on files that they touch.</para>
-            </listitem>
-          </varlistentry>
-
           <varlistentry>
             <term><literal>mime-types-file</literal></term>
             <listitem>
@@ -744,7 +789,19 @@ collabnet = svn.collab.net
                 file content types.</para>
             </listitem>         
           </varlistentry>
-               
+          <varlistentry>
+            <term><literal>no-unlock</literal></term>
+            <listitem>
+              <para>This Boolean option corresponds to <command>svn
+                commit</command>'s <option>--no-unlock</option>
+                option, which tells Subversion not to release locks on
+                files you've just committed.  If this runtime option
+                is set to <literal>yes</literal>, Subversion will
+                never release locks automatically, leaving you to run
+                <command>svn unlock</command> explicitly.  It defaults
+                to <literal>no</literal>.</para>
+            </listitem>         
+          </varlistentry>
           <varlistentry>
             <term><literal>preserved-conflict-file-exts</literal></term>
             <listitem>
@@ -798,54 +855,48 @@ collabnet = svn.collab.net
                 application will be used to view them.</para>
             </listitem>         
           </varlistentry>
-
           <varlistentry>
-            <term><literal>interactive-conflicts</literal></term>
-            <listitem>
-              <para>This is a Boolean option that specifies whether
-                Subversion should try to resolve conflicts
-                interactively.  If its value is <literal>yes</literal>
-                (which is the default value), Subversion will prompt
-                the user for how to handle conflicts in the manner
-                demonstrated in <xref linkend="svn.tour.cycle.resolve"
-                />.  Otherwise, it will simply flag the conflict and
-                continue its operation, postponing resolution to a later
-                time.</para>
-            </listitem>         
+            <term><literal>use-commit-times</literal></term>
+            <listitem>         
+              <para>Normally your working copy files have timestamps
+                that reflect the last time they were touched by any
+                process, whether your own editor or some
+                <command>svn</command> subcommand.  This is generally
+                convenient for people developing software, because
+                build systems often look at timestamps as a way of
+                deciding which files need to be recompiled.</para>
+
+              <para>In other situations, however, it's sometimes nice
+                for the working copy files to have timestamps that
+                reflect the last time they were changed in the
+                repository.  The <command>svn export</command> command
+                always places these <quote>last-commit
+                timestamps</quote> on trees that it produces.  By
+                setting this config variable to
+                <literal>yes</literal>, the <command>svn
+                checkout</command>, <command>svn update</command>,
+                <command>svn switch</command>, and <command>svn
+                revert</command> commands will also set last-commit
+                timestamps on files that they touch.</para>
+            </listitem>
           </varlistentry>
-
-          <varlistentry>
-            <term><literal>no-unlock</literal></term>
-            <listitem>
-              <para>This Boolean option corresponds to <command>svn
-                commit</command>'s <option>--no-unlock</option>
-                option, which tells Subversion not to release locks on
-                files you've just committed.  If this runtime option
-                is set to <literal>yes</literal>, Subversion will
-                never release locks automatically, leaving you to run
-                <command>svn unlock</command> explicitly.  It defaults
-                to <literal>no</literal>.</para>
-
-            </listitem>         
-          </varlistentry>
-
         </variablelist>
 
-        <para>The <literal>[auto-props]</literal> section controls
-          the Subversion client's ability to automatically set
-          properties on files when they are added or imported.
-          It contains any number of key-value pairs in the
-          format <literal>PATTERN = PROPNAME=VALUE[;PROPNAME=VALUE
-          ...]</literal>, where <literal>PATTERN</literal> is a file
-          pattern that matches one or more filenames and the rest of
-          the line is a semicolon-delimited set of property
-          assignments.  Multiple matches
-          on a file will result in multiple propsets for that
-          file; however, there is no guarantee that auto-props
-          will be applied in the order in which they are listed
-          in the config file, so you can't have one rule
-          <quote>override</quote> another.  You can find several
-          examples of auto-props usage in the
+        <para>The <literal>[auto-props]</literal> section controls the
+          Subversion client's ability to automatically set properties
+          on files when they are added or imported.  It contains any
+          number of key-value pairs in the
+          format <literal><replaceable>PATTERN</replaceable>
+          = <replaceable>PROPNAME</replaceable>=<replaceable>VALUE</replaceable>[;<replaceable>PROPNAME</replaceable>=<replaceable>VALUE</replaceable>
+          ...]</literal>, where <replaceable>PATTERN</replaceable> is
+          a file pattern that matches one or more filenames and the
+          rest of the line is a semicolon-delimited set of property
+          assignments.  Multiple matches on a file will result in
+          multiple propsets for that file; however, there is no
+          guarantee that auto-props will be applied in the order in
+          which they are listed in the config file, so you can't have
+          one rule <quote>override</quote> another.  You can find
+          several examples of auto-props usage in the
           <filename>config</filename> file.  Lastly, don't
           forget to set <literal>enable-auto-props</literal> to
           <literal>yes</literal> in the <literal>miscellany</literal>
