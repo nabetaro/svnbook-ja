@@ -2937,7 +2937,7 @@ CustomLog logs/svn_logfile "%t %u %{SVN-ACTION}e" env=SVN-ACTION
           multiple repositories into a single log file.</para>
 
         <para>For an exhaustive list of all actions logged, see <xref
-          linkend="svn.ref.mod_dav_svn.conf.logging"/>.</para>
+          linkend="svn.serverconfig.operational-logging"/>.</para>
 
       </sect3>
 
@@ -3665,6 +3665,183 @@ calc = @calc-developers, @calc-owners
         unreadable directory, rather than asking for authentication
         partway through.</para>
     </sidebar>
+
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <sect1 id="svn.serverconfig.operational-logging">
+    <title>High-level Logging</title>
+
+    <para>Both the Apache <command>httpd</command>
+      and <command>svnserve</command> Subversion servers provide
+      support for high-level logging of Subversion operations.
+      Configuring each of the server options to provide this level of
+      logging is done differently, of course, but the output from each
+      is designed to conform to a uniform syntax.</para>
+
+    <para>To enable high-level logging in <command>svnserve</command>,
+      you need only use the <option>--log-file</option> command-line
+      option when starting the server, passing as the value to the
+      option the file to which <command>svnserve</command> should
+      write its log output.</para>
+
+    <informalexample>
+      <screen>
+$ svnserve -d -r /path/to/repositories --log-file /var/log/svn.log
+</screen>
+    </informalexample>
+
+    <para>Enabling the same in Apache is a bit more involved, but is
+      essentially an extension of Apache's stock log output
+      configuration mechanisms&mdash;see
+      <xref linkend="svn.serverconfig.httpd.extra.logging"/> for
+      details.</para>
+        
+    <para>The following is a list of Subversion action log messages
+      produced by its high-level logging mechanism, followed by one or
+      more examples of the log message as it appears in the log
+      output.</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>Checkout or export</term>
+        <listitem>
+          <programlisting>
+checkout-or-export /path r62 depth=infinity
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Commit</term>
+        <listitem>
+          <programlisting>
+commit harry r100
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Diffs</term>
+        <listitem>
+          <programlisting>
+diff /path r15:20 depth=infinity ignore-ancestry
+diff /path1@15 /path2@20 depth=infinity ignore-ancestry
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Fetch a directory</term>
+        <listitem>
+          <programlisting>
+get-dir /trunk r17 text
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Fetch a file</term>
+        <listitem>
+          <programlisting>
+get-file /path r20 props
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Fetch a file revision</term>
+        <listitem>
+          <programlisting>
+get-file-revs /path r12:15 include-merged-revisions
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Fetch merge information</term>
+        <listitem>
+          <programlisting>
+get-mergeinfo (/path1 /path2)
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Lock</term>
+        <listitem>
+          <programlisting>
+lock /path steal
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Log</term>
+        <listitem>
+          <programlisting>
+log (/path1,/path2,/path3) r20:90 discover-changed-paths revprops=()
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Replay revisions (svnsync)</term>
+        <listitem>
+          <programlisting>
+replay /path r19
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Revision property change</term>
+        <listitem>
+          <programlisting>
+change-rev-prop r50 propertyname
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Revision property list</term>
+        <listitem>
+          <programlisting>
+rev-proplist r34
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Status</term>
+        <listitem>
+          <programlisting>
+status /path r62 depth=infinity
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Switch</term>
+        <listitem>
+          <programlisting>
+switch /pathA /pathB@50 depth=infinity
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Unlock</term>
+        <listitem>
+          <programlisting>
+unlock /path break
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Update</term>
+        <listitem>
+          <programlisting>
+update /path r17 send-copyfrom-args
+</programlisting>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>As a convenience to administrators who wish to post-process
+      their Subversion high-level logging output (perhaps for
+      reporting or analysis purposes), Subversion source code
+      distributions provide a Python module (located at
+      <filename>tools/server-side/svn_server_log_parse.py</filename>)
+      which can be used to parse Subversion's log output.</para>
 
   </sect1>
 
