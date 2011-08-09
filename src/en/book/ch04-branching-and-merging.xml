@@ -531,11 +531,14 @@ Changed paths:
         make important changes in the
         project's <filename>/trunk</filename>.  It's in your best
         interest to replicate those changes to your own branch, just
-        to make sure they mesh well with your changes.  In fact, this
-        is a best practice: frequently keeping your branch in sync
-        with the main development line helps
-        prevent <quote>surprise</quote> conflicts when it comes time
-        for you to fold your changes back into the trunk.</para>
+        to make sure they mesh well with your changes.</para>
+
+      <tip>
+        <para>Frequently keeping your branch in sync with the main
+          development line helps prevent <quote>surprise</quote>
+          conflicts when the time comes for you to fold your changes
+          back into the trunk.</para>
+      </tip>
 
       <para>Subversion is aware of the history of your branch and
         knows when it divided away from the trunk.  To replicate the
@@ -808,13 +811,13 @@ Committed revision 391.
         tree:  the resulting difference is exactly your branch
         changes!)</para>
 
-      <para>Keep in mind that the <option>--reintegrate</option> option
-        is quite specialized in contrast to more general nature of most
-        Subversion subcommand options.  It supports the use case
-        described above, but has little applicability outside of that.
-        Because of this narrow focus, in addition to requiring an
-        up-to-date working copy with no mixed-revisions, it will not
-        function in combination with most of the other
+      <para>Keep in mind that the <option>--reintegrate</option>
+        option is quite specialized in contrast to the more general
+        nature of most Subversion subcommand options.  It supports the
+        use case described above, but has little applicability outside
+        of that.  Because of this narrow focus, in addition to
+        requiring an up-to-date working copy with no mixed-revisions,
+        it will not function in combination with most of the other
         <command>svn merge</command> options. You'll get an error if you
         use any non-global options but these: <option>--accept</option>,
         <option>--dry-run</option>, <option>--diff3-cmd</option>,
@@ -827,7 +830,7 @@ Committed revision 391.
       <informalexample>
         <screen>
 $ svn delete ^/calc/branches/my-calc-branch \
-      -m "Remove my-calc-branch."
+      -m "Remove my-calc-branch, reintegrated with trunk in r391."
 Committed revision 392.
 </screen>
       </informalexample>
@@ -844,36 +847,26 @@ Committed revision 392.
         at some point, should you desire (see
         <xref linkend="svn.branchmerge.basicmerging.resurrect"/>).</para>
 
-      <para>In Subversion 1.5, once
-        a <option>--reintegrate</option> merge is done from branch to trunk,
-        the branch is no longer usable for further work.  It's not
-        able to correctly absorb new trunk changes, nor can it be
-        properly reintegrated to trunk again.  For this reason, if you
-        want to keep working on your feature branch, we recommend
-        destroying it and then re-creating it from the trunk:</para>
+      <para>Once a <option>--reintegrate</option> merge is done from
+        branch to trunk, the branch is no longer usable for further
+        work.  It's not able to correctly absorb new trunk changes,
+        nor can it be properly reintegrated to trunk again.  For this
+        reason, if you want to keep working on your feature branch, we
+        recommend destroying it and then re-creating it from the
+        trunk:</para>
 
       <informalexample>
         <screen>
 $ svn delete http://svn.example.com/repos/calc/branches/my-calc-branch \
-      -m "Remove my-calc-branch."
+      -m "Remove my-calc-branch, reintegrated with trunk in r391."
 Committed revision 392.
 
 $ svn copy http://svn.example.com/repos/calc/trunk \
-           http://svn.example.com/repos/calc/branches/new-branch
-      -m "Create a new branch from trunk."
+           http://svn.example.com/repos/calc/branches/my-calc-branch
+      -m "Recreate my-calc-branch from trunk@HEAD."
 Committed revision 393.
-
-$ cd my-calc-branch
-
-$ svn switch ^/calc/branches/new-branch
-Updated to revision 393.
 </screen>
       </informalexample>
-
-      <para>The final command in the prior example&mdash;<command>svn
-        switch</command>&mdash;is a way of updating an existing working
-        copy to reflect a different repository directory.  We'll discuss
-        this more in <xref linkend="svn.branchmerge.switchwc"/>.</para>
 
       <para>There is another way of making the branch usable again
         after reintegration, without deleting the branch. See
@@ -887,40 +880,49 @@ Updated to revision 393.
 
       <para>The basic mechanism Subversion uses to track
         changesets&mdash;that is, which changes have been merged to
-        which branches&mdash;is by recording data in properties.
-        Specifically, merge data is tracked in
+        which branches&mdash;is by recording data in versioned
+        properties.  Specifically, merge data is tracked in
         the <literal>svn:mergeinfo</literal> property attached to
         files and directories.  (If you're not familiar with
-        Subversion properties, now is the time to skim
-        <xref linkend="svn.advanced.props"/>.)</para>
+        Subversion properties, see <xref linkend="svn.advanced.props"
+        />.)</para>
 
-      <para>You can examine the property, just like any
-        other:</para>
+      <para>You can examine the property, just like any other:</para>
 
       <informalexample>
         <screen>
 $ cd my-calc-branch
 $ svn propget svn:mergeinfo .
 /trunk:341-390
+$
 </screen>
       </informalexample>
 
-      <para>It is <emphasis>not</emphasis> recommended that you change
-        the value of this property yourself, unless you really know
-        what you're doing.  This property is automatically maintained
-        by Subversion whenever you run <command>svn merge</command>.
-        Its value indicates which changes (at a given path) have been
-        replicated into the directory in question.  In this case, the
-        path is <filename>/trunk</filename> and the directory which
-        has received the specific changes
-        is <filename>/branches/my-calc-branch</filename>.</para>
+      <warning>
+        <para>While is possible to
+          modify <literal>svn:mergeinfo</literal> just as you might
+          any other versioned property, we strongly discourage doing
+          so unless you <emphasis>really</emphasis> know what you're
+          doing.</para>
+      </warning>
 
-      <para>There's also a subcommand, <command>svn
+      <para>The <literal>svn:mergeinfo</literal> property is
+        automatically maintained by Subversion whenever you
+        run <command>svn merge</command>.  Its value indicates which
+        changes made to a given path have been replicated into the
+        directory in question.  In our previous example, the path
+        which is the source of the merged changes is
+        <filename>/trunk</filename> and the directory which has
+        received the changes is
+        <filename>/branches/my-calc-branch</filename>.</para>
+
+      <para>Subversion also provides a subcommand, <command>svn
         mergeinfo</command>, which can be helpful in seeing not only
         which changesets a directory has absorbed, but also which
         changesets it's still eligible to receive.  This gives a sort
-        of preview of the next set of changes that <command>svn
-        merge</command> will replicate to your branch.</para>
+        of preview of which changes a subsequent <command>svn
+        merge</command> operation would replicate to your
+        branch.</para>
 
       <informalexample>
         <screen>
@@ -943,6 +945,7 @@ r392
 r393
 r394
 r395
+$
 </screen>
       </informalexample>
 
@@ -1279,7 +1282,6 @@ Updated to revision 1390.
       syntax of the command and discusses a number of common
       scenarios that require it.</para>
 
-
     <!-- =============================================================== -->
     <sect2 id="svn.branchmerge.cherrypicking">
       <title>Cherrypicking</title>
@@ -1336,6 +1338,7 @@ Index: integer.c
       <informalexample>
         <screen>
 $ svn merge -c 355 ^/calc/trunk
+--- Merging r355 into '.':
 U    integer.c
 
 $ svn status
@@ -1406,7 +1409,7 @@ U    button.c
           changes.  If you postpone a conflict from the first wave of
           changes, the whole merge command will bail out with an error
           message.<footnote><para>At least, this is true in Subversion
-          1.5 at the time of this writing.  This behavior may improve
+          1.6 at the time of this writing.  This behavior may improve
           in future versions of Subversion.</para></footnote></para>
       </warning>
 
@@ -1494,19 +1497,20 @@ $ svn merge ^/calc/branches/some-branch
         arguments:</para>
 
       <orderedlist>
-
-        <listitem><para>An initial repository tree (often called the
-        <firstterm>left side</firstterm> of the
-        comparison)</para></listitem>
-
-        <listitem><para>A final repository tree (often called the
-        <firstterm>right side</firstterm> of the
-        comparison)</para></listitem>
-
-        <listitem><para>A working copy to accept the differences as
-        local changes (often called the <firstterm>target</firstterm>
-        of the merge)</para></listitem>
-
+        <listitem>
+          <para>An initial repository tree (often called the
+            <firstterm>left side</firstterm> of the comparison)</para>
+        </listitem>
+        <listitem>
+          <para>A final repository tree (often called the
+            <firstterm>right side</firstterm> of the
+            comparison)</para>
+        </listitem>
+        <listitem>
+          <para>A working copy to accept the differences as local
+            changes (often called the <firstterm>target</firstterm> of
+            the merge)</para>
+        </listitem>
       </orderedlist>
 
       <para>Once these three arguments are specified, the two trees
@@ -1565,38 +1569,39 @@ $ svn merge -r 100:200 http://svn.example.com/repos/trunk
         <varlistentry>
           <term>Merging unrelated sources</term>
           <listitem>
-          <para>If you
-            ask <command>svn merge</command> to compare two URLs that
-            aren't related to each other, a patch will still be
-            generated and applied to your working copy, but no merging
-            metadata will be created.  There's no common history
-            between the two sources, and future <quote>smart</quote>
-            merges depend on that common history.</para>
+            <para>If you ask <command>svn merge</command> to compare
+              two URLs that aren't related to each other, a patch will
+              still be generated and applied to your working copy, but
+              no merging metadata will be created.  There's no common
+              history between the two sources, and
+              future <quote>smart</quote> merges depend on that common
+              history.</para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
           <term>Merging from foreign repositories</term>
           <listitem>
-          <para>While it's possible to run a
-            command such as <userinput>svn merge -r 100:200
-            <replaceable>http://svn.foreignproject.com/repos/trunk</replaceable></userinput>, the
-            resultant patch will also lack any historical merge
-            metadata.  At time of this writing, Subversion has no way of
-            representing different repository URLs within
-            the <literal>svn:mergeinfo</literal> property.</para>
+            <para>While it's possible to run a command such
+              as <userinput>svn merge -r 100:200
+              <replaceable>http://svn.foreignproject.com/repos/trunk</replaceable></userinput>,
+              the resultant patch will also lack any historical merge
+              metadata.  At time of this writing, Subversion has no
+              way of representing different repository URLs within
+              the <literal>svn:mergeinfo</literal> property.</para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
           <term>Using <option>--ignore-ancestry</option></term>
           <listitem>
-          <para>If this option is passed to <command>svn
-            merge</command>, it causes the merging logic to mindlessly
-            generate differences the same way that <command>svn
-            diff</command> does, ignoring any historical
-            relationships.  We discuss this later in the chapter in
-            <xref linkend="svn.branchmerge.advanced.ancestry"/>.</para>
+            <para>If this option is passed to <command>svn
+              merge</command>, it causes the merging logic to
+              mindlessly generate differences the same way
+              that <command>svn diff</command> does, ignoring any
+              historical relationships.  We discuss this later in the
+              chapter in
+              <xref linkend="svn.branchmerge.advanced.ancestry"/>.</para>
           </listitem>
         </varlistentry>
 
@@ -1767,15 +1772,15 @@ Select: (p) postpone, (df) diff-full, (e) edit,
         the file has no local modifications.</para>
 
       <para>Another small difference between <command>svn
-          update</command> and <command>svn merge</command> is the
-        names of the full-text files created when a conflict
-        happens.  In <xref linkend="svn.tour.cycle.resolve"/>, we saw
-        that an update produces files named
+        update</command> and <command>svn merge</command> is the names
+        of the full-text files created when a conflict happens.  In
+        <xref linkend="svn.tour.cycle.resolve"/>, we saw that an
+        update produces files named
         <filename>filename.mine</filename>,
         <filename>filename.rOLDREV</filename>, and
         <filename>filename.rNEWREV</filename>.  When <command>svn
-          merge</command> produces a conflict, though, it creates
-        three files named <filename>filename.working</filename>,
+        merge</command> produces a conflict, though, it creates three
+        files named <filename>filename.working</filename>,
         <filename>filename.left</filename>, and
         <filename>filename.right</filename>.  In this case, the
         terms <quote>left</quote> and <quote>right</quote> are
@@ -1806,10 +1811,10 @@ Select: (p) postpone, (df) diff-full, (e) edit,
         out, that is, prevent them from ever being automatically
         merged.</para>
 
-      <para>In Subversion 1.5, the only way to block a changeset is to
+      <para>In Subversion 1.6, the only way to block a changeset is to
         make the system believe that the change has
-        <emphasis>already</emphasis> been merged.  To do this, one can
-        invoke a merge command with the <option>--record-only</option>
+        <emphasis>already</emphasis> been merged.  To do this, invoke
+        a merge command with the <option>--record-only</option>
         option:</para>
 
       <informalexample>
@@ -1833,21 +1838,21 @@ $ svn commit -m "Block r3328 from being merged to the branch."
 </screen>
       </informalexample>
 
+      <!-- ### FIXME: In 1.7, record-only merges produce some output -->
+
       <para>This technique works, but it's also a little bit
         dangerous.  The main problem is that we're not clearly
-        differentiating between the ideas of <quote>I already have this
-        change</quote> and <quote>I don't have this change.</quote>
-        We're effectively lying to the system, making it think that
-        the change was previously merged.  This puts the
-        responsibility on you&mdash;the user&mdash;to remember that
-        the change wasn't actually merged, it just wasn't wanted.
-        There's no way to ask Subversion for a list of <quote>blocked
-        changelists.</quote> If you want to track them (so that you
-        can unblock them someday) you'll need to record them in a
-        text file somewhere, or perhaps in an invented property.  In
-        Subversion 1.5, unfortunately, this is the only way to manage
-        blocked revisions; the plans are to make a better interface
-        for this in future versions.</para>
+        differentiating between the ideas of <quote>I already have
+        this change</quote> and <quote>I don't have this change, but
+        don't currently want it.</quote> We're effectively lying to
+        the system, making it think that the change was previously
+        merged.  This puts the responsibility on you&mdash;the
+        user&mdash;to remember that the change wasn't actually merged,
+        it just wasn't wanted.  There's no way to ask Subversion for a
+        list of <quote>blocked changelists.</quote> If you want to
+        track them (so that you can unblock them someday) you'll need
+        to record them in a text file somewhere, or perhaps in an
+        invented property.</para>
 
     </sect2>
 
@@ -1907,8 +1912,6 @@ $ cd my-calc-branch
 $ svn update
 Updated to revision 393.
 $ svn merge --record-only -c 391 ^/calc/trunk
---- Recording mergeinfo for merge of r391 into '.':
- U   .
 $ svn commit -m "Block revision 391 from being merged into my-calc-branch."
 Sending        .
 
@@ -1916,8 +1919,7 @@ Committed revision 394.
 </screen>
       </informalexample>
 
-      <para>(Versions of Subversion prior to 1.7 do not produce any output
-        during the record-only merge.)</para>
+      <!-- ### FIXME: In 1.7, record-only merges produce some output -->
 
       <para>Now your branch is ready to soak up changes from the trunk
         again. After another sync of your branch to the trunk, you can
@@ -2117,7 +2119,7 @@ G    383    sally   return retval;
         <screen>
 D    foo.c
 A    foo.c
-      </screen>
+</screen>
       </informalexample>
 
       <para>Most merges involve comparing trees that are ancestrally
@@ -2135,7 +2137,7 @@ A    foo.c
         only, ignoring any relations between files and directories.
         Add the <option>--ignore-ancestry</option> option to your
         <command>merge</command> command, and it will behave just
-          like <command>svn diff</command>.  (And conversely, the
+        like <command>svn diff</command>.  (And conversely, the
         <option>--notice-ancestry</option> option will cause
         <command>svn diff</command> to behave like the
         <command>svn merge</command> command.)</para>
@@ -2192,7 +2194,7 @@ $ svn merge --reintegrate ^/calc/branches/my-calc-branch
 D   integer.c
 A   whole.c
 U   .
-      </screen>
+</screen>
       </informalexample>
 
       <para>This doesn't look so bad at first glance, but it's also
@@ -2380,9 +2382,9 @@ $ svn info | grep URL
 URL: http://svn.example.com/repos/calc/trunk
 
 $ svn switch ^/calc/branches/my-calc-branch
-U   integer.c
-U   button.c
-U   Makefile
+U    integer.c
+U    button.c
+U    Makefile
 Updated to revision 341.
 
 $ svn info | grep URL
@@ -2409,16 +2411,16 @@ URL: http://svn.example.com/repos/calc/branches/my-calc-branch
       subdirectories.  Subversion users often follow a specific
       algorithm when using branches:</para>
 
-      <orderedlist>
-        <listitem>
-          <para>Copy the project's entire <quote>trunk</quote> to a
-            new branch directory.</para>
-        </listitem>
-        <listitem>
-          <para>Switch only <emphasis>part</emphasis> of the trunk
-            working copy to mirror the branch.</para>
-        </listitem>
-      </orderedlist>
+    <orderedlist>
+      <listitem>
+        <para>Copy the project's entire <quote>trunk</quote> to a new
+          branch directory.</para>
+      </listitem>
+      <listitem>
+        <para>Switch only <emphasis>part</emphasis> of the trunk
+          working copy to mirror the branch.</para>
+      </listitem>
+    </orderedlist>
 
     <para>In other words, if a user knows that the branch work needs
       to happen on only a specific subdirectory, she uses
@@ -2450,6 +2452,8 @@ URL: http://svn.example.com/repos/calc/branches/my-calc-branch
       changes and you don't want to abandon an existing working copy.
       See <xref linkend="svn.ref.svn.c.switch"/> for more information
       and an example.</para></footnote></para>
+
+    <!-- ### TODO: Recommend 'svn relocate' in 1.7 -->
 
     <sidebar>
       <title>Switches and Updates</title>
@@ -2489,16 +2493,15 @@ URL: http://svn.example.com/repos/calc/branches/my-calc-branch
       behaviors; any local modifications in your working copy are
       preserved when new data arrives from the repository.</para>
 
+    <tip>
+      <para>Have you ever found yourself making some complex edits (in
+        your <filename>/trunk</filename> working copy) and suddenly
+        realized, <quote>Hey, these changes ought to be in their own
+        branch?</quote> A great technique to do this can be summarized
+        in two steps:</para>
 
-      <tip>
-        <para>Have you ever found yourself making some complex edits
-          (in your <filename>/trunk</filename> working copy) and
-          suddenly realized, <quote>Hey, these changes ought to be in
-          their own branch?</quote>  A great technique to do this can
-          be summarized in two steps:</para>
-
-        <informalexample>
-            <screen>
+      <informalexample>
+        <screen>
 $ svn copy http://svn.example.com/repos/calc/trunk \
            http://svn.example.com/repos/calc/branches/newbranch \
       -m "Create branch 'newbranch'."
@@ -2506,14 +2509,14 @@ Committed revision 353.
 $ svn switch ^/calc/branches/newbranch
 At revision 353.
 </screen>
-          </informalexample>
+      </informalexample>
 
-        <para>The <command>svn switch</command> command, like
-          <command>svn update</command>, preserves your local edits.
-          At this point, your working copy is now a reflection of the
-          newly created branch, and your next <command>svn
-          commit</command> invocation will send your changes
-          there.</para> </tip>
+      <para>The <command>svn switch</command> command, like
+        <command>svn update</command>, preserves your local edits.  At
+        this point, your working copy is now a reflection of the newly
+        created branch, and your next <command>svn commit</command>
+        invocation will send your changes there.</para>
+    </tip>
 
   </sect1>
 
@@ -2528,7 +2531,6 @@ At revision 353.
       <indexterm>
         <primary>tags</primary>
       </indexterm>
-
       Another common version control concept is a tag.  A tag is
       just a <quote>snapshot</quote> of a project in time.  In
       Subversion, this idea already seems to be everywhere.  Each
@@ -2618,14 +2620,15 @@ Committed revision 902.
         of your work, you may decide that you need to create a working
         copy that is designed to have specific features and bug fixes.
         You can accomplish this by selectively backdating files or
-        directories to particular revisions (using <command>svn update</command>
-        with the <option>-r</option> option liberally), by switching files and directories to
-        particular branches (making use of <command>svn
-        switch</command>), or even just by making a bunch of local
-        changes.  When you're done, your working copy is a hodgepodge
-        of repository locations from different revisions.  But after
-        testing, you know it's the precise combination of data you
-        need to tag.</para>
+        directories to particular revisions (using <command>svn
+        update</command> with the <option>-r</option> option
+        liberally), by switching files and directories to particular
+        branches (making use of <command>svn switch</command>), or
+        even just by making a bunch of local changes.  When you're
+        done, your working copy is a hodgepodge of repository
+        locations from different revisions.  But after testing, you
+        know it's the precise combination of data you need to
+        tag.</para>
 
       <para>Time to make a snapshot.  Copying one URL to another won't
         work here.  In this case, you want to make a snapshot of your
@@ -2704,27 +2707,32 @@ Committed revision 940.
         often people create these top-level directories:</para>
 
       <informalexample>
-        <screen>
-/trunk
-/branches
-/tags
-</screen>
+        <literallayout>
+/
+   trunk/
+   branches/
+   tags/
+</literallayout>
       </informalexample>
 
       <para>If a repository contains multiple projects, admins
-        typically index their layout by project (see <xref
+        typically index their layout by project.  See <xref
         linkend="svn.reposadmin.projects.chooselayout"/> to read more about
-        <quote>project roots</quote>):</para>
+        <quote>project roots</quote>, but here's an example of such a
+        layout:</para>
 
       <informalexample>
-        <screen>
-/paint/trunk
-/paint/branches
-/paint/tags
-/calc/trunk
-/calc/branches
-/calc/tags
-</screen>
+        <literallayout>
+/
+   paint/
+      trunk/
+      branches/
+      tags/
+   calc/
+      trunk/
+      branches/
+      tags/
+</literallayout>
       </informalexample>
 
       <para>Of course, you're free to ignore these common layouts.
@@ -2884,51 +2892,40 @@ Committed revision 377.
 
         <listitem>
           <para><emphasis>Developers commit all new work to the
-              trunk.</emphasis>
-
-            Day-to-day changes are committed to
+            trunk.</emphasis>  Day-to-day changes are committed to
             <filename>/trunk</filename>: new features, bug fixes, and
             so on.</para>
         </listitem>
-
         <listitem>
           <para><emphasis>The trunk is copied to a
-              <quote>release</quote> branch.</emphasis>
-
-            When the team thinks the software is ready for release
-            (say, a 1.0 release), <filename>/trunk</filename>
-            might be copied to
+            <quote>release</quote> branch.</emphasis>  When the team
+            thinks the software is ready for release (say, a 1.0
+            release), <filename>/trunk</filename> might be copied to
             <filename>/branches/1.0</filename>.</para>
         </listitem>
-
         <listitem>
-          <para><emphasis>Teams continue to work in parallel.</emphasis>
-
-            One team begins rigorous testing of the release branch,
-            while another team continues new work (say, for version
-            2.0) on <filename>/trunk</filename>.  If bugs are
-            discovered in either location, fixes are ported back and
-            forth as necessary.  At some point, however, even that
-            process stops.  The branch is <quote>frozen</quote> for
-            final testing right before a release.</para>
+          <para><emphasis>Teams continue to work in
+            parallel.</emphasis>  One team begins rigorous testing of
+            the release branch, while another team continues new work
+            (say, for version 2.0) on <filename>/trunk</filename>.  If
+            bugs are discovered in either location, fixes are ported
+            back and forth as necessary.  At some point, however, even
+            that process stops.  The branch is <quote>frozen</quote>
+            for final testing right before a release.</para>
         </listitem>
-
         <listitem>
-          <para><emphasis>The branch is tagged and released.</emphasis>
-
-            When testing is complete,
+          <para><emphasis>The branch is tagged and
+            released.</emphasis>  When testing is complete,
             <filename>/branches/1.0</filename> is copied to
             <filename>/tags/1.0.0</filename> as a reference
             snapshot.  The tag is packaged and released to
             customers.</para>
         </listitem>
-
         <listitem>
-          <para><emphasis>The branch is maintained over time.</emphasis>
-
-            While work continues on <filename>/trunk</filename> for
-            version 2.0, bug fixes continue to be ported from
-            <filename>/trunk</filename> to
+          <para><emphasis>The branch is maintained over
+            time.</emphasis>  While work continues
+            on <filename>/trunk</filename> for version 2.0, bug fixes
+            continue to be ported from <filename>/trunk</filename> to
             <filename>/branches/1.0</filename>.  When enough
             bug fixes have accumulated, management may decide to do a
             1.0.1 release: <filename>/branches/1.0</filename> is
@@ -3033,7 +3030,7 @@ A    newdirectory/newfile
         weekly sync of trunk to branch is analogous to running
         <command>svn update</command> in a working copy, while the
         final merge step is analogous to running <command>svn
-          commit</command> from a working copy.  After all, what else
+        commit</command> from a working copy.  After all, what else
         <emphasis>is</emphasis> a working copy but a very shallow
         private branch?  It's a branch that's capable of
         storing only one change at a time.</para>
@@ -3278,7 +3275,9 @@ $ svn commit -m "merging libcomplex-1.1 into the main branch"
     <!-- TODO: Try to clarify some of the steps for svn_load_dirs.pl
          (Garrett sez they've been "glossed over".  Also, consider
          another section on bypassing svn_load_dirs.pl altogether and
-         running with just svn merge, now that it ignores ancestry. -->
+         running with just svn merge, now that it ignores ancestry.
+         Another idea would be presenting this using foreign repos
+         merges. -->
 
     <!-- =============================================================== -->
     <sect2 id="svn.advanced.vendorbr.svn_load_dirs">
@@ -3529,7 +3528,7 @@ $ svn_load_dirs.pl -t libcomplex-1.1                              \
           </row>
         </tbody>
       </tgroup>
-      </table>
+    </table>
 
   </sect1>
 
