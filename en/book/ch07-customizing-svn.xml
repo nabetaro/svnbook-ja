@@ -891,7 +891,39 @@ collabnet = svn.collab.net
           ...]</literal>, where <replaceable>PATTERN</replaceable> is
           a file pattern that matches one or more filenames and the
           rest of the line is a semicolon-delimited set of property
-          assignments.  Multiple matches on a file will result in
+          assignments.  (If you need to use a semicolon in your
+          property's name or value, you can escape it by doubling
+          it.)</para>
+
+        <informalexample>
+          <screen>
+$ cat ~/.subversion/config
+&hellip;
+[auto-props]
+*.c = svn:eol-style=native
+*.html = svn:eol-style=native;svn:mime-type=text/html;; charset=UTF8
+*.sh = svn:eol-style=native;svn:executable
+&hellip;
+$ cd projects/myproject
+$ svn status
+?       www/index.html
+$ svn add www/index.html
+A         www/index.html
+$ svn diff www/index.html
+&hellip;
+
+Property changes on: www/index.html
+___________________________________________________________________
+Added: svn:mime-type
+   + text/html; charset=UTF8
+Added: svn:eol-style
+   + native
+$
+</screen>
+
+        </informalexample>
+
+        <para>Multiple matches on a file will result in
           multiple propsets for that file; however, there is no
           guarantee that auto-props will be applied in the order in
           which they are listed in the config file, so you can't have
