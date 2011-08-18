@@ -2561,38 +2561,62 @@ Node-path: spreadsheet/Makefile
         distribute heavy Subversion load across multiple servers, use
         as a soft-upgrade mechanism, and so on.</para>
 
-      <para>Subversion provides a program for managing scenarios such
-        as these&mdash;<command>svnsync</command>.  This works by
-        essentially asking the Subversion server to
-        <quote>replay</quote> revisions, one at a time.  It then uses
-        that revision information to mimic a commit of the same to
-        another repository.  Neither repository needs to be locally
-        accessible to the machine on which <command>svnsync</command> is
+      <para>Subversion provides a pair of programs for managing
+        scenarios such as these.  The first of the programs
+        is <command>svnsync</command>, which works by essentially
+        asking the Subversion server to <quote>replay</quote>
+        revisions, one at a time.  It then uses that revision
+        information to mimic a commit of the same to another
+        repository.  Neither repository needs to be locally accessible
+        to the machine on which <command>svnsync</command> is
         running&mdash;its parameters are repository URLs, and it does
         all its work through Subversion's Repository Access (RA)
         interfaces.  All it requires is read access to the source
         repository and read/write access to the destination
         repository.</para>
 
+      <para>The second program, which was introduced in Subversion
+        1.7, is <command>svnrdump</command>.  This program is
+        essentially a network-aware version of the <command>svnadmin
+        dump</command> and <command>svnadmin load</command> commands,
+        and can in fact be used with those commands&mdash;and other
+        tools, such as <command>svndumpfilter</command>&mdash;to
+        transfer repository history between remote or local
+        repositories.</para>
+
       <note>
-        <para>When using <command>svnsync</command> against a remote
-          source repository, the Subversion server for that repository
-          must be running Subversion version 1.4 or later.</para>
+        <para>When using <command>svnsync</command>
+          or <command>svnrdump</command> against a remote source
+          repository, the Subversion server for that repository must
+          be running Subversion version 1.4 or later.</para>
       </note>
 
+      <para>We'll cover replication via <command>svnsync</command> and
+        <command>svnrdump</command> in the sections which
+        follow.</para>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.reposadmin.maint.replication.svnsync">
+        <title>Replication with svnsync</title>
+
       <para>Assuming you already have a source repository that you'd
-        like to mirror, the next thing you need is an empty target
-        repository that will actually serve as that mirror.  This
-        target repository can use either of the available filesystem
-        data-store backends (see <xref
-        linkend="svn.reposadmin.basics.backends" />), but it must not
-        yet have any version history in it.  The protocol that
-        <command>svnsync</command> uses to communicate revision information
-        is highly sensitive to mismatches between the versioned
-        histories contained in the source and target repositories.
-        For this reason, while <command>svnsync</command> cannot
-        <emphasis>demand</emphasis> that the target repository be
-        read-only,<footnote><para>In fact, it can't truly be
+        like to mirror, the next thing you need is a target repository
+        that will actually serve as that mirror.  This target
+        repository can use either of the available filesystem
+        data-store backends (see
+        <xref linkend="svn.reposadmin.basics.backends"
+        />)&mdash;Subversion's abstraction layers ensure that such
+        details don't matter.  But by default, it must
+        not yet have any version history in it.  (We'll discuss an
+        exception to this later in this section.)</para>
+
+      <para>The protocol that <command>svnsync</command> uses to
+        communicate revision information is highly sensitive to
+        mismatches between the versioned histories contained in the
+        source and target repositories.  For this reason,
+        while <command>svnsync</command>
+        cannot <emphasis>demand</emphasis> that the target repository
+        be read-only,<footnote><para>In fact, it can't truly be
         read-only, or <command>svnsync</command> itself would have a
         tough time copying revision history into it.</para></footnote>
         allowing the revision history in the target repository to
@@ -2793,29 +2817,31 @@ $
         only a few seconds for the average reader to parse this
         paragraph and the sample output that follows it, the actual
         time required to complete such a mirroring operation is, shall
-        we say, quite a bit longer.</para></footnote>
-        The <command>svnsync synchronize</command> subcommand will
-        peek into the special revision properties previously stored on
-        the target repository, and determine both what repository it
-        is mirroring as well as that the most recently mirrored
-        revision was revision 0.  Then it will query the source
-        repository and determine what the latest revision in that
-        repository is.  Finally, it asks the source repository's
-        server to start replaying all the revisions between 0 and that
-        latest revision.  As <command>svnsync</command> gets the
-        resultant response from the source repository's server, it
-        begins forwarding those revisions to the target repository's
-        server as new commits.</para>
+        we say, quite a bit longer.</para></footnote> The
+        <command>svnsync synchronize</command> subcommand will peek
+        into the special revision properties previously stored on the
+        target repository and determine how much of the source
+        repository has been previously mirrored&mdash;in this case,
+        the most recently mirrored revision is r0.  Then it will query
+        the source repository and determine what the latest revision
+        in that repository is.  Finally, it asks the source
+        repository's server to start replaying all the revisions
+        between 0 and that latest revision.  As
+        <command>svnsync</command> gets the resultant response from
+        the source repository's server, it begins forwarding those
+        revisions to the target repository's server as new
+        commits.</para>
 
       <informalexample>
         <screen>
 $ svnsync help synchronize
-synchronize (sync): usage: svnsync synchronize DEST_URL
+synchronize (sync): usage: svnsync synchronize DEST_URL [SOURCE_URL]
 
 Transfer all pending revisions to the destination from the source
 with which it was initialized.
 &hellip;
-$ svnsync synchronize http://svn.example.com/svn-mirror
+$ svnsync synchronize http://svn.example.com/svn-mirror \
+                      http://svn.collab.net/repos/svn
 Transmitting file data ........................................
 Committed revision 1.
 Copied properties for revision 1.
@@ -2864,6 +2890,20 @@ $
         the source repository, this is exactly what you do
         to keep your mirror up to date.</para>
 
+      <warning>
+        <para>As part of its bookkeeping, <command>svnsync</command>
+          records in the mirror repository the URL with which the
+          mirror was initialized.  Because of this, invocations of
+          <command>svnsync</command> which follow the initialization
+          step do not <emphasis>require</emphasis> that you provide
+          the source URL on the command line again.  However, for
+          security purposes, we recommend that you continue to do so.
+          Depending on how it is deployed, it may not be safe for
+          <command>svnsync</command> to trust the source URL which it
+          retrieves from the mirror repository, and from which it
+          pulls versioned data.</para>
+      </warning>
+
       <sidebar>
         <title>svnsync Bookkeeping</title>
 
@@ -2881,7 +2921,7 @@ $
 
         <para>One of those pieces of state-tracking information is a
           flag that essentially just means <quote>there's a
-          synchronization in progress right now.</quote>  This is used
+          synchronization in progress right now.</quote> This is used
           to prevent multiple <command>svnsync</command> processes
           from colliding with each other while trying to mirror data
           to the same destination repository.  Now, generally you
@@ -2893,10 +2933,13 @@ $
           particular state flag.  This causes all future
           synchronization attempts to fail because it appears that a
           synchronization is still in progress when, in fact, none is.
-          Fortunately, recovering from this situation is as simple as
-          removing the <literal>svn:sync-lock</literal> property which
-          serves as this flag from revision 0 of the mirror
-          repository:</para>
+          Fortunately, recovering from this situation is easy to do.
+          In Subversion 1.7, you can use the newly introduced
+          <option>--steal-lock</option> option with
+          <command>svnsync</command>'s commands.  In previous
+          Subversion versions, you need only to remove the
+          <literal>svn:sync-lock</literal> property which serves as
+          this flag from revision 0 of the mirror repository:</para>
 
         <informalexample>
           <screen>
@@ -2906,14 +2949,14 @@ $
 </screen>
         </informalexample>
 
-        <para>That <command>svnsync</command> stores the source
-          repository URL in a bookkeeping property on the mirror
-          repository is the reason why you have to specify that
-          URL only once, during <command>svnsync init</command>.  Future
-          synchronization operations against that mirror simply
-          consult the special <literal>svn:sync-from-url</literal>
-          property stored on the mirror itself to know where
-          to synchronize from.  This value is used literally by the
+        <para>Also, <command>svnsync</command> stores the source
+          repository URL provided at mirror initialization time in a
+          bookkeeping property on the mirror repository.  Future
+          synchronization operations against that mirror which omit
+          the source URL at the command line will consult the
+          special <literal>svn:sync-from-url</literal> property stored
+          on the mirror itself to know where to synchronize from.
+          This value is used literally by the
           synchronization process, though.  So while from within
           CollabNet's network you can perhaps access our example
           source URL as <literal>http://svn/repos/svn</literal>
@@ -2922,14 +2965,17 @@ $
           voodoo), if you later need to update that mirror from
           another machine outside CollabNet's network, the
           synchronization might fail (because the hostname
-          <literal>svn</literal> is ambiguous).  For this reason, it's
-          best to use fully qualified source repository URLs when
-          initializing a mirror repository rather than those that
-          refer to only hostnames or IP addresses (which can change
-          over time).  But here again, if you need an existing mirror
+          <literal>svn</literal> is ambiguous).  To avoid this
+          problem, it's best to use fully qualified source repository
+          URLs when initializing a mirror repository rather than those
+          that refer to only hostnames or IP addresses (which can
+          change over time).  But here again, if you need an existing mirror
           to start referring to a different URL for the same source
           repository, you can change the bookkeeping property which
           houses that information:</para>
+
+        <!-- ### TODO: I think 'svnsync init -/-allow-non-empty'
+             ### can be used for this, too.  -->
 
         <informalexample>
           <screen>
@@ -2973,6 +3019,7 @@ Last Merged Revision: 23408
 $
 </screen>
         </informalexample>
+
       </sidebar>
 
       <para>There is, however, one bit of inelegance in the process.
@@ -3003,11 +3050,12 @@ $
 </screen>
       </informalexample>
 
-      <para>That's repository replication in a nutshell.  You'll
-        likely want some automation around such a process.  For
-        example, while our example was a pull-and-push setup, you
-        might wish to have your primary repository push changes to one
-        or more blessed mirrors as part of its post-commit and
+      <para>That's repository replication
+        via <command>svnsync</command> in a nutshell.  You'll likely
+        want some automation around such a process.  For example,
+        while our example was a pull-and-push setup, you might wish to
+        have your primary repository push changes to one or more
+        blessed mirrors as part of its post-commit and
         post-revprop-change hook implementations.  This would enable
         the mirror to be up to date in as near to real time as is
         likely possible.</para>
@@ -3041,43 +3089,103 @@ $
         processes will stop mirroring data at the point that the
         source URL you specified is no longer valid.</para>
 
-      <para>As far as user interaction with repositories and mirrors
-        goes, it <emphasis>is</emphasis> possible to have a single
-        working copy that interacts with both, but you'll have to jump
-        through some hoops to make it happen.  First, you need to
-        ensure that both the primary and mirror repositories have the
-        same repository UUID (which is not the case by default).  See
-        <xref linkend="svn.reposadmin.maint.uuids" /> later in this
-        chapter for more about this.</para>
-        
-      <para>Once the two repositories have the same UUID, you can use
-        <command>svn switch</command> with
-        the <option>--relocate</option> option to point your working
-        copy to whichever of the repositories you wish to operate
-        against, a process that is described in
-        <xref linkend="svn.ref.svn.c.switch" />.  There is a possible
-        danger here, though, in that if the primary and mirror
-        repositories aren't in close synchronization, a working copy
-        up to date with, and pointing to, the primary repository will,
-        if relocated to point to an out-of-date mirror, become
-        confused about the apparent sudden loss of revisions it fully
-        expects to be present, and it will throw errors to that
-        effect.  If this occurs, you can relocate your working copy
-        back to the primary repository and then either wait until the
-        mirror repository is up to date, or backdate your working copy
-        to a revision you know is present in the sync repository, and
-        then retry the relocation.</para>
+        <para>We mentioned previously the cost of setting up an
+          initial mirror of an existing repository.  For many folks,
+          the sheer cost of transmitting thousands&mdash;or
+          millions&mdash;of revisions of history to a new mirror
+          repository via <command>svnsync</command> is a show-stopper.
+          Fortunately, Subversion 1.7 provides a workaround by way of
+          a new <option>--allow-non-empty</option> option to
+          <command>svnsync initialize</command>.  This option allows
+          you to initialize one repository as a mirror of another
+          while bypassing the verification that the to-be-initialized
+          mirror has no version history present in it.  Per our
+          previous warnings about the sensitivity of this whole
+          replication process, you should rightly discern that this is
+          an option to be used only with great caution.  But it's
+          wonderfully handy when you have administrative access to the
+          source repository, where you can simply make a physical copy
+          of the repository and then initialize that copy as a new
+          mirror:</para>
 
-      <para>Finally, be aware that the revision-based replication
-        provided by <command>svnsync</command> is only
-        that&mdash;replication of revisions.  Only information carried
-        by the Subversion repository dump file format is available for
-        replication.  As such, <command>svnsync</command> has the same
-        sorts of limitations that the repository dump stream has, and
-        does not include such things as the hook implementations,
-        repository or server configuration data, uncommitted
-        transactions, or information about user locks on repository
-        paths.</para>
+        <informalexample>
+          <screen>
+$ svnadmin hotcopy /path/to/repos /path/to/mirror-repos
+$ ### create /path/to/mirror-repos/hooks/pre-revprop-change
+$ svnsync initialize file:///path/to/mirror-repos \
+                     file:///path/to/repos
+svnsync: E000022: Destination repository already contains revision history; co
+nsider using --allow-non-empty if the repository's revisions are known to mirr
+or their respective revisions in the source repository
+$ svnsync initialize --allow-non-empty file:///path/to/mirror-repos \
+                                       file:///path/to/repos
+Copied properties for revision 32042.
+$
+</screen>
+        </informalexample>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.reposadmin.maint.replication.svnrdump">
+        <title>Replication with svnrdump</title>
+
+        <para>### TODO ###</para>
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.reposadmin.maint.replication.wrapup">
+        <title>Replication wrap-up</title>
+
+        <para>We've discussed a couple of ways to replicate revision
+          history from one repository to another.  So let's look now
+          at the user end of these operations.  How does replication
+          and the various situations which call for it affect
+          Subversion clients?</para>
+
+        <para>As far as user interaction with repositories and mirrors
+          goes, it <emphasis>is</emphasis> possible to have a single
+          working copy that interacts with both, but you'll have to
+          jump through some hoops to make it happen.  First, you need
+          to ensure that both the primary and mirror repositories have
+          the same repository UUID (which is not the case by default).
+          See <xref linkend="svn.reposadmin.maint.uuids" /> later in
+          this chapter for more about this.</para>
+        
+        <para>Once the two repositories have the same UUID, you can use
+          <command>svn switch</command> with
+          the <option>--relocate</option> option to point your working
+          copy to whichever of the repositories you wish to operate
+          against, a process that is described in
+          <xref linkend="svn.ref.svn.c.switch" />.  There is a
+          possible danger here, though, in that if the primary and
+          mirror repositories aren't in close synchronization, a
+          working copy up to date with, and pointing to, the primary
+          repository will, if relocated to point to an out-of-date
+          mirror, become confused about the apparent sudden loss of
+          revisions it fully expects to be present, and it will throw
+          errors to that effect.  If this occurs, you can relocate
+          your working copy back to the primary repository and then
+          either wait until the mirror repository is up to date, or
+          backdate your working copy to a revision you know is present
+          in the sync repository, and then retry the
+          relocation.</para>
+
+        <para>Finally, be aware that the revision-based replication
+          provided by <command>svnsync</command>
+          and <command>svnrdump</command> is only
+          that&mdash;replication of revisions.  Only the kinds of
+          information carried by the Subversion repository dump file
+          format are available for replication.  As
+          such, <command>svnsync</command>
+          and <command>svnrdump</command> are limited in ways similar
+          to that of the repository dump stream.  They do not include
+          in their replicated information such things as the hook
+          implementations, repository or server configuration data,
+          uncommitted transactions, or information about user locks on
+          repository paths.</para>
+
+      </sect3>
 
     </sect2>
 
