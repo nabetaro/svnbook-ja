@@ -3027,11 +3027,10 @@ CustomLog logs/svn_logfile "%t %u %{SVN-ACTION}e" env=SVN-ACTION
           <para>Now that you've configured
             your <literal>Location</literal> blocks on master and
             slaves, you need to configure the master to replicate to
-            the slaves.  This is done the usual way&mdash;
-            using <command>svnsync</command>.  If you're not familiar
-            with this tool, see
-            <xref linkend="svn.reposadmin.maint.replication"/> for
-            details.</para>
+            the slaves.  Our walkthough uses <command>svnsync</command>,
+            which is covered in more detail in
+            <xref linkend="svn.reposadmin.maint.replication.svnsync"
+            />.</para>
 
           <para>First, make sure that each slave repository has a
             <filename>pre-revprop-change</filename> hook script which
@@ -3044,16 +3043,20 @@ CustomLog logs/svn_logfile "%t %u %{SVN-ACTION}e" env=SVN-ACTION
 
           <informalexample>
             <screen>
-$ svnsync init http://slave1.example.com/svn-proxy-sync file:///var/svn/repos
+$ svnsync init http://slave1.example.com/svn-proxy-sync \
+               file:///var/svn/repos
 Copied properties for revision 0.
-$ svnsync init http://slave2.example.com/svn-proxy-sync file:///var/svn/repos
+$ svnsync init http://slave2.example.com/svn-proxy-sync \
+               file:///var/svn/repos
 Copied properties for revision 0.
-$ svnsync init http://slave3.example.com/svn-proxy-sync file:///var/svn/repos
+$ svnsync init http://slave3.example.com/svn-proxy-sync \
+               file:///var/svn/repos
 Copied properties for revision 0.
 
 # Perform the initial replication
 
-$ svnsync sync http://slave1.example.com/svn-proxy-sync
+$ svnsync sync http://slave1.example.com/svn-proxy-sync \
+               file:///var/svn/repos
 Transmitting file data ....
 Committed revision 1.
 Copied properties for revision 1.
@@ -3062,7 +3065,8 @@ Committed revision 2.
 Copied properties for revision 2.
 &hellip;
 
-$ svnsync sync http://slave2.example.com/svn-proxy-sync
+$ svnsync sync http://slave2.example.com/svn-proxy-sync \
+               file:///var/svn/repos
 Transmitting file data ....
 Committed revision 1.
 Copied properties for revision 1.
@@ -3071,7 +3075,8 @@ Committed revision 2.
 Copied properties for revision 2.
 &hellip;
 
-$ svnsync sync http://slave3.example.com/svn-proxy-sync
+$ svnsync sync http://slave3.example.com/svn-proxy-sync \
+               file:///var/svn/repos
 Transmitting file data ....
 Committed revision 1.
 Copied properties for revision 1.
@@ -3091,9 +3096,12 @@ Copied properties for revision 2.
 #!/bin/sh
 # Post-commit script to replicate newly committed revision to slaves
 
-svnsync sync http://slave1.example.com/svn-proxy-sync &gt; /dev/null 2&gt;&amp;1 &amp;
-svnsync sync http://slave2.example.com/svn-proxy-sync &gt; /dev/null 2&gt;&amp;1 &amp;
-svnsync sync http://slave3.example.com/svn-proxy-sync &gt; /dev/null 2&gt;&amp;1 &amp;
+svnsync sync http://slave1.example.com/svn-proxy-sync \
+             file:///var/svn/repos &gt; /dev/null 2&gt;&amp;1 &amp;
+svnsync sync http://slave2.example.com/svn-proxy-sync \
+             file:///var/svn/repos &gt; /dev/null 2&gt;&amp;1 &amp;
+svnsync sync http://slave3.example.com/svn-proxy-sync \
+             file:///var/svn/repos &gt; /dev/null 2&gt;&amp;1 &amp;
 </programlisting>
           </informalexample>
 
@@ -3113,9 +3121,15 @@ svnsync sync http://slave3.example.com/svn-proxy-sync &gt; /dev/null 2&gt;&amp;1
 # Post-revprop-change script to replicate revprop-changes to slaves
 
 REV=${2}
-svnsync copy-revprops http://slave1.example.com/svn-proxy-sync ${REV} &gt; /dev/null 2&gt;&amp;1 &amp;
-svnsync copy-revprops http://slave2.example.com/svn-proxy-sync ${REV} &gt; /dev/null 2&gt;&amp;1 &amp;
-svnsync copy-revprops http://slave3.example.com/svn-proxy-sync ${REV} &gt; /dev/null 2&gt;&amp;1 &amp;
+svnsync copy-revprops http://slave1.example.com/svn-proxy-sync \
+                      file:///var/svn/repos \
+                      -r ${REV} &gt; /dev/null 2&gt;&amp;1 &amp;
+svnsync copy-revprops http://slave2.example.com/svn-proxy-sync \
+                      file:///var/svn/repos \
+                      -r ${REV} &gt; /dev/null 2&gt;&amp;1 &amp;
+svnsync copy-revprops http://slave3.example.com/svn-proxy-sync \
+                      file:///var/svn/repos \
+                      -r ${REV} &gt; /dev/null 2&gt;&amp;1 &amp;
 </programlisting>
           </informalexample>
 
