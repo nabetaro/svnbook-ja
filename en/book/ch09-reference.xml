@@ -8014,6 +8014,16 @@ $ svnlook youngest /var/svn/repos/
         </varlistentry>
 
         <varlistentry>
+          <term><option>--revision</option> (<option>-r</option>)
+            <replaceable>ARG</replaceable></term>
+          <listitem>
+            <para>Used by <command>svnsync copy-revprops</command> to
+              specify a particular revision or revision range on which
+              to operate.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
           <term><option>--source-password</option>
             <replaceable>PASSWD</replaceable></term>
           <listitem>
@@ -8093,7 +8103,10 @@ $ svnlook youngest /var/svn/repos/
         </refnamediv>
         <refsect1>
           <title>Synopsis</title>
-          <para><literal>svnsync copy-revprops DEST_URL [REV[:REV2]</literal></para>
+          <para><literal>svnsync copy-revprops DEST_URL
+            [SOURCE_URL]</literal></para>
+          <para><literal>svnsync copy-revprops DEST_URL
+            REV[:REV2]</literal></para>
         </refsect1>
         <refsect1>
           <title>Description</title>
@@ -8111,6 +8124,26 @@ $ svnlook youngest /var/svn/repos/
             copy-revprops</command> is the answer to this problem.
             Use it to resynchronize the revision properties for a
             particular revision or range of revisions.</para>
+
+          <para>When <replaceable>SOURCE_URL</replaceable> is
+            provided, <command>svnsync</command> will use it as the
+            repository URL which the destination repository is
+            mirroring. Generally, <replaceable>SOURCE_URL</replaceable>
+            will be exactly the same source URL as was used with
+            the <command>svnsync initialize</command> command when the
+            mirror was first set up.  You may choose, however, to
+            omit <replaceable>SOURCE_URL</replaceable>, in which
+            case <command>svnsync</command> will consult the mirror
+            repository's records to determine the source URL which
+            should be used.</para>
+
+          <warning>
+            <para>We strongly recommend that you specify the source
+              URL on the command-line, especially when commit access
+              to the mirror server is granted to untrusted
+              users.</para>
+          </warning>
+
         </refsect1>
 
         <refsect1>
@@ -8122,6 +8155,7 @@ $ svnlook youngest /var/svn/repos/
 --no-auth-cache
 --non-interactive
 --quiet (-q)
+--revision (-r)
 --source-password ARG
 --source-username ARG
 --sync-password ARG
@@ -8134,11 +8168,13 @@ $ svnlook youngest /var/svn/repos/
         <refsect1>
           <title>Examples</title>
 
-          <para>Resynchronize revision properties for a single revision:</para>
+          <para>Resynchronize the revision properties associated with
+            a single revision (r6):</para>
 
           <informalexample>
             <screen>
-$ svnsync copy-revprops file:///var/svn/repos-mirror 6
+$ svnsync copy-revprops -r 6 file:///var/svn/repos-mirror \
+                             http://svn.example.com/repos
 Copied properties for revision 6.
 $
 </screen>
@@ -8263,7 +8299,8 @@ $
         </refnamediv>
         <refsect1>
           <title>Synopsis</title>
-          <para><literal>svnsync initialize MIRROR_URL SOURCE_URL</literal></para>
+          <para><literal>svnsync initialize MIRROR_URL
+            SOURCE_URL</literal></para>
         </refsect1>
         <refsect1>
           <title>Description</title>
@@ -8335,7 +8372,8 @@ $
 
           <informalexample>
             <screen>
-$ svnsync initialize file:///var/svn/repos-mirror http://svn.example.com/repos
+$ svnsync initialize file:///var/svn/repos-mirror \
+                     http://svn.example.com/repos
 svnsync: Repository has not been enabled to accept revision propchanges;
 ask the administrator to create a pre-revprop-change hook
 $
@@ -8348,7 +8386,8 @@ $
 
           <informalexample>
             <screen>
-$ svnsync initialize file:///var/svn/repos-mirror http://svn.example.com/repos
+$ svnsync initialize file:///var/svn/repos-mirror \
+                     http://svn.example.com/repos
 Copied properties for revision 0.
 $
 </screen>
@@ -8374,7 +8413,8 @@ $
         </refnamediv>
         <refsect1>
           <title>Synopsis</title>
-          <para><literal>svnsync synchronize DEST_URL</literal></para>
+          <para><literal>svnsync synchronize DEST_URL
+            [SOURCE_URL]</literal></para>
         </refsect1>
         <refsect1>
           <title>Description</title>
@@ -8388,6 +8428,25 @@ $
 
           <para><command>svnsync synchronize</command> can be
             gracefully canceled and restarted.</para>
+
+          <para>When <replaceable>SOURCE_URL</replaceable> is
+            provided, <command>svnsync</command> will use it as the
+            repository URL which the destination repository is
+            mirroring. Generally, <replaceable>SOURCE_URL</replaceable>
+            will be exactly the same source URL as was used with
+            the <command>svnsync initialize</command> command when the
+            mirror was first set up.  You may choose, however, to
+            omit <replaceable>SOURCE_URL</replaceable>, in which
+            case <command>svnsync</command> will consult the mirror
+            repository's records to determine the source URL which
+            should be used.</para>
+
+          <warning>
+            <para>We strongly recommend that you specify the source
+              URL on the command-line, especially when commit access
+              to the mirror server is granted to untrusted
+              users.</para>
+          </warning>
 
         </refsect1>
 
@@ -8417,7 +8476,8 @@ $
 
           <informalexample>
             <screen>
-$ svnsync synchronize file:///var/svn/repos-mirror
+$ svnsync synchronize file:///var/svn/repos-mirror \
+                      http://svn.example.com/repos
 Committed revision 1.
 Copied properties for revision 1.
 Committed revision 2.
