@@ -3176,6 +3176,37 @@ svnsync copy-revprops http://slave3.example.com/svn-proxy-sync \
             and force <command>svnsync</command> to run when things go
             wrong.</para>
 
+          <para>Another limitation of the write-through proxy
+            deployment model involves version mismatches&mdash;of the
+            version of Subversion which is installed, that
+            is&mdash;between the master and slave servers.  Each new
+            release of Subversion may (and often does) add new
+            features to the network protocol used between the clients
+            and servers.  Since feature negotiation happens against
+            the slave, it is the slave's protocol version and feature
+            set which is used.  But write operations are passed
+            through to the master server quite literally.  Therefore,
+            there is always a risk that the slave server will answer a
+            feature negotiation request from the client in way that is
+            true for the slave, but untrue for the master if the
+            master is running an older version of Subversion.  This
+            could result in the client trying to use a new feature
+            that the master doesn't understand, and failing.  There
+            are a couple of known problems of this sort in Subversion
+            1.7, which introduced a major revision of its HTTP
+            protocol.  If you are deploying a Subversion 1.7 slave
+            server in front of a pre-1.7 master, you'll want to
+            configure your slave server's
+            Subversion <literal>&lt;Location&gt;</literal> block with
+            the <literal>SVNAdvertiseV2Protocol Off</literal>
+            directive.</para>
+          
+          <tip>
+            <para>For the best results possible, try to run the same
+              version of Subversion on your master and slave
+              servers.</para>
+          </tip>
+
           <sidebar>
             <title>Can We Set Up Replication with svnserve?</title>
 
