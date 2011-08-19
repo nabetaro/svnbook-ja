@@ -8878,6 +8878,15 @@ $
         </varlistentry>
 
         <varlistentry>
+          <term><option>--pattern</option></term>
+          <listitem>
+            <para>Treat the path prefixes provided to the filtering
+              commands as file glob patterns rather than explicit path
+              substrings.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
           <term><option>--renumber-revs</option></term>
           <listitem>
             <para>Renumbers revisions that remain after
@@ -8975,6 +8984,7 @@ $
           <informalexample>
             <screen>
 --drop-empty-revs
+--pattern
 --preserve-revprops
 --quiet
 --renumber-revs
@@ -8987,13 +8997,13 @@ $
         <refsect1>
           <title>Examples</title>
 
-        <para>If we have a dump file from a repository with a number of
-          different picnic-related directories in it, but we want to keep
-          everything <emphasis>except</emphasis>
-          the <filename>sandwiches</filename> part of the repository,
-          we'll exclude only that path:</para>
+          <para>If we have a dump file from a repository with a number
+            of different picnic-related directories in it, but we want
+            to keep everything <emphasis>except</emphasis>
+            the <filename>sandwiches</filename> part of the
+            repository, we'll exclude only that path:</para>
 
-        <informalexample>
+          <informalexample>
             <screen>
 $ svndumpfilter exclude sandwiches &lt; dumpfile &gt; filtered-dumpfile
 Excluding prefixes:
@@ -9007,6 +9017,35 @@ Revision 4 committed as 4.
 
 Dropped 1 node(s):
    '/sandwiches'
+$
+</screen>
+          </informalexample>
+
+          <para>Beginning in Subversion 1.7,
+            <command>svndumpfilter</command> can optionally treat
+            the <replaceable>PATH_PREFIX</replaceable>s not merely as
+            explicit substrings, but as file patterns instead.  So,
+            for example, if you wished to filter out paths which ended
+            with <filename>.OLD</filename>, you would do the
+            following:</para>
+
+          <informalexample>
+            <screen>
+$ svndumpfilter exclude --pattern *.OLD &lt; dumpfile &gt; filtered-dumpfile
+Excluding prefix patterns:
+   '/*.OLD'
+
+Revision 0 committed as 0.
+Revision 1 committed as 1.
+Revision 2 committed as 2.
+Revision 3 committed as 3.
+Revision 4 committed as 4.
+
+Dropped 3 node(s):
+   '/condiments/salt.OLD'
+   '/condiments/pepper.OLD'
+   '/toppings/cheese.OLD'
+$
 </screen>
           </informalexample>
 
@@ -9045,6 +9084,7 @@ Dropped 1 node(s):
           <informalexample>
             <screen>
 --drop-empty-revs
+--pattern
 --preserve-revprops
 --quiet
 --renumber-revs
@@ -9074,10 +9114,56 @@ Revision 2 committed as 2.
 Revision 3 committed as 3.
 Revision 4 committed as 4.
 
-Dropped 3 node(s):
+Dropped 12 node(s):
+   '/condiments'
+   '/condiments/pepper'
+   '/condiments/pepper.OLD'
+   '/condiments/salt'
+   '/condiments/salt.OLD'
    '/drinks'
    '/snacks'
    '/supplies'
+   '/toppings'
+   '/toppings/cheese'
+   '/toppings/cheese.OLD'
+   '/toppings/lettuce'
+$
+</screen>
+          </informalexample>
+
+          <para>Beginning in Subversion 1.7,
+            <command>svndumpfilter</command> can optionally treat
+            the <replaceable>PATH_PREFIX</replaceable>s not merely as
+            explicit substrings, but as file patterns instead.  So,
+            for example, if you wished to include only paths which ended
+            with <filename>ks</filename>, you would do the
+            following:</para>
+
+          <informalexample>
+            <screen>
+$ svndumpfilter include --pattern *ks &lt; dumpfile &gt; filtered-dumpfile
+Including prefix patterns:
+   '/*ks'
+
+Revision 0 committed as 0.
+Revision 1 committed as 1.
+Revision 2 committed as 2.
+Revision 3 committed as 3.
+Revision 4 committed as 4.
+
+Dropped 11 node(s):
+   '/condiments'
+   '/condiments/pepper'
+   '/condiments/pepper.OLD'
+   '/condiments/salt'
+   '/condiments/salt.OLD'
+   '/sandwiches'
+   '/supplies'
+   '/toppings'
+   '/toppings/cheese'
+   '/toppings/cheese.OLD'
+   '/toppings/lettuce'
+$
 </screen>
           </informalexample>
 
