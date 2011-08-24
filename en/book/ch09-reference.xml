@@ -570,15 +570,15 @@ $ svn commit -m "They don't make Sunday."
         
         <varlistentry>
           <term><option>--relocate</option> <replaceable>FROM TO
-          [PATH...]</replaceable></term>
+            [PATH...]</replaceable></term>
           <listitem>
-            <para>Used with the <command>svn switch</command>
-              subcommand, changes the location of the repository that
-              your working copy references.  This is useful if the
-              location of your repository changes and you have an
-              existing working copy that you'd like to continue to
-              use.  See <xref linkend="svn.ref.svn.c.switch"/> for
-              more details and an example.</para>
+            <para>Deprecated.  When used with the <command>svn
+              switch</command> subcommand, changes the location of the
+              repository that your working copy references.  The
+              preferred approach as of Subversion 1.7, however, is to
+              use the <command>svn relocate</command> subcommand.  See
+              <xref linkend="svn.ref.svn.c.relocate" /> for more
+              details and an example.</para>
           </listitem>
         </varlistentry>
         
@@ -4172,6 +4172,248 @@ property 'owner-pic' set on 'moo.c'
       </refentry>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <refentry id="svn.ref.svn.c.relocate">
+
+        <indexterm>
+          <primary>svn</primary>
+          <secondary>subcommands</secondary>
+          <tertiary>relocate</tertiary>
+        </indexterm>
+
+        <refnamediv>
+          <refname>svn relocate</refname>
+          <refpurpose>Relocate the working copy to point to a
+            different repository root URL.</refpurpose>
+        </refnamediv>
+        <refsect1>
+          <title>Synopsis</title>
+          <para><literal>svn relocate FROM-PREFIX TO-PREFIX [PATH...]</literal></para>
+          <para><literal>svn relocate TO-URL [PATH]</literal></para>
+        </refsect1>
+
+        <refsect1>
+          <title>Description</title>
+
+          <para>Sometimes an administrator might change the location
+            (or apparent location, from the client's perspective) of a
+            repository.  The content of the repository doesn't change,
+            but the repository's root URL does.  The hostname may
+            change because the repository is now being served from a
+            different computer.  Or, perhaps the URL scheme changes
+            because the repository is now being served via SSL
+            (using <literal>https://</literal>) instead of over plain
+            HTTP.  There are many different reasons for these types of
+            repository relocations.  But ideally, a <quote>change of
+            address</quote> for a repository shouldn't suddently cause
+            all the working copies which point to that repository to
+            become forever unusable.  And fortunately, that's not the
+            case.  Rather than force users to check out a new working
+            copy when a repository is relocated, Subversion provides
+            the <command>svn relocate</command> command, which 
+            <quote>rewrites</quote> the working copy's administrative
+            metadata to refer to the new repository location.</para>
+
+          <para>The first <command>svn relocate</command> syntax
+            allows you to update one or more working copies by what
+            essentially amounts to a find-and-replace within the
+            repository root URLs recorded in those working copies.
+            Subversion will replace the initial substring
+            <replaceable>FROM-PREFIX</replaceable> with the
+            string <replaceable>TO-PREFIX</replaceable> in those URLs.
+            These initial URL substrings can be as long or as short as
+            is necessary to differentiate between them.  Obviously, to
+            use this syntax form, you need to know both the current
+            root URL of the repository to which the working copy is
+            pointing, and the new URL of that repository.
+            (You can use <command>svn info</command> to determine
+            the former.)</para>
+
+          <para>The second syntax does not require that you know the
+            current repository root URL with which the working copy is
+            associated at all&mdash;only the new repository URL
+            (<replaceable>TO-URL</replaceable>) to which it should be
+            pointing.  In this syntax form, only one working copy may
+            be relocated at a time.</para>
+
+          <warning>
+            <para>Users often get confused about the difference
+              between <command>svn switch</command> and <command>svn
+              relocate</command>.  Here's the rule of thumb:</para>
+            
+            <itemizedlist>
+              <listitem>
+                <para>If the working copy needs to reflect a new
+                  directory <emphasis>within</emphasis> the
+                  repository, use <command>svn
+                  switch</command>.</para>
+              </listitem>
+              <listitem>
+                <para>If the working copy still reflects the
+                  same repository directory, but the location of the
+                  repository itself has changed, use <command>svn
+                  relocate</command>.</para>
+              </listitem>
+            </itemizedlist>
+          </warning>
+
+        </refsect1>
+
+        <refsect1>
+          <title>Options</title>
+
+          <informalexample>
+            <screen>
+--ignore-externals
+</screen>
+          </informalexample>
+        </refsect1>
+
+        <refsect1>
+          <title>Examples</title>
+
+          <para>Let's start with a working copy that reflects a local
+            repository URL:</para>
+
+          <informalexample>
+            <screen>
+$ svn info | grep URL:
+URL: file:///var/svn/repos/trunk
+$
+</screen>
+          </informalexample>
+
+          <para>One day the administrator decides to rename the
+            on-disk repository directory.  We missed the memo, so we
+            see an error the next time we try to update our working
+            copy.</para>
+
+          <informalexample>
+            <screen>
+$ svn up
+Updating '.':
+svn: E180001: Unable to connect to a repository at URL 'file:///var/svn/repos/trunk'
+</screen>
+          </informalexample>
+
+          <para>After cornering the administrator over by the vending
+            machines, we learn about the repository being moved and
+            are told the new URL.  Rather than checkout a new working
+            copy, though, we simply ask Subversion to rewrite the
+            working copy metadata to point to the new repository
+            location.</para>
+
+          <informalexample>
+            <screen>
+$ svn relocate file:///var/svn/new-repos/trunk
+$
+</screen>
+          </informalexample>
+
+          <para>Subversion doesn't tell us much about what it did, but
+            hey&mdash;error-free operation is really all we need,
+            right?  Our working copy is functional for online
+            operations again.</para>
+
+          <informalexample>
+            <screen>
+$ svn up
+Updating '.':
+A    lib/new.c
+M    src/code.h
+M    src/headers.h
+&hellip;
+</screen>
+          </informalexample>
+
+          <note>
+            <para>Once again, this type of relocation
+              affects <emphasis>working copy metadata only</emphasis>.
+              It will not change your versioned or unversioned file
+              contents, perform any version control operations (such
+              as commits or updates), and so on.</para>
+          </note>
+
+          <para>A few months later, we're told that the company is
+            moving development to separate machines and that we'll be
+            using HTTP to access the repository.  So we relocate our
+            working copy again.</para>
+
+          <informalexample>
+            <screen>
+$ svn relocate http://svn.company.com/repos/trunk
+$
+</screen>
+          </informalexample>
+
+          <para>Now, each time we perform a relocation of this sort,
+            Subversion contacts the repository&mdash;at its new URL,
+            of course&mdash;to verify a few things.</para>
+
+          <para>First, it wants to compare the UUID of the repository
+            against what is stored in the working copy.  If these UUIDs
+            don't match, the working copy relocation is disallowed.
+            Maybe this isn't the same repository (just in a new
+            location) after all?</para>
+
+          <para>Secondly, Subversion wants to ensure that the updated
+            working copy metadata jives with respect to the directory
+            location <emphasis>inside</emphasis> the repository.
+            Subversion won't let you accidentally relocate a working
+            copy of a branch in your repository to the URL of a
+            different branch in the same repository.  (That's
+            what <command>svn switch</command>, described in
+            <xref linkend="svn.ref.svn.c.switch" />, is for.)</para>
+
+          <para>Also, Subversion will not allow you to relocate a
+            subtree of the working copy.  If you're going to relocate
+            the working copy at all, you must relocate the whole
+            thing.  This is to protect the integrity of the working
+            copy metadata and behavior as a whole.  (And really, you'd
+            be hard pressed to come up with a compelling reason to
+            relocate only a piece of your working copy anyway.)</para>
+
+          <para>Let's look at one final relocation opportunity.  After
+            using HTTP access for some time, the company moves to
+            SSL-only access.  Now, the only change to the repository
+            URL is that the scheme goes from
+            being <literal>http://</literal> to
+            being <literal>https://</literal>.  There are two
+            different ways that we could make our working copy reflect
+            ths change.  The first is to do exactly as we've done
+            before and relocate to the new repository URL.</para>
+
+          <informalexample>
+            <screen>
+$ svn relocate http://svn.company.com/repos/trunk
+$
+</screen>
+          </informalexample>
+
+          <para>But we have another option here, too.  We could simply
+            ask Subversion to swap out the changed prefixes of the
+            URL.</para>
+
+          <informalexample>
+            <screen>
+$ svn relocate http https
+$
+</screen>
+          </informalexample>
+
+          <para>Either approach leaves us a working copy whose
+            metadata has been updated to point to the right repository
+            location.</para>
+
+          <para>By default, <command>svn relocate</command> will
+            traverse any external working copies nested within your
+            working copy and attempt relocation of those working
+            copies, too.  Use the <option>--ignore-externals</option>
+            option to disable this behavior.</para>
+
+        </refsect1>
+      </refentry>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <refentry id="svn.ref.svn.c.resolve">
 
         <indexterm>
@@ -4979,10 +5221,7 @@ $ svn status --xml wc
         <refsect1>
           <title>Synopsis</title>
           <para><literal>svn switch URL[@PEGREV] [PATH]</literal></para>
-
           <para><literal>switch --relocate FROM TO [PATH...]</literal></para>
-
-
         </refsect1>
         <refsect1>
           <title>Description</title>
@@ -5019,13 +5258,10 @@ $ svn status --xml wc
             <quote>sticky</quote> working copy depth on the switch
             target.</para>
 
-          <para>The <option>--relocate</option> option causes
-            <command>svn switch</command> to do something different:
-            it updates your working copy to point to <emphasis>the
-            same</emphasis> repository directory, only at a different
-            URL (typically because an administrator has moved the
-            repository to another server, or to another URL on the
-            same server).</para>
+          <para>The <option>--relocate</option> option is deprecated
+            as of Subversion 1.7.  Use <command>svn relocate</command>
+            (described in <xref linkend="svn.ref.svn.c.relocate" />)
+            to perform working copy relocation instead.</para>
 
         </refsect1>
 
@@ -5086,70 +5322,6 @@ Updated to revision 31.
               branch if you don't want to switch your entire working
               copy.</para>
           </tip>
-
-          <para>Sometimes an administrator might change the location
-            (or apparent location) of your repository&mdash;in other
-            words, the content of the repository doesn't change, but
-            the repository's root URL does.  For example, the hostname
-            may change, the URL scheme may change, or any part of the
-            URL that leads to the repository itself may change.
-            Rather than check out a new working copy, you can have the
-            <command>svn switch</command> command
-            <quote>rewrite</quote> your working copy's administrative
-            metadata to refer to the new repository location.  If you
-            use the <option>--relocate</option> option to <command>svn
-            switch</command>, Subversion will contact the repository
-            to validate the relocation request (looking for the
-            repository at the new URL, of course), and then do this
-            metadata rewriting.  No file contents will be changed as
-            the result of this type of switch operation&mdash;this is
-            a metadata-only modification to the working copy.</para>
-
-          <informalexample>
-            <screen>
-$ svn checkout file:///var/svn/repos test
-A    test/a
-A    test/b
-&hellip;
-
-$ mv /var/svn/repos /var/svn/newlocation
-
-$ svn update test/
-Updating 'test':
-svn: Unable to open an ra_local session to URL
-svn: Unable to open repository 'file:///var/svn/repos'
-
-$ svn switch --relocate file:///var/svn/repos \
-                        file:///var/svn/tmp/newlocation test/
-
-$ svn update test/
-Updating 'test':
-At revision 3.
-</screen>
-          </informalexample>
-
-          <warning>
-            <para>Be careful when using the
-            <option>--relocate</option> option.  If you mistype the
-            argument, you might end up creating nonsensical URLs
-            within your working copy that render the whole workspace
-            unusable and tricky to fix.  It's also important to
-            understand exactly when one should or shouldn't use
-            <option>--relocate</option>.  Here's the rule of
-            thumb:</para>
-            
-            <itemizedlist>
-              <listitem><para>If the working copy needs to reflect a
-                  new directory <emphasis>within</emphasis> the
-                  repository, use just <command>svn
-                  switch</command>.</para></listitem>
-
-              <listitem><para>If the working copy still reflects the
-                  same repository directory, but the location of the
-                  repository itself has changed, use <command>svn
-                  switch</command> with the <option>--relocate</option> option.</para></listitem>
-            </itemizedlist>
-          </warning>
 
         </refsect1>
       </refentry>
