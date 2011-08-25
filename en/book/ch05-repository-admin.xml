@@ -11,11 +11,10 @@
 
   <para>In this chapter, we'll discuss how to create and configure a
     Subversion repository.  We'll also talk about repository
-    maintenance, providing examples of how and when to use the
-    <command>svnlook</command> and <command>svnadmin</command> tools
-    provided with Subversion.  We'll address some common questions and
-    mistakes and give some suggestions on how to arrange the data in
-    the repository.</para>
+    maintenance, providing examples of how and when to use various
+    related tools provided with Subversion.  We'll address some common
+    questions and mistakes and give some suggestions on how to arrange
+    the data in the repository.</para>
 
   <para>If you plan to access a Subversion repository only in the role
     of a user whose data is under version control (i.e., via a
@@ -1299,6 +1298,39 @@ Available subcommands:
       </sect3>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.reposadmin.maint.tk.svnrdump">
+        <title>svnrdump</title>
+
+        <para>The <command>svnrdump</command> program is, to put it
+          simply, essentially just network-aware flavors of
+          the <command>svnadmin dump</command> and <command>svnadmin
+          load</command> subcommands, rolled up into a separate
+          program.</para>
+
+        <informalexample>
+          <screen>
+$ svnrdump help
+general usage: svnrdump SUBCOMMAND URL [-r LOWER[:UPPER]]
+Type 'svnrdump help &lt;subcommand&gt;' for help on a specific subcommand.
+Type 'svnrdump --version' to see the program version and RA modules.
+
+Available subcommands:
+   dump
+   load
+   help (?, h)
+
+$
+</screen>
+        </informalexample>
+
+        <para>We discuss the use of <command>svnrdump</command> and
+          the aforementioned <command>svnadmin</command> commands
+          later in this chapter (see
+          <xref linkend="svn.reposadmin.maint.migrate" />).</para>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.reposadmin.maint.tk.svnsync">
         <title>svnsync</title>
 
@@ -1951,8 +1983,8 @@ The latest repos revision is 19.
         modification&mdash;between repositories.  And Subversion
         provides the tools necessary for creating and loading these
         dump streams: the <command>svnadmin dump</command> and
-        <command>svnadmin load</command> subcommands,
-        respectively.</para>
+        <command>svnadmin load</command> subcommands, respectively,
+        and the <command>svnrdump</command> program.</para>
 
       <warning>
         <para>While the Subversion repository dump format contains
@@ -1992,20 +2024,39 @@ The latest repos revision is 19.
           customizations (including hook scripts), and so on.</para>
       </note>
 
-      <para>Whatever your reason for migrating repository history,
-        using the <command>svnadmin dump</command> and
-        <command>svnadmin load</command> subcommands is
-        straightforward.  <command>svnadmin dump</command> will output
-        a range of repository revisions that are formatted using
-        Subversion's custom filesystem dump format.  The dump format
-        is printed to the standard output stream, while informative
-        messages are printed to the standard error stream.  This
-        allows you to redirect the output stream to a file while
-        watching the status output in your terminal window.  For
-        example:</para>
+      <para>The Subversion repository dump format also enables
+        conversion from a different storage mechanism or version
+        control system altogether.  Because the dump file format is,
+        for the most part, human-readable, it should be relatively
+        easy to describe generic sets of changes&mdash;each of which
+        should be treated as a new revision&mdash;using this file
+        format.  In fact, the <command>cvs2svn</command> utility (see
+        <xref linkend="svn.forcvs.convert" />) uses the dump format to
+        represent the contents of a CVS repository so that those
+        contents can be copied into a Subversion repository.</para>
 
-      <informalexample>
-        <screen>
+      <para>For now, we'll concern ourselves only with migration of
+        repository data between Subversion repositories, which we'll
+        describe in detail in the sections which follow.</para>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.reposadmin.maint.migrate.svnadmin">
+        <title>Repository data migration using svnadmin</title>
+
+        <para>Whatever your reason for migrating repository history,
+          using the <command>svnadmin dump</command> and
+          <command>svnadmin load</command> subcommands is
+          straightforward.  <command>svnadmin dump</command> will output
+          a range of repository revisions that are formatted using
+          Subversion's custom filesystem dump format.  The dump format
+          is printed to the standard output stream, while informative
+          messages are printed to the standard error stream.  This
+          allows you to redirect the output stream to a file while
+          watching the status output in your terminal window.  For
+          example:</para>
+
+        <informalexample>
+          <screen>
 $ svnlook youngest myrepos
 26
 $ svnadmin dump myrepos &gt; dumpfile
@@ -2016,26 +2067,26 @@ $ svnadmin dump myrepos &gt; dumpfile
 * Dumped revision 25.
 * Dumped revision 26.
 </screen>
-      </informalexample>
+        </informalexample>
 
-      <para>At the end of the process, you will have a single file
-        (<filename>dumpfile</filename> in the previous example) that
-        contains all the data stored in your repository in the
-        requested range of revisions.  Note that <command>svnadmin
-        dump</command> is reading revision trees from the repository
-        just like any other <quote>reader</quote> process would
-        (e.g., <command>svn checkout</command>), so it's safe
-        to run this command at any time.</para>
+        <para>At the end of the process, you will have a single file
+          (<filename>dumpfile</filename> in the previous example) that
+          contains all the data stored in your repository in the
+          requested range of revisions.  Note that <command>svnadmin
+          dump</command> is reading revision trees from the repository
+          just like any other <quote>reader</quote> process would
+          (e.g., <command>svn checkout</command>), so it's safe
+          to run this command at any time.</para>
 
-      <para>The other subcommand in the pair, <command>svnadmin
-        load</command>, parses the standard input stream as a
-        Subversion repository dump file and effectively replays those
-        dumped revisions into the target repository for that
-        operation.  It also gives informative feedback, this time
-        using the standard output stream:</para>
+        <para>The other subcommand in the pair, <command>svnadmin
+          load</command>, parses the standard input stream as a
+          Subversion repository dump file and effectively replays those
+          dumped revisions into the target repository for that
+          operation.  It also gives informative feedback, this time
+          using the standard output stream:</para>
 
-      <informalexample>
-        <screen>
+        <informalexample>
+          <screen>
 $ svnadmin load newrepos &lt; dumpfile
 &lt;&lt;&lt; Started new txn, based on original revision 1
      * adding path : A ... done.
@@ -2063,157 +2114,157 @@ $ svnadmin load newrepos &lt; dumpfile
 ------- Committed new rev 26 (loaded from original rev 26) &gt;&gt;&gt;
 
 </screen>
-      </informalexample>
+        </informalexample>
 
-      <para>The result of a load is new revisions added to a
-        repository&mdash;the same thing you get by making commits
-        against that repository from a regular Subversion client.
-        Just as in a commit, you can use hook programs to perform
-        actions before and after each of the commits made during a
-        load process.  By passing the
-        <option>--use-pre-commit-hook</option> and
-        <option>--use-post-commit-hook</option> options to
-        <command>svnadmin load</command>, you can instruct Subversion
-        to execute the pre-commit and post-commit hook programs,
-        respectively, for each loaded revision.  You might use these,
-        for example, to ensure that loaded revisions pass through the
-        same validation steps that regular commits pass through.  Of
-        course, you should use these options with care&mdash;if your
-        post-commit hook sends emails to a mailing list for each new
-        commit, you might not want to spew hundreds or thousands of
-        commit emails in rapid succession at that list!  You can read
-        more about the use of hook scripts in
-        <xref linkend="svn.reposadmin.create.hooks"/>.</para>
+        <para>The result of a load is new revisions added to a
+          repository&mdash;the same thing you get by making commits
+          against that repository from a regular Subversion client.
+          Just as in a commit, you can use hook programs to perform
+          actions before and after each of the commits made during a
+          load process.  By passing the
+          <option>--use-pre-commit-hook</option> and
+          <option>--use-post-commit-hook</option> options to
+          <command>svnadmin load</command>, you can instruct Subversion
+          to execute the pre-commit and post-commit hook programs,
+          respectively, for each loaded revision.  You might use these,
+          for example, to ensure that loaded revisions pass through the
+          same validation steps that regular commits pass through.  Of
+          course, you should use these options with care&mdash;if your
+          post-commit hook sends emails to a mailing list for each new
+          commit, you might not want to spew hundreds or thousands of
+          commit emails in rapid succession at that list!  You can read
+          more about the use of hook scripts in
+          <xref linkend="svn.reposadmin.create.hooks"/>.</para>
 
-      <para>Note that because <command>svnadmin</command> uses
-        standard input and output streams for the repository dump and
-        load processes, people who are feeling especially saucy can try
-        things such as this (perhaps even using different versions of
-        <command>svnadmin</command> on each side of the pipe):</para>
+        <para>Note that because <command>svnadmin</command> uses
+          standard input and output streams for the repository dump and
+          load processes, people who are feeling especially saucy can try
+          things such as this (perhaps even using different versions of
+          <command>svnadmin</command> on each side of the pipe):</para>
 
-      <informalexample>
-        <screen>
+        <informalexample>
+          <screen>
 $ svnadmin create newrepos
 $ svnadmin dump oldrepos | svnadmin load newrepos
 </screen>
-      </informalexample>
+        </informalexample>
 
-      <para>By default, the dump file will be quite large&mdash;much
-        larger than the repository itself.  That's because by default
-        every version of every file is expressed as a full text in the
-        dump file.  This is the fastest and simplest behavior, and
-        it's nice if you're piping the dump data directly into some other
-        process (such as a compression program, filtering program, or
-        loading process).  But if you're creating a dump file
-        for longer-term storage, you'll likely want to save disk space
-        by using the <option>--deltas</option> option.  With this
-        option, successive revisions of files will be output as
-        compressed, binary differences&mdash;just as file revisions
-        are stored in a repository.  This option is slower, but it
-        results in a dump file much closer in size to the original
-        repository.</para>
+        <para>By default, the dump file will be quite large&mdash;much
+          larger than the repository itself.  That's because by default
+          every version of every file is expressed as a full text in the
+          dump file.  This is the fastest and simplest behavior, and
+          it's nice if you're piping the dump data directly into some other
+          process (such as a compression program, filtering program, or
+          loading process).  But if you're creating a dump file
+          for longer-term storage, you'll likely want to save disk space
+          by using the <option>--deltas</option> option.  With this
+          option, successive revisions of files will be output as
+          compressed, binary differences&mdash;just as file revisions
+          are stored in a repository.  This option is slower, but it
+          results in a dump file much closer in size to the original
+          repository.</para>
 
-      <para>We mentioned previously that <command>svnadmin
-        dump</command> outputs a range of revisions.  Use the
-        <option>--revision</option> (<option>-r</option>) option to
-        specify a single revision, or a range of revisions, to dump.
-        If you omit this option, all the existing repository revisions
-        will be dumped.</para>
+        <para>We mentioned previously that <command>svnadmin
+          dump</command> outputs a range of revisions.  Use the
+          <option>--revision</option> (<option>-r</option>) option to
+          specify a single revision, or a range of revisions, to dump.
+          If you omit this option, all the existing repository revisions
+          will be dumped.</para>
 
-      <informalexample>
-        <screen>
+        <informalexample>
+          <screen>
 $ svnadmin dump myrepos -r 23 &gt; rev-23.dumpfile
 $ svnadmin dump myrepos -r 100:200 &gt; revs-100-200.dumpfile
 </screen>
-      </informalexample>
+        </informalexample>
 
-      <para>As Subversion dumps each new revision, it outputs only
-        enough information to allow a future loader to re-create that
-        revision based on the previous one.  In other words, for any
-        given revision in the dump file, only the items that were
-        changed in that revision will appear in the dump.  The only
-        exception to this rule is the first revision that is dumped
-        with the current <command>svnadmin dump</command>
-        command.</para>
+        <para>As Subversion dumps each new revision, it outputs only
+          enough information to allow a future loader to re-create that
+          revision based on the previous one.  In other words, for any
+          given revision in the dump file, only the items that were
+          changed in that revision will appear in the dump.  The only
+          exception to this rule is the first revision that is dumped
+          with the current <command>svnadmin dump</command>
+          command.</para>
 
-      <para>By default, Subversion will not express the first dumped
-        revision as merely differences to be applied to the previous
-        revision.  For one thing, there is no previous revision in the
-        dump file!  And second, Subversion cannot know the state of
-        the repository into which the dump data will be loaded (if it
-        ever is).  To ensure that the output of each
-        execution of <command>svnadmin dump</command> is
-        self-sufficient, the first dumped revision is, by default, a
-        full representation of every directory, file, and property in
-        that revision of the repository.</para>
+        <para>By default, Subversion will not express the first dumped
+          revision as merely differences to be applied to the previous
+          revision.  For one thing, there is no previous revision in the
+          dump file!  And second, Subversion cannot know the state of
+          the repository into which the dump data will be loaded (if it
+          ever is).  To ensure that the output of each
+          execution of <command>svnadmin dump</command> is
+          self-sufficient, the first dumped revision is, by default, a
+          full representation of every directory, file, and property in
+          that revision of the repository.</para>
 
-      <para>However, you can change this default behavior.  If you add
-        the <option>--incremental</option> option when you dump your
-        repository, <command>svnadmin</command> will compare the first
-        dumped revision against the previous revision in the
-        repository&mdash;the same way it treats every other revision that
-        gets dumped.  It will then output the first revision exactly
-        as it does the rest of the revisions in the dump
-        range&mdash;mentioning only the changes that occurred in that
-        revision.  The benefit of this is that you can create several
-        small dump files that can be loaded in succession, instead of
-        one large one, like so:</para>
+        <para>However, you can change this default behavior.  If you add
+          the <option>--incremental</option> option when you dump your
+          repository, <command>svnadmin</command> will compare the first
+          dumped revision against the previous revision in the
+          repository&mdash;the same way it treats every other revision that
+          gets dumped.  It will then output the first revision exactly
+          as it does the rest of the revisions in the dump
+          range&mdash;mentioning only the changes that occurred in that
+          revision.  The benefit of this is that you can create several
+          small dump files that can be loaded in succession, instead of
+          one large one, like so:</para>
 
-      <informalexample>
-        <screen>
+        <informalexample>
+          <screen>
 $ svnadmin dump myrepos -r 0:1000 &gt; dumpfile1
 $ svnadmin dump myrepos -r 1001:2000 --incremental &gt; dumpfile2
 $ svnadmin dump myrepos -r 2001:3000 --incremental &gt; dumpfile3
 </screen>
-      </informalexample>
+        </informalexample>
 
-      <para>These dump files could be loaded into a new repository
-        with the following command sequence:</para>
+        <para>These dump files could be loaded into a new repository
+          with the following command sequence:</para>
 
-      <informalexample>
-        <screen>
+        <informalexample>
+          <screen>
 $ svnadmin load newrepos &lt; dumpfile1
 $ svnadmin load newrepos &lt; dumpfile2
 $ svnadmin load newrepos &lt; dumpfile3
 </screen>
-      </informalexample>
+        </informalexample>
 
-      <para>Another neat trick you can perform with this
-        <option>--incremental</option> option involves appending to an
-        existing dump file a new range of dumped revisions.  For
-        example, you might have a <literal>post-commit</literal> hook
-        that simply appends the repository dump of the single revision
-        that triggered the hook.  Or you might have a script that runs
-        nightly to append dump file data for all the revisions that
-        were added to the repository since the last time the script
-        ran.  Used like this, <command>svnadmin dump</command> can be
-        one way to back up changes to your repository over time in case
-        of a system crash or some other catastrophic event.</para>
+        <para>Another neat trick you can perform with this
+          <option>--incremental</option> option involves appending to an
+          existing dump file a new range of dumped revisions.  For
+          example, you might have a <literal>post-commit</literal> hook
+          that simply appends the repository dump of the single revision
+          that triggered the hook.  Or you might have a script that runs
+          nightly to append dump file data for all the revisions that
+          were added to the repository since the last time the script
+          ran.  Used like this, <command>svnadmin dump</command> can be
+          one way to back up changes to your repository over time in case
+          of a system crash or some other catastrophic event.</para>
 
-      <para>The dump format can also be used to merge the contents of
-        several different repositories into a single repository.  By
-        using the <option>--parent-dir</option> option of
-        <command>svnadmin load</command>, you can specify a new
-        virtual root directory for the load process.  That means if
-        you have dump files for three repositories&mdash;say
-        <filename>calc-dumpfile</filename>,
-        <filename>cal-dumpfile</filename>, and
-        <filename>ss-dumpfile</filename>&mdash;you can first create a new
-        repository to hold them all:</para>
+        <para>The dump format can also be used to merge the contents of
+          several different repositories into a single repository.  By
+          using the <option>--parent-dir</option> option of
+          <command>svnadmin load</command>, you can specify a new
+          virtual root directory for the load process.  That means if
+          you have dump files for three repositories&mdash;say
+          <filename>calc-dumpfile</filename>,
+          <filename>cal-dumpfile</filename>, and
+          <filename>ss-dumpfile</filename>&mdash;you can first create a new
+          repository to hold them all:</para>
 
-      <informalexample>
-        <screen>
+        <informalexample>
+          <screen>
 $ svnadmin create /var/svn/projects
 $
 </screen>
-      </informalexample>
+        </informalexample>
 
-      <para>Then, make new directories in the repository that will
-        encapsulate the contents of each of the three previous
-        repositories:</para>
+        <para>Then, make new directories in the repository that will
+          encapsulate the contents of each of the three previous
+          repositories:</para>
 
-      <informalexample>
-        <screen>
+        <informalexample>
+          <screen>
 $ svn mkdir -m "Initial project roots" \
       file:///var/svn/projects/calc \
       file:///var/svn/projects/calendar \
@@ -2221,13 +2272,13 @@ $ svn mkdir -m "Initial project roots" \
 Committed revision 1.
 $ 
 </screen>
-      </informalexample>
+        </informalexample>
 
-      <para>Lastly, load the individual dump files into their
-        respective locations in the new repository:</para>
+        <para>Lastly, load the individual dump files into their
+          respective locations in the new repository:</para>
 
-      <informalexample>
-        <screen>
+        <informalexample>
+          <screen>
 $ svnadmin load /var/svn/projects --parent-dir calc &lt; calc-dumpfile
 &hellip;
 $ svnadmin load /var/svn/projects --parent-dir calendar &lt; cal-dumpfile
@@ -2236,20 +2287,79 @@ $ svnadmin load /var/svn/projects --parent-dir spreadsheet &lt; ss-dumpfile
 &hellip;
 $
 </screen>
-      </informalexample>
+        </informalexample>
 
-      <para>We'll mention one final way to use the Subversion
-        repository dump format&mdash;conversion from a different
-        storage mechanism or version control system altogether.
-        Because the dump file format is, for the most part,
-        human-readable, it should be relatively easy to describe
-        generic sets of changes&mdash;each of which should be treated
-        as a new revision&mdash;using this file format.  In fact, the
-        <command>cvs2svn</command> utility (see <xref
-        linkend="svn.forcvs.convert"/>) uses the dump format to
-        represent the contents of a CVS repository so that those
-        contents can be copied into a Subversion repository.</para>
+      </sect3>
 
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.reposadmin.maint.migrate.svnrdump">
+        <title>Repository data migration using svnrdump</title>
+
+        <para>In Subversion 1.7, <command>svnrdump</command> joined
+          the set of stock Subversion tools.  It offers fairly
+          specialized functionality, essentially as a network-aware
+          version of the <command>svnadmin dump</command>
+          and <command>svnadmin load</command> commands which we
+          discuss in depth in
+          <xref linkend="svn.reposadmin.maint.migrate.svnadmin"
+          />.  <command>svnrdump dump</command> will generate a dump
+          stream from a remote repository, spewing it to standard
+          output; <command>svnrdump load</command> will read a dump
+          stream from standard input and load it into a remote
+          repository.  Using <command>svnrdump</command>, you can
+          generate incremental dumps just as you might
+          with <command>svnadmin dump</command>.  You can even dump a
+          subtree of the repository&mdash;something
+          that <command>svnadmin dump</command> cannot do.</para>
+
+        <para>The primary difference is that instead of requiring
+          direct access to the repository, <command>svnrdump</command>
+          operates remotely (using the very same Repository Access
+          (RA) protocols that the Subversion client does).  As such,
+          you might need to provide authentication credentials.  Also,
+          your remote interations are subject to any authorization
+          limitations configured on the Subversion server.</para>
+
+        <note>
+          <para><command>svnrdump dump</command> requires that the
+            remote server be running Subversion 1.4 or newer.  It
+            currently generates dump streams only of the sort which
+            are created when you pass the <option>--deltas</option>
+            option to <command>svnadmin dump</command>.  This isn't
+            interesting in the typical use-cases, but might impact
+            specific types of custom transformations you might wish to
+            apply to the resulting dump stream.</para>
+        </note>
+
+        <note>
+          <para>Because it modifies revision properties after
+            committing new revisions, <command>svnrdump load</command>
+            requires that the target repository have revision property
+            changes enabled via the pre-revprop-change hook.  See
+            <xref linkend="svn.ref.reposhooks.pre-revprop-change" />
+            for details.</para>
+        </note>
+
+        <para>As you might expect, you can use
+          <command>svnadmin</command> and <command>svnrdump</command>
+          in concert.  You can, for example, use <command>svnrdump
+          dump</command> to generate a dump stream from a remote
+          repository, and pipe the results thereof through
+          <command>svnadmin load</command> to copy all that repository
+          history into a local repository.  Or you can do the reverse,
+          copying history from a local repository into a remote
+          one.</para>
+
+        <tip>
+          <para>By using <literal>file://</literal>
+            URLs, <command>svnrdump</command> can also access local
+            repositories, but it will be doing so via Subversion's
+            Repository Access (RA) abstraction layer&mdash;you'll get
+            better performance out of <command>svnadmin</command> in
+            such situations.</para>
+        </tip>
+
+      </sect3>
     </sect2>
 
     <!-- =============================================================== -->
@@ -2285,15 +2395,17 @@ $
         linkend="svn.reposadmin.maint.migrate" />, the Subversion
         repository dump format is a human-readable representation of
         the changes that you've made to your versioned data over time.
-        Use the <command>svnadmin dump</command> command to generate
-        the dump data, and <command>svnadmin load</command> to
-        populate a new repository with it.  The great thing about the
-        human-readability aspect of the dump format is that, if you
-        aren't careless about it, you can manually inspect and modify
-        it.  Of course, the downside is that if you have three years'
-        worth of repository activity encapsulated in what is likely to
-        be a very large dump file, it could take you a long, long time
-        to manually inspect and modify it.</para>
+        Use the <command>svnadmin dump</command> or <command>svnrdump
+        dump</command> command to generate the dump data,
+        and <command>svnadmin load</command> or <command>svnrdump
+        load</command> to populate a new repository with it.  The
+        great thing about the human-readability aspect of the dump
+        format is that, if you aren't careless about it, you can
+        manually inspect and modify it.  Of course, the downside is
+        that if you have three years' worth of repository activity
+        encapsulated in what is likely to be a very large dump file,
+        it could take you a long, long time to manually inspect and
+        modify it.</para>
 
       <para>That's where <command>svndumpfilter</command> becomes
         useful.  This program acts as a path-based filter for
@@ -2502,7 +2614,8 @@ Node-path: spreadsheet/Makefile
         other programs that generate dump data might not be so
         consistent.</para></footnote> you should probably normalize
         those paths so that they all have, or all lack, leading
-        slashes.</para>
+        slashes.</para> <!-- ### FIXME: Is this still accurate?
+                             Surely we've fixed ### this by now! -->
 
       <para>Also, copied paths can give you some trouble.
         Subversion supports copy operations in the repository, where
@@ -2561,9 +2674,8 @@ Node-path: spreadsheet/Makefile
         distribute heavy Subversion load across multiple servers, use
         as a soft-upgrade mechanism, and so on.</para>
 
-      <para>Subversion provides a pair of programs for managing
-        scenarios such as these.  The first of the programs
-        is <command>svnsync</command>, which works by essentially
+      <para>Subversion provides a program for managing scenarios such
+        as these.  <command>svnsync</command> works by essentially
         asking the Subversion server to <quote>replay</quote>
         revisions, one at a time.  It then uses that revision
         information to mimic a commit of the same to another
@@ -2575,25 +2687,11 @@ Node-path: spreadsheet/Makefile
         repository and read/write access to the destination
         repository.</para>
 
-      <para>The second program, which was introduced in Subversion
-        1.7, is <command>svnrdump</command>.  This program is
-        essentially a network-aware version of the <command>svnadmin
-        dump</command> and <command>svnadmin load</command> commands,
-        and can in fact be used with those commands&mdash;and other
-        tools, such as <command>svndumpfilter</command>&mdash;to
-        transfer repository history between remote or local
-        repositories.</para>
-
       <note>
-        <para>When using <command>svnsync</command>
-          or <command>svnrdump</command> against a remote source
-          repository, the Subversion server for that repository must
-          be running Subversion version 1.4 or later.</para>
+        <para>When using <command>svnsync</command> against a remote
+          source repository, the Subversion server for that repository
+          must be running Subversion version 1.4 or later.</para>
       </note>
-
-      <para>We'll cover replication via <command>svnsync</command> and
-        <command>svnrdump</command> in the sections which
-        follow.</para>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <sect3 id="svn.reposadmin.maint.replication.svnsync">
@@ -3057,15 +3155,24 @@ $
           the mirror to be up to date in as near to real time as is
           likely possible.</para>
 
-        <para>Also, while it isn't very commonplace to do so,
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.reposadmin.maint.replication.svnsync-partial">
+        <title>Partial replication with svnsync</title>
+
+        <para><command>svnsync</command> isn't limited to full copies
+          of everything which lives in a repository.  It can handle
+          various shades of partial replication, too.  For example,
+          while it isn't very commonplace to do so,
           <command>svnsync</command> does gracefully mirror repositories
           in which the user as whom it authenticates has only partial
           read access.  It simply copies only the bits of the repository
           that it is permitted to see.  Obviously, such a mirror is not
           useful as a backup solution.</para>
 
-        <para>In Subversion 1.5, <command>svnsync</command> grew the
-          ability to also mirror a subset of a repository rather than
+        <para>As of Subversion 1.5, <command>svnsync</command> also
+          has the ability to mirror a subset of a repository rather than
           the whole thing.  The process of setting up and maintaining
           such a mirror is exactly the same as when mirroring a whole
           repository, except that instead of specifying the source
@@ -3085,6 +3192,12 @@ $
           subdirectory is renamed in the future, your synchronization
           processes will stop mirroring data at the point that the
           source URL you specified is no longer valid.</para>
+
+      </sect3>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <sect3 id="svn.reposadmin.maint.replication.svnsync-init-nonempty">
+        <title>A quick trick for mirror creation</title>
 
         <para>We mentioned previously the cost of setting up an
           initial mirror of an existing repository.  For many folks,
@@ -3121,13 +3234,18 @@ $
 </screen>
         </informalexample>
 
-      </sect3>
+        <para>Admins who are running a version of Subversion prior to
+          1.7 (and thus do not have access to <command>svnsync
+          initialize</command>'s <option>--allow-non-empty</option>
+          feature) can accomplish effectively the same thing that that
+          feature does through <emphasis>careful</emphasis>
+          manipulation of the r0 revision properties on the copy of
+          the repository which is slated to become a mirror of the
+          original.  Use <command>svnadmin setrevprop</command> to
+          create the same bookkeeping properties
+          that <command>svnsync</command> would have created
+          there.</para>
 
-      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-      <sect3 id="svn.reposadmin.maint.replication.svnrdump">
-        <title>Replication with svnrdump</title>
-
-        <para>### TODO ###</para>
       </sect3>
 
       <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
@@ -3168,18 +3286,18 @@ $
           relocation.</para>
 
         <para>Finally, be aware that the revision-based replication
-          provided by <command>svnsync</command>
-          and <command>svnrdump</command> is only
+          provided by <command>svnsync</command> is only
           that&mdash;replication of revisions.  Only the kinds of
           information carried by the Subversion repository dump file
-          format are available for replication.  As
-          such, <command>svnsync</command>
-          and <command>svnrdump</command> are limited in ways similar
-          to that of the repository dump stream.  They do not include
-          in their replicated information such things as the hook
-          implementations, repository or server configuration data,
-          uncommitted transactions, or information about user locks on
-          repository paths.</para>
+          format are available for replication.  As such, tools such
+          as <command>svnsync</command>
+          (and <command>svnrdump</command>, which we discuss in
+          <xref linkend="svn.reposadmin.maint.migrate.svnrdump" />)
+          are limited in ways similar to that of the repository dump
+          stream.  They do not include in their replicated information
+          such things as the hook implementations, repository or
+          server configuration data, uncommitted transactions, or
+          information about user locks on repository paths.</para>
 
       </sect3>
 

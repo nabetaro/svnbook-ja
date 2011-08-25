@@ -8819,6 +8819,352 @@ $
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <!-- ================================================================= -->
+  <sect1 id="svn.ref.svnrdump">
+    <title>svnrdump&mdash;Remote Subversion Repository Data Migration</title>
+    
+    <para><command>svnrdump</command> joined the Subversion tool chain
+      in the Subversion 1.7 release.  It is best described as a
+      network-aware version of the <command>svnadmin dump</command>
+      and <command>svnadmin load</command> commands, paired together
+      and released as a separate standalone program.  We discuss the
+      process of dumping and loading repository data&mdash;using
+      both <command>svnadmin</command>
+      and <command>svnrdump</command>&mdash; in
+      <xref linkend="svn.reposadmin.maint.migrate" />.</para>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.ref.svnrdump.sw">
+      <title>svnrdump Options</title>
+
+      <para>Options in <command>svnrdump</command> are global, just
+        as they are in <command>svn</command> and
+        <command>svnadmin</command>:</para>
+
+      <variablelist>
+
+        <varlistentry>
+          <term><option>--config-dir</option>
+            <replaceable>DIR</replaceable></term>
+          <listitem>
+            <para>Instructs Subversion to read configuration
+              information from the specified directory instead of the
+              default location (<filename>.subversion</filename> in
+              the user's home directory).</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--config-option</option>
+            <replaceable>FILE</replaceable>:<replaceable>SECTION</replaceable>:<replaceable>OPTION</replaceable>=[<replaceable>VALUE</replaceable>]</term>
+          <listitem>
+            <para>Sets, for the duration of the command, the value of
+              a runtime configuration
+              option.  <replaceable>FILE</replaceable>
+              and <replaceable>SECTION</replaceable> are the runtime
+              configuration file (either <literal>config</literal>
+              or <literal>servers</literal>) and the section thereof,
+              respectively, which contain the option whose value you
+              wish to change.  <replaceable>OPTION</replaceable> is,
+              of course, the option itself,
+              and <replaceable>VALUE</replaceable> the value (if any)
+              you wish to assign to the option.  For example, to
+              temporarily disable the use of the automatic property
+              setting feature,
+              use <option>--config-option=servers:global:http-library=serf</option>.
+              You can use this option multiple times to change
+              multiple option values simultaneously.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--incremental</option></term>
+          <listitem>
+            <para>Dump a revision or revision range only as a diff
+              against the previous revision, instead of the default,
+              which is begin a dumped revision range with a complete
+              expansion of all contents of the repository as of that
+              revision.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--no-auth-cache</option></term>
+          <listitem>
+            <para>Prevents caching of authentication information
+              (e.g., username and password) in the Subversion
+              runtime configuration directories.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--non-interactive</option></term>
+          <listitem>
+            <para>In the case of an authentication failure or
+              insufficient credentials, prevents prompting for
+              credentials (e.g., username or password).  This is useful
+              if you're running Subversion inside an automated
+              script and it's more appropriate to have Subversion fail
+              than to prompt for more information.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--password</option>
+            <replaceable>PASSWD</replaceable></term>
+          <listitem>
+            <para>Specifies the password to use when authenticating
+              against a Subversion server.  If not provided, or if
+              incorrect, Subversion will prompt you for this
+              information as needed.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--quiet</option> (<option>-q</option>)</term>
+          <listitem>
+            <para>Requests that the client print only essential
+              information while performing an operation.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--revision</option> (<option>-r</option>)
+            <replaceable>ARG</replaceable></term>
+          <listitem>
+            <para>Used by <command>svnsync copy-revprops</command> to
+              specify a particular revision or revision range on which
+              to operate.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--trust-server-cert</option></term>
+          <listitem>
+            <para>Used with <option>--non-interactive</option> to accept
+              any unknown SSL server certificates without prompting.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--username</option>
+            <replaceable>NAME</replaceable></term>
+          <listitem>
+            <para>Specifies the username to use when authenticating
+              against a Subversion server.  If not provided, or if
+              incorrect, Subversion will prompt you for this
+              information as needed.</para>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.ref.svnrdump.c">
+      <title>svnrdump Subcommands</title>
+
+      <para>Here are the various subcommands
+        for the <command>svnrdump</command> program.</para>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <refentry id="svn.ref.svnrdump.c.dump">
+
+        <indexterm>
+          <primary>svnrdump</primary>
+          <secondary>subcommands</secondary>
+          <tertiary>dump</tertiary>
+        </indexterm>
+
+        <refnamediv>
+          <refname>svnrdump dump</refname>
+          <refpurpose></refpurpose>
+        </refnamediv>
+        <refsect1>
+          <title>Synopsis</title>
+          <para><literal>svnrdump dump SOURCE_URL</literal></para>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+
+          <para>Dump&mdash;that is, generate a repository dump stream
+            of&mdash;revisions of the repository item located
+            at <replaceable>SOURCE_URL</replaceable>, printing the
+            information to standard output.  By default, the entire
+            history will be included in the dump stream, but the scope
+            of the operation can be limited via the use of
+            the <option>--revision</option> (<option>-r</option>)
+            option.</para>
+
+        </refsect1>
+
+        <refsect1>
+          <title>Options</title>
+
+          <informalexample>
+            <screen>
+--config-dir DIR
+--config-option
+--incremental
+--no-auth-cache
+--non-interactive
+--password ARG
+--quiet (-q)
+--revision (-r) REV
+--trust-server-cert
+--username ARG
+</screen>
+          </informalexample>
+        </refsect1>
+
+        <refsect1>
+          <title>Examples</title>
+
+          <para>Generate a dump stream of the full history of a remote
+            repository (assuming that the user as who this runs has
+            authorization to read all paths in the repository).</para>
+
+          <informalexample>
+            <screen>
+$ svnrdump dump http://svn.example.com/repos/calc &gt; full.dump
+* Dumped revision 0.
+* Dumped revision 1.
+* Dumped revision 2.
+&hellip;
+</screen>
+          </informalexample>
+
+          <para>Incrementally dump a single revision from that same
+            repository:</para>
+
+          <informalexample>
+            <screen>
+$ svnrdump dump http://svn.example.com/repos/calc \
+           -r 21 --incremental &gt; full.dump
+* Dumped revision 21.
+$
+</screen>
+          </informalexample>
+
+        </refsect1>
+      </refentry>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <refentry id="svn.ref.svnrdump.c.help">
+
+        <indexterm>
+          <primary>svnrdump</primary>
+          <secondary>subcommands</secondary>
+          <tertiary>help</tertiary>
+        </indexterm>
+
+        <refnamediv>
+          <refname>svnrdump help</refname>
+          <refpurpose>Help!</refpurpose>
+        </refnamediv>
+        <refsect1>
+
+          <title>Synopsis</title>
+          <para><literal>svnrdump help</literal></para>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+
+          <para>Use this to get help.  Well, certain kinds of help.
+            Need white lab coat and straightjackets kind of help?
+            There's a whole different protocol for that sort of
+            thing.</para>
+            
+        </refsect1>
+
+        <refsect1>
+          <title>Options</title>
+          <para>None</para>
+        </refsect1>
+
+      </refentry>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <refentry id="svn.ref.svnrdump.c.load">
+
+        <indexterm>
+          <primary>svnrdump</primary>
+          <secondary>subcommands</secondary>
+          <tertiary>load</tertiary>
+        </indexterm>
+
+        <refnamediv>
+          <refname>svnrdump load</refname>
+          <refpurpose></refpurpose>
+        </refnamediv>
+        <refsect1>
+          <title>Synopsis</title>
+          <para><literal>svnrdump load DEST_URL</literal></para>
+        </refsect1>
+        <refsect1>
+          <title>Description</title>
+
+          <para>Read from standard input revision information
+            described in a Subversion repository dump stream, and load
+            that information into the repository located
+            at <replaceable>DEST_URL</replaceable>.</para>
+
+        </refsect1>
+        
+        <refsect1>
+          <title>Options</title>
+
+          <informalexample>
+            <screen>
+--config-dir DIR
+--config-option
+--no-auth-cache
+--non-interactive
+--password ARG
+--quiet (-q)
+--trust-server-cert
+--username ARG
+</screen>
+          </informalexample>
+        </refsect1>
+
+        <refsect1>
+          <title>Examples</title>
+
+          <para>Dump the contents of a local repository, and
+            use <command>svnrdump load</command> to transfer that
+            revision information into an existing remote
+            repository:</para>
+
+          <informalexample>
+            <screen>
+$ svnadmin dump -q /var/svn/repos/new-project | \
+      svnrdump load http://svn.example.com/repos/new-project
+* Loaded revision 0
+* Loaded revision 1.
+* Loaded revision 2.
+&hellip;
+</screen>
+          </informalexample>
+
+          <note>
+            <para>To operate properly <command>svnrdump load</command>
+              requires that the target repository have revision
+              property modification enabled via the pre-revprop-change
+              hook.  For details about that hook, see
+              <xref linkend="svn.ref.reposhooks.pre-revprop-change"
+              />.</para>
+          </note>
+
+        </refsect1>
+      </refentry>
+
+    </sect2>
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
   <sect1 id="svn.ref.svnserve">
     <title>svnserve&mdash;Custom Subversion Server</title>
     
