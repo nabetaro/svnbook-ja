@@ -1306,9 +1306,13 @@ $
         mapping, it will set your file's
         <literal>svn:mime-type</literal> property to the MIME type it
         found.  If no mapping file is configured, or no mapping for
-        your file's extension could be found, Subversion runs a very
-        basic heuristic to determine whether the file contains nontextual
-        content.  If so, it automatically sets the
+        your file's extension could be found, Subversion will fall
+        back to heuristic algorithms to determine the file's MIME
+        type.  Depending on how it is built, Subversion 1.7 can make
+        use of file scanning libraries to detect a file's type based
+        on its content.  Failing all else, Subversion will employ its
+        own very basic heuristic to determine whether the file
+        contains nontextual content.  If so, it automatically sets the
         <literal>svn:mime-type</literal> property on that file to
         <literal>application/octet-stream</literal> (the generic
         <quote>this is a collection of bytes</quote> MIME type).  Of
@@ -1320,6 +1324,17 @@ $
         Subversion's use of MIME types, see <xref
         linkend="svn.advanced.props.special.mime-type" /> later in
         this chapter.)</para>
+
+      <note>
+        <para>UTF-16 is commonly used to encode files whose semantic
+          content is textual in nature, but the encoding itself makes
+          heavy use of bytes which our outside the typical ASCII
+          character byte range.  As such, Subversion will tend to
+          classify such files as binary files, much to the chagrin of
+          users who desire line-based differencing and merging,
+          keyword substitution, and other behaviors for those
+          files.</para>
+      </note>
 
       <para>Subversion also provides, via its runtime configuration
         system (see <xref linkend="svn.advanced.confarea" />), a more
@@ -1499,11 +1514,10 @@ $
           property.</para>
       </warning>
 
-      <para>Users can configure the <literal>mime-types-file</literal>
-        runtime configuration parameter, which identifies the location
-        of a MIME types mapping file.  Subversion will consult this
-        mapping file to determine the MIME type of newly added and
-        imported files.</para>
+      <para>Subversion provides a number of mechanisms by which to
+        automatically set the <literal>svn:mime-type</literal>
+        property on a versioned file.  See
+        <xref linkend="svn.advanced.props.auto" /> for details.</para>
 
       <para>Also, if the <literal>svn:mime-type</literal> property is
         set, then the Subversion Apache module will use its value to
@@ -2327,13 +2341,27 @@ $Author:: harry      $:  Author of last commit
 $Date:: 2006-03-15 0#$:  Date of last commit
 </screen>
     </informalexample>
-       
-    <para>The use of fixed-length keywords is especially handy
-      when performing substitutions into complex file formats that
-      themselves use fixed-length fields for data, or for which
-      the stored size of a given data field is overbearingly
-      difficult to modify from outside the format's native
-      application (such as for Microsoft Office documents).</para>
+
+    <para>The use of fixed-length keywords is especially handy when
+      performing substitutions into complex file formats that
+      themselves use fixed-length fields for data, or for which the
+      stored size of a given data field is overbearingly difficult to
+      modify from outside the format's native application (as is true
+      for the older Microsoft Office document formats).</para>
+
+    <note>
+      <para>Subversion will only perform keyword substitution on files
+        that it considers to be human-readable&mdash;this is, files
+        which don't carry an <literal>svn:mime-type</literal> property
+        whose value indicates otherwise.  To force keyword
+        substitution on binary files, you'll need to either lie or
+        feign ignorance about their true content type.  Understand,
+        however, that doing so will also enable for those files other
+        Subversion behaviors that you might not desire, including
+        line-based differencing and merging.  For more about content
+        types, see <xref linkend="svn.advanced.props.special.mime-type"
+        />.</para>
+    </note>
 
     <warning>
       <para>Be aware that because the width of a keyword field is
