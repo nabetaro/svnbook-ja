@@ -241,6 +241,16 @@ $ svn status myfile -qv
         </varlistentry>
 
         <varlistentry>
+          <term><option>--diff</option></term>
+          <listitem>
+            <para>Enables a special output mode for <command>svn
+              log</command> which includes a difference report (a
+              la <command>svn diff</command>) as part of each
+              revision's information.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
           <term><option>--diff-cmd</option>
             <replaceable>CMD</replaceable></term>
           <listitem>
@@ -302,11 +312,11 @@ $ svn status myfile -qv
             <para>Specifies an argument or arguments that Subversion
               should pass to an external diff command.  This option is
               valid only when used with the <command>svn
-              diff</command> or <command>svn merge</command> commands,
-              with the
-              <option>--diff-cmd</option> option.
-              If you wish to pass multiple
-              arguments, you must enclose all of them in quotes (e.g.,
+              diff</command>, <command>svn merge</command>,
+              or <command>svn log --diff</command> commands, where the
+              <option>--diff-cmd</option> option was also used.  If
+              you wish to pass multiple arguments, you must enclose
+              all of them in quotes (e.g.,
               <userinput>svn diff --diff-cmd /usr/bin/diff -x
               "-b -E"</userinput>).</para>
           </listitem>
@@ -364,7 +374,16 @@ $ svn status myfile -qv
               option to subcommands that accept log messages.</para>
           </listitem>
         </varlistentry>
-        
+
+        <varlistentry>
+          <term><option>--git</option></term>
+          <listitem>
+            <para>Enables a special output mode for <command>svn
+              diff</command> designed for cross-compatibility with the
+              popular Git distributed version control system.</para>
+          </listitem>
+        </varlistentry>
+
         <varlistentry>
           <term><option>--help</option> (<option>-h</option> or
              <option>-?</option>)</term>
@@ -406,6 +425,16 @@ $ svn status myfile -qv
           </listitem>
         </varlistentry>
       
+        <varlistentry>
+          <term><option>--internal-diff</option></term>
+          <listitem>
+            <para>Instructs Subversion to use its built-in
+              differencing engine despite any external differencing
+              mechanism that may be specified for use in the user's
+              runtime configuration.</para>
+          </listitem>
+        </varlistentry>
+
         <varlistentry>
           <term><option>--keep-changelists</option></term>
           <listitem>
@@ -653,6 +682,19 @@ $ svn log -r 1729:{2002-02-17}
               or <literal>infinity</literal>.  For detailed coverage
               of what these mean and how to use this option, see
               <xref linkend="svn.advanced.sparsedirs" />.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--show-copies-as-adds</option></term>
+          <listitem>
+            <para>Enables a special output mode for <command>svn
+              diff</command> in which the content difference for a
+              file created via a copy operation appears as it would
+              for a brand new file (with each line therein appearing
+              as an addition to an empty file) rather than as a delta
+              against the original file from which the copy was
+              created.</para>
           </listitem>
         </varlistentry>
 
@@ -2107,11 +2149,14 @@ D         over-there
 --diff-cmd CMD
 --extensions (-x) ARG
 --force
+--git
+--internal-diff
 --new ARG
 --no-diff-deleted
 --notice-ancestry
 --old ARG
 --revision (-r) ARG
+--show-copies-as-adds
 --summarize
 --xml
 </screen>
@@ -2132,6 +2177,7 @@ Index: COMMITTERS
 ===================================================================
 --- COMMITTERS	(revision 4404)
 +++ COMMITTERS	(working copy)
+&hellip;
 </screen>
           </informalexample>
 
@@ -2145,6 +2191,7 @@ Index: COMMITTERS
 ===================================================================
 --- COMMITTERS	(revision 3900)
 +++ COMMITTERS	(working copy)
+&hellip;
 </screen>
           </informalexample>
 
@@ -2159,6 +2206,7 @@ Index: COMMITTERS
 ===================================================================
 --- COMMITTERS	(revision 3900)
 +++ COMMITTERS	(working copy)
+&hellip;
 </screen>
           </informalexample>
 
@@ -2188,6 +2236,7 @@ Index: COMMITTERS
 ===================================================================
 --- COMMITTERS	(revision 3000)
 +++ COMMITTERS	(revision 3500)
+&hellip;
 </screen>
           </informalexample>
 
@@ -2223,6 +2272,7 @@ Index: COMMITTERS
 ===================================================================
 --- COMMITTERS	(revision 3000)
 +++ COMMITTERS	(revision 3500)
+&hellip;
 </screen>
           </informalexample>
 
@@ -2239,6 +2289,7 @@ Index: COMMITTERS
 0a1,2
 &gt; This is a test
 &gt; 
+$
 </screen>
           </informalexample>
 
@@ -2983,7 +3034,12 @@ $ svn lock http://svn.red-bean.com/repos/test/tree.jpg
           <informalexample>
             <screen>
 --change (-c) ARG
+--depth ARG
+--diff
+--diff-cmd ARG
+--extensions (-x) ARG
 --incremental
+--internal-diff
 --limit (-l) NUM
 --quiet (-q)
 --revision (-r) REV
@@ -3248,6 +3304,42 @@ Made a change.
 </screen>
             </informalexample>
           </tip>
+
+          <para>Beginning with Subversion 1.7, users can take
+            advantage of a special output mode which combines the
+            information from <command>svn log</command> with what you
+            would see when running <command>svn diff</command> on the
+            same targets for each revision of the log.  Simply
+            invoke <command>svn log</command> with
+            the <option>--diff</option> option to trigger this output
+            mode.</para>
+
+          <informalexample>
+            <screen>
+$ svn log -r 20 touched.txt --diff
+------------------------------------------------------------------------
+r20 | sally | 2003-01-17 22:56:19 -0600 (Fri, 17 Jan 2003) | 1 line
+
+Made a change.
+
+Index: touched.txt
+===================================================================
+--- touched.txt	(revision 19)
++++ touched.txt	(revision 20)
+@@ -1 +1,2 @@
+ This is the file 'touched.txt'.
++We add such exciting text to files around here!
+------------------------------------------------------------------------
+$
+</screen>
+          </informalexample>
+
+          <para>As with <command>svn diff</command>, you may also make
+            use of many of the various options which control the way
+            the difference is generated,
+            including <option>--depth</option>, <option>--diff-cmd</option>,
+            and <option>--extensions</option>
+            (<option>-x</option>).</para>
 
         </refsect1>
       </refentry>
