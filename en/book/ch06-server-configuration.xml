@@ -3890,6 +3890,136 @@ update /path r17 send-copyfrom-args
   <!-- ================================================================= -->
   <!-- ================================================================= -->
   <!-- ================================================================= -->
+  <sect1 id="svn.serverconfig.optimization">
+    <title>Server Optimization</title>
+
+    <para>Part of the due diligence when offering a service such as a
+      Subversion server involves capacity planning and performance
+      tuning.  Subversion doesn't tend to be particularly greedy in
+      terms of server resources such as CPU cycles and memory, but any
+      service can benefit from optimizations, especially when usage of
+      the service skyrockets<footnote><para>In Subversion's case, the
+      skyrocketing affect is, of course, due to its cool name.  Well,
+      that and its popularity, reliability, ease of
+      use&hellip;.</para></footnote>.  In this section, we'll discuss
+      some ways you can tweak your Subversion server configuration
+      to offer even better performance and scalability.</para>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.serverconfig.optimization.caching">
+      <title>Data Caching</title>
+
+      <para>Generally speaking, the most expensive part of a
+        Subversion server's job is fetching data from the repository.
+        Subversion 1.6 attempted to offset this cost by introducing
+        some in-memory caching of certain classes of data read from
+        the repository.  But Subversion 1.7 takes this a step further,
+        not only caching the results of some of the more costly
+        operations, but also by providing in each of the available
+        servers the means by which fine-tune the size and some
+        behaviors of the cache.</para>
+
+      <para>For <command>svnserve</command>, you can specify the size
+        of the cache using the <option>--memory-cache-size</option>
+        (<option>-M</option>) command-line option.  You can also
+        dictate whether <command>svnserve</command> should attempt to
+        cache content fulltexts and deltas via the
+        boolean <option>--cache-fulltexts</option>
+        and <option>--cache-txdeltas</option> options,
+        respectively.</para>
+
+      <informalexample>
+        <screen>
+$ svnserve -d -r /path/to/repositories \
+           --memory-cache-size 1024 \
+           --cache-txdeltas yes \
+           --cache-fulltexts yes
+&hellip;
+$
+</screen>
+      </informalexample>
+
+      <para><command>mod_dav_svn</command> provides the same degree of
+        cache configurability via <filename>httpd.conf</filename>
+        directives.
+        The <literal>SVNInMemoryCacheSize</literal>,
+        <literal>SVNCacheFullTexts</literal>,
+        and <literal>SVNCacheTextDeltas</literal> directives may be
+        used at the server configuration level to control Subversion's
+        data cache characteristics:</para>
+
+      <informalexample>
+        <programlisting>
+&lt;IfModule dav_svn_module&gt;
+  # Enable a 1 Gb Subversion data cache for both fulltext and deltas.
+  SVNInMemoryCacheSize 1048576
+  SVNCacheTextDeltas On
+  SVNCacheFullTexts On
+&lt;/IfModule&gt;
+</programlisting>
+      </informalexample>
+
+      <para>So what settings should you use?  Certainly you need to
+        consider what resources are available on your server.  To get
+        any benefit out of the cache at all, you'll probably want to
+        let the cache be at least large enough to hold all the files
+        which are most commonly accessed in your repository (for
+        example, your project's <filename>trunk</filename> directory
+        tree).</para>
+
+      <tip>
+        <para>Setting the memory cache size to <literal>0</literal>
+          will disable this enhanced caching mechanism and cause
+          Subversion to fall back to using the older cache mechanisms
+          introduced in Subversion 1.6.</para>
+      </tip>
+
+      <note>
+        <para>Currently, only repositories which make use of the FSFS
+          backend data store make use of this data caching
+          functionality.</para>
+      </note>
+
+    </sect2>
+
+    <!-- =============================================================== -->
+    <sect2 id="svn.serverconfig.optimization.compression">
+      <title>Network Compression of Data</title>
+
+      <para>Compressing the data transmitted across the wire can
+        greatly reduce the size of those network transmissions, but
+        comes at the cost of server (and client) CPU cycles.
+        Depending on your server's CPU capacity, the typical access
+        patterns of the clients who use your servers, and the
+        bandwidth of the networks between them, you might wish to fine
+        tune just how hard your server will work to compress the data
+        it sends across the wire.  To assist with this fine tuning
+        process, Subversion 1.7 offers
+        the <option>--compression</option> (<option>-c</option>)
+        option to <command>svnserve</command> and
+        the <literal>SVNCompressionLevel</literal> directive
+        for <command>mod_dav_svn</command>.  Both accept a value which
+        is an integer between 0 and 9 (inclusive), where 9 offers the
+        best compression of wire data, and 0 disables compression
+        altogether.</para>
+
+      <para>For example, on a local area network (LAN) with 1-Gigabit
+        connections, it might not make sense to have the server
+        compress its network transmissions (which also forces the
+        clients to decompress them), as the network itself is so fast
+        that users won't really benefit from the smaller overall
+        network payload.  On the other hand, servers which are
+        accessed primarily by clients with low-bandwidth connections
+        would be doing those clients a favor by minimizing the overall
+        size of its network communications.</para>
+
+    </sect2>
+
+  </sect1>
+
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
+  <!-- ================================================================= -->
   <sect1 id="svn.serverconfig.multimethod">
 
     <title>Supporting Multiple Repository Access Methods</title>
