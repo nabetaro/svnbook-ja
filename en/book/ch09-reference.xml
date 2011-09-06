@@ -1352,13 +1352,11 @@ $ svn checkout file:///var/svn/repos/test mine
 A    mine/a
 A    mine/b
 ^C
-svn: The operation was interrupted
-svn: caught SIGINT
+svn: E200015: Caught signal
 $ svn checkout file:///var/svn/repos/test mine
 A    mine/c
 ^C
-svn: The operation was interrupted
-svn: caught SIGINT
+svn: E200015: Caught signal
 $ svn update mine
 Updating 'mine':
 A    mine/d
@@ -1381,13 +1379,16 @@ $
 </screen>
           </informalexample>
 
-          <para>Subversion will complain by default if you try to
-            check out a directory atop an existing directory which
-            contains files or subdirectories that the checkout itself
-            would have created.  Use the <option>--force</option>
-            option to override this safeguard.  When you check out
-            with the <option>--force</option> option, any unversioned
-            file in the checkout target tree which ordinarily would
+          <para>Prior to version 1.7, Subversion would complain by
+            default if you try to check out a directory atop an
+            existing directory which contains files or subdirectories
+            that the checkout itself would have created.  Subversion
+            1.7 handles this situation differently, allowing the
+            checkout to proceed but marking any obstructing objects as
+            tree conflicts.  Use the <option>--force</option> option
+            to override this safeguard.  When you check out with
+            the <option>--force</option> option, any unversioned file
+            in the checkout target tree which ordinarily would
             obstruct the checkout will still become versioned, but
             Subversion will preserve its contents as-is.  If those
             contents differ from the repository file at that path
@@ -1402,9 +1403,6 @@ $
 $ mkdir project
 $ mkdir project/lib
 $ touch project/lib/file.c
-$ svn checkout file:///var/svn/repos/project/trunk project
-svn: Failed to add directory 'project/lib': an unversioned directory of the sa
-me name already exists
 $ svn checkout file:///var/svn/repos/project/trunk project --force
 E    project/lib
 A    project/lib/subdir
@@ -1647,8 +1645,7 @@ Committed revision 5.
           <informalexample>
             <screen>
 $ svn commit -F file_under_vc.txt foo.c
-svn: The log message file is under version control
-svn: Log message file is a versioned file; use '--force-log' to override
+svn: E205004: Log message file is a versioned file; use '--force-log' to override
 
 $ svn commit --force-log -F file_under_vc.txt foo.c
 Sending        foo.c
@@ -1976,12 +1973,13 @@ Committed revision 15.
           <informalexample>
             <screen>
 $ svn delete over-there 
-svn: Attempting restricted operation for modified resource
-svn: Use --force to override this restriction
-svn: 'over-there' has local modifications
-
+svn: E195006: Use --force to override this restriction (local modifications ma
+y be lost)
+svn: E195006: '/home/sally/project/over-there' has local modifications -- comm
+it or revert them first
 $ svn delete --force over-there 
 D         over-there
+$
 </screen>
           </informalexample>
           
@@ -2953,9 +2951,8 @@ $ svn lock tree.jpg house.jpg
           <informalexample>
             <screen>
 $ svn lock tree.jpg
-svn: warning: Path '/tree.jpg is already locked by user 'sally in \
-     filesystem '/var/svn/repos/db'
-
+svn: warning: W160035: Path '/tree.jpg is already locked by user 'sally' in fi
+lesystem '/var/svn/repos/db'
 $ svn lock --force tree.jpg
 'tree.jpg' locked by user 'harry'.
 </screen>
@@ -5771,7 +5768,7 @@ $ svn unlock tree.jpg house.jpg
           <informalexample>
             <screen>
 $ svn unlock tree.jpg
-svn: 'tree.jpg' is not locked in this working copy
+svn: E195013: 'tree.jpg' is not locked in this working copy
 $ svn unlock --force tree.jpg
 'tree.jpg' unlocked.
 </screen>
@@ -6055,8 +6052,8 @@ $
             <screen>
 $ svn status
 svn: E155036: Please see the 'svn upgrade' command
-svn: E155036: Working copy '/home/cmpilato/tests/wc' is too old (format 10, cr
-eated by Subversion 1.6)
+svn: E155036: Working copy '/home/sally/project' is too old (format 10, create
+d by Subversion 1.6)
 $
 </screen>
           </informalexample>
@@ -7074,9 +7071,8 @@ The latest repos revision is 34.
           <informalexample>
             <screen>
 $ svnadmin recover /var/svn/repos
-svn: Failed to get exclusive repository access; perhaps another process
-such as httpd, svnserve or svn has it open?
-
+svn: E165000: Failed to get exclusive repository access; perhaps another proce
+ss such as httpd, svnserve or svn has it open?
 $
 </screen>
           </informalexample>
