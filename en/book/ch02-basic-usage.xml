@@ -2795,78 +2795,64 @@ M       somedir/foo.c
       <informalexample>
         <screen>
 $ svn list -Rv svn://svn.example.com/trunk/
-      4 harry                 Feb 06 14:34 ./
-      4 harry              23 Feb 06 14:34 COPYING
-      4 harry              41 Feb 06 14:34 Makefile
-      4 harry              33 Feb 06 14:34 README
-      4 harry                 Feb 06 14:34 code/
-      4 harry              51 Feb 06 14:34 code/bar.c
-      4 harry             124 Feb 06 14:34 code/foo.c
+     13 harry                 Sep 06 10:34 ./
+     13 harry              27 Sep 06 10:34 COPYING
+     13 harry              41 Sep 06 10:32 Makefile
+     13 harry              53 Sep 06 10:34 README
+     13 harry                 Sep 06 10:32 code/
+     13 harry              54 Sep 06 10:32 code/bar.c
+     13 harry             130 Sep 06 10:32 code/foo.c
+$
 </screen>
       </informalexample>
 
-      <para>Your collaborator Harry has renamed the file
-        <filename>bar.c</filename> to <filename>baz.c</filename>.  You
-        are still working on <filename>bar.c</filename> in your
-        working copy, but you don't know yet that the file has been
-        renamed in the repository.</para>
-
-      <para>The log message to Harry's commit looked like this:</para>
-
-      <informalexample>
-        <screen>
-$ svn log -r5 svn://svn.example.com/trunk
-------------------------------------------------------------------------
-r5 | harry | 2009-02-06 14:42:59 +0000 (Fri, 06 Feb 2009) | 2 lines
-Changed paths:
-   M /trunk/Makefile
-   D /trunk/code/bar.c
-   A /trunk/code/baz.c (from /trunk/code/bar.c:4)
-
-Rename bar.c to baz.c, and adjust Makefile accordingly.
-</screen>
-      </informalexample>
-
-      <para>The local changes you have made look like this:</para>
+      <para>Later, in revision 14, your collaborator Harry renames the file
+        <filename>bar.c</filename> to <filename>baz.c</filename>.
+        Unfortunately, you don't realize this yet.  As it turns out,
+        you are busy in your working copy composing a different set of
+        changes, some of which also involve modifications
+        to <filename>bar.c</filename>:</para>
 
       <informalexample>
         <screen>
 $ svn diff
 Index: code/foo.c
 ===================================================================
---- code/foo.c  (revision 4)
-+++ code/foo.c  (working copy)
+--- code/foo.c	(revision 13)
++++ code/foo.c	(working copy)
 @@ -3,5 +3,5 @@
  int main(int argc, char *argv[])
  {
-        printf("I don't like being moved around!\n%s", bar());
--       return 0;
-+       return 1;
+     printf("I don't like being moved around!\n%s", bar());
+-    return 0;
++    return 1;
  }
 Index: code/bar.c
 ===================================================================
---- code/bar.c  (revision 4)
-+++ code/bar.c  (working copy)
+--- code/bar.c	(revision 13)
++++ code/bar.c	(working copy)
 @@ -1,4 +1,4 @@
  const char *bar(void)
  {
--       return "Me neither!\n";
-+       return "Well, I do like being moved around!\n";
+-    return "Me neither!\n";
++    return "Well, I do like being moved around!\n";
  }
+$
 </screen>
       </informalexample>
 
-      <para>Your changes are all based on revision 4.  They cannot be
-        committed because Harry has already checked in revision 5:</para>
+      <para>You first realize that someone else has
+        changed <filename>bar.c</filename> when your own commit
+        attempt fails:</para>
 
       <informalexample>
         <screen>
 $ svn commit -m "Small fixes"
 Sending        code/bar.c
-Sending        code/foo.c
-Transmitting file data ..
-svn: Commit failed (details follow):
-svn: File not found: transaction '5-5', path '/trunk/code/bar.c'
+svn: E155011: Commit failed (details follow):
+svn: E155011: File '/home/svn/project/code/bar.c' is out of date
+svn: E160013: File not found: transaction '14-e', path '/code/bar.c'
+$
 </screen>
       </informalexample>
 <!-- XXX: That error message should be cleaned up! -->
@@ -2883,9 +2869,10 @@ Updating '.':
    C code/bar.c
 A    code/baz.c
 U    Makefile
-Updated to revision 5.
+Updated to revision 14.
 Summary of conflicts:
   Tree conflicts: 1
+$
 </screen>
       </informalexample>
 
@@ -2900,63 +2887,48 @@ $ svn status
 M       code/foo.c
 A  +  C code/bar.c
       >   local edit, incoming delete upon update
-M       code/baz.c
+Summary of conflicts:
+  Tree conflicts: 1
+$
 </screen>
       </informalexample>
 
-      <para>Note how bar.c is automatically scheduled for re-addition
-        in your working copy, which simplifies things in case you want
-        to keep the file.</para>
+      <para>Note how <filename>bar.c</filename> is automatically
+        scheduled for re-addition in your working copy, which
+        simplifies things in case you want to keep the file.</para>
 
-      <para>Because a move in Subversion is implemented as a copy operation
-        followed by a delete operation, and these two operations cannot
-        be easily related to one another during an update, all Subversion
-        can warn you about is an incoming delete operation on a locally
-        modified file.
-        This delete operation <emphasis>may</emphasis> be part of a move,
-        or it could be a genuine delete operation.  Talking to your
-        collaborators, or, as a last resort, <command>svn log</command>,
-        is a good way to find out what has actually happened.</para>
+      <para>Because a move in Subversion is implemented as a copy
+        operation followed by a delete operation, and these two
+        operations cannot be easily related to one another during an
+        update, all Subversion can warn you about is an incoming
+        delete operation on a locally modified file.  This delete
+        operation <emphasis>may</emphasis> be part of a move, or it
+        could be a genuine delete operation.  Determining exactly what
+        semantic change was made to the repository is
+        important&mdash;you want to know just how your own edits fit
+        into the overall trajectory of the project.  So read log
+        messages, talk to your collaborators, study the line-based
+        differences&mdash;do whatever you must do&mdash;to determine
+        your best course of action.</para>
 
-      <para>Both <filename>foo.c</filename> and <filename>baz.c</filename>
-        are reported as locally modified in the output of
-        <command>svn status</command>.  You made the changes to
-        <filename>foo.c</filename> yourself, so this should not be
-        surprising.  But why is <filename>baz.c</filename> reported as
-        locally modified?</para>
-
-      <para>The answer is that despite the limitations of the move
-        implementation, Subversion was smart enough to transfer your
-        local edits in <filename>bar.c</filename>
-        into <filename>baz.c</filename>:</para>
+      <para>In this case, Harry's commit log message tells you what
+        you need to know.</para>
 
       <informalexample>
         <screen>
-$ svn diff code/baz.c
-Index: code/baz.c
-===================================================================
---- code/baz.c  (revision 5)
-+++ code/baz.c  (working copy)
-@@ -1,4 +1,4 @@
- const char *bar(void)
- {
--       return "Me neither!\n";
-+       return "Well, I do like being moved around!\n";
- }
+$ svn log -r14 ^/trunk
+------------------------------------------------------------------------
+r14 | harry | 2011-09-06 10:38:17 -0400 (Tue, 06 Sep 2011) | 1 line
+Changed paths:
+   M /Makefile
+   D /code/bar.c
+   A /code/baz.c (from /code/bar.c:13)
+
+Rename bar.c to baz.c, and adjust Makefile accordingly.
+------------------------------------------------------------------------
+$
 </screen>
       </informalexample>
-
-      <warning>
-        <para>Local edits to the file <filename>bar.c</filename>, which is
-          renamed during an update to <filename>baz.c</filename>, will
-          only be applied to <filename>bar.c</filename> if your working
-          copy of <filename>bar.c</filename> is based on the revision in
-          which it was last modified before being moved in the repository.
-          Otherwise, Subversion will resort to retreiving
-          <filename>baz.c</filename> from the repository, and will not
-          try to transfer your local modifications to it.  You will have
-          to do so manually.</para>
-      </warning>
 
       <para><command>svn info</command> shows the URLs of the items
         involved in the conflict. The <emphasis>left</emphasis> URL
@@ -2972,6 +2944,8 @@ $ svn info code/bar.c | tail -n 4
 Tree conflict: local edit, incoming delete upon update
   Source  left: (file) ^/trunk/code/bar.c@4
   Source right: (none) ^/trunk/code/bar.c@5
+
+$
 </screen>
       </informalexample>
 
@@ -2982,15 +2956,78 @@ Tree conflict: local edit, incoming delete upon update
       <informalexample>
         <screen>
 $ svn commit -m "Small fixes" 
-svn: Commit failed (details follow):
-svn: Aborting commit: 'code/bar.c' remains in conflict
+svn: E155015: Commit failed (details follow):
+svn: E155015: Aborting commit: '/home/svn/project/code/bar.c' remains in confl
+ict
+$
 </screen>
       </informalexample>
 
-      <para>So how can this conflict be resolved?  You can either agree
-        or disagree with the move Harry made.  In case you agree, you can
-        delete <filename>bar.c</filename> and mark the tree conflict as
-        resolved:</para>
+      <para>To resolve this conflict, you must either agree or
+        disagree with the move that Harry made.</para>
+
+      <para>If you agree with the move, your <filename>bar.c</filename>
+        is superfluous.  You'll want to delete it and mark the tree
+        conflict as resolved.  But wait:  you made changes to that
+        file!  Before deleting <filename>bar.c</filename>, you need to
+        decide if the changes you made to it need to be applied
+        elsewhere, for example to the new <filename>baz.c</filename>
+        file where all of <filename>bar.c</filename>'s code now lives.
+        Let's assume that your changes do need to <quote>follow the
+        move</quote>.  Subversion isn't smart enough to do this work
+        for you<footnote><para>In some cases, Subversion 1.5 and 1.6
+        <emphasis>would</emphasis> actually handle this for you, but
+        this somewhat hit-or-miss functionality was removed in
+        Subversion 1.7.</para></footnote>, so you need to migrate your
+        changes manually.</para>
+
+      <para>In our example, you could manually re-make your change
+        to <filename>bar.c</filename> pretty easily&mdash;it was,
+        after all, a single-line change.  That's not always the case,
+        though, so we'll show a more scalable approach.  We'll first
+        use <command>svn diff</command> to create a patch file.  Then
+        we'll edit the headers of that patch file to point to the new
+        name of our renamed file.  Finally, we re-apply the modified
+        patch to our working copy.</para>
+
+      <informalexample>
+        <screen>
+$ svn diff code/bar.c > PATCHFILE
+$ cat PATCHFILE
+Index: code/bar.c
+===================================================================
+--- code/bar.c	(working copy)
++++ code/bar.c	(working copy)
+@@ -1,4 +1,4 @@
+ const char *bar(void)
+ {
+-    return "Me neither!\n";
++    return "Well, I do like being moved around!\n";
+ }
+$ ### Edit PATCHFILE to refer to code/baz.c instead of code/bar.c
+$ cat PATCHFILE
+Index: code/baz.c
+===================================================================
+--- code/baz.c	(working copy)
++++ code/baz.c	(working copy)
+@@ -1,4 +1,4 @@
+ const char *bar(void)
+ {
+-    return "Me neither!\n";
++    return "Well, I do like being moved around!\n";
+ }
+$ svn patch PATCHFILE
+U         code/baz.c
+$
+</screen>
+      </informalexample>
+
+      <para>Now that the changes you originally made
+        to <filename>bar.c</filename> have been successfully
+        reproduced in <filename>baz.c</filename>, you can
+        delete <filename>bar.c</filename> and resolve the conflict,
+        instructing the resolution logic to accept what is currently
+        in the working copy as the desired result.</para>
 
       <informalexample>
         <screen>
@@ -3004,36 +3041,37 @@ M       code/baz.c
 $ svn diff
 Index: code/foo.c
 ===================================================================
---- code/foo.c  (revision 5)
+--- code/foo.c  (revision 14)
 +++ code/foo.c  (working copy)
 @@ -3,5 +3,5 @@
  int main(int argc, char *argv[])
  {
-        printf("I don't like being moved around!\n%s", bar());
--       return 0;
-+       return 1;
+     printf("I don't like being moved around!\n%s", bar());
+-    return 0;
++    return 1;
  }
 Index: code/baz.c
 ===================================================================
---- code/baz.c  (revision 5)
+--- code/baz.c  (revision 14)
 +++ code/baz.c  (working copy)
 @@ -1,4 +1,4 @@
  const char *bar(void)
  {
--       return "Me neither!\n";
-+       return "Well, I do like being moved around!\n";
+-    return "Me neither!\n";
++    return "Well, I do like being moved around!\n";
  }
+$
 </screen>
       </informalexample>
 
-      <para>If you do not agree with the move, you can delete
-        <filename>baz.c</filename> instead, after making sure any
-        changes made to it after it was renamed are either preserved
-        or not worth keeping.  Do not forget to revert the changes
-        Harry made to the <filename>Makefile</filename>.
+      <para>But what if you do not agree with the move?  Well, in that
+        case, you can delete <filename>baz.c</filename> instead, after
+        making sure any changes made to it after it was renamed are
+        either preserved or not worth keeping.  (Do not forget to also
+        revert the changes Harry made to <filename>Makefile</filename>.)
         Since <filename>bar.c</filename> is already scheduled for
-        re-addition, there is nothing else left to do, and the conflict
-        can be marked resolved:</para>
+        re-addition, there is nothing else left to do, and the
+        conflict can be marked resolved:</para>
 
       <informalexample>
         <screen>
@@ -3049,37 +3087,37 @@ M       Makefile
 $ svn diff
 Index: code/foo.c
 ===================================================================
---- code/foo.c	(revision 5)
+--- code/foo.c	(revision 14)
 +++ code/foo.c	(working copy)
 @@ -3,5 +3,5 @@
  int main(int argc, char *argv[])
  {
- 	printf("I don't like being moved around!\n%s", bar());
--	return 0;
-+	return 1;
+     printf("I don't like being moved around!\n%s", bar());
+-    return 0;
++    return 1;
  }
 Index: code/bar.c
 ===================================================================
---- code/bar.c	(revision 5)
+--- code/bar.c	(revision 14)
 +++ code/bar.c	(working copy)
 @@ -1,4 +1,4 @@
  const char *bar(void)
  {
--	return "Me neither!\n";
-+	return "Well, I do like being moved around!\n";
+-    return "Me neither!\n";
++    return "Well, I do like being moved around!\n";
  }
 Index: code/baz.c
 ===================================================================
---- code/baz.c	(revision 5)
+--- code/baz.c	(revision 14)
 +++ code/baz.c	(working copy)
 @@ -1,4 +0,0 @@
 -const char *bar(void)
 -{
--	return "Me neither!\n";
+-    return "Me neither!\n";
 -}
 Index: Makefile
 ===================================================================
---- Makefile	(revision 5)
+--- Makefile	(revision 14)
 +++ Makefile	(working copy)
 @@ -1,2 +1,2 @@
  foo: 
@@ -3088,9 +3126,9 @@ Index: Makefile
 </screen>
       </informalexample>
 
-      <para>In either case, you have now resolved your first tree
-        conflict!  You can commit your changes and tell Harry during
-        tea break about all the extra work he caused for you.</para>
+      <para>You've now resolved your first tree conflict!  You can
+        commit your changes and tell Harry during tea break about all
+        the extra work he caused for you.</para>
 
     </sect2>
   </sect1>
