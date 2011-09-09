@@ -751,10 +751,12 @@ $
         office,</quote> it could just as well mean <quote>across the
         globe.</quote> To facilitate this, all of Subversion's public
         interfaces that accept path arguments expect those paths to be
-        canonicalized&mdash;which is most easily accomplished by passing
-        them through the <function>svn_path_canonicalize()</function>
-        function&mdash;and encoded in UTF-8.  This means, for example, that
-        any new client binary that drives the
+        canonicalized&mdash;which is most easily accomplished by
+        passing them through <function>svn_dirent_canonicalize()</function>
+        or <function>svn_uri_canonicalize()</function> (depending on
+        whether you are canonicalizing a local system path or a URL,
+        respectively)&mdash;and encoded in UTF-8.  This means, for
+        example, that any new client binary that drives the
         <filename>libsvn_client</filename> interface needs to first
         convert paths from the locale-specific encoding to UTF-8
         before passing those paths to the Subversion libraries, and
@@ -1094,7 +1096,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Canonicalize the repository path.
-    repos_path = svn.core.svn_path_canonicalize(sys.argv[1])
+    repos_path = svn.core.svn_dirent_canonicalize(sys.argv[1])
 
     # Do the real work.
     crawl_youngest(repos_path)
@@ -1213,8 +1215,8 @@ if __name__ == '__main__':
     if len(args) != 1:
         usage_and_exit(2)
             
-    # Canonicalize the repository path.
-    wc_path = svn.core.svn_path_canonicalize(args[0])
+    # Canonicalize the working copy path.
+    wc_path = svn.core.svn_dirent_canonicalize(args[0])
 
     # Do the real work.
     try:
@@ -1232,11 +1234,13 @@ if __name__ == '__main__':
 
       <warning>
         <para>Run user-provided paths
-          through <function>svn_path_canonicalize()</function> before
-          passing them to other API functions.  Failure to do so can
-          trigger assertions in the underlying Subversion C library
-          which translate into rather immediate and unceremonious
-          program abortion.</para>
+          through the appropriate canonicalization function
+          (<function>svn_dirent_canonicalize()</function> or
+          <function>svn_uri_canonicalize()</function>) before passing
+          them to other API functions.  Failure to do so can trigger
+          assertions in the underlying Subversion C library which
+          translate into rather immediate and unceremonious program
+          abortion.</para>
       </warning>
 
       <para>Of particular interest to users of the Python flavor of
