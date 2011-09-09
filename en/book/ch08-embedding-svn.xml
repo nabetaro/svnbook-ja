@@ -31,12 +31,13 @@
 
     <para>Each of Subversion's core libraries can be said to exist in
       one of three main layers&mdash;the Repository layer, the
-      Repository Access (RA) layer, or the Client layer (see <xref
-      linkend="svn.intro.architecture.dia-1" /> in the Preface).  We will examine
-      these layers shortly, but first, let's briefly summarize
-      Subversion's various libraries.  For the sake of consistency, we
-      will refer to the libraries by their extensionless Unix library
-      names (<filename>libsvn_fs</filename>, <filename>libsvn_wc</filename>,
+      Repository Access (RA) layer, or the Client layer (see
+      <xref linkend="svn.intro.architecture.dia-1" /> in the Preface).
+      We will examine these layers shortly, but first, let's briefly
+      summarize Subversion's various libraries.  For the sake of
+      consistency, we will refer to the libraries by their
+      extensionless Unix library names
+      (<filename>libsvn_fs</filename>, <filename>libsvn_wc</filename>,
       <filename>mod_dav_svn</filename>, etc.).</para>
 
     <variablelist>
@@ -433,12 +434,13 @@
       <informalexample>
         <screen>
 $ svn --version
-svn, version 1.6.0
-   compiled Mar 21 2009, 17:27:36
+svn, version 1.7.0
+   compiled Nov 15 2011, 10:10:24
 
-Copyright (C) 2000-2009 CollabNet.
+Copyright (C) 2011 The Apache Software Foundation.
+This software consists of contributions made by many people; see the NOTICE
+file for more information.
 Subversion is open source software, see http://subversion.apache.org/
-This product includes software developed by CollabNet (http://www.Collab.Net/).
 
 The following repository access (RA) modules are available:
 
@@ -462,13 +464,13 @@ $
         functionality necessary for sending and receiving versioned
         data to and from the repository.  And each of the available RA
         plug-ins is able to perform that task using a specific
-        protocol&mdash;<filename>libsvn_ra_dav</filename> speaks
-        HTTP/WebDAV (optionally using SSL encryption) with an Apache
-        HTTP Server that is running the
-        <filename>mod_dav_svn</filename> Subversion server module;
-        <filename>libsvn_ra_svn</filename> speaks a custom network
-        protocol with the <command>svnserve</command> program; and so
-        on.</para>
+        protocol&mdash;<filename>libsvn_ra_neon</filename>
+        and <filename>libsvn_ra_serf</filename> speak HTTP/WebDAV
+        (optionally using SSL encryption) with an Apache HTTP Server
+        that is running the <filename>mod_dav_svn</filename>
+        Subversion server module; <filename>libsvn_ra_svn</filename>
+        speaks a custom network protocol with the
+        <command>svnserve</command> program; and so on.</para>
 
       <para>For those who wish to access a Subversion repository
         using still another protocol, that is precisely why the
@@ -499,18 +501,15 @@ $
       <para>Subversion's working copy library,
         <filename>libsvn_wc</filename>, is directly responsible for
         managing the data in the working copies.  To accomplish this,
-        the library stores administrative information about each
-        working copy directory within a special subdirectory.  This
+        the library stores administrative information about the
+        working copy within a special subdirectory.  This
         subdirectory, named <filename>.svn</filename>, is present in
-        each working copy directory and contains various other files
+        each working copy and contains various other files
         and directories that record state and provide a private
         workspace for administrative action.  For those familiar with
         CVS, this <filename>.svn</filename> subdirectory is similar in
         purpose to the <filename>CVS</filename> administrative
-        directories found in CVS working copies.  For more information
-        about the <filename>.svn</filename> administrative area, see
-        <xref linkend="svn.developer.insidewc"/> later in this
-        chapter.</para>
+        directories found in CVS working copies.</para>
 
       <para>The Subversion client library,
         <filename>libsvn_client</filename>, has the broadest
@@ -585,128 +584,6 @@ $
       </sidebar>
 
     </sect2>
-  </sect1>
-
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <!-- ================================================================= -->
-  <sect1 id="svn.developer.insidewc">
-    <title>Inside the Working Copy Administration Area</title>
-    
-    <para>As we mentioned earlier, each directory of a Subversion
-      working copy contains a special subdirectory called
-      <filename>.svn</filename> that houses administrative data about
-      that working copy directory.  Subversion uses the information in
-      <filename>.svn</filename> to keep track of things such as:</para>
-
-    <itemizedlist>
-      <listitem>
-        <para>Which repository location(s) are represented by the
-          files and subdirectories in the working copy
-          directory</para>
-      </listitem>
-      <listitem>
-        <para>What revision of each of those files and directories is
-          currently present in the working copy</para>
-      </listitem>
-      <listitem>
-        <para>Any user-defined properties that might be attached
-          to those files and directories</para>
-      </listitem>
-      <listitem>
-        <para>Pristine (unedited) copies of the working copy
-          files</para>
-      </listitem>
-    </itemizedlist>
-
-    <para>The Subversion working copy administration area's layout and
-      contents are considered implementation details not really
-      intended for human consumption.  Developers are encouraged to
-      use Subversion's public APIs, or the tools that Subversion
-      provides, to access and manipulate the working copy data,
-      instead of directly reading or modifying those files.  The file
-      formats employed by the working copy library for its
-      administrative data do change from time to time&mdash;a fact
-      that the public APIs do a great job of hiding from the average
-      user.  In this section, we expose some of these implementation
-      details sheerly to appease your overwhelming curiosity.</para>
-
-    <!-- =============================================================== -->
-    <sect2 id="svn.developer.insidewc.entries">
-      <title>The Entries File</title>
-
-      <para>Perhaps the single most important file in the
-        <filename>.svn</filename> directory is the
-        <filename>entries</filename> file.  It
-        contains the bulk of the administrative
-        information about the versioned items in a working copy
-        directory.  This one file tracks the repository
-        URLs, pristine revision, file checksums, pristine text and
-        property timestamps, scheduling and conflict state
-        information, last-known commit information (author, revision,
-        timestamp), local copy history&mdash;practically everything
-        that a Subversion client is interested in knowing about a
-        versioned (or to-be-versioned) resource!</para>
-
-      <para>Folks familiar with CVS's administrative directories will
-        have recognized at this point that Subversion's
-        <filename>.svn/entries</filename> file serves the purposes of,
-        among other things, CVS's <filename>CVS/Entries</filename>,
-        <filename>CVS/Root</filename>, and
-        <filename>CVS/Repository</filename> files combined.</para>
-
-      <para>The format of the <filename>.svn/entries</filename> file
-        has changed over time.  Originally an XML file, it now uses a
-        custom&mdash;though still human-readable&mdash;file format.
-        While XML was a great choice for early developers of
-        Subversion who were frequently debugging the file's contents
-        (and Subversion's behavior in light of them), the need for
-        easy developer debugging has diminished as Subversion has
-        matured and has been replaced by the user's need for snappier
-        performance.  Be aware that Subversion's working copy library
-        automatically upgrades working copies from one format to
-        another&mdash;it reads the old formats and writes the
-        new&mdash;which saves you the hassle of checking out a new
-        working copy, but can also complicate situations where
-        different versions of Subversion might be trying to use the
-        same working copy.</para>
-
-    </sect2>
-
-    <!-- =============================================================== -->
-    <sect2 id="svn.developer.insidewc.base-and-props">
-      <title>Pristine Copies and Property Files</title>
-
-      <para>As mentioned before, the <filename>.svn</filename>
-        directory also holds the pristine <quote>text-base</quote>
-        versions of files.  You can find those in
-        <filename>.svn/text-base</filename>.  The benefits of these
-        pristine copies are multiple&mdash;network-free checks for
-        local modifications and difference reporting, network-free
-        reversion of modified or missing files, more efficient
-        transmission of changes to the server&mdash;but they come at the
-        cost of having each versioned file stored at least twice on
-        disk.  These days, this seems to be a negligible penalty for
-        most files.  However, the situation gets uglier as the size of
-        your versioned files grows.  Some attention is being given to
-        making the presence of the <quote>text-base</quote> an option.
-        Ironically, though, it is as your versioned files' sizes get
-        larger that the existence of the <quote>text-base</quote>
-        becomes more crucial&mdash;who wants to transmit a huge file
-        across a network just because she wants to commit a tiny
-        change to it?</para>
-
-      <para>Similar in purpose to the <quote>text-base</quote> files
-        are the property files and their pristine
-        <quote>prop-base</quote> copies, located in
-        <filename>.svn/props</filename> and
-        <filename>.svn/prop-base</filename>, respectively.  Since
-        directories can have properties too, there are also
-        <filename>.svn/dir-props</filename> and
-        <filename>.svn/dir-prop-base</filename> files.</para>
-
-    </sect2>
-
   </sect1>
 
   <!-- ================================================================= -->
@@ -847,6 +724,23 @@ $
     </sect2>
 
     <!-- =============================================================== -->
+    <sect2 id="svn.developer.usingapi.funcsbatons">
+      <title>Functions and Batons</title> 
+
+      <para>To facilite <quote>streamy</quote> (asyncronous) behavior
+        and provide consumers of the Subversion C API with hooks for
+        handling information in customizable ways, many functions in
+        the API accept pairs of parameters: a pointer to a callback
+        function, and a pointer to a blob of memory called
+        a <firstterm>baton</firstterm> that carries context
+        information for that callback function.  Batons are typically
+        C structures with additional information that the callback
+        function needs but which is not given directly to the callback
+        function by the driving API function.</para>
+
+    </sect2>
+
+    <!-- =============================================================== -->
     <sect2 id="svn.developer.usingapi.urlpath">
       <title>URL and Path Requirements</title>
 
@@ -873,8 +767,8 @@ $
 
       <para>Also, Subversion APIs require all URL parameters to be
         properly URI-encoded.  So, instead of passing
-        <uri>file:///home/username/My File.txt</uri> as the URL of a
-        file named <filename>My File.txt</filename>, you need to pass
+        <uri>file:///home/username/My&nbsp;File.txt</uri> as the URL of a
+        file named <filename>My&nbsp;File.txt</filename>, you need to pass
         <uri>file:///home/username/My%20File.txt</uri>.  Again,
         Subversion supplies helper functions that your application can
         use&mdash;<function>svn_path_uri_encode()</function> and
@@ -1263,7 +1157,7 @@ def generate_status_code(status):
                }
     return code_map.get(status, '?')
 
-def do_status(wc_path, verbose):
+def do_status(wc_path, verbose, prefix):
     # Build a client context baton.
     ctx = svn.client.svn_client_create_context()
 
@@ -1274,7 +1168,10 @@ def do_status(wc_path, verbose):
         # the status crawl
         text_status = generate_status_code(status.text_status)
         prop_status = generate_status_code(status.prop_status)
-        print '%s%s  %s' % (text_status, prop_status, path)
+        prefix_text = ''
+        if prefix is not None:
+            prefix_text = prefix + " "
+        print '%s%s%s  %s' % (prefix_text, text_status, prop_status, path)
         
     # Do the status crawl, using _status_callback() as our callback function.
     revision = svn.core.svn_opt_revision_t()
@@ -1287,8 +1184,12 @@ def usage_and_exit(errorcode):
     """Print usage message, and exit with ERRORCODE."""
     stream = errorcode and sys.stderr or sys.stdout
     stream.write("""Usage: %s OPTIONS WC-PATH
+
+  Print working copy status, optionally with a bit of prefix text.
+
 Options:
   --help, -h    : Show this usage message
+  --prefix ARG  : Print ARG, followed by a space, before each line of output
   --verbose, -v : Show all statuses, even uninteresting ones
 """ % (os.path.basename(sys.argv[0])))
     sys.exit(errorcode)
@@ -1296,13 +1197,17 @@ Options:
 if __name__ == '__main__':
     # Parse command-line options.
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hv", ["help", "verbose"])
+        opts, args = getopt.getopt(sys.argv[1:], "hv",
+                                   ["help", "prefix=", "verbose"])
     except getopt.GetoptError:
         usage_and_exit(1)
     verbose = 0
+    prefix = None
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             usage_and_exit(0)
+        if opt in ("--prefix"):
+            prefix = arg
         if opt in ("-v", "--verbose"):
             verbose = 1
     if len(args) != 1:
@@ -1313,7 +1218,7 @@ if __name__ == '__main__':
 
     # Do the real work.
     try:
-        do_status(wc_path, verbose)
+        do_status(wc_path, verbose, prefix)
     except svn.core.SubversionException, e:
         sys.stderr.write("Error (%d): %s\n" % (e.apr_err, e.message))
         sys.exit(1)
@@ -1323,13 +1228,34 @@ if __name__ == '__main__':
       <para>As was the case in
         <xref linkend="svn.developer.usingapi.otherlangs.ex-1" />,
         this program is pool-free and uses, for the most part, normal
-        Python datatypes.  Also note that the path passed to this
-        program (like the last one) gets run through
-        <function>svn_path_canonicalize()</function>, because to
-        <emphasis>not</emphasis> do so runs the risk of triggering the
-        underlying Subversion C library's assertions about such
-        things, which translates into rather immediate and
-        unceremonious program abortion.</para>
+        Python datatypes.</para>
+
+      <warning>
+        <para>Run user-provided paths
+          through <function>svn_path_canonicalize()</function> before
+          passing them to other API functions.  Failure to do so can
+          trigger assertions in the underlying Subversion C library
+          which translate into rather immediate and unceremonious
+          program abortion.</para>
+      </warning>
+
+      <para>Of particular interest to users of the Python flavor of
+        Subversion's API is the implementation of callback functions.
+        As previously mentioned, Subversion's C API makes liberal use
+        of the callback function/baton paradigm.  API functions which
+        in C accept a function and baton pair only accept a callback
+        function parameter in Python.  How, then, does the caller pass
+        arbitrary context information to the callback function?  In
+        Python, this is done by taking advantage of Python's scoping
+        rules and default argument values.  You can see this in action
+        in <xref linkend="svn.developer.usingapi.otherlangs.ex-2" />.
+        The <function>svn_client_status2()</function> function is
+        given a callback function
+        (<function>_status_callback()</function>) but no
+        baton&mdash;<function>_status_callback()</function> gets
+        access to the user-provided prefix string because that
+        variable falls into the scope of the function
+        automatically.</para>
 
     </sect2>
   </sect1>
