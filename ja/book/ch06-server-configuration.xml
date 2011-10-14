@@ -1,0 +1,3730 @@
+<chapter id="svn.serverconfig">
+  <title>サーバの設定</title>
+
+  <para>A Subversion repository can be accessed simultaneously by clients running on
+the same machine on which the repository resides using URLs carrying the
+<literal>file://</literal> scheme.  But the typical Subversion setup
+involves a single server machine being accessed from clients on computers
+all over the office&mdash;or, perhaps, all over the world.</para>
+
+  <para>This chapter describes how to get your Subversion repository exposed outside
+its host machine for use by remote clients.  We will cover Subversion's
+currently available server mechanisms, discussing the configuration and use
+of each.  After reading this chapter, you should be able to decide which
+networking setup is right for your needs, as well as understand how to
+enable such a setup on your host computer.</para>
+
+
+  
+  
+  
+  <!-- ================================================================= -->
+<!-- ================================================================= -->
+<!-- ================================================================= -->
+<sect1 id="svn.serverconfig.overview">
+
+    <title>概要</title>
+
+    <para>Subversion was designed with an abstract repository access layer.  This
+means that a repository can be programmatically accessed by any sort of
+server process, and the client <quote>repository access</quote> API allows
+programmers to write plug-ins that speak relevant network protocols.  In
+theory, Subversion can use an infinite number of network implementations.
+In practice, there are only two Subversion servers in widespread use today.</para>
+
+    <para>Apache is an extremely popular web server; using the
+<command>mod_dav_svn</command> module, Apache can access a repository and
+make it available to clients via the WebDAV/DeltaV protocol, which is an
+extension of HTTP.  Because Apache is an extremely extensible server, it
+provides a number of features <quote>for free,</quote> such as encrypted SSL
+communication, logging, integration with a number of third-party
+authentication systems, and limited built-in web browsing of repositories.</para>
+
+    <para>In the other corner is <command>svnserve</command>: a small, lightweight
+server program that speaks a custom protocol with clients.  Because its
+protocol is explicitly designed for Subversion and is stateful (unlike
+HTTP), it provides significantly faster network operations&mdash;but at the
+cost of some features as well.  While it can use SASL to provide a variety
+of authentication and encryption options, it has no logging or built-in web
+browsing.  It is, however, extremely easy to set up and is often the best
+option for small teams just starting out with Subversion.</para>
+
+    <para>The network protocol which <command>svnserve</command> speaks may also be
+tunneled over an SSH connection.  This deployment option for
+<command>svnserve</command> differs quite a bit in features from a
+traditional <command>svnserve</command> deployment.  SSH is used to encrypt
+all communication.  SSH is also used exclusively to authenticate, so real
+system accounts are required on the server host (unlike vanilla
+<command>svnserve</command>, which has its own private user accounts).
+Finally, because this setup requires that each user spawn a private,
+temporary <command>svnserve</command> process, it's equivalent (from a
+permissions point of view) to allowing a group of local users to all access
+the repository via <literal>file://</literal> URLs.  Path-based access
+control has no meaning, since each user is accessing the repository database
+files directly.</para>
+
+    <para><xref linkend="svn.serverconfig.overview.tbl-1"/> provides a quick summary
+of the three typical server deployments.</para>
+
+    <table id="svn.serverconfig.overview.tbl-1">
+      <title>Subversion サーバオプションの比較</title>
+      <tgroup cols="4">
+        <thead>
+          <row>
+            <entry>機能</entry>
+            <entry>Apache + mod_dav_svn</entry>
+            <entry>svnserve</entry>
+            <entry>SSH 経由の svnserve</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>認証オプション</entry>
+            <entry>HTTP Basic 認証、Digest 認証、X.509 証明書、LDAP、NTLM、その他 Apache httpd で利用可能な方法</entry>
+            <entry>デフォルトで CRAM-MD5、LDAP、NTLM、その他 SASL で利用可能な方法</entry>
+            <entry>SSH</entry>
+          </row>
+          <row>
+            <entry>ユーザアカウントオプション</entry>
+            <entry>プライベートな <quote>users</quote> ファイルや、その他 Apache httpd で利用可能な方法 (LDAP, SQL,
+etc.)</entry>
+            <entry>プライベートな <quote>users</quote> ファイルや、その他 SASL で利用可能な方法 (LDAP, SQL, etc.)</entry>
+            <entry>システムアカウント</entry>
+          </row>
+          <row>
+            <entry>認可オプション</entry>
+            <entry>リポジトリ全体かパスごとに指定した読み書きアクセスが可能</entry>
+            <entry>リポジトリ全体かパスごとに指定した読み書きアクセスが可能</entry>
+            <entry>リポジトリ全体を指定した読み書きアクセスのみが可能</entry>
+          </row>
+          <row>
+            <entry>暗号化</entry>
+            <entry>Available via optional SSL (https)</entry>
+            <entry>オプションのSASL 機能経由で可能</entry>
+            <entry>SSH 接続に内包</entry>
+          </row>
+          <row>
+            <entry>ログ</entry>
+            <entry>High-level operational logging of Subversion operations plus detailed
+logging at the per-HTTP-request level</entry>
+            <entry>高レベル操作ログのみ</entry>
+            <entry>高レベル操作ログのみ</entry>
+          </row>
+          <row>
+            <entry>相互運用性</entry>
+            <entry>他の WebDAVクライアントからアクセス可能</entry>
+            <entry>svn クライアントとのみ</entry>
+            <entry>svn クライアントとのみ</entry>
+          </row>
+          <row>
+            <entry>ウェブによる参照</entry>
+            <entry>制限があるビルトインサポート、あるいは ViewVC のようなサードパーティーツール経由</entry>
+            <entry>ViewVC のようなサードパーティーツール経由のみ</entry>
+            <entry>ViewVC のようなサードパーティーツール経由のみ</entry>
+          </row>
+          <row>
+            <entry>マスターサーバ・スレーブサーバの複製</entry>
+            <entry>スレーブからマスターへの透過的書き込みプロキシが利用可能</entry>
+            <entry>読み込み専用のスレーブサーバのみ作成可能</entry>
+            <entry>読み込み専用のスレーブサーバのみ作成可能</entry>
+          </row>
+          <row>
+            <entry>スピード</entry>
+            <entry>やや遅い</entry>
+            <entry>やや速い</entry>
+            <entry>やや速い</entry>
+          </row>
+          <row>
+            <entry>最初のセットアップ</entry>
+            <entry>やや複雑</entry>
+            <entry>非常に簡単</entry>
+            <entry>どちらかといえば簡単</entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </table>
+
+  </sect1>
+
+  <sect1 id="svn.serverconfig.choosing">
+
+    <title>サーバ形態の選択</title>
+
+    <para>So, which server should you use? Which is best?</para>
+
+    <para>Obviously, there's no right answer to that question.  Every team has
+different needs, and the different servers all represent different sets of
+trade-offs.  The Subversion project itself doesn't endorse one server or
+another, or consider either server more <quote>official</quote> than
+another.</para>
+
+    <para>Here are some reasons why you might choose one deployment over another, as
+well as reasons you might <emphasis>not</emphasis> choose one.</para>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.choosing.svnserve">
+
+      <title>svnserve サーバ</title>
+
+      <variablelist>
+        <varlistentry>
+          <term>使いたくなるだろう理由は以下の通りです。</term>
+          <listitem>
+            <itemizedlist>
+              <listitem>
+                <para>簡単に素早くセットアップできます。</para>
+              </listitem>
+              <listitem>
+                <para>ネットワークプロトコルには状態があり、WebDAV よりも非常に高速です。</para>
+              </listitem>
+              <listitem>
+                <para>サーバにシステムアカウントを作る必要がありません。</para>
+              </listitem>
+              <listitem>
+                <para>ネットワーク越しにパスワードを渡しません。</para>
+              </listitem>
+            </itemizedlist>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>やめておきたくなるだろう理由は以下の通りです。</term>
+          <listitem>
+            <itemizedlist>
+              <listitem>
+                <para>By default, only one authentication method is available, the network
+protocol is not encrypted, and the server stores clear text passwords.  (All
+these things can be changed by configuring SASL, but it's a bit more work to
+do.)</para>
+              </listitem>
+              <listitem>
+                <para>No advanced logging facilities.</para>
+              </listitem>
+              <listitem>
+                <para>No built-in web browsing.  (You'd have to install a separate web server and
+repository browsing software to add this.)</para>
+              </listitem>
+            </itemizedlist>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+    </sect2>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.choosing.svn-ssh">
+
+      <title>SSH 経由の svnserve</title>
+
+      <variablelist>
+        <varlistentry>
+          <term>使いたくなるだろう理由は以下の通りです。</term>
+          <listitem>
+            <itemizedlist>
+              <listitem>
+                <para>The network protocol is stateful and noticeably faster than WebDAV.</para>
+              </listitem>
+              <listitem>
+                <para>You can take advantage of existing SSH accounts and user infrastructure.</para>
+              </listitem>
+              <listitem>
+                <para>ネットワークのトラフィックはすべて暗号化されています。</para>
+              </listitem>
+            </itemizedlist>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>やめておきたくなるだろう理由は以下の通りです。</term>
+          <listitem>
+            <itemizedlist>
+              <listitem>
+                <para>認証方法の選択肢はひとつしかありません。</para>
+              </listitem>
+              <listitem>
+                <para>No advanced logging facilities.</para>
+              </listitem>
+              <listitem>
+                <para>It requires users to be in the same system group, or use a shared SSH key.</para>
+              </listitem>
+              <listitem>
+                <para>If used improperly, it can lead to file permission problems.</para>
+              </listitem>
+            </itemizedlist>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+    </sect2>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.choosing.apache">
+
+      <title>Apache HTTP サーバ</title>
+
+      <variablelist>
+        <varlistentry>
+          <term>使いたくなるだろう理由は以下の通りです。</term>
+          <listitem>
+            <itemizedlist>
+              <listitem>
+                <para>It allows Subversion to use any of the numerous authentication systems
+already integrated with Apache.</para>
+              </listitem>
+              <listitem>
+                <para>There is no need to create system accounts on the server.</para>
+              </listitem>
+              <listitem>
+                <para>Apache のログ機構をすべて利用できます。</para>
+              </listitem>
+              <listitem>
+                <para>Network traffic can be encrypted via SSL.</para>
+              </listitem>
+              <listitem>
+                <para>HTTP(S) can usually go through corporate firewalls.</para>
+              </listitem>
+              <listitem>
+                <para>Built-in repository browsing is available via web browser.</para>
+              </listitem>
+              <listitem>
+                <para>リポジトリを、透過的なバージョン管理を持つネットワークドライブとしてマウントできます (<xref
+linkend="svn.webdav.autoversioning"/> をご覧ください)。</para>
+              </listitem>
+            </itemizedlist>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>やめておきたくなるだろう理由は以下の通りです。</term>
+          <listitem>
+            <itemizedlist>
+              <listitem>
+                <para>Noticeably slower than <command>svnserve</command>, because HTTP is a
+stateless protocol and requires more network turnarounds.</para>
+              </listitem>
+              <listitem>
+                <para>初期セットアップが複雑になる可能性があります。</para>
+              </listitem>
+            </itemizedlist>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+    </sect2>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.choosing.recommendations">
+
+      <title>提案</title>
+
+      <para>In general, the authors of this book recommend a vanilla
+<command>svnserve</command> installation for small teams just trying to get
+started with a Subversion server; it's the simplest to set up and has the
+fewest maintenance issues.  You can always switch to a more complex server
+deployment as your needs change.</para>
+
+      <para>Here are some general recommendations and tips, based on years of supporting
+users:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>If you're trying to set up the simplest possible server for your group, a
+vanilla <command>svnserve</command> installation is the easiest, fastest
+route.  Note, however, that your repository data will be transmitted in the
+clear over the network.  If your deployment is entirely within your
+company's LAN or VPN, this isn't an issue.  If the repository is exposed to
+the wide-open Internet, you might want to make sure that either the
+repository's contents aren't sensitive (e.g., it contains only open source
+code), or that you go the extra mile in configuring SASL to encrypt network
+communications.</para>
+        </listitem>
+
+        <listitem>
+          <para>If you need to integrate with existing legacy identity systems (LDAP, Active
+Directory, NTLM, X.509, etc.), you must use either the Apache-based server
+or <command>svnserve</command> configured with SASL.</para>
+        </listitem>
+
+        <listitem>
+          <para>If you've decided to use either Apache or stock <command>svnserve</command>,
+create a single <command>svn</command> user on your system and run the
+server process as that user.  Be sure to make the repository directory
+wholly owned by the <command>svn</command> user as well.  From a security
+point of view, this keeps the repository data nicely siloed and protected by
+operating system filesystem permissions, changeable by only the Subversion
+server process itself.</para> </listitem>
+
+        <listitem>
+          <para>If you have an existing infrastructure that is heavily based on SSH
+accounts, and if your users already have system accounts on your server
+machine, it makes sense to deploy an <command>svnserve</command>-over-SSH
+solution.  Otherwise, we don't widely recommend this option to the public.
+It's generally considered safer to have your users access the repository via
+(imaginary) accounts managed by <command>svnserve</command> or Apache,
+rather than by full-blown system accounts.  If your deep desire for
+encrypted communication still draws you to this option, we recommend using
+Apache with SSL or <command>svnserve</command> with SASL encryption instead.</para> </listitem>
+
+        <listitem>
+          <para>Do <emphasis>not</emphasis> be seduced by the simple idea of having all of
+your users access a repository directly via <literal>file://</literal>
+URLs.  Even if the repository is readily available to everyone via a network
+share, this is a bad idea.  It removes any layers of protection between the
+users and the repository: users can accidentally (or intentionally) corrupt
+the repository database, it becomes hard to take the repository offline for
+inspection or upgrade, and it can lead to a mess of file permission problems
+(see <xref linkend="svn.serverconfig.multimethod"/>).  Note that this is
+also one of the reasons we warn against accessing repositories via
+<literal>svn+ssh://</literal> URLs&mdash;from a security standpoint, it's
+effectively the same as local users accessing via
+<literal>file://</literal>, and it can entail all the same problems if the
+administrator isn't careful.</para>
+            </listitem> </itemizedlist>
+
+    </sect2>
+
+  </sect1>
+
+  
+  
+  
+  <!-- ================================================================= -->
+<!-- ================================================================= -->
+<!-- ================================================================= -->
+<sect1 id="svn.serverconfig.svnserve">
+
+    <title>svnserve (カスタムサーバ)</title>
+
+    <para>The <command>svnserve</command> program is a lightweight server, capable of
+speaking to clients over TCP/IP using a custom, stateful protocol.  Clients
+contact an <command>svnserve</command> server by using URLs that begin with
+the <literal>svn://</literal> or <literal>svn+ssh://</literal> scheme.  This
+section will explain the different ways of running
+<command>svnserve</command>, how clients authenticate themselves to the
+server, and how to configure appropriate access control to your
+repositories.</para>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.svnserve.invoking">
+      <title>サーバの起動</title>
+
+      <para><command>svnserve</command> プログラムを動作させるのに、以下のように、いくつか異なる方法があります。</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>リクエストを受け付ける、スタンドアロンデーモンとして <command>svnserve</command> 実行します。</para>
+        </listitem>
+        <listitem>
+          <para>Have the Unix <command>inetd</command> daemon temporarily spawn
+<command>svnserve</command> whenever a request comes in on a certain port.</para>
+        </listitem>
+        <listitem>
+          <para>Have SSH invoke a temporary <command>svnserve</command> over an encrypted
+tunnel.</para>
+        </listitem>
+        <listitem>
+          <para>Run <command>svnserve</command> as a Microsoft Windows service.</para>
+        </listitem>
+        <listitem>
+          <para>Run <command>svnserve</command> as a launchd job.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>The following sections will cover in detail these various deployment options
+for <command>svnserve</command>.</para>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.svnserve.invoking.daemon">
+        <title>デーモンとしての svnserve</title>
+
+        <para>The easiest option is to run <command>svnserve</command> as a standalone
+<quote>daemon</quote> process.  Use the <option>-d</option> option for this:</para>
+
+        <informalexample>
+          <screen>
+$ svnserve -d
+$               # svnserve が実行中、ポート 3690 で listen
+</screen>
+        </informalexample>
+
+        <para>When running <command>svnserve</command> in daemon mode, you can use the
+<option>--listen-port</option> and <option>--listen-host</option> options to
+customize the exact port and hostname to <quote>bind</quote> to.</para>
+
+        <para>Once we successfully start <command>svnserve</command> as explained
+previously, it makes every repository on your system available to the
+network.  A client needs to specify an <emphasis>absolute</emphasis> path in
+the repository URL.  For example, if a repository is located at
+<filename>/var/svn/project1</filename>, a client would reach it via
+<uri>svn://host.example.com/var/svn/project1</uri>.  To increase security,
+you can pass the <option>-r</option> option to <command>svnserve</command>,
+which restricts it to exporting only repositories below that path.  For
+example:</para>
+
+        <informalexample>
+          <screen>
+$ svnserve -d -r /var/svn
+&hellip;
+</screen>
+        </informalexample>
+
+        <para>Using the <option>-r</option> option effectively modifies the location that
+the program treats as the root of the remote filesystem space.  Clients then
+use URLs that have that path portion removed from them, leaving much shorter
+(and much less revealing) URLs:</para>
+
+        <informalexample>
+          <screen>
+$ svn checkout svn://host.example.com/project1
+&hellip;
+</screen>
+        </informalexample>
+
+      </sect3>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.svnserve.invoking.inetd">
+        <title>inetd 経由の svnserve</title>
+
+        <para>If you want <command>inetd</command> to launch the process, you need to pass
+the <option>-i</option> (<option>--inetd</option>) option.  In the following
+example, we've shown the output from running <literal>svnserve -i</literal>
+at the command line, but note that this isn't how you actually start the
+daemon; see the paragraphs following the example for how to configure
+<command>inetd</command> to start <command>svnserve</command>.</para>
+
+        <informalexample>
+          <screen>
+$ svnserve -i
+( success ( 2 2 ( ) ( edit-pipeline svndiff1 absent-entries commit-revprops d\
+epth log-revprops atomic-revprops partial-replay ) ) ) 
+</screen>
+        </informalexample>
+
+        <para>When invoked with the <option>--inetd</option> option,
+<command>svnserve</command> attempts to speak with a Subversion client via
+<filename>stdin</filename> and <filename>stdout</filename> using a custom
+protocol.  This is the standard behavior for a program being run via
+<command>inetd</command>.  The IANA has reserved port 3690 for the
+Subversion protocol, so on a Unix-like system you can add lines to
+<filename>/etc/services</filename> such as these (if they don't already
+exist):</para>
+
+        <informalexample>
+          <programlisting>
+svn           3690/tcp   # Subversion
+svn           3690/udp   # Subversion
+</programlisting>
+        </informalexample>
+
+        <para>If your system is using a classic Unix-like <command>inetd</command> daemon,
+you can add this line to <filename>/etc/inetd.conf</filename>:</para>
+
+        <informalexample>
+          <programlisting>
+svn stream tcp nowait svnowner /usr/bin/svnserve svnserve -i
+</programlisting>
+        </informalexample>
+
+        <para>Make sure <quote>svnowner</quote> is a user that has appropriate permissions
+to access your repositories.  Now, when a client connection comes into your
+server on port 3690, <command>inetd</command> will spawn an
+<command>svnserve</command> process to service it.  Of course, you may also
+want to add <option>-r</option> to the configuration line as well, to
+restrict which repositories are exported.</para>
+
+      </sect3>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.svnserve.invoking.tunnel">
+        <title>トンネル経由の svnserve</title>
+
+        <para>Another way to invoke <command>svnserve</command> is in tunnel mode, using
+the <option>-t</option> option.  This mode assumes that a remote-service
+program such as <command>rsh</command> or <command>ssh</command> has
+successfully authenticated a user and is now invoking a private
+<command>svnserve</command> process <emphasis>as that user</emphasis>.
+(Note that you, the user, will rarely, if ever, have reason to invoke
+<command>svnserve</command> with the <option>-t</option> at the command
+line; instead, the SSH daemon does so for you.)  The
+<command>svnserve</command> program behaves normally (communicating via
+<filename>stdin</filename> and <filename>stdout</filename>)  and assumes
+that the traffic is being automatically redirected over some sort of tunnel
+back to the client.  When <command>svnserve</command> is invoked by a tunnel
+agent like this, be sure that the authenticated user has full read and write
+access to the repository database files.  It's essentially the same as a
+local user accessing the repository via <literal>file://</literal> URLs.</para>
+
+        <para>This option is described in much more detail later in this chapter in <xref
+linkend="svn.serverconfig.svnserve.sshauth"/>.</para>
+
+      </sect3>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.svnserve.invoking.winservice">
+        <title>svnserve as a Windows service</title>
+
+        <para>If your Windows system is a descendant of Windows NT (Windows 2000 or
+newer), you can run <command>svnserve</command> as a standard Windows
+service.  This is typically a much nicer experience than running it as a
+standalone daemon with the <option>--daemon</option> (<option>-d</option>)
+option.  Using daemon mode requires launching a console, typing a command,
+and then leaving the console window running indefinitely.  A Windows
+service, however, runs in the background, can start at boot time
+automatically, and can be started and stopped using the same consistent
+administration interface as other Windows services. </para>
+
+        <para>You'll need to define the new service using the command-line tool
+<command>SC.EXE</command>.  Much like the <command>inetd</command>
+configuration line, you must specify an exact invocation of
+<command>svnserve</command> for Windows to run at startup time:</para>
+
+        <informalexample>
+          <screen>
+C:\&gt; sc create svn
+        binpath= "C:\svn\bin\svnserve.exe --service -r C:\repos"
+        displayname= "Subversion Server"
+        depend= Tcpip
+        start= auto
+</screen>
+        </informalexample>
+
+        <para>This defines a new Windows service named <literal>svn</literal> which
+executes a particular <command>svnserve.exe</command> command when started
+(in this case, rooted at <filename>C:\repos</filename>).  There are a number
+of caveats in the prior example, however.</para>
+
+        <para>First, notice that the <command>svnserve.exe</command> program must always
+be invoked with the <option>--service</option> option.  Any other options to
+<command>svnserve</command> must then be specified on the same line, but you
+cannot add conflicting options such as <option>--daemon</option>
+(<option>-d</option>), <option>--tunnel</option>, or
+<option>--inetd</option> (<option>-i</option>).  Options such as
+<option>-r</option> or <option>--listen-port</option> are fine, though.
+Second, be careful about spaces when invoking the <command>SC.EXE</command>
+command: the <literal>key= value</literal> patterns must have no spaces
+between <literal>key=</literal> and must have exactly one space before the
+<literal>value</literal>.  Lastly, be careful about spaces in your command
+line to be invoked.  If a directory name contains spaces (or other
+characters that need escaping), place the entire inner value of
+<literal>binpath</literal> in double quotes, by escaping them:</para>
+
+        <informalexample>
+          <screen>
+C:\&gt; sc create svn
+        binpath= "\"C:\program files\svn\bin\svnserve.exe\" --service -r C:\repos"
+        displayname= "Subversion Server"
+        depend= Tcpip
+        start= auto
+</screen>
+        </informalexample>
+
+        <para>Also note that the word <literal>binpath</literal> is misleading&mdash;its
+value is a <emphasis>command line</emphasis>, not the path to an
+executable.  That's why you need to surround it with quotes if it contains
+embedded spaces.</para>
+
+        <para>Once the service is defined, it can be stopped, started, or queried using
+standard GUI tools (the Services administrative control panel), or at the
+command line:</para>
+
+        <informalexample>
+          <screen>
+C:\&gt; net stop svn
+C:\&gt; net start svn
+</screen>
+        </informalexample>
+
+        <para>The service can also be uninstalled (i.e., undefined) by deleting its
+definition: <userinput>sc delete svn</userinput>.  Just be sure to stop the
+service first! The <command>SC.EXE</command> program has many other
+subcommands and options; run <userinput>sc /?</userinput> to learn more
+about it.</para>
+
+      </sect3>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.svnserve.invoking.launchd">
+        <title>svnserve as a launchd job</title>
+
+        <para>Mac OS X (10.4 and higher) uses <command>launchd</command> to manage
+processes (including daemons) both system-wide and per-user.  A
+<command>launchd</command> job is specified by parameters in an XML property
+list file, and the <command>launchctl</command> command is used to manage
+the lifecycle of those jobs.</para>
+
+        <para>When configured to run as a <command>launchd</command> job,
+<command>svnserve</command> is automatically launched on demand whenever
+incoming Subversion <literal>svn://</literal> network traffic needs to be
+handled.  This is far more convenient than a configuration which requires
+you to manually invoke <command>svnserve</command> as a long-running
+background process.</para>
+
+        <para>To configure <command>svnserve</command> as a <command>launchd</command>
+job, first create a job definition file named
+<filename>/Library/LaunchDaemons/org.apache.subversion.svnserve.plist</filename>.
+<xref linkend="svn.serverconfig.svnserve.invoking.launchd.ex-1"/> provides
+an example of such a file.</para>
+
+        <example id="svn.serverconfig.svnserve.invoking.launchd.ex-1">
+          <title>A sample svnserve launchd job definition</title>
+<programlisting>
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+    &lt;dict&gt;
+        &lt;key&gt;Label&lt;/key&gt;
+        &lt;string&gt;org.apache.subversion.svnserve&lt;/string&gt;
+        &lt;key&gt;ServiceDescription&lt;/key&gt;
+        &lt;string&gt;Host Subversion repositories using svn:// scheme&lt;/string&gt;
+        &lt;key&gt;ProgramArguments&lt;/key&gt;
+        &lt;array&gt;
+            &lt;string&gt;/usr/bin/svnserve&lt;/string&gt;
+            &lt;string&gt;--inetd&lt;/string&gt;
+            &lt;string&gt;--root=/var/svn&lt;/string&gt;
+        &lt;/array&gt;
+        &lt;key&gt;UserName&lt;/key&gt;
+        &lt;string&gt;svn&lt;/string&gt;
+        &lt;key&gt;GroupName&lt;/key&gt;
+        &lt;string&gt;svn&lt;/string&gt;
+        &lt;key&gt;inetdCompatibility&lt;/key&gt;
+        &lt;dict&gt;
+            &lt;key&gt;Wait&lt;/key&gt;
+            &lt;false/&gt;
+        &lt;/dict&gt;
+        &lt;key&gt;Sockets&lt;/key&gt;
+        &lt;dict&gt;
+            &lt;key&gt;Listeners&lt;/key&gt;
+            &lt;array&gt;
+                &lt;dict&gt;
+                    &lt;key&gt;SockServiceName&lt;/key&gt;
+                    &lt;string&gt;svn&lt;/string&gt;
+                    &lt;key&gt;Bonjour&lt;/key&gt;
+                    &lt;true/&gt;
+                &lt;/dict&gt;
+            &lt;/array&gt;
+        &lt;/dict&gt;
+    &lt;/dict&gt;
+&lt;/plist&gt;
+</programlisting></example>
+
+        <warning>
+          <para>The <command>launchd</command> system can be somewhat challenging to learn.
+Fortunately, documentation exists for the commands described in this
+section. For example, run <userinput>man launchd</userinput> from the
+command line to see the manual page for <command>launchd</command> itself,
+<userinput>man launchd.plist</userinput> to read about the job definition
+format, etc.</para>
+        </warning>
+
+        <para>Once your job definition file is created, you can activate the job using
+<command>launchctl load</command>:</para>
+
+        <informalexample>
+          <screen>
+$ sudo launchctl load \
+       -w /Library/LaunchDaemons/org.apache.subversion.svnserve.plist
+</screen>
+        </informalexample>
+
+        <para>To be clear, this action doesn't actually launch <command>svnserve</command>
+yet.  It simply tells <command>launchd</command> how to fire up
+<command>svnserve</command> when incoming networking traffic arrives on the
+<literal>svn</literal> network port; it will be terminated it after the
+traffic has been handled.</para>
+
+        <note>
+          <para>Because we want <command>svnserve</command> to be a system-wide daemon
+process, we need to use <command>sudo</command> to manage this job as an
+administrator.  Note also that the <literal>UserName</literal> and
+<literal>GroupName</literal> keys in the definition file are
+optional&mdash;if omitted, the job will run as the user who loaded the job.</para>
+        </note>
+
+        <para>Deactivating the job is just as easy to do&mdash;use <command>launchctl
+unload</command>:</para>
+
+        <informalexample>
+          <screen>
+$ sudo launchctl unload \
+       -w /Library/LaunchDaemons/org.apache.subversion.svnserve.plist
+</screen>
+        </informalexample>
+
+        <para><command>launchctl</command> also provides a way for you to query the status
+of jobs.  If the job is loaded, there will be line which matches the
+<literal>Label</literal> specified in the job definition file:</para>
+
+        <informalexample>
+          <screen>
+$ sudo launchctl list | grep org.apache.subversion.svnserve
+-       0       org.apache.subversion.svnserve
+$
+</screen>
+        </informalexample>
+
+      </sect3>
+    </sect2>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.svnserve.auth">
+      <title>Built-in Authentication and Authorization</title>
+
+      <para>クライアントが<command>svnserve</command>プロセスに接続する とき、以下のことが起こります:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>クライアントは特定のリポジトリを選択します。</para>
+        </listitem>
+        <listitem>
+          <para>The server processes the repository's
+<filename>conf/svnserve.conf</filename> file and begins to enforce any
+authentication and authorization policies it describes.</para>
+        </listitem>
+        <listitem>
+          <para>Depending on the defined policies, one of the following may occur:</para>
+          <itemizedlist>
+            <listitem>
+              <para>The client may be allowed to make requests anonymously, without ever
+receiving an authentication challenge.</para>
+            </listitem>
+            <listitem>
+              <para>The client may be challenged for authentication at any time.</para>
+            </listitem>
+            <listitem>
+              <para>If operating in tunnel mode, the client will declare itself to be already
+externally authenticated (typically by SSH).</para>
+            </listitem>
+          </itemizedlist>
+        </listitem>
+      </itemizedlist>
+
+      <para>The <command>svnserve</command> server, by default, knows only how to send a
+CRAM-MD5<footnote><para>See RFC 2195.</para></footnote> authentication challenge.  In
+essence, the server sends a small amount of data to the client.  The client
+uses the MD5 hash algorithm to create a fingerprint of the data and password
+combined, and then sends the fingerprint as a response.  The server performs
+the same computation with the stored password to verify that the result is
+identical.  <emphasis>At no point does the actual password travel over the
+network.</emphasis></para>
+
+      <para>If your <command>svnserve</command> server was built with SASL support, it
+not only knows how to send CRAM-MD5 challenges, but also likely knows a
+whole host of other authentication mechanisms.  See <xref
+linkend="svn.serverconfig.svnserve.sasl"/> later in this chapter to learn
+how to configure SASL authentication and encryption.</para>
+
+      <para>It's also possible, of course, for the client to be externally authenticated
+via a tunnel agent, such as <command>ssh</command>.  In that case, the
+server simply examines the user it's running as, and uses this name as the
+authenticated username.  For more on this, see the later section, <xref
+linkend="svn.serverconfig.svnserve.sshauth"/>.</para>
+
+      <para>As you've already guessed, a repository's <filename>svnserve.conf</filename>
+file is the central mechanism for controlling authentication and
+authorization policies.  The file has the same format as other configuration
+files (see <xref linkend="svn.advanced.confarea"/>): section names are
+marked by square brackets (<literal>[</literal> and <literal>]</literal>),
+comments begin with hashes (<literal>#</literal>), and each section contains
+specific variables that can be set (<literal>variable = value</literal>).
+Let's walk through these files and learn how to use them.</para>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.svnserve.auth.users">
+        <title>ユーザファイルと認証範囲の作成</title>
+
+        <para>For now, the <literal>[general]</literal> section of
+<filename>svnserve.conf</filename> has all the variables you need.  Begin by
+changing the values of those variables: choose a name for a file that will
+contain your usernames and passwords and choose an authentication realm:</para>
+
+        <informalexample>
+          <programlisting>
+[general]
+password-db = userfile
+realm = example realm
+</programlisting>
+        </informalexample>
+
+        <para>The <literal>realm</literal> is a name that you define.  It tells clients
+which sort of <quote>authentication namespace</quote> they're connecting to;
+the Subversion client displays it in the authentication prompt and uses it
+as a key (along with the server's hostname and port) for caching credentials
+on disk (see <xref linkend="svn.serverconfig.netmodel.credcache"/>).  The
+<literal>password-db</literal> variable points to a separate file that
+contains a list of usernames and passwords, using the same familiar format.
+For example:</para>
+
+        <informalexample>
+          <programlisting>
+[users]
+harry = foopassword
+sally = barpassword
+</programlisting>
+        </informalexample>
+
+        <para>The value of <literal>password-db</literal> can be an absolute or relative
+path to the users file.  For many admins, it's easy to keep the file right
+in the <filename>conf/</filename> area of the repository, alongside
+<filename>svnserve.conf</filename>.  On the other hand, it's possible you
+may want to have two or more repositories share the same users file; in that
+case, the file should probably live in a more public place.  The
+repositories sharing the users file should also be configured to have the
+same realm, since the list of users essentially defines an authentication
+realm.  Wherever the file lives, be sure to set the file's read and write
+permissions appropriately.  If you know which user(s)
+<command>svnserve</command> will run as, restrict read access to the users
+file as necessary.</para>
+
+      </sect3>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.svnserve.auth.general">
+        <title>アクセス制御の設定</title>
+
+        <para>There are two more variables to set in the
+<filename>svnserve.conf</filename> file: they determine what unauthenticated
+(anonymous) and authenticated users are allowed to do.  The variables
+<literal>anon-access</literal> and <literal>auth-access</literal> can be set
+to the value <literal>none</literal>, <literal>read</literal>, or
+<literal>write</literal>.  Setting the value to <literal>none</literal>
+prohibits both reading and writing; <literal>read</literal> allows read-only
+access to the repository, and <literal>write</literal> allows complete
+read/write access to the repository.  For example:</para>
+
+        <informalexample>
+          <programlisting>
+[general]
+password-db = userfile
+realm = example realm
+
+# anonymous users can only read the repository
+anon-access = read
+
+# authenticated users can both read and write
+auth-access = write
+</programlisting>
+        </informalexample>
+
+        <para>The example settings are, in fact, the default values of the variables,
+should you forget to define them.  If you want to be even more conservative,
+you can block anonymous access completely:</para>
+
+        <informalexample>
+          <programlisting>
+[general]
+password-db = userfile
+realm = example realm
+
+# anonymous users aren't allowed
+anon-access = none
+
+# authenticated users can both read and write
+auth-access = write
+</programlisting>
+        </informalexample>
+
+        <para>The server process understands not only these <quote>blanket</quote> access
+controls to the repository, but also finer-grained access restrictions
+placed on specific files and directories within the repository.  To make use
+of this feature, you need to define a file containing more detailed rules,
+and then set the <literal>authz-db</literal> variable to point to it:</para>
+
+        <informalexample>
+          <programlisting>
+[general]
+password-db = userfile
+realm = example realm
+
+# Specific access rules for specific locations
+authz-db = authzfile
+</programlisting>
+        </informalexample>
+
+        <para>We discuss the syntax of the <filename>authzfile</filename> file in detail
+later in this chapter, in <xref
+linkend="svn.serverconfig.pathbasedauthz"/>.  Note that the
+<literal>authz-db</literal> variable isn't mutually exclusive with the
+<literal>anon-access</literal> and <literal>auth-access</literal> variables;
+if all the variables are defined at once, <emphasis>all</emphasis> of the
+rules must be satisfied before access is allowed.</para>
+
+      </sect3>
+    </sect2>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.svnserve.sasl">
+      <title>SASL 付き <command>svnserve</command> の使い方</title>
+
+      <para>For many teams, the built-in CRAM-MD5 authentication is all they need from
+<command>svnserve</command>.  However, if your server (and your Subversion
+clients) were built with the Cyrus Simple Authentication and Security Layer
+(SASL) library, you have a number of authentication and encryption options
+available to you.</para>
+
+      <sidebar>
+        <title>SASL とは何か?</title>
+
+        <para>The Cyrus Simple Authentication and Security Layer is open source software
+written by Carnegie Mellon University.  It adds generic authentication and
+encryption capabilities to any network protocol, and as of Subversion 1.5
+and later, both the <command>svnserve</command> server and
+<command>svn</command> client know how to make use of this library.  It may
+or may not be available to you: if you're building Subversion yourself,
+you'll need to have at least version 2.1 of SASL installed on your system,
+and you'll need to make sure that it's detected during Subversion's build
+process.  The Subversion command-line client will report the availability of
+Cyrus SASL when you run <userinput>svn --version</userinput>; if you're
+using some other Subversion client, you might need to check with the package
+maintainer as to whether SASL support was compiled in.</para>
+
+        <para>SASL comes with a number of pluggable modules that represent different
+authentication systems: Kerberos (GSSAPI), NTLM, One-Time-Passwords (OTP),
+DIGEST-MD5, LDAP, Secure-Remote-Password (SRP), and others.  Certain
+mechanisms may or may not be available to you; be sure to check which
+modules are provided.</para>
+
+        <para>You can download Cyrus SASL (both code and documentation) from <ulink
+url="http://asg.web.cmu.edu/sasl/sasl-library.html" />.</para>
+
+      </sidebar>
+
+      <para>Normally, when a subversion client connects to <command>svnserve</command>,
+the server sends a greeting that advertises a list of the capabilities it
+supports, and the client responds with a similar list of capabilities.  If
+the server is configured to require authentication, it then sends a
+challenge that lists the authentication mechanisms available; the client
+responds by choosing one of the mechanisms, and then authentication is
+carried out in some number of round-trip messages.  Even when SASL
+capabilities aren't present, the client and server inherently know how to
+use the CRAM-MD5 and ANONYMOUS mechanisms (see <xref
+linkend="svn.serverconfig.svnserve.auth"/>).  If server and client were
+linked against SASL, a number of other authentication mechanisms may also be
+available.  However, you'll need to explicitly configure SASL on the server
+side to advertise them.</para>
+
+      <sect3 id="svn.serverconfig.svnserve.sasl.authn">
+        <title>SASL による認証</title>
+
+        <para>To activate specific SASL mechanisms on the server, you'll need to do two
+things.  First, create a <literal>[sasl]</literal> section in your
+repository's <filename>svnserve.conf</filename> file with an initial
+key-value pair:</para>
+
+        <informalexample>
+          <programlisting>
+          [sasl]
+          use-sasl = true
+</programlisting>
+        </informalexample>
+
+        <para>Second, create a main SASL configuration file called
+<filename>svn.conf</filename> in a place where the SASL library can find
+it&mdash;typically in the directory where SASL plug-ins are located.  You'll
+have to locate the plug-in directory on your particular system, such as
+<filename>/usr/lib/sasl2/</filename> or <filename>/etc/sasl2/</filename>.
+(Note that this is <emphasis>not</emphasis> the
+<filename>svnserve.conf</filename> file that lives within a repository!)</para>
+
+        <para>On a Windows server, you'll also have to edit the system registry (using a
+tool such as <command>regedit</command>)  to tell SASL where to find
+things.  Create a registry key named
+<literal>[HKEY_LOCAL_MACHINE\SOFTWARE\Carnegie Mellon\Project Cyrus\SASL
+Library]</literal>, and place two keys inside it: a key called
+<literal>SearchPath</literal> (whose value is a path to the directory
+containing the SASL <filename>sasl*.dll</filename> plug-in libraries), and a
+key called <literal>ConfFile</literal> (whose value is a path to the parent
+directory containing the <filename>svn.conf</filename> file you created).</para>
+
+        <para>Because SASL provides so many different kinds of authentication mechanisms,
+it would be foolish (and far beyond the scope of this book) to try to
+describe every possible server-side configuration.  Instead, we recommend
+that you read the documentation supplied in the <filename>doc/</filename>
+subdirectory of the SASL source code.  It goes into great detail about every
+mechanism and how to configure the server appropriately for each.  For the
+purposes of this discussion, we'll just demonstrate a simple example of
+configuring the DIGEST-MD5 mechanism.  For example, if your
+<filename>subversion.conf</filename> (or <filename>svn.conf</filename>) file
+contains the following:</para>
+
+        <informalexample>
+          <programlisting>
+pwcheck_method: auxprop
+auxprop_plugin: sasldb
+sasldb_path: /etc/my_sasldb
+mech_list: DIGEST-MD5
+</programlisting>
+        </informalexample>
+
+        <para>you've told SASL to advertise the DIGEST-MD5 mechanism to clients and to
+check user passwords against a private password database located at
+<filename>/etc/my_sasldb</filename>.  A system administrator can then use
+the <command>saslpasswd2</command> program to add or modify usernames and
+passwords in the database:</para>
+
+        <informalexample>
+          <screen>
+$ saslpasswd2 -c -f /etc/my_sasldb -u realm username
+</screen>
+        </informalexample>
+
+        <para>A few words of warning: first, make sure the <quote>realm</quote> argument
+to <command>saslpasswd2</command> matches the same realm you've defined in
+your repository's <filename>svnserve.conf</filename> file; if they don't
+match, authentication will fail.  Also, due to a shortcoming in SASL, the
+common realm must be a string with no space characters.  Finally, if you
+decide to go with the standard SASL password database, make sure the
+<command>svnserve</command> program has read access to the file (and
+possibly write access as well, if you're using a mechanism such as OTP).</para>
+
+        <para>This is just one simple way of configuring SASL.  Many other authentication
+mechanisms are available, and passwords can be stored in other places such
+as in LDAP or a SQL database.  Consult the full SASL documentation for
+details.</para>
+
+        <para>Remember that if you configure your server to only allow certain SASL
+authentication mechanisms, this forces all connecting clients to have SASL
+support as well.  Any Subversion client built without SASL support (which
+includes all pre-1.5 clients) will be unable to authenticate.  On the one
+hand, this sort of restriction may be exactly what you want (<quote>My
+clients must all use Kerberos!</quote>).  However, if you still want
+non-SASL clients to be able to authenticate, be sure to advertise the
+CRAM-MD5 mechanism as an option.  All clients are able to use CRAM-MD5,
+whether they have SASL capabilities or not.</para>
+
+      </sect3>
+
+      <sect3 id="svn.serverconfig.svnserve.sasl.encryption">
+        <title>SASL 暗号化</title>
+
+        <para>SASL is also able to perform data encryption if a particular mechanism
+supports it.  The built-in CRAM-MD5 mechanism doesn't support encryption,
+but DIGEST-MD5 does, and mechanisms such as SRP actually require use of the
+OpenSSL library.  To enable or disable different levels of encryption, you
+can set two values in your repository's <filename>svnserve.conf</filename>
+file:</para>
+
+        <informalexample>
+          <programlisting>
+[sasl]
+use-sasl = true
+min-encryption = 128
+max-encryption = 256
+</programlisting>
+        </informalexample>
+
+        <para>The <literal>min-encryption</literal> and <literal>max-encryption</literal>
+variables control the level of encryption demanded by the server.  To
+disable encryption completely, set both values to 0.  To enable simple
+checksumming of data (i.e., prevent tampering and guarantee data integrity
+without encryption), set both values to 1.  If you wish to allow&mdash;but
+not require&mdash;encryption, set the minimum value to 0, and the maximum
+value to some bit length.  To require encryption unconditionally, set both
+values to numbers greater than 1.  In our previous example, we require
+clients to do at least 128-bit encryption, but no more than 256-bit
+encryption.</para>
+
+      </sect3>
+    </sect2>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.svnserve.sshauth">
+      <title>SSH のトンネリング</title>
+
+      <para><command>svnserve</command>'s built-in authentication (and SASL support) can
+be very handy, because it avoids the need to create real system accounts.
+On the other hand, some administrators already have well-established SSH
+authentication frameworks in place.  In these situations, all of the
+project's users already have system accounts and the ability to <quote>SSH
+into</quote> the server machine.</para>
+
+      <para>It's easy to use SSH in conjunction with <command>svnserve</command>.  The
+client simply uses the <literal>svn+ssh://</literal> URL scheme to connect:</para>
+
+      <informalexample>
+        <screen>
+$ whoami
+harry
+
+$ svn list svn+ssh://host.example.com/repos/project
+harryssh@host.example.com's password:  *****
+
+foo
+bar
+baz
+&hellip;
+</screen>
+      </informalexample>
+
+      <para>In this example, the Subversion client is invoking a local
+<command>ssh</command> process, connecting to
+<literal>host.example.com</literal>, authenticating as the user
+<literal>harryssh</literal> (according to SSH user configuration), then
+spawning a private <command>svnserve</command> process on the remote machine
+running as the user <literal>harryssh</literal>.  The
+<command>svnserve</command> command is being invoked in tunnel mode
+(<option>-t</option>), and its network protocol is being
+<quote>tunneled</quote> over the encrypted connection by
+<command>ssh</command>, the tunnel agent.  If the client performs a commit,
+the authenticated username <literal>harryssh</literal> will be used as the
+author of the new revision.</para>
+
+      <para>The important thing to understand here is that the Subversion client is
+<emphasis>not</emphasis> connecting to a running <command>svnserve</command>
+daemon.  This method of access doesn't require a daemon, nor does it notice
+one if present.  It relies wholly on the ability of <command>ssh</command>
+to spawn a temporary <command>svnserve</command> process, which then
+terminates when the network connection is closed.</para>
+
+      <para>When using <literal>svn+ssh://</literal> URLs to access a repository,
+remember that it's the <command>ssh</command> program prompting for
+authentication, and <emphasis>not</emphasis> the <command>svn</command>
+client program.  That means there's no automatic password-caching going on
+(see <xref linkend="svn.serverconfig.netmodel.credcache"/>).  The Subversion
+client often makes multiple connections to the repository, though users
+don't normally notice this due to the password caching feature.  When using
+<literal>svn+ssh://</literal> URLs, however, users may be annoyed by
+<command>ssh</command> repeatedly asking for a password for every outbound
+connection.  The solution is to use a separate SSH password-caching tool
+such as <command>ssh-agent</command> on a Unix-like system, or
+<command>pageant</command> on Windows.</para>
+
+      <para>When running over a tunnel, authorization is primarily controlled by
+operating system permissions to the repository's database files; it's very
+much the same as if Harry were accessing the repository directly via a
+<literal>file://</literal> URL.  If multiple system users are going to be
+accessing the repository directly, you may want to place them into a common
+group, and you'll need to be careful about umasks (be sure to read <xref
+linkend="svn.serverconfig.multimethod"/> later in this chapter).  But even
+in the case of tunneling, you can still use the
+<filename>svnserve.conf</filename> file to block access, by simply setting
+<literal>auth-access = read</literal> or <literal>auth-access =
+none</literal>.<footnote><para>Note that using any sort of <command>svnserve</command>-enforced access
+control at all is a bit pointless; the user already has direct access to the
+repository database.</para></footnote></para>
+
+      <para>You'd think that the story of SSH tunneling would end here, but it doesn't.
+Subversion allows you to create custom tunnel behaviors in your runtime
+<filename>config</filename> file (see <xref
+linkend="svn.advanced.confarea"/>).  For example, suppose you want to use
+RSH instead of SSH.<footnote><para>We don't actually recommend this, since RSH is notably less secure than SSH.</para></footnote> In the
+<literal>[tunnels]</literal> section of your <filename>config</filename>
+file, simply define it like this:</para>
+
+      <informalexample>
+        <programlisting>
+[tunnels]
+rsh = rsh
+</programlisting>
+      </informalexample>
+
+      <para>And now, you can use this new tunnel definition by using a URL scheme that
+matches the name of your new variable:
+<literal>svn+rsh://host/path</literal>.  When using the new URL scheme, the
+Subversion client will actually be running the command <userinput>rsh host
+svnserve -t</userinput> behind the scenes.  If you include a username in the
+URL (e.g., <literal>svn+rsh://username@host/path</literal>), the client will
+also include that in its command (<userinput>rsh username@host svnserve
+-t</userinput>).  But you can define new tunneling schemes to be much more
+clever than that:</para>
+
+      <informalexample>
+        <programlisting>
+[tunnels]
+joessh = $JOESSH /opt/alternate/ssh -p 29934
+</programlisting>
+      </informalexample>
+
+      <para>This example demonstrates a couple of things.  First, it shows how to make
+the Subversion client launch a very specific tunneling binary (the one
+located at <filename>/opt/alternate/ssh</filename>) with specific options.
+In this case, accessing an <literal>svn+joessh://</literal> URL would invoke
+the particular SSH binary with <option>-p 29934</option> as
+arguments&mdash;useful if you want the tunnel program to connect to a
+nonstandard port.</para>
+
+      <para>Second, it shows how to define a custom environment variable that can
+override the name of the tunneling program.  Setting the
+<literal>SVN_SSH</literal> environment variable is a convenient way to
+override the default SSH tunnel agent.  But if you need to have several
+different overrides for different servers, each perhaps contacting a
+different port or passing a different set of options to SSH, you can use the
+mechanism demonstrated in this example.  Now if we were to set the
+<literal>JOESSH</literal> environment variable, its value would override the
+entire value of the tunnel variable&mdash;<command>$JOESSH</command> would
+be executed instead of <userinput>/opt/alternate/ssh -p 29934</userinput>.</para>
+
+    </sect2>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.svnserve.sshtricks">
+      <title>SSH Configuration Tricks</title>
+
+      <para>It's possible to control not only the way in which the client invokes
+<command>ssh</command>, but also to control the behavior of
+<command>sshd</command> on your server machine.  In this section, we'll show
+how to control the exact <command>svnserve</command> command executed by
+<command>sshd</command>, as well as how to have multiple users share a
+single system account.</para>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.svnserve.sshtricks.setup">
+        <title>最初のセットアップ</title>
+
+        <para>To begin, locate the home directory of the account you'll be using to launch
+<command>svnserve</command>.  Make sure the account has an SSH
+public/private keypair installed, and that the user can log in via
+public-key authentication.  Password authentication will not work, since all
+of the following SSH tricks revolve around using the SSH
+<filename>authorized_keys</filename> file.</para>
+
+        <para>If it doesn't already exist, create the <filename>authorized_keys</filename>
+file (on Unix, typically <filename>~/.ssh/authorized_keys</filename>).  Each
+line in this file describes a public key that is allowed to connect.  The
+lines are typically of the form:</para>
+
+        <informalexample>
+          <programlisting>
+  ssh-dsa AAAABtce9euch&hellip; user@example.com
+</programlisting>
+        </informalexample>
+
+        <para>The first field describes the type of key, the second field is the
+base64-encoded key itself, and the third field is a comment.  However, it's
+a lesser known fact that the entire line can be preceded by a
+<literal>command</literal> field:</para>
+
+        <informalexample>
+          <programlisting>
+  command="program" ssh-dsa AAAABtce9euch&hellip; user@example.com
+</programlisting>
+        </informalexample>
+
+        <para>When the <literal>command</literal> field is set, the SSH daemon will run
+the named program instead of the typical tunnel-mode
+<command>svnserve</command> invocation that the Subversion client asks for.
+This opens the door to a number of server-side tricks.  In the following
+examples, we abbreviate the lines of the file as:</para>
+
+        <informalexample>
+          <programlisting>
+  command="program" TYPE KEY COMMENT
+</programlisting>
+        </informalexample>
+
+      </sect3>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.svnserve.sshtricks.fixedcmd">
+        <title>起動コマンドの制御</title>
+
+        <para>実行されるサーバ側コマンドを指定することができるので、特定の <command>svnserve</command>バイナリを指定したり、追加の引数を
+指定して実行することが簡単にできます:</para>
+
+        <informalexample>
+          <programlisting>
+  command="/path/to/svnserve -t -r /virtual/root" TYPE KEY COMMENT
+</programlisting>
+        </informalexample>
+
+        <para>In this example, <filename>/path/to/svnserve</filename> might be a custom
+wrapper script around <command>svnserve</command> which sets the umask (see
+<xref linkend="svn.serverconfig.multimethod"/>).  It also shows how to
+anchor <command>svnserve</command> in a virtual root directory, just as one
+often does when running <command>svnserve</command> as a daemon process.
+This might be done either to restrict access to parts of the system, or
+simply to relieve the user of having to type an absolute path in the
+<literal>svn+ssh://</literal> URL.</para>
+
+        <para>It's also possible to have multiple users share a single account.  Instead
+of creating a separate system account for each user, generate a
+public/private key pair for each person.  Then place each public key into
+the <filename>authorized_keys</filename> file, one per line, and use the
+<option>--tunnel-user</option> option:</para>
+
+        <informalexample>
+          <programlisting>
+  command="svnserve -t --tunnel-user=harry" TYPE1 KEY1 harry@example.com
+  command="svnserve -t --tunnel-user=sally" TYPE2 KEY2 sally@example.com
+</programlisting>
+        </informalexample>
+
+        <para>This example allows both Harry and Sally to connect to the same account via
+public key authentication.  Each of them has a custom command that will be
+executed; the <option>--tunnel-user</option> option tells
+<command>svnserve</command> to assume that the named argument is the
+authenticated user.  Without <option>--tunnel-user</option>, it would appear
+as though all commits were coming from the one shared system account.</para>
+
+        <para>A final word of caution: giving a user access to the server via public-key
+in a shared account might still allow other forms of SSH access, even if
+you've set the <literal>command</literal> value in
+<filename>authorized_keys</filename>.  For example, the user may still get
+shell access through SSH or be able to perform X11 or general port
+forwarding through your server.  To give the user as little permission as
+possible, you may want to specify a number of restrictive options
+immediately after the <literal>command</literal>:</para>
+
+        <informalexample>
+          <programlisting>
+  command="svnserve -t --tunnel-user=harry",no-port-forwarding,no-agent-forw
+arding,no-X11-forwarding,no-pty TYPE1 KEY1 harry@example.com
+</programlisting>
+        </informalexample>
+
+        <para>Note that this all must be on one line&mdash;truly on one line&mdash;since
+SSH <filename>authorized_keys</filename> files do not even allow the
+conventional backslash character (<literal>\</literal>) for line
+continuation.  The only reason we've shown it with a line break is to fit it
+on the physical page of a book.</para>
+
+      </sect3>
+    </sect2>
+  </sect1>
+
+
+  
+  
+  
+  <!-- ================================================================= -->
+<!-- ================================================================= -->
+<!-- ================================================================= -->
+<sect1 id="svn.serverconfig.httpd">
+
+    <title>httpd (Apache HTTP サーバ)</title>
+
+    <para>The Apache HTTP Server is a <quote>heavy-duty</quote> network server that
+Subversion can leverage.  Via a custom module, <command>httpd</command>
+makes Subversion repositories available to clients via the
+WebDAV/DeltaV<footnote><para>See <ulink url="http://www.webdav.org/"/>.</para></footnote> protocol, which is an
+extension to HTTP 1.1.  This protocol takes the ubiquitous HTTP protocol
+that is the core of the World Wide Web, and adds writing&mdash;specifically,
+versioned writing&mdash;capabilities.  The result is a standardized, robust
+system that is conveniently packaged as part of the Apache 2.0 software,
+supported by numerous operating systems and third-party products, and
+doesn't require network administrators to open up yet another custom
+port.<footnote><para>They really hate doing that.</para></footnote> While an Apache-Subversion server
+has more features than <command>svnserve</command>, it's also a bit more
+difficult to set up.  With flexibility often comes more complexity.</para>
+
+    <para>Much of the following discussion includes references to Apache configuration
+directives.  While some examples are given of the use of these directives,
+describing them in full is outside the scope of this chapter.  The Apache
+team maintains excellent documentation, publicly available on their web site
+at <ulink url="http://httpd.apache.org"/>.  For example, a general reference
+for the configuration directives is located at <ulink
+url="http://httpd.apache.org/docs-2.0/mod/directives.html" />.</para>
+
+    <para>Also, as you make changes to your Apache setup, it is likely that somewhere
+along the way a mistake will be made.  If you are not already familiar with
+Apache's logging subsystem, you should become aware of it.  In your
+<filename>httpd.conf</filename> file are directives that specify the on-disk
+locations of the access and error logs generated by Apache (the
+<literal>CustomLog</literal> and <literal>ErrorLog</literal> directives,
+respectively).  Subversion's <command>mod_dav_svn</command> uses Apache's
+error logging interface as well.  You can always browse the contents of
+those files for information that might reveal the source of a problem that
+is not clearly noticeable otherwise.</para>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.httpd.prereqs">
+      <title>必須要件</title>
+
+      <para>To network your repository over HTTP, you basically need four components,
+available in two packages.  You'll need Apache <command>httpd</command> 2.0
+or newer, the <command>mod_dav</command> DAV module that comes with it,
+Subversion, and the <command>mod_dav_svn</command> filesystem provider
+module distributed with Subversion.  Once you have all of those components,
+the process of networking your repository is as simple as:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Getting httpd up and running with the <command>mod_dav</command> module</para>
+        </listitem>
+        <listitem>
+          <para>Installing the <command>mod_dav_svn</command> backend to
+<command>mod_dav</command>, which uses Subversion's libraries to access the
+repository</para>
+        </listitem>
+        <listitem>
+          <para>Configuring your <filename>httpd.conf</filename> file to export (or expose)
+the repository</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>You can accomplish the first two items either by compiling
+<command>httpd</command> and Subversion from source code or by installing
+prebuilt binary packages of them on your system.  For the most up-to-date
+information on how to compile Subversion for use with the Apache HTTP
+Server, as well as how to compile and configure Apache itself for this
+purpose, see the <filename>INSTALL</filename> file in the top level of the
+Subversion source code tree.</para>
+
+    </sect2>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.httpd.basic">
+      <title>基本的な Apache の設定</title>
+
+      <para>Once you have all the necessary components installed on your system, all
+that remains is the configuration of Apache via its
+<filename>httpd.conf</filename> file.  Instruct Apache to load the
+<command>mod_dav_svn</command> module using the
+<literal>LoadModule</literal> directive.  This directive must precede any
+other Subversion-related configuration items.  If your Apache was installed
+using the default layout, your <command>mod_dav_svn</command> module should
+have been installed in the <filename>modules</filename> subdirectory of the
+Apache install location (often <filename>/usr/local/apache2</filename>).
+The <literal>LoadModule</literal> directive has a simple syntax, mapping a
+named module to the location of a shared library on disk:</para>
+
+      <informalexample>
+        <programlisting>
+LoadModule dav_svn_module     modules/mod_dav_svn.so
+</programlisting>
+      </informalexample>
+
+      <para>Apache interprets the <literal>LoadModule</literal> configuration item's
+library path as relative to its own server root.  If configured as
+previously shown, Apache will look for the Subversion DAV module shared
+library in its own <filename>modules/</filename> subdirectory.  Depending on
+how Subversion was installed on your system, you might need to specify a
+different path for this library altogether, perhaps even an absolute path
+such as in the following example:</para>
+
+      <informalexample>
+        <programlisting>
+LoadModule dav_svn_module     C:/Subversion/lib/mod_dav_svn.so
+</programlisting>
+      </informalexample>
+
+      <para>Note that if <command>mod_dav</command> was compiled as a shared object
+(instead of statically linked directly to the <command>httpd</command>
+binary), you'll need a similar <literal>LoadModule</literal> statement for
+it, too.  Be sure that it comes before the <command>mod_dav_svn</command>
+line:</para>
+
+      <informalexample>
+        <programlisting>
+LoadModule dav_module         modules/mod_dav.so
+LoadModule dav_svn_module     modules/mod_dav_svn.so
+</programlisting>
+      </informalexample>
+
+      <para>At a later location in your configuration file, you now need to tell Apache
+where you keep your Subversion repository (or repositories).  The
+<literal>Location</literal> directive has an XML-like notation, starting
+with an opening tag and ending with a closing tag, with various other
+configuration directives in the middle.  The purpose of the
+<literal>Location</literal> directive is to instruct Apache to do something
+special when handling requests that are directed at a given URL or one of
+its children.  In the case of Subversion, you want Apache to simply hand off
+support for URLs that point at versioned resources to the DAV layer.  You
+can instruct Apache to delegate the handling of all URLs whose path portions
+(the part of the URL that follows the server's name and the optional port
+number) begin with <filename>/repos/</filename> to a DAV provider whose
+repository is located at <filename>/var/svn/repository</filename> using the
+following <filename>httpd.conf</filename> syntax:</para>
+
+      <informalexample>
+        <programlisting>
+&lt;Location /repos&gt;
+  DAV svn
+  SVNPath /var/svn/repository
+&lt;/Location&gt;
+</programlisting>
+      </informalexample>
+
+      <para>If you plan to support multiple Subversion repositories that will reside in
+the same parent directory on your local disk, you can use an alternative
+directive&mdash;<literal>SVNParentPath</literal>&mdash;to indicate that
+common parent directory.  For example, if you know you will be creating
+multiple Subversion repositories in a directory
+<filename>/var/svn</filename> that would be accessed via URLs such as
+<uri>http://my.server.com/svn/repos1</uri>,
+<uri>http://my.server.com/svn/repos2</uri>, and so on, you could use the
+<filename>httpd.conf</filename> configuration syntax in the following
+example:</para>
+
+      <informalexample>
+        <programlisting>
+&lt;Location /svn&gt;
+  DAV svn
+
+  # "/svn/foo" のような URL をリポジトリ /var/svn/foo に、自動的にマッピングする
+  SVNParentPath /var/svn
+&lt;/Location&gt;
+</programlisting>
+      </informalexample>
+
+      <para>Using this syntax, Apache will delegate the handling of all URLs whose path
+portions begin with <filename>/svn/</filename> to the Subversion DAV
+provider, which will then assume that any items in the directory specified
+by the <literal>SVNParentPath</literal> directive are actually Subversion
+repositories.  This is a particularly convenient syntax in that, unlike the
+use of the <literal>SVNPath</literal> directive, you don't have to restart
+Apache to add or remove hosted repositories.</para>
+
+      <para>Be sure that when you define your new <literal>Location</literal>, it
+doesn't overlap with other exported locations.  For example, if your main
+<literal>DocumentRoot</literal> is exported to <filename>/www</filename>, do
+not export a Subversion repository in <literal>&lt;Location
+/www/repos&gt;</literal>.  If a request comes in for the URI
+<filename>/www/repos/foo.c</filename>, Apache won't know whether to look for
+a file <filename>repos/foo.c</filename> in the
+<literal>DocumentRoot</literal>, or whether to delegate
+<command>mod_dav_svn</command> to return <filename>foo.c</filename> from the
+Subversion repository.  The result is often an error from the server of the
+form <literal>301 Moved Permanently</literal>.</para>
+
+      <sidebar>
+        <title>サーバー名と COPY 要求</title>
+
+        <para>Subversion makes use of the <literal>COPY</literal> request type to perform
+server-side copies of files and directories.  As part of the sanity checking
+done by the Apache modules, the source of the copy is expected to be located
+on the same machine as the destination of the copy.  To satisfy this
+requirement, you might need to tell <command>mod_dav</command> the name you
+use as the hostname of your server.  Generally, you can use the
+<literal>ServerName</literal> directive in <filename>httpd.conf</filename>
+to accomplish this.</para>
+
+        <informalexample>
+          <programlisting>
+ServerName svn.example.com
+</programlisting>
+        </informalexample>
+
+        <para>If you are using Apache's virtual hosting support via the
+<literal>NameVirtualHost</literal> directive, you may need to use the
+<literal>ServerAlias</literal> directive to specify additional names by
+which your server is known.  Again, refer to the Apache documentation for
+full details.</para>
+      </sidebar>
+
+      <para>At this stage, you should strongly consider the question of permissions.  If
+you've been running Apache for some time now as your regular web server, you
+probably already have a collection of content&mdash;web pages, scripts, and
+such.  These items have already been configured with a set of permissions
+that allows them to work with Apache, or more appropriately, that allows
+Apache to work with those files.  Apache, when used as a Subversion server,
+will also need the correct permissions to read and write to your Subversion
+repository.</para>
+
+      <para>You will need to determine a permission system setup that satisfies
+Subversion's requirements without messing up any previously existing web
+page or script installations.  This might mean changing the permissions on
+your Subversion repository to match those in use by other things that Apache
+serves for you, or it could mean using the <literal>User</literal> and
+<literal>Group</literal> directives in <filename>httpd.conf</filename> to
+specify that Apache should run as the user and group that owns your
+Subversion repository.  There is no single correct way to set up your
+permissions, and each administrator will have different reasons for doing
+things a certain way.  Just be aware that permission-related problems are
+perhaps the most common oversight when configuring a Subversion repository
+for use with Apache.</para>
+
+    </sect2>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.httpd.authn">
+      <title>認証オプション</title>
+
+      <para>At this point, if you configured <filename>httpd.conf</filename> to contain
+something such as the following:</para>
+
+      <informalexample>
+        <programlisting>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNParentPath /var/svn
+&lt;/Location&gt;
+</programlisting>
+      </informalexample>
+
+      <para>your repository is <quote>anonymously</quote> accessible to the world.
+Until you configure some authentication and authorization policies, the
+Subversion repositories that you make available via the
+<literal>Location</literal> directive will be generally accessible to
+everyone.  In other words:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Anyone can use a Subversion client to check out a working copy of a
+repository URL (or any of its subdirectories).</para>
+        </listitem>
+        <listitem>
+          <para>Anyone can interactively browse the repository's latest revision simply by
+pointing a web browser to the repository URL.</para>
+        </listitem>
+        <listitem>
+          <para>Anyone can commit to the repository.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Of course, you might have already set up a <filename>pre-commit</filename>
+hook script to prevent commits (see <xref
+linkend="svn.reposadmin.create.hooks"/>).  But as you read on, you'll see
+that it's also possible to use Apache's built-in methods to restrict access
+in specific ways.</para>
+
+      <tip>
+        <para>Requiring authentication defends against invalid users directly accessing
+the repository, but does not guard the privacy of valid users' network
+activity.  See <xref linkend="svn.serverconfig.httpd.ssl"/> for how to
+configure your server to support SSL encryption, which can provide that
+extra layer of protection.</para>
+      </tip>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.httpd.authn.basic">
+        <title>Basic 認証</title>
+
+        <para>The easiest way to authenticate a client is via the HTTP Basic
+authentication mechanism, which simply uses a username and password to
+verify a user's identity.  Apache provides the <command>htpasswd</command>
+utility<footnote><para>See <ulink url="http://httpd.apache.org/docs/current/programs/htpasswd.html"
+/>.</para></footnote> for managing files containing
+usernames and passwords.</para>
+        
+        <warning>
+          <para>Basic authentication is <emphasis>extremely</emphasis> insecure, because it
+sends passwords over the network in very nearly plain text.  See <xref
+linkend="svn.serverconfig.httpd.authn.digest"/> for details on using the
+much safer Digest mechanism.</para>
+        </warning>
+
+        <para>First, create a password file and grant access to users Harry and Sally:</para>
+          
+        <informalexample>
+          <screen>
+$ ### 初回のみ: -c を指定してファイル作成
+$ ### -m を指定してパスワードをより安全な MD5 暗号化
+$ htpasswd -c -m /etc/svn-auth.htpasswd harry
+New password: *****
+Re-type new password: *****
+Adding password for user harry
+$ htpasswd -m /etc/svn-auth.htpasswd sally
+New password: *******
+Re-type new password: *******
+Adding password for user sally
+$
+</screen>
+        </informalexample>
+
+        <para>Next, add some more directives inside the
+<literal>&lt;Location&gt;</literal> block to tell Apache how to use the
+password file:</para>
+
+        <informalexample>
+          <programlisting>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNParentPath /var/svn
+
+  # 認証方式: Basic
+  AuthName "Subversion repository"
+  AuthType Basic
+  AuthUserFile /etc/svn-auth.htpasswd
+&lt;/Location&gt;
+</programlisting>
+        </informalexample>
+
+        <para>These directives work as follows:</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><literal>AuthName</literal> is an arbitrary name that you choose for the
+authentication domain.  Most browsers display this name in the dialog box
+when prompting for username and password.</para>
+          </listitem>
+          <listitem>
+            <para><literal>AuthType</literal> specifies the type of authentication to use.</para>
+          </listitem>
+          <listitem>
+            <para><literal>AuthUserFile</literal> specifies the location of the password file
+to use.</para>
+          </listitem>
+        </itemizedlist>
+        
+        <para>However, this <literal>&lt;Location&gt;</literal> block doesn't yet do
+anything useful.  It merely tells Apache that <emphasis>if</emphasis>
+authorization were required, it should challenge the Subversion client for a
+username and password.  (When authorization is required, Apache requires
+authentication as well.)  What's missing here, however, are directives that
+tell Apache <emphasis>which sorts</emphasis> of client requests require
+authorization; currently, none do.  The simplest thing is to specify that
+<emphasis>all</emphasis> requests require authorization by adding
+<literal>Require valid-user</literal> to the block:</para>
+
+        <informalexample>
+          <programlisting>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNParentPath /var/svn
+
+  # 認証方式: Basic
+  AuthName "Subversion repository"
+  AuthType Basic
+  AuthUserFile /etc/svn-auth.htpasswd
+
+  # 認可方式: 認証ユーザーのみ
+  Require valid-user
+&lt;/Location&gt;
+</programlisting>
+        </informalexample>
+
+        <para>Refer to <xref linkend="svn.serverconfig.httpd.authz"/> for more detail on
+the <literal>Require</literal> directive and other ways to set authorization
+policies.</para>
+
+      </sect3>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.httpd.authn.digest">
+        <title>Digest 認証</title>
+        
+        <para>Digest authentication is an improvement on Basic authentication which allows
+the server to verify a client's identity without sending the password over
+the network unprotected.  Both client and server create a non-reversible MD5
+hash of the username, password, requested URI, and a
+<firstterm>nonce</firstterm> (number used once) provided by the server and
+changed each time authentication is required.  The client sends its hash to
+the server, and the server then verifies that the hashes match.</para>
+
+        <para>Configuring Apache to use Digest authentication is straightforward, with
+only small variations on our prior example:</para>
+
+        <informalexample>
+          <programlisting>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNParentPath /var/svn
+
+  # 認証方式: Digest
+  AuthName "Subversion repository"
+  AuthType Digest
+  AuthUserFile /etc/svn-auth.htdigest
+
+  # 認可方式: 認証したユーザーのみ
+  Require valid-user
+&lt;/Location&gt;
+</programlisting>
+        </informalexample>
+
+        <para>Notice that <literal>AuthType</literal> is now set to
+<literal>Digest</literal>, and we specify a different path for
+<literal>AuthUserFile</literal>.  Digest authentication uses a different
+file format than Basic authentication; it is created using Apache's
+<command>htdigest</command> utility<footnote><para>See <ulink url="http://httpd.apache.org/docs/current/programs/htdigest.html"
+/>.</para></footnote>
+rather than <command>htpasswd</command>.  Digest authentication also has the
+additional concept of a <quote>realm</quote>, which must match the value of
+the <literal>AuthName</literal> directive.  The password file can be created
+as follows:</para>
+
+        <informalexample>
+          <screen>
+$ ### First time: use -c to create the file
+$ htdigest -c /etc/svn-auth.htdigest "Subversion repository" harry
+Adding password for harry in realm Subversion repository.
+New password: *****
+Re-type new password: *****
+$ htdigest /etc/svn-auth.htdigest "Subversion repository" sally
+Adding user sally in realm Subversion repository
+New password: *******
+Re-type new password: *******
+$
+</screen>
+        </informalexample>
+
+      </sect3>
+
+    </sect2>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.httpd.authz">
+      <title>認可オプション</title>
+
+      <para>At this point, you've configured authentication, but not authorization.
+Apache is able to challenge clients and confirm identities, but it has not
+been told how to allow or restrict access to the clients bearing those
+identities.  This section describes two strategies for controlling access to
+your repositories.</para>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.httpd.authz.blanket">
+        <title>Blanket access control</title>
+
+        <para>The simplest form of access control is to authorize certain users for either
+read-only access to a repository or read/write access to a repository.</para>
+
+        <para>You can restrict access on all repository operations by adding
+<literal>Require valid-user</literal> directly inside the
+<literal>&lt;Location&gt;</literal> block.  The example from <xref
+linkend="svn.serverconfig.httpd.authn.digest"/> allows only clients that
+successfully authenticate to do anything with the Subversion repository:</para>
+
+        <informalexample>
+          <programlisting>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNParentPath /var/svn
+
+  # 認証方式: Digest
+  AuthName "Subversion repository"
+  AuthType Digest
+  AuthUserFile /etc/svn-auth.htdigest
+
+  # 認可方式: 認証したユーザーのみ
+  Require valid-user
+&lt;/Location&gt;
+</programlisting>
+        </informalexample>
+
+        <para>Sometimes you don't need to run such a tight ship.  For example,
+Subversion's own source code repository at <ulink
+url="http://svn.collab.net/repos/svn"/> allows anyone in the world to
+perform read-only repository tasks (such as checking out working copies and
+browsing the repository), but restricts write operations to authenticated
+users.  The <literal>Limit</literal> and <literal>LimitExcept</literal>
+directives allow for this type of selective restriction.  Like the
+<literal>Location</literal> directive, these blocks have starting and ending
+tags, and you would nest them inside your
+<literal>&lt;Location&gt;</literal> block.</para>
+
+        <para>The parameters present on the <literal>Limit</literal> and
+<literal>LimitExcept</literal> directives are HTTP request types that are
+affected by that block.  For example, to allow anonymous read-only
+operations, you would use the <literal>LimitExcept</literal> directive
+(passing the <literal>GET</literal>, <literal>PROPFIND</literal>,
+<literal>OPTIONS</literal>, and <literal>REPORT</literal> request type
+parameters) and place the previously mentioned <literal>Require
+valid-user</literal> directive inside the
+<literal>&lt;LimitExcept&gt;</literal> block instead of just inside the
+<literal>&lt;Location&gt;</literal> block.</para>
+
+        <informalexample>
+          <programlisting>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNParentPath /var/svn
+
+  # Authentication: Digest
+  AuthName "Subversion repository"
+  AuthType Digest
+  AuthUserFile /etc/svn-auth.htdigest
+
+  # Authorization: Authenticated users only for non-read-only
+  #                (write) operations; allow anonymous reads
+  &lt;LimitExcept GET PROPFIND OPTIONS REPORT&gt;
+    Require valid-user
+  &lt;/LimitExcept&gt;
+&lt;/Location&gt;
+</programlisting>
+        </informalexample>
+
+        <para>These are only a few simple examples.  For more in-depth information about
+Apache access control and the <literal>Require</literal> directive, take a
+look at the <literal>Security</literal> section of the Apache
+documentation's tutorials collection at <ulink
+url="http://httpd.apache.org/docs-2.0/misc/tutorials.html"/>.</para>
+
+      </sect3>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.httpd.authz.perdir">
+        <title>ディレクトリごとのアクセス制御</title>
+
+        <para>It's possible to set up finer-grained permissions using
+<command>mod_authz_svn</command>.  This Apache module grabs the various
+opaque URLs passing from client to server, asks
+<command>mod_dav_svn</command> to decode them, and then possibly vetoes
+requests based on access policies defined in a configuration file.</para>
+
+        <para>If you've built Subversion from source code,
+<command>mod_authz_svn</command> is automatically built and installed
+alongside <command>mod_dav_svn</command>.  Many binary distributions install
+it automatically as well.  To verify that it's installed correctly, make
+sure it comes right after <command>mod_dav_svn</command>'s
+<literal>LoadModule</literal> directive in <filename>httpd.conf</filename>:</para>
+
+        <informalexample>
+          <programlisting>
+LoadModule dav_module         modules/mod_dav.so
+LoadModule dav_svn_module     modules/mod_dav_svn.so
+LoadModule authz_svn_module   modules/mod_authz_svn.so
+</programlisting>
+        </informalexample>
+
+        <para>To activate this module, you need to configure your
+<literal>&lt;Location&gt;</literal> block to use the
+<literal>AuthzSVNAccessFile</literal> directive, which specifies a file
+containing the permissions policy for paths within your repositories.  (In a
+moment, we'll discuss the format of that file.)</para>
+
+        <para>Apache is flexible, so you have the option to configure your block in one of
+three general patterns.  To begin, choose one of these basic configuration
+patterns.  (The following examples are very simple; look at Apache's own
+documentation for much more detail on Apache authentication and
+authorization options.)</para>
+
+        <para>The most open approach is to allow access to everyone.  This means Apache
+never sends authentication challenges, and all users are treated as
+<quote>anonymous</quote>.  (See <xref
+linkend="svn.serverconfig.httpd.authz.perdir.ex-1" />.)</para>
+
+        <example id="svn.serverconfig.httpd.authz.perdir.ex-1">
+          <title>A sample configuration for anonymous access</title>
+<programlisting>
+&lt;Location /repos&gt;
+  DAV svn
+  SVNParentPath /var/svn
+
+  # Authentication: None
+
+  # Authorization: Path-based access control
+  AuthzSVNAccessFile /path/to/access/file
+&lt;/Location&gt;
+</programlisting></example>
+
+        <para>On the opposite end of the paranoia scale, you can configure Apache to
+authenticate all clients.  This block unconditionally requires
+authentication via the <literal>Require valid-user</literal> directive, and
+defines a means to authenticate valid users.  (See <xref
+linkend="svn.serverconfig.httpd.authz.perdir.ex-2"/>.)</para>
+
+        <example id="svn.serverconfig.httpd.authz.perdir.ex-2">
+          <title>A sample configuration for authenticated access</title>
+<programlisting>
+&lt;Location /repos&gt;
+  DAV svn
+  SVNParentPath /var/svn
+
+  # Authentication: Digest
+  AuthName "Subversion repository"
+  AuthType Digest
+  AuthUserFile /etc/svn-auth.htdigest
+
+  # Authorization: Path-based access control; authenticated users only
+  AuthzSVNAccessFile /path/to/access/file
+  Require valid-user
+&lt;/Location&gt;
+</programlisting></example>
+
+        <para>A third very popular pattern is to allow a combination of authenticated and
+anonymous access.  For example, many administrators want to allow anonymous
+users to read certain repository directories, but restrict access to more
+sensitive areas to authenticated users.  In this setup, all users start out
+accessing the repository anonymously.  If your access control policy demands
+a real username at any point, Apache will demand authentication from the
+client.  To do this, use both the <literal>Satisfy Any</literal> and
+<literal>Require valid-user</literal> directives.  (See <xref
+linkend="svn.serverconfig.httpd.authz.perdir.ex-3" />.)</para>
+
+        <example id="svn.serverconfig.httpd.authz.perdir.ex-3">
+          <title>A sample configuration for mixed authenticated/anonymous access</title>
+<programlisting>
+&lt;Location /repos&gt;
+  DAV svn
+  SVNParentPath /var/svn
+
+  # 認証方式: Digest
+  AuthName "Subversion repository"
+  AuthType Digest
+  AuthUserFile /etc/svn-auth.htdigest
+
+  # 認可方式: パスベースアクセス制御
+  #                まず匿名アクセスを行い、必要なら認証する
+  AuthzSVNAccessFile /path/to/access/file
+  Satisfy Any
+  Require valid-user
+&lt;/Location&gt;
+</programlisting></example>
+
+        <para>The next step is to create the authorization file containing access rules
+for particular paths within the repository.  We describe how later in this
+chapter, in <xref linkend="svn.serverconfig.pathbasedauthz"/>.</para>
+
+      </sect3>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.httpd.authz.pathauthzoff">
+        <title>パスベースチェックの禁止</title>
+
+        <para>The <command>mod_dav_svn</command> module goes through a lot of work to make
+sure that data you've marked <quote>unreadable</quote> doesn't get
+accidentally leaked.  This means it needs to closely monitor all of the
+paths and file-contents returned by commands such as <command>svn
+checkout</command> and <command>svn update</command>.  If these commands
+encounter a path that isn't readable according to some authorization policy,
+the path is typically omitted altogether.  In the case of history or rename
+tracing&mdash;for example, running a command such as <userinput>svn cat -r
+OLD foo.c</userinput> on a file that was renamed long ago&mdash;the rename
+tracking will simply halt if one of the object's former names is determined
+to be read-restricted.</para>
+
+        <para>All of this path checking can sometimes be quite expensive, especially in
+the case of <command>svn log</command>.  When retrieving a list of
+revisions, the server looks at every changed path in each revision and
+checks it for readability.  If an unreadable path is discovered, it's
+omitted from the list of the revision's changed paths (normally seen with
+the <option>--verbose</option> (<option>-v</option>) option), and the whole
+log message is suppressed.  Needless to say, this can be time-consuming on
+revisions that affect a large number of files.  This is the cost of
+security: even if you haven't configured a module such as
+<command>mod_authz_svn</command> at all, the <command>mod_dav_svn</command>
+module is still asking Apache <command>httpd</command> to run authorization
+checks on every path.  The <command>mod_dav_svn</command> module has no idea
+what authorization modules have been installed, so all it can do is ask
+Apache to invoke whatever might be present.</para>
+
+        <para>On the other hand, there's also an escape hatch of sorts, which allows you
+to trade security features for speed.  If you're not enforcing any sort of
+per-directory authorization (i.e., not using
+<command>mod_authz_svn</command> or similar module), you can disable all of
+this path checking.  In your <filename>httpd.conf</filename> file, use the
+<literal>SVNPathAuthz</literal> directive as shown in <xref
+linkend="svn.serverconfig.httpd.authz.pathauthzoff.ex-1"/>.
+        </para>
+
+        <example id="svn.serverconfig.httpd.authz.pathauthzoff.ex-1">
+          <title>Disabling path checks altogether</title>
+<programlisting>
+&lt;Location /repos&gt;
+  DAV svn
+  SVNParentPath /var/svn
+
+  SVNPathAuthz off
+&lt;/Location&gt;
+</programlisting></example>
+
+        <para>The <literal>SVNPathAuthz</literal> directive is <quote>on</quote> by
+default.  When set to <quote>off,</quote> all path-based authorization
+checking is disabled; <command>mod_dav_svn</command> stops invoking
+authorization checks on every path it discovers.</para>
+
+      </sect3>
+
+    </sect2>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.httpd.ssl">
+      <title>Protecting network traffic with SSL</title>
+
+      <para>Connecting to a repository via <literal>http://</literal> means that all
+Subversion activity is sent across the network in the clear.  This means
+that actions such as checkouts, commits, and updates could potentially be
+intercepted by an unauthorized party <quote>sniffing</quote> network
+traffic.  Encrypting traffic using SSL is a good way to protect potentially
+sensitive information over the network.</para>
+
+      <para>If a Subversion client is compiled to use OpenSSL, it gains the ability to
+speak to an Apache server via <literal>https://</literal> URLs, so all
+traffic is encrypted with a per-connection session key.  The WebDAV library
+used by the Subversion client is not only able to verify server
+certificates, but can also supply client certificates when challenged by the
+server.</para>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.httpd.ssl.server">
+        <title>Subversion server SSL certificate configuration</title>
+
+        <para>It's beyond the scope of this book to describe how to generate client and
+server SSL certificates and how to configure Apache to use them.  Many other
+references, including Apache's own documentation, describe the process.</para>
+
+        <tip>
+          <para>SSL certificates from well-known entities generally cost money, but at a
+bare minimum, you can configure Apache to use a self-signed certificate
+generated with a tool such as OpenSSL (<ulink url="http://openssl.org"
+/>).<footnote><para>While self-signed certificates are still vulnerable to a
+<quote>man-in-the-middle</quote> attack, such an attack is much more
+difficult for a casual observer to pull off, compared to sniffing
+unprotected passwords.</para></footnote></para>
+        </tip>
+
+      </sect3>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.httpd.ssl.client">
+        <title>Subversion client SSL certificate management</title>
+
+        <para>When connecting to Apache via <literal>https://</literal>, a Subversion
+client can receive two different types of responses:</para>
+
+        <itemizedlist>
+          <listitem>
+            <para>サーバ証明書</para>
+          </listitem>
+          <listitem>
+            <para>A challenge for a client certificate</para>
+          </listitem>
+        </itemizedlist>
+
+        <sect4 id="svn.serverconfig.httpd.ssl.client.servercert">
+          <title>サーバー証明書</title>
+
+          <para>When the client receives a server certificate, it needs to verify that the
+server is who it claims to be. OpenSSL does this by examining the signer of
+the server certificate, or <firstterm>certificate authority</firstterm>
+(CA).  If OpenSSL is unable to automatically trust the CA, or if some other
+problem occurs (such as an expired certificate or hostname mismatch), the
+Subversion command-line client will ask you whether you want to trust the
+server certificate anyway:</para>
+
+          <informalexample>
+            <screen>
+$ svn list https://host.example.com/repos/project
+
+Error validating server certificate for 'https://host.example.com:443':
+ - The certificate is not issued by a trusted authority.  Use the
+   fingerprint to validate the certificate manually!
+Certificate information:
+ - Hostname: host.example.com
+ - Valid: from Jan 30 19:23:56 2004 GMT until Jan 30 19:23:56 2006 GMT
+ - Issuer: CA, example.com, Sometown, California, US
+ - Fingerprint: 7d:e1:a9:34:33:39:ba:6a:e9:a5:c4:22:98:7b:76:5c:92:a0:9c:7b
+
+(R)eject, accept (t)emporarily or accept (p)ermanently?
+</screen>
+          </informalexample>
+
+          <para>This dialogue is essentially the same question you may have seen coming from
+your web browser (which is just another HTTP client like Subversion).  If
+you choose the <literal>(p)</literal>ermanent option, Subversion will cache
+the server certificate in your private runtime <filename>auth/</filename>
+area, just as your username and password are cached (see <xref
+linkend="svn.serverconfig.netmodel.credcache"/>), and will automatically
+trust the certificate in the future.</para>
+
+          <para>Your runtime <filename>servers</filename> file also gives you the ability to
+make your Subversion client automatically trust specific CAs, either
+globally or on a per-host basis.  Simply set the
+<literal>ssl-authority-files</literal> variable to a semicolon-separated
+list of PEM-encoded CA certificates:</para>
+
+          <informalexample>
+            <programlisting>
+[global]
+ssl-authority-files = /path/to/CAcert1.pem;/path/to/CAcert2.pem
+</programlisting>
+          </informalexample>
+
+          <para>Many OpenSSL installations also have a predefined set of
+<quote>default</quote> CAs that are nearly universally trusted.  To make the
+Subversion client automatically trust these standard authorities, set the
+<literal>ssl-trust-default-ca</literal> variable to <literal>true</literal>.</para>
+
+        </sect4>
+
+        <sect4 id="svn.serverconfig.httpd.ssl.client.clientcert">
+          <title>Client certificate challenge</title>
+
+          <para>If the client receives a challenge for a certificate, the server is asking
+the client to prove its identity.  The client must send back a certificate
+signed by a CA that the server trusts, along with a <firstterm>challenge
+response</firstterm> which proves that the client owns the private key
+associated with the certificate.  The private key and certificate are
+usually stored in an encrypted format on disk, protected by a passphrase.
+When Subversion receives this challenge, it will ask you for the path to the
+encrypted file and the passphrase that protects it:</para>
+
+          <informalexample>
+            <screen>
+$ svn list https://host.example.com/repos/project
+
+Authentication realm: https://host.example.com:443
+Client certificate filename: /path/to/my/cert.p12
+Passphrase for '/path/to/my/cert.p12':  ********
+</screen>
+          </informalexample>
+
+          <para>Notice that the client credentials are stored in a <literal>.p12</literal>
+file.  To use a client certificate with Subversion, it must be in PKCS#12
+format, which is a portable standard.  Most web browsers are able to import
+and export certificates in that format.  Another option is to use the
+OpenSSL command-line tools to convert existing certificates into PKCS#12.</para>
+
+          <para>The runtime <filename>servers</filename> file also allows you to automate
+this challenge on a per-host basis.  If you set the
+<literal>ssl-client-cert-file</literal> and
+<literal>ssl-client-cert-password</literal> variables, Subversion can
+automatically respond to a client certificate challenge without prompting
+you:</para>
+
+          <informalexample>
+            <programlisting>
+[groups]
+examplehost = host.example.com
+
+[examplehost]
+ssl-client-cert-file = /path/to/my/cert.p12
+ssl-client-cert-password = somepassword
+</programlisting>
+          </informalexample>
+
+          <para>More security-conscious folk might want to exclude
+<literal>ssl-client-cert-password</literal> to avoid storing the passphrase
+in the clear on disk.</para>
+
+        </sect4>
+      </sect3>
+    </sect2>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.httpd.extra">
+      <title>おまけ</title>
+
+      <para>We've covered most of the authentication and authorization options for
+Apache and <command>mod_dav_svn</command>.  But there are a few other nice
+features that Apache provides.</para>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.httpd.extra.browsing">
+        <title>リポジトリの閲覧</title>
+
+        <para>One of the most useful benefits of an Apache/WebDAV configuration for your
+Subversion repository is that your versioned files and directories are
+immediately available for viewing via a regular web browser.  Since
+Subversion uses URLs to identify versioned resources, those URLs used for
+HTTP-based repository access can be typed directly into a web browser.  Your
+browser will issue an HTTP <literal>GET</literal> request for that URL;
+based on whether that URL represents a versioned directory or file,
+<command>mod_dav_svn</command> will respond with a directory listing or with
+file contents.</para>
+
+        <sect4 id="svn.serverconfig.httpd.extra.browsing.syntax">
+          <title>URL syntax</title>
+
+          <para>If the URLs do not contain any information about which version of the
+resource you wish to see, <command>mod_dav_svn</command> will answer with
+the youngest version.  This functionality has the wonderful side effect that
+you can pass around Subversion URLs to your peers as references to
+documents, and those URLs will always point at the latest manifestation of
+that document.  Of course, you can even use the URLs as hyperlinks from
+other web sites, too.</para>
+
+          <para>As of Subversion 1.6, <command>mod_dav_svn</command> supports a public URI
+syntax for examining older revisions of both files and directories.  The
+syntax uses the query string portion of the URL to specify either or both of
+a peg revision and operative revision, which Subversion will then use to
+determine which version of the file or directory to display to your web
+browser.  Add the query string name/value pair
+<literal>p=<replaceable>PEGREV</replaceable></literal>, where
+<replaceable>PEGREV</replaceable> is a revision number, to specify the peg
+revision you wish to apply to the request.  Use
+<literal>r=<replaceable>REV</replaceable></literal>, where
+<replaceable>REV</replaceable> is a revision number, to specify an operative
+revision.</para>
+
+          <para>For example, if you wish to see the latest version of a
+<filename>README.txt</filename> file located in your project's
+<filename>/trunk</filename>, point your web browser to that file's
+repository URL, which might look something like the following:</para>
+
+          <informalexample>
+            <programlisting>
+http://host.example.com/repos/project/trunk/README.txt
+</programlisting>
+          </informalexample>
+
+          <para>If you now wish to see some older version of that file, add an operative
+revision to the URL's query string:</para>
+
+          <informalexample>
+            <programlisting>
+http://host.example.com/repos/project/trunk/README.txt?r=1234
+</programlisting>
+          </informalexample>
+       
+          <para>What if the thing you're trying to view no longer exists in the youngest
+revision of the repository? That's where a peg revision is handy:</para>
+
+          <informalexample>
+            <programlisting>
+http://host.example.com/repos/project/trunk/deleted-thing.txt?p=321
+</programlisting>
+          </informalexample>
+
+          <para>And of course, you can combine peg revision and operative revision
+specifiers to fine-tune the exact item you wish to view:</para>
+
+          <informalexample>
+            <programlisting>
+http://host.example.com/repos/project/trunk/renamed-thing.txt?p=123&amp;r=21
+</programlisting>
+          </informalexample>
+
+          <para>The previous URL would display revision 21 of the object which, in revision
+123, was located at <filename>/trunk/renamed-thing.txt</filename> in the
+repository.  See <xref linkend="svn.advanced.pegrevs" /> for a detailed
+explanation of these <quote>peg revision</quote> and <quote>operative
+revision</quote> concepts.  They can be a bit tricky to wrap your head
+around.</para>
+          
+          <para>As a reminder, this feature of <command>mod_dav_svn</command> offers only a
+limited repository browsing experience.  You can see directory listings and
+file contents, but no revision properties (such as commit log messages) or
+file/directory properties.  For folks who require more extensive browsing of
+repositories and their history, there are several third-party software
+packages which offer this.  Some examples include ViewVC (<ulink
+url="http://viewvc.tigris.org"/>), Trac (<ulink
+url="http://trac.edgewall.org"/>) and WebSVN (<ulink
+url="http://websvn.info"/>).  These third-party tools don't affect
+<command>mod_dav_svn</command>'s built-in <quote>browseability</quote>, and
+generally offer a much wider set of features, including the display of the
+aforementioned property sets, display of content differences between file
+revisions, and so on.</para>
+          
+        </sect4>
+
+        <sect4 id="svn.serverconfig.httpd.extra.browsing.mimetype">
+          <title>適切な MIME 型</title>
+
+          <para>When browsing a Subversion repository, the web browser gets a clue about how
+to render a file's contents by looking at the
+<literal>Content-Type:</literal> header returned in Apache's response to the
+HTTP <literal>GET</literal> request.  The value of this header is some sort
+of MIME type.  By default, Apache will tell the web browsers that all
+repository files are of the <quote>default</quote> MIME type, typically
+<literal>text/plain</literal>.  This can be frustrating, however, if a user
+wishes repository files to render as something more meaningful&mdash;for
+example, it might be nice to have a <filename>foo.html</filename> file in
+the repository actually render as HTML when browsing.</para>
+
+          <para>To make this happen, you need only to make sure that your files have the
+proper <literal>svn:mime-type</literal> set.  We discuss this in more detail
+in <xref linkend="svn.advanced.props.special.mime-type"/>, and you can even
+configure your client to automatically attach proper
+<literal>svn:mime-type</literal> properties to files entering the repository
+for the first time; see <xref linkend="svn.advanced.props.auto"/>.</para>
+
+          <para>Continuing our example, if one were to set the
+<literal>svn:mime-type</literal> property to <literal>text/html</literal> on
+file <filename>foo.html</filename>, Apache would properly tell your web
+browser to render the file as HTML.  One could also attach proper
+<literal>image/*</literal> MIME-type properties to image files and
+ultimately get an entire web site to be viewable directly from a repository!
+There's generally no problem with this, as long as the web site doesn't
+contain any dynamically generated content.</para>
+
+        </sect4>
+
+        <sect4 id="svn.serverconfig.httpd.extra.browsing.xslt">
+          <title>ロックのカスタマイズ</title>
+
+          <para>You generally will get more use out of URLs to versioned files&mdash;after
+all, that's where the interesting content tends to lie.  But you might have
+occasion to browse a Subversion directory listing, where you'll quickly note
+that the generated HTML used to display that listing is very basic, and
+certainly not intended to be aesthetically pleasing (or even interesting).
+To enable customization of these directory displays, Subversion provides an
+XML index feature.  A single <literal>SVNIndexXSLT</literal> directive in
+your repository's <literal>Location</literal> block of
+<filename>httpd.conf</filename> will instruct <command>mod_dav_svn</command>
+to generate XML output when displaying a directory listing, and to reference
+the XSLT stylesheet of your choice:</para>
+
+          <informalexample>
+            <programlisting>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNParentPath /var/svn
+  SVNIndexXSLT "/svnindex.xsl"
+  &hellip;
+&lt;/Location&gt;
+</programlisting>
+          </informalexample>
+
+          <para>Using the <literal>SVNIndexXSLT</literal> directive and a creative XSLT
+stylesheet, you can make your directory listings match the color schemes and
+imagery used in other parts of your web site.  Or, if you'd prefer, you can
+use the sample stylesheets provided in the Subversion source distribution's
+<filename>tools/xslt/</filename> directory.  Keep in mind that the path
+provided to the <literal>SVNIndexXSLT</literal> directory is actually a URL
+path&mdash;browsers need to be able to read your stylesheets to make use of
+them!</para>
+
+        </sect4>
+
+        <sect4 id="svn.serverconfig.httpd.extra.browsing.reposlisting">
+          <title>リポジトリの一覧</title>
+
+          <para>If you're serving a collection of repositories from a single URL via the
+<literal>SVNParentPath</literal> directive, then it's also possible to have
+Apache display all available repositories to a web browser.  Just activate
+the <literal>SVNListParentPath</literal> directive:</para>
+
+          <informalexample>
+            <programlisting>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNParentPath /var/svn
+  SVNListParentPath on
+  &hellip;
+&lt;/Location&gt;
+</programlisting>
+          </informalexample>
+
+          <para>If a user now points her web browser to the URL
+<literal>http://host.example.com/svn/</literal>, she'll see a list of all
+Subversion repositories sitting in <filename>/var/svn</filename>.
+Obviously, this can be a security problem, so this feature is turned off by
+default.</para>
+
+        </sect4>
+      </sect3>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.httpd.extra.logging">
+        <title>Apache のログ</title>
+
+        <para>Because Apache is an HTTP server at heart, it contains fantastically
+flexible logging features.  It's beyond the scope of this book to discuss
+all of the ways logging can be configured, but we should point out that even
+the most generic <filename>httpd.conf</filename> file will cause Apache to
+produce two logs: <filename>error_log</filename> and
+<filename>access_log</filename>.  These logs may appear in different places,
+but are typically created in the logging area of your Apache installation.
+(On Unix, they often live in <filename>/usr/local/apache2/logs/</filename>.)</para>
+
+        <para>The <filename>error_log</filename> describes any internal errors that Apache
+runs into as it works.  The <filename>access_log</filename> file records
+every incoming HTTP request received by Apache.  This makes it easy to see,
+for example, which IP addresses Subversion clients are coming from, how
+often particular clients use the server, which users are authenticating
+properly, and which requests succeed or fail.</para>
+
+        <para>Unfortunately, because HTTP is a stateless protocol, even the simplest
+Subversion client operation generates multiple network requests.  It's very
+difficult to look at the <filename>access_log</filename> and deduce what the
+client was doing&mdash;most operations look like a series of cryptic
+<literal>PROPPATCH</literal>, <literal>GET</literal>,
+<literal>PUT</literal>, and <literal>REPORT</literal> requests.  To make
+things worse, many client operations send nearly identical series of
+requests, so it's even harder to tell them apart.</para>
+
+        <para><command>mod_dav_svn</command>, however, can come to your aid.  By
+activating an <quote>operational logging</quote> feature, you can ask
+<command>mod_dav_svn</command> to create a separate log file describing what
+sort of high-level operations your clients are performing.</para>
+
+        <para>To do this, you need to make use of Apache's <literal>CustomLog</literal>
+directive (which is explained in more detail in Apache's own
+documentation).  Be sure to invoke this directive
+<emphasis>outside</emphasis> your Subversion <literal>Location</literal>
+block:</para>
+
+        <informalexample>
+          <programlisting>
+&lt;Location /svn&gt;
+  DAV svn
+  &hellip;
+&lt;/Location&gt;
+
+CustomLog logs/svn_logfile "%t %u %{SVN-ACTION}e" env=SVN-ACTION
+</programlisting>
+        </informalexample>
+
+        <para>In this example, we're asking Apache to create a special logfile,
+<filename>svn_logfile</filename>, in the standard Apache
+<filename>logs</filename> directory.  The <literal>%t</literal> and
+<literal>%u</literal> variables are replaced by the time and username of the
+request, respectively.  The really important parts are the two instances of
+<literal>SVN-ACTION</literal>.  When Apache sees that variable, it
+substitutes the value of the <literal>SVN-ACTION</literal> environment
+variable, which is automatically set by <command>mod_dav_svn</command>
+whenever it detects a high-level client action.</para>
+
+        <para>So, instead of having to interpret a traditional
+<filename>access_log</filename> like this:</para>
+
+        <informalexample>
+          <screen>
+[26/Jan/2007:22:25:29 -0600] "PROPFIND /svn/calc/!svn/vcc/default HTTP/1.1" 207 398
+[26/Jan/2007:22:25:29 -0600] "PROPFIND /svn/calc/!svn/bln/59 HTTP/1.1" 207 449
+[26/Jan/2007:22:25:29 -0600] "PROPFIND /svn/calc HTTP/1.1" 207 647
+[26/Jan/2007:22:25:29 -0600] "REPORT /svn/calc/!svn/vcc/default HTTP/1.1" 200 607
+[26/Jan/2007:22:25:31 -0600] "OPTIONS /svn/calc HTTP/1.1" 200 188
+[26/Jan/2007:22:25:31 -0600] "MKACTIVITY /svn/calc/!svn/act/e6035ef7-5df0-4ac0-b811-4be7c823f998 HTTP/1.1" 201 227
+&hellip;
+</screen>
+        </informalexample>
+
+        <para>you can peruse a much more intelligible <filename>svn_logfile</filename>
+like this:</para>
+
+        <informalexample>
+          <screen>
+[26/Jan/2007:22:24:20 -0600] - get-dir /tags r1729 props
+[26/Jan/2007:22:24:27 -0600] - update /trunk r1729 depth=infinity
+[26/Jan/2007:22:25:29 -0600] - status /trunk/foo r1729 depth=infinity
+[26/Jan/2007:22:25:31 -0600] sally commit r1730
+</screen>
+        </informalexample>
+
+        <para>In addition to the <literal>SVN-ACTION</literal> environment variable,
+<command>mod_dav_svn</command> also populates the
+<literal>SVN-REPOS</literal> and <literal>SVN-REPOS-NAME</literal>
+variables, which carry the filesystem path to the repository and the
+basename thereof, respectively.  You might wish to include references to one
+or both of these variables in your <literal>CustomLog</literal> format
+string, too, especially if you are combining usage information from multiple
+repositories into a single log file.</para>
+
+        <para>For an exhaustive list of all actions logged, see <xref
+linkend="svn.serverconfig.operational-logging"/>.</para>
+
+      </sect3>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.httpd.extra.writethruproxy">
+        <title>書き込み透過プロキシ</title>
+
+        <para>One of the nice advantages of using Apache as a Subversion server is that it
+can be set up for simple replication.  For example, suppose that your team
+is distributed across four offices around the globe.  The Subversion
+repository can exist only in one of those offices, which means the other
+three offices will not enjoy accessing it&mdash;they're likely to experience
+significantly slower traffic and response times when updating and committing
+code.  A powerful solution is to set up a system consisting of one
+<firstterm>master</firstterm> Apache server and several
+<firstterm>slave</firstterm> Apache servers.  If you place a slave server in
+each office, users can check out a working copy from whichever slave is
+closest to them.  All read requests go to their local slave.  Write requests
+get automatically routed to the single master server.  When the commit
+completes, the master then automatically <quote>pushes</quote> the new
+revision to each slave server using the <command>svnsync</command>
+replication tool.</para>
+
+        <para>This configuration creates a huge perceptual speed increase for your users,
+because Subversion client traffic is typically 80&ndash;90% read requests.
+And if those requests are coming from a <emphasis>local</emphasis> server,
+it's a huge win.</para>
+
+        <para>In this section, we'll walk you through a standard setup of this
+single-master/multiple-slave system.  However, keep in mind that your
+servers must be running at least Apache 2.2.0 (with
+<command>mod_proxy</command> loaded) and Subversion 1.5
+(<command>mod_dav_svn</command>).</para>
+
+        <sect4 id="svn.serverconfig.httpd.extra.writethruproxy.configure">
+          <title>サーバの設定</title>
+
+          <para>First, configure your master server's <filename>httpd.conf</filename> file
+in the usual way.  Make the repository available at a certain URI location,
+and configure authentication and authorization however you'd like.  After
+that's done, configure each of your <quote>slave</quote> servers in the
+exact same way, but add the special <literal>SVNMasterURI</literal>
+directive to the block:</para>
+
+          <informalexample>
+            <programlisting>
+&lt;Location /svn&gt;
+  DAV svn
+  SVNPath /var/svn/repos
+  SVNMasterURI http://master.example.com/svn
+  &hellip;
+&lt;/Location&gt;
+</programlisting>
+          </informalexample>
+
+          <para>This new directive tells a slave server to redirect all write requests to
+the master.  (This is done automatically via Apache's
+<command>mod_proxy</command> module.)  Ordinary read requests, however, are
+still serviced by the slaves.  Be sure that your master and slave servers
+all have matching authentication and authorization configurations; if they
+fall out of sync, it can lead to big headaches.</para>
+
+          <para>Next, we need to deal with the problem of infinite recursion.  With the
+current configuration, imagine what will happen when a Subversion client
+performs a commit to the master server.  After the commit completes, the
+server uses <command>svnsync</command> to replicate the new revision to each
+slave.  But because <command>svnsync</command> appears to be just another
+Subversion client performing a commit, the slave will immediately attempt to
+proxy the incoming write request back to the master! Hilarity ensues.</para>
+
+          <para>The solution to this problem is to have the master push revisions to a
+different <literal>&lt;Location&gt;</literal> on the slaves.  This location
+is configured to <emphasis>not</emphasis> proxy write requests at all, but
+to accept normal commits from (and only from) the master's IP address:</para>
+
+          <informalexample>
+            <programlisting>
+&lt;Location /svn-proxy-sync&gt;
+  DAV svn
+  SVNPath /var/svn/repos
+  Order deny,allow
+  Deny from all
+  # ここに指定した IP アドレスからしかサーバーにアクセスさせない:
+  Allow from 10.20.30.40
+  &hellip;
+&lt;/Location&gt;
+</programlisting>
+          </informalexample>
+
+        </sect4>
+
+        <sect4 id="svn.serverconfig.httpd.extra.writethruproxy.replicate">
+          <title>複製のセットアップ</title>
+
+          <para>Now that you've configured your <literal>Location</literal> blocks on master
+and slaves, you need to configure the master to replicate to the slaves.
+Our walkthough uses <command>svnsync</command>, which is covered in more
+detail in <xref linkend="svn.reposadmin.maint.replication.svnsync" />.</para>
+
+          <para>First, make sure that each slave repository has a
+<filename>pre-revprop-change</filename> hook script which allows remote
+revision property changes.  (This is standard procedure for being on the
+receiving end of <command>svnsync</command>.) Then log into the master
+server and configure each of the slave repository URIs to receive data from
+the master repository on the local disk:</para>
+
+          <informalexample>
+            <screen>
+$ svnsync init http://slave1.example.com/svn-proxy-sync \
+               file:///var/svn/repos
+リビジョン 0 の属性をコピーしました。
+$ svnsync init http://slave2.example.com/svn-proxy-sync \
+               file:///var/svn/repos
+リビジョン 0 の属性をコピーしました。
+$ svnsync init http://slave3.example.com/svn-proxy-sync \
+               file:///var/svn/repos
+リビジョン 0 の属性をコピーしました。
+
+# Perform the initial replication
+
+$ svnsync sync http://slave1.example.com/svn-proxy-sync \
+               file:///var/svn/repos
+ファイルのデータを送信しています ....
+リビジョン 1 をコミットしました。
+リビジョン 1 の属性をコピーしました。
+ファイルのデータを送信しています ....
+リビジョン 2 をコミットしました。
+リビジョン 2 の属性をコピーしました。
+&hellip;
+
+$ svnsync sync http://slave2.example.com/svn-proxy-sync \
+               file:///var/svn/repos
+ファイルのデータを送信しています ....
+リビジョン 1 をコミットしました。
+リビジョン 1 の属性をコピーしました。
+ファイルのデータを送信しています ....
+リビジョン 2 をコミットしました。
+リビジョン 2 の属性をコピーしました。
+&hellip;
+
+$ svnsync sync http://slave3.example.com/svn-proxy-sync \
+               file:///var/svn/repos
+ファイルのデータを送信しています ....
+リビジョン 1 をコミットしました。
+リビジョン 1 の属性をコピーしました。
+ファイルのデータを送信しています ....
+リビジョン 2 をコミットしました。
+リビジョン 2 の属性をコピーしました。
+&hellip;</screen>
+          </informalexample>
+
+          <para>After this is done, we configure the master server's
+<literal>post-commit</literal> hook script to invoke
+<command>svnsync</command> on each slave server:</para>
+
+          <informalexample>
+            <programlisting>
+#!/bin/sh
+# Post-commit script to replicate newly committed revision to slaves
+
+svnsync sync http://slave1.example.com/svn-proxy-sync \
+             file:///var/svn/repos &gt; /dev/null 2&gt;&amp;1 &amp;
+svnsync sync http://slave2.example.com/svn-proxy-sync \
+             file:///var/svn/repos &gt; /dev/null 2&gt;&amp;1 &amp;
+svnsync sync http://slave3.example.com/svn-proxy-sync \
+             file:///var/svn/repos &gt; /dev/null 2&gt;&amp;1 &amp;
+</programlisting>
+          </informalexample>
+
+          <para>The extra bits on the end of each line aren't necessary, but they're a
+sneaky way to allow the sync commands to run in the background so that the
+Subversion client isn't left waiting forever for the commit to finish.  In
+addition to this <literal>post-commit</literal> hook, you'll need a
+<literal>post-revprop-change</literal> hook as well so that when a user,
+say, modifies a log message, the slave servers get that change also:</para>
+
+          <informalexample>
+            <programlisting>
+#!/bin/sh
+# Post-revprop-change script to replicate revprop-changes to slaves
+
+REV=${2}
+svnsync copy-revprops http://slave1.example.com/svn-proxy-sync \
+                      file:///var/svn/repos \
+                      -r ${REV} &gt; /dev/null 2&gt;&amp;1 &amp;
+svnsync copy-revprops http://slave2.example.com/svn-proxy-sync \
+                      file:///var/svn/repos \
+                      -r ${REV} &gt; /dev/null 2&gt;&amp;1 &amp;
+svnsync copy-revprops http://slave3.example.com/svn-proxy-sync \
+                      file:///var/svn/repos \
+                      -r ${REV} &gt; /dev/null 2&gt;&amp;1 &amp;
+</programlisting>
+          </informalexample>
+
+          <para>The only thing we've left out here is what to do about user-level locks (of
+the <command>svn lock</command> variety).  Locks are enforced by the master
+server during commit operations; but all the information about locks is
+distributed during read operations such as <command>svn update</command> and
+<command>svn status</command> by the slave server.  As such, a fully
+functioning proxy setup needs to perfectly replicate lock information from
+the master server to the slave servers.  Unfortunately, most of the
+mechanisms that one might employ to accomplish this replication fall short
+in one way or another<footnote><para><ulink url="http://subversion.tigris.org/issues/show_bug.cgi?id=3457" />
+tracks these problems.</para></footnote>.  Many teams
+don't use Subversion's locking features at all, so this may be a nonissue
+for you.  Sadly, for those teams which do use locks, we have no
+recommendations on how to gracefully work around this shortcoming.</para>
+
+        </sect4>
+
+        <sect4 id="svn.serverconfig.httpd.extra.writethruproxy.caveats">
+          <title>警告</title>
+
+          <para>Your master/slave replication system should now be ready to use.  A couple
+of words of warning are in order, however.  Remember that this replication
+isn't entirely robust in the face of computer or network crashes.  For
+example, if one of the automated <command>svnsync</command> commands fails
+to complete for some reason, the slaves will begin to fall behind.  For
+example, your remote users will see that they've committed revision 100, but
+then when they run <command>svn update</command>, their local server will
+tell them that revision 100 doesn't yet exist! Of course, the problem will
+be automatically fixed the next time another commit happens and the
+subsequent <command>svnsync</command> is successful&mdash;the sync will
+replicate all waiting revisions.  But still, you may want to set up some
+sort of out-of-band monitoring to notice synchronization failures and force
+<command>svnsync</command> to run when things go wrong.</para>
+
+          <para>Another limitation of the write-through proxy deployment model involves
+version mismatches&mdash;of the version of Subversion which is installed,
+that is&mdash;between the master and slave servers.  Each new release of
+Subversion may (and often does) add new features to the network protocol
+used between the clients and servers.  Since feature negotiation happens
+against the slave, it is the slave's protocol version and feature set which
+is used.  But write operations are passed through to the master server quite
+literally.  Therefore, there is always a risk that the slave server will
+answer a feature negotiation request from the client in way that is true for
+the slave, but untrue for the master if the master is running an older
+version of Subversion.  This could result in the client trying to use a new
+feature that the master doesn't understand, and failing.  There are a couple
+of known problems of this sort in Subversion 1.7, which introduced a major
+revision of its HTTP protocol.  If you are deploying a Subversion 1.7 slave
+server in front of a pre-1.7 master, you'll want to configure your slave
+server's Subversion <literal>&lt;Location&gt;</literal> block with the
+<literal>SVNAdvertiseV2Protocol Off</literal> directive.</para>
+          
+          <tip>
+            <para>For the best results possible, try to run the same version of Subversion on
+your master and slave servers.</para>
+          </tip>
+
+          <sidebar>
+            <title>svnserve で複製をセットアップできますか?</title>
+
+            <para>If you're using <command>svnserve</command> instead of Apache as your
+server, you can certainly configure your repository's hook scripts to invoke
+<command>svnsync</command> as we've shown here, thereby causing automatic
+replication from master to slaves.  Unfortunately, at the time of this
+writing there is no way to make slave <command>svnserve</command> servers
+automatically proxy write requests back to the master server.  This means
+your users would only be able to check out read-only working copies from the
+slave servers.  You'd have to configure your slave servers to disallow write
+access completely.  This might be useful for creating read-only
+<quote>mirrors</quote> of popular open source projects, but it's not a
+transparent proxying system.</para>
+          </sidebar>
+
+        </sect4>
+      </sect3>
+
+      
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<sect3 id="svn.serverconfig.httpd.extra.other">
+        <title>その他のApacheの機能</title>
+
+        <para>Several of the features already provided by Apache in its role as a robust
+web server can be leveraged for increased functionality or security in
+Subversion as well.  The Subversion client is able to use SSL (the Secure
+Sockets Layer, discussed earlier).  If your Subversion client is built to
+support SSL, it can access your Apache server using
+<literal>https://</literal> and enjoy a high-quality encrypted network
+session.</para>
+
+        <para>Equally useful are other features of the Apache and Subversion relationship,
+such as the ability to specify a custom port (instead of the default HTTP
+port 80) or a virtual domain name by which the Subversion repository should
+be accessed, or the ability to access the repository through an HTTP proxy.</para>
+
+        <para>Finally, because <command>mod_dav_svn</command> is speaking a subset of the
+WebDAV/DeltaV protocol, it's possible to access the repository via
+third-party DAV clients.  Most modern operating systems (Win32, OS X, and
+Linux) have the built-in ability to mount a DAV server as a standard network
+<quote>shared folder.</quote> This is a complicated topic, but also wondrous
+when implemented.  For details, read <xref linkend="svn.webdav"/>.</para>
+
+        <para>Note that there are a number of other small tweaks one can make to
+<command>mod_dav_svn</command> that are too obscure to mention in this
+chapter.  For a complete list of all <filename>httpd.conf</filename>
+directives that <command>mod_dav_svn</command> responds to, see <xref
+linkend="svn.ref.mod_dav_svn.conf.directives"/>.</para>
+
+      </sect3>
+    </sect2>
+  </sect1>
+
+  
+  
+  
+  <!-- ================================================================= -->
+<!-- ================================================================= -->
+<!-- ================================================================= -->
+<sect1 id="svn.serverconfig.pathbasedauthz">
+
+    <title>パスベース認証</title>
+
+    <para>Both Apache and <command>svnserve</command> are capable of granting (or
+denying) permissions to users.  Typically this is done over the entire
+repository: a user can read the repository (or not), and she can write to
+the repository (or not).  It's also possible, however, to define
+finer-grained access rules.  One set of users may have permission to write
+to a certain directory in the repository, but not others; another directory
+might not even be readable by all but a few special people.</para>
+
+    <para>Both servers use a common file format to describe these path-based access
+rules.  In the case of Apache, one needs to load the
+<command>mod_authz_svn</command> module and then add the
+<literal>AuthzSVNAccessFile</literal> directive (within the
+<filename>httpd.conf</filename> file) pointing to your own access rules
+file.  (For a full explanation, see <xref
+linkend="svn.serverconfig.httpd.authz.perdir"/>.)  If you're using
+<command>svnserve</command>, you need to make the
+<literal>authz-db</literal> variable (within
+<filename>svnserve.conf</filename>) point to your access rules file.</para>
+
+    <sidebar>
+      <title>Do You Really Need Path-Based Access Control?</title>
+
+      <para>A lot of administrators setting up Subversion for the first time tend to
+jump into path-based access control without giving it a lot of thought.  The
+administrator usually knows which teams of people are working on which
+projects, so it's easy to jump in and grant certain teams access to certain
+directories and not others.  It seems like a natural thing, and it appeases
+the administrator's desire to maintain tight control of the repository.</para>
+
+      <para>Note, though, that there are often invisible (and visible!) costs associated
+with this feature.  In the visible category, the server needs to do a lot
+more work to ensure that the user has the right to read or write each
+specific path; in certain situations, there's very noticeable performance
+loss.  In the invisible category, consider the culture you're creating.
+Most of the time, while certain users <emphasis>shouldn't</emphasis> be
+committing changes to certain parts of the repository, that social contract
+doesn't need to be technologically enforced.  Teams can sometimes
+spontaneously collaborate with each other; someone may want to help someone
+else out by committing to an area she doesn't normally work on.  By
+preventing this sort of thing at the server level, you're setting up
+barriers to unexpected collaboration.  You're also creating a bunch of rules
+that need to be maintained as projects develop, new users are added, and so
+on.  It's a bunch of extra work to maintain.</para>
+
+        <para>Remember that this is a version control system! Even if somebody
+accidentally commits a change to something she shouldn't, it's easy to undo
+the change.  And if a user commits to the wrong place with deliberate
+malice, it's a social problem anyway, and that the problem needs to be dealt
+with outside Subversion.</para>
+
+      <para>So, before you begin restricting users' access rights, ask yourself whether
+there's a real, honest need for this, or whether it's just something that
+<quote>sounds good</quote> to an administrator.  Decide whether it's worth
+sacrificing some server speed, and remember that there's very little risk
+involved; it's bad to become dependent on technology as a crutch for social
+problems.<footnote><para>A common theme in this book!</para></footnote></para>
+
+      <para>As an example to ponder, consider that the Subversion project itself has
+always had a notion of who is allowed to commit where, but it's always been
+enforced socially.  This is a good model of community trust, especially for
+open source projects.  Of course, sometimes there <emphasis>are</emphasis>
+truly legitimate needs for path-based access control; within corporations,
+for example, certain types of data really can be sensitive, and access needs
+to be genuinely restricted to small groups of people.</para>
+
+    </sidebar>
+
+    <para>Once your server knows where to find your access file, it's time to define
+the rules.</para>
+
+    <para>The syntax of the file is the same familiar one used by
+<filename>svnserve.conf</filename> and the runtime configuration files.
+Lines that start with a hash (<literal>#</literal>) are ignored.  In its
+simplest form, each section names a repository and path within it, as well
+as the authenticated usernames are the option names within each section.
+The value of each option describes the user's level of access to the
+repository path: either <literal>r</literal> (read-only) or
+<literal>rw</literal> (read/write).  If the user is not mentioned at all, no
+access is allowed.</para>
+
+    <para>To be more specific: the value of the section names is either of the form
+<literal>[repos-name:path]</literal> or of the form
+<literal>[path]</literal>.</para>
+
+    <warning>
+      <para>Prior to version 1.7, Subversion treated repository names and paths in a
+case-insensitive fashion for the purposes of access control, converting them
+to lower case internally before comparing them against the contents of your
+access file.  It now does these comparisons case-sensitively.  If you
+upgraded to Subversion 1.7 from an older version, you should review your
+access files for case correctness.</para>
+    </warning>
+
+    <para>If you're using the <literal>SVNParentPath</literal> directive, it's
+important to specify the repository names in your sections.  If you omit
+them, a section such as <literal>[/some/dir]</literal> will match the path
+<filename>/some/dir</filename> in <emphasis>every</emphasis> repository.  If
+you're using the <literal>SVNPath</literal> directive, however, it's fine to
+only define paths in your sections&mdash;after all, there's only one
+repository.</para>
+
+    <informalexample>
+      <programlisting>
+[calc:/branches/calc/bug-142]
+harry = rw
+sally = r
+</programlisting>
+    </informalexample>
+
+    <para>In this first example, the user <literal>harry</literal> has full read and
+write access on the <filename>/branches/calc/bug-142</filename> directory in
+the <literal>calc</literal> repository, but the user
+<literal>sally</literal> has read-only access.  Any other users are blocked
+from accessing this directory.</para>
+
+    <warning>
+      <para><command>mod_dav_svn</command> offers a directive,
+<literal>SVNReposName</literal>, which allows administrators to define a
+more human-friendly name, of sorts, for a repository:</para>
+
+      <informalexample>
+        <programlisting>
+&lt;Location /svn/calc&gt;
+  SVNPath /var/svn/calc
+  SVNReposName "Calculator Application"
+&hellip;
+</programlisting>
+      </informalexample>
+
+      <para>This allows <command>mod_dav_svn</command> to identify the repository by
+something other than merely its server directory
+basename&mdash;<filename>calc</filename>, in the previous example&mdash;when
+providing directory listings of repository content.  Be aware, however, that
+when consulting the access file for authorization rules, Subversion uses
+this repository basename for comparison, <emphasis>not</emphasis> any
+configured human-friendly name.</para>
+    </warning>
+
+    <para>Of course, permissions are inherited from parent to child directory.  That
+means we can specify a subdirectory with a different access policy for
+Sally:</para>
+
+    <informalexample>
+      <programlisting>
+[calc:/branches/calc/bug-142]
+harry = rw
+sally = r
+
+# give sally write access only to the 'testing' subdir
+[calc:/branches/calc/bug-142/testing]
+sally = rw
+</programlisting>
+    </informalexample>
+
+    <para>Now Sally can write to the <filename>testing</filename> subdirectory of the
+branch, but can still only read other parts.  Harry, meanwhile, continues to
+have complete read/write access to the whole branch.</para>
+
+    <para>It's also possible to explicitly deny permission to someone via inheritance
+rules, by setting the username variable to nothing:</para>
+
+    <informalexample>
+      <programlisting>
+[calc:/branches/calc/bug-142]
+harry = rw
+sally = r
+
+[calc:/branches/calc/bug-142/secret]
+harry =
+</programlisting>
+    </informalexample>
+
+    <para>In this example, Harry has read/write access to the entire
+<filename>bug-142</filename> tree, but has absolutely no access at all to
+the <filename>secret</filename> subdirectory within it.</para>
+
+    <tip>
+      <para>The thing to remember is that the most specific path always matches first.
+The server tries to match the path itself, and then the parent of the path,
+then the parent of that, and so on.  The net effect is that mentioning a
+specific path in the access file will always override any permissions
+inherited from parent directories.</para>
+    </tip>
+
+    <para>By default, nobody has any access to the repository at all.  That means that
+if you're starting with an empty file, you'll probably want to give at least
+read permission to all users at the root of the repository.  You can do this
+by using the asterisk variable (<literal>*</literal>), which means
+<quote>all users</quote>:</para>
+
+    <informalexample>
+      <programlisting>
+[/]
+* = r
+</programlisting>
+    </informalexample>
+
+    <para>This is a common setup; notice that no repository name is mentioned in the
+section name.  This makes all repositories world-readable to all users.
+Once all users have read access to the repositories, you can give explicit
+<literal>rw</literal> permission to certain users on specific subdirectories
+within specific repositories.</para>
+
+    <para>The access file also allows you to define whole groups of users, much like
+the Unix <filename>/etc/group</filename> file:</para>
+
+    <informalexample>
+      <programlisting>
+[groups]
+calc-developers = harry, sally, joe
+paint-developers = frank, sally, jane
+everyone = harry, sally, joe, frank, jane
+</programlisting>
+    </informalexample>
+
+    <para>Groups can be granted access control just like users.  Distinguish them with
+an <quote>at</quote> (<literal>@</literal>) prefix:</para>
+
+    <informalexample>
+      <programlisting>
+[calc:/projects/calc]
+@calc-developers = rw
+
+[paint:/projects/paint]
+jane = r
+@paint-developers = rw
+</programlisting>
+    </informalexample>
+
+    <para>Another important fact is that group permissions are not overridden by
+individual user permissions. Rather, the <emphasis>combination</emphasis> of
+all matching permissions is granted.  In the prior example, Jane is a member
+of the <literal>paint-developers</literal> group, which has read/write
+access.  Combined with the <literal>jane = r</literal> rule, this still
+gives Jane read/write access.  Permissions for group members can only be
+extended beyond the permissions the group already has. Restricting users who
+are part of a group to less than their group's permissions is impossible.</para>
+
+    <para>Groups can also be defined to contain other groups:</para>
+
+    <informalexample>
+      <programlisting>
+[groups]
+calc-developers = harry, sally, joe
+paint-developers = frank, sally, jane
+everyone = @calc-developers, @paint-developers
+</programlisting>
+    </informalexample>
+
+    <para>Subversion 1.5 brought several useful features to the access file
+syntax&mdash;username aliases, authentication class tokens, and a new rule
+exclusion mechanism&mdash;all of which further simplify the maintenance of
+the access file.  We'll describe first the username aliases feature.</para>
+
+    <para>Some authentication systems expect and carry relatively short usernames of
+the sorts we've been describing here&mdash;<literal>harry</literal>,
+<literal>sally</literal>, <literal>joe</literal>, and so on.  But other
+authentication systems&mdash;such as those which use LDAP stores or SSL
+client certificates&mdash;may carry much more complex usernames.  For
+example, Harry's username in an LDAP-protected system might be
+<literal>CN=Harold Hacker,OU=Engineers,DC=red-bean,DC=com</literal>.  With
+usernames like that, the access file can become quite bloated with long or
+obscure usernames that are easy to mistype.  Fortunately, username aliases
+allow you to have to type the correct complex username only once, in a
+statement which assigns to it a more easily digestable alias.</para>
+
+    <informalexample>
+      <programlisting>
+[aliases]
+harry = CN=Harold Hacker,OU=Engineers,DC=red-bean,DC=com
+sally = CN=Sally Swatterbug,OU=Engineers,DC=red-bean,DC=com
+joe = CN=Gerald I. Joseph,OU=Engineers,DC=red-bean,DC=com
+&hellip;
+</programlisting>
+    </informalexample>
+
+    <para>Once you've defined a set of aliases, you can refer to the users elsewhere
+in the access file via their aliases in all the same places you could have
+instead used their actual usernames.  Simply prepend an ampersand to the
+alias to distinguish it from a regular username:</para>
+
+    <informalexample>
+      <programlisting>
+[groups]
+calc-developers = &amp;harry, &amp;sally, &amp;joe
+paint-developers = &amp;frank, &amp;sally, &amp;jane
+everyone = @calc-developers, @paint-developers
+</programlisting>
+    </informalexample>
+
+    <para>You might also choose to use aliases if your users' usernames change
+frequently.  Doing so allows you to need to update only the aliases table
+when these username changes occur, instead of doing
+global-search-and-replace operations on the whole access file.</para>
+
+    <para>Subversion also supports some <quote>magic</quote> tokens for helping you to
+make rule assignments based on the user's authentication class.  One such
+token is the <literal>$authenticated</literal> token.  Use this token where
+you would otherwise specify a username, alias, or group name in your
+authorization rules to declare the permissions granted to any user who has
+authenticated with any username at all.  Similarly employed is the
+<literal>$anonymous</literal> token, except that it matches everyone who has
+<emphasis>not</emphasis> authenticated with a username.</para>
+
+    <informalexample>
+      <programlisting>
+[calendar:/projects/calendar]
+$anonymous = r
+$authenticated = rw
+</programlisting>
+    </informalexample>
+
+    <para>Finally, another handy bit of access file syntax magic is the use of the
+tilde (<literal>~</literal>) character as an exclusion marker.  In your
+authorization rules, prefixing a username, alias, group name, or
+authentication class token with a tilde character will cause Subversion to
+apply the rule to users who do <emphasis>not</emphasis> match the rule.
+Though somewhat unnecessarily obfuscated, the following block is equivalent
+to the one in the previous example:</para>
+
+    <informalexample>
+      <programlisting>
+[calendar:/projects/calendar]
+~$authenticated = r
+~$anonymous = rw
+</programlisting>
+    </informalexample>
+
+    <para>A less obvious example might be as follows:</para>
+
+    <informalexample>
+      <programlisting>
+[groups]
+calc-developers = &amp;harry, &amp;sally, &amp;joe
+calc-owners = &amp;hewlett, &amp;packard
+calc = @calc-developers, @calc-owners
+
+# Any calc participant has read-write access...
+[calc:/projects/calc]
+@calc = rw
+
+# ...but only allow the owners to make and modify release tags.
+[calc:/projects/calc/tags]
+~@calc-owners = r
+</programlisting>
+    </informalexample>
+
+    
+    <!-- ### FIXME: This is very Neon-specific. -->
+<sidebar>
+      <title>Partial Readability and Checkouts</title>
+
+      <para>If you're using Apache as your Subversion server and have made certain
+subdirectories of your repository unreadable to certain users, you need to
+be aware of a possible nonoptimal behavior with <command>svn
+checkout</command>.</para>
+
+      <para>When the client requests a checkout or update over HTTP, it makes a single
+server request and receives a single (often large) server response.  When
+the server receives the request, that is the <emphasis>only</emphasis>
+opportunity Apache has to demand user authentication.  This has some odd
+side effects.  For example, if a certain subdirectory of the repository is
+readable only by user Sally, and user Harry checks out a parent directory,
+his client will respond to the initial authentication challenge as Harry.
+As the server generates the large response, there's no way it can resend an
+authentication challenge when it reaches the special subdirectory; thus the
+subdirectory is skipped altogether, rather than asking the user to
+reauthenticate as Sally at the right moment.  In a similar way, if the root
+of the repository is anonymously world-readable, the entire checkout will be
+done without authentication&mdash;again, skipping the unreadable directory,
+rather than asking for authentication partway through.</para>
+    </sidebar>
+
+  </sect1>
+
+  
+  
+  
+  <!-- ================================================================= -->
+<!-- ================================================================= -->
+<!-- ================================================================= -->
+<sect1 id="svn.serverconfig.operational-logging">
+    <title>高レベルロギング</title>
+
+    <para>Both the Apache <command>httpd</command> and <command>svnserve</command>
+Subversion servers provide support for high-level logging of Subversion
+operations.  Configuring each of the server options to provide this level of
+logging is done differently, of course, but the output from each is designed
+to conform to a uniform syntax.</para>
+
+    <para>To enable high-level logging in <command>svnserve</command>, you need only
+use the <option>--log-file</option> command-line option when starting the
+server, passing as the value to the option the file to which
+<command>svnserve</command> should write its log output.</para>
+
+    <informalexample>
+      <screen>
+$ svnserve -d -r /path/to/repositories --log-file /var/log/svn.log
+</screen>
+    </informalexample>
+
+    <para>Enabling the same in Apache is a bit more involved, but is essentially an
+extension of Apache's stock log output configuration mechanisms&mdash;see
+<xref linkend="svn.serverconfig.httpd.extra.logging"/> for details.</para>
+        
+    <para>The following is a list of Subversion action log messages produced by its
+high-level logging mechanism, followed by one or more examples of the log
+message as it appears in the log output.</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>チェックアウトやエクスポート</term>
+        <listitem>
+          <programlisting>
+checkout-or-export /path r62 depth=infinity
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>コミット</term>
+        <listitem>
+          <programlisting>
+commit harry r100
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>差分</term>
+        <listitem>
+          <programlisting>
+diff /path r15:20 depth=infinity ignore-ancestry
+diff /path1@15 /path2@20 depth=infinity ignore-ancestry
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>ディレクトリの取得</term>
+        <listitem>
+          <programlisting>
+get-dir /trunk r17 text
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>ファイルの取得</term>
+        <listitem>
+          <programlisting>
+get-file /path r20 props
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>ファイルリビジョンの取得</term>
+        <listitem>
+          <programlisting>
+get-file-revs /path r12:15 include-merged-revisions
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>マージ情報の取得</term>
+        <listitem>
+          <programlisting>
+get-mergeinfo (/path1 /path2)
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>ロック</term>
+        <listitem>
+          <programlisting>
+lock /path steal
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>ログ</term>
+        <listitem>
+          <programlisting>
+log (/path1,/path2,/path3) r20:90 discover-changed-paths revprops=()
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>リビジョンの再実行 (svnsync)</term>
+        <listitem>
+          <programlisting>
+replay /path r19
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>リビジョン属性の変更</term>
+        <listitem>
+          <programlisting>
+change-rev-prop r50 propertyname
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>リビジョン属性の一覧</term>
+        <listitem>
+          <programlisting>
+rev-proplist r34
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>状態</term>
+        <listitem>
+          <programlisting>
+status /path r62 depth=infinity
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>切り替え</term>
+        <listitem>
+          <programlisting>
+switch /pathA /pathB@50 depth=infinity
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>ロック解除</term>
+        <listitem>
+          <programlisting>
+unlock /path break
+</programlisting>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>更新</term>
+        <listitem>
+          <programlisting>
+update /path r17 send-copyfrom-args
+</programlisting>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>As a convenience to administrators who wish to post-process their Subversion
+high-level logging output (perhaps for reporting or analysis purposes),
+Subversion source code distributions provide a Python module (located at
+<filename>tools/server-side/svn_server_log_parse.py</filename>)  which can
+be used to parse Subversion's log output.</para>
+
+  </sect1>
+
+  
+  
+  
+  <!-- ================================================================= -->
+<!-- ================================================================= -->
+<!-- ================================================================= -->
+<sect1 id="svn.serverconfig.optimization">
+    <title>サーバーの最適化</title>
+
+    <para>Part of the due diligence when offering a service such as a Subversion
+server involves capacity planning and performance tuning.  Subversion
+doesn't tend to be particularly greedy in terms of server resources such as
+CPU cycles and memory, but any service can benefit from optimizations,
+especially when usage of the service skyrockets<footnote><para>In Subversion's case, the skyrocketing affect is, of course, due to its cool
+name.  Well, that and its popularity, reliability, ease of use&hellip;.</para></footnote>.  In this section, we'll discuss some ways you can tweak your
+Subversion server configuration to offer even better performance and
+scalability.</para>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.optimization.caching">
+      <title>データキャッシング</title>
+
+      <para>Generally speaking, the most expensive part of a Subversion server's job is
+fetching data from the repository.  Subversion 1.6 attempted to offset this
+cost by introducing some in-memory caching of certain classes of data read
+from the repository.  But Subversion 1.7 takes this a step further, not only
+caching the results of some of the more costly operations, but also by
+providing in each of the available servers the means by which fine-tune the
+size and some behaviors of the cache.</para>
+
+      <para>For <command>svnserve</command>, you can specify the size of the cache using
+the <option>--memory-cache-size</option> (<option>-M</option>) command-line
+option.  You can also dictate whether <command>svnserve</command> should
+attempt to cache content fulltexts and deltas via the boolean
+<option>--cache-fulltexts</option> and <option>--cache-txdeltas</option>
+options, respectively.</para>
+
+      <informalexample>
+        <screen>
+$ svnserve -d -r /path/to/repositories \
+           --memory-cache-size 1024 \
+           --cache-txdeltas yes \
+           --cache-fulltexts yes
+&hellip;
+$
+</screen>
+      </informalexample>
+
+      <para><command>mod_dav_svn</command> provides the same degree of cache
+configurability via <filename>httpd.conf</filename> directives.  The
+<literal>SVNInMemoryCacheSize</literal>,
+<literal>SVNCacheFullTexts</literal>, and
+<literal>SVNCacheTextDeltas</literal> directives may be used at the server
+configuration level to control Subversion's data cache characteristics:</para>
+
+      <informalexample>
+        <programlisting>
+&lt;IfModule dav_svn_module&gt;
+  # Enable a 1 Gb Subversion data cache for both fulltext and deltas.
+  SVNInMemoryCacheSize 1048576
+  SVNCacheTextDeltas On
+  SVNCacheFullTexts On
+&lt;/IfModule&gt;
+</programlisting>
+      </informalexample>
+
+      <para>So what settings should you use? Certainly you need to consider what
+resources are available on your server.  To get any benefit out of the cache
+at all, you'll probably want to let the cache be at least large enough to
+hold all the files which are most commonly accessed in your repository (for
+example, your project's <filename>trunk</filename> directory tree).</para>
+
+      <tip>
+        <para>Setting the memory cache size to <literal>0</literal> will disable this
+enhanced caching mechanism and cause Subversion to fall back to using the
+older cache mechanisms introduced in Subversion 1.6.</para>
+      </tip>
+
+      <note>
+        <para>Currently, only repositories which make use of the FSFS backend data store
+make use of this data caching functionality.</para>
+      </note>
+
+    </sect2>
+
+    
+    <!-- =============================================================== -->
+<sect2 id="svn.serverconfig.optimization.compression">
+      <title>Network Compression of Data</title>
+
+      <para>Compressing the data transmitted across the wire can greatly reduce the size
+of those network transmissions, but comes at the cost of server (and client)
+CPU cycles.  Depending on your server's CPU capacity, the typical access
+patterns of the clients who use your servers, and the bandwidth of the
+networks between them, you might wish to fine tune just how hard your server
+will work to compress the data it sends across the wire.  To assist with
+this fine tuning process, Subversion 1.7 offers the
+<option>--compression</option> (<option>-c</option>)  option to
+<command>svnserve</command> and the <literal>SVNCompressionLevel</literal>
+directive for <command>mod_dav_svn</command>.  Both accept a value which is
+an integer between 0 and 9 (inclusive), where 9 offers the best compression
+of wire data, and 0 disables compression altogether.</para>
+
+      <para>For example, on a local area network (LAN) with 1-Gigabit connections, it
+might not make sense to have the server compress its network transmissions
+(which also forces the clients to decompress them), as the network itself is
+so fast that users won't really benefit from the smaller overall network
+payload.  On the other hand, servers which are accessed primarily by clients
+with low-bandwidth connections would be doing those clients a favor by
+minimizing the overall size of its network communications.</para>
+
+    </sect2>
+
+  </sect1>
+
+  
+  
+  
+  <!-- ================================================================= -->
+<!-- ================================================================= -->
+<!-- ================================================================= -->
+<sect1 id="svn.serverconfig.multimethod">
+
+    <title>複数リポジトリアクセス方法のサポート</title>
+
+    <para>You've seen how a repository can be accessed in many different ways.  But is
+it possible&mdash;or safe&mdash;for your repository to be accessed by
+multiple methods simultaneously? The answer is yes, provided you use a bit
+of foresight.</para>
+
+    <para>ある時刻において、以下のようなプロセスがあなたのリポジトリに対して 読み出しアクセス、あるいは書き込みアクセス要求を出しているかも知れません :</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Regular system users using a Subversion client (as themselves) to access the
+repository directly via <literal>file://</literal> URLs</para>
+      </listitem>
+      <listitem>
+        <para>Regular system users connecting to SSH-spawned private
+<command>svnserve</command> processes (running as themselves), which access
+the repository</para>
+      </listitem>
+      <listitem>
+        <para>An <command>svnserve</command> process&mdash;either a daemon or one launched
+by <command>inetd</command>&mdash;running as a particular fixed user</para>
+      </listitem>
+      <listitem>
+        <para>An Apache <command>httpd</command> process, running as a particular fixed
+user</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>The most common problem administrators run into is repository ownership and
+permissions.  Does every process (or user) in the preceding list have the
+rights to read and write the repository's underlying data files? Assuming
+you have a Unix-like operating system, a straightforward approach might be
+to place every potential repository user into a new <literal>svn</literal>
+group, and make the repository wholly owned by that group.  But even that's
+not enough, because a process may write to the database files using an
+unfriendly umask&mdash;one that prevents access by other users.</para>
+
+    <para>So the next step beyond setting up a common group for repository users is to
+force every repository-accessing process to use a sane umask.  For users
+accessing the repository directly, you can make the <command>svn</command>
+program into a wrapper script that first runs <userinput>umask
+002</userinput> and then runs the real <command>svn</command> client
+program.  You can write a similar wrapper script for the
+<command>svnserve</command> program, and add a <userinput>umask
+002</userinput> command to Apache's own startup script,
+<filename>apachectl</filename>.  For example:</para>
+
+    <informalexample>
+      <screen>
+$ cat /usr/bin/svn
+
+#!/bin/sh
+
+umask 002
+/usr/bin/svn-real "$@"
+</screen>
+    </informalexample>
+
+    <para>Another common problem is often encountered on Unix-like systems.  If your
+repository is backed by Berkeley DB, for example, it occasionally creates
+new log files to journal its actions.  Even if the Berkeley DB repository is
+wholly owned by the <command>svn</command> group, these newly created log
+files won't necessarily be owned by that same group, which then creates more
+permissions problems for your users.  A good workaround is to set the group
+SUID bit on the repository's <filename>db</filename> directory.  This causes
+all newly created log files to have the same group owner as the parent
+directory.</para>
+
+    <para>Once you've jumped through these hoops, your repository should be accessible
+by all the necessary processes.  It may seem a bit messy and complicated,
+but the problems of having multiple users sharing write access to common
+files are classic ones that are not often elegantly solved.</para>
+
+    <para>Fortunately, most repository administrators will never
+<emphasis>need</emphasis> to have such a complex configuration.  Users who
+wish to access repositories that live on the same machine are not limited to
+using <literal>file://</literal> access URLs&mdash;they can typically
+contact the Apache HTTP server or <command>svnserve</command> using
+<literal>localhost</literal> for the server name in their
+<literal>http://</literal> or <literal>svn://</literal> URL.  And
+maintaining multiple server processes for your Subversion repositories is
+likely to be more of a headache than necessary.  We recommend that you
+choose a single server that best meets your needs and stick with it!</para>
+
+    <sidebar>
+      <title>svn+ssh:// サーバのチェックリスト</title>
+
+      <para>It can be quite tricky to get a bunch of users with existing SSH accounts to
+share a repository without permissions problems.  If you're confused about
+all the things that you (as an administrator) need to do on a Unix-like
+system, here's a quick checklist that resummarizes some of the topics
+discussed in this section:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>All of your SSH users need to be able to read and write to the repository,
+so put all the SSH users into a single group.</para>
+        </listitem>
+        <listitem>
+          <para>
+            Make the repository wholly owned by that group.
+            </para>
+        </listitem>
+        <listitem>
+          <para>読み書き用グループパーミッションの設定する</para>
+        </listitem>
+        <listitem>
+          <para>Your users need to use a sane umask when accessing the repository, so make
+sure <command>svnserve</command> (<filename>/usr/bin/svnserve</filename>, or
+wherever it lives in <literal>$PATH</literal>) is actually a wrapper script
+that runs <userinput>umask 002</userinput> and executes the real
+<command>svnserve</command> binary.</para>
+        </listitem>
+        <listitem>
+          <para>Take similar measures when using <command>svnlook</command> and
+<command>svnadmin</command>.  Either run them with a sane umask or wrap them
+as just described.</para>
+        </listitem>
+      </itemizedlist>
+
+    </sidebar>
+
+  </sect1>
+</chapter>
+
+
+<!--
+local variables:
+sgml-parent-document: ("book.xml" "chapter")
+end:
+-->
