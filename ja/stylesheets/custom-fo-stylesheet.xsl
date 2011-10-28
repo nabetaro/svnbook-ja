@@ -4,7 +4,8 @@
 
   <xsl:param name="draft.mode">yes</xsl:param>
   <xsl:param name="body.font.family" select="'PMincho'"/>
-  <xsl:param name="monospace.font.family" select="'Gothic'"/>
+  <xsl:param name="monospace.font.family" select="'Mincho'"/>
   <xsl:param name="title.font.family" select="'PGothic'"/>
   <xsl:param name="paper.type" select="'A4'"/>
+
 </xsl:stylesheet>
